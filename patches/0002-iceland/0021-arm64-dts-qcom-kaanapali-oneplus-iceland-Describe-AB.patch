@@ -1,0 +1,82 @@
+From 30e68f020f1d3af89368badaf26f5f924dcbe17d Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 28 Sep 2026 02:56:23 +0000
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: Describe ABL's
+ splash framebuffer
+
+Add a simple-framebuffer for ABL's splash buffer (3392x2400 at
+0xfc800000) with the display clocks of both DSI links, the MDSS GDSC and
+an MMCX vote, and reserve its memory (it lies inside a RAM range ABL
+reports). Without these votes the display pipeline is released once
+boot settles and the LCD shows white; with them the framebuffer console
+stays up until the MSM KMS driver takes over. Modelled on the OnePlus 15
+(infiniti) framebuffer node, plus the DSI1 clocks for the dual-DSI panel.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ .../dts/qcom/kaanapali-oneplus-iceland.dts    | 45 ++++++++++++++++++-
+ 1 file changed, 44 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 3ea11107c35b..3726b5278e58 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -42,7 +42,45 @@ aliases {
+ 		serial1 = &uart18;
+ 	};
+ 
+-	chosen { };
++	chosen {
++		#address-cells = <2>;
++		#size-cells = <2>;
++		ranges;
++
++		/*
++		 * ABL's splash framebuffer (3392x2400 XN251, dual DSI). The clocks, power
++		 * domains and MMCX level keep the bootloader's scanout alive until the
++		 * MSM KMS driver takes over (as on the OnePlus 15).
++		 */
++		framebuffer: framebuffer@fc800000 {
++			compatible = "simple-framebuffer";
++			reg = <0x0 0xfc800000 0x0 0x2b00000>;
++			width = <3392>;
++			height = <2400>;
++			stride = <(3392 * 4)>;
++			format = "a8r8g8b8";
++
++			clocks = <&gcc GCC_DISP_HF_AXI_CLK>,
++				 <&dispcc DISP_CC_MDSS_AHB_CLK>,
++				 <&dispcc DISP_CC_MDSS_MDP_CLK>,
++				 <&dispcc DISP_CC_MDSS_MDP_LUT_CLK>,
++				 <&dispcc DISP_CC_MDSS_VSYNC_CLK>,
++				 <&dispcc DISP_CC_MDSS_BYTE0_CLK>,
++				 <&dispcc DISP_CC_MDSS_BYTE0_INTF_CLK>,
++				 <&dispcc DISP_CC_MDSS_PCLK0_CLK>,
++				 <&dispcc DISP_CC_MDSS_ESC0_CLK>,
++				 <&dispcc DISP_CC_MDSS_BYTE1_CLK>,
++				 <&dispcc DISP_CC_MDSS_BYTE1_INTF_CLK>,
++				 <&dispcc DISP_CC_MDSS_PCLK1_CLK>,
++				 <&dispcc DISP_CC_MDSS_ESC1_CLK>;
++
++			power-domains = <&rpmhpd RPMHPD_MMCX>,
++					<&dispcc DISP_CC_MDSS_CORE_GDSC>;
++			required-opps = <&rpmhpd_opp_svs>;
++
++			memory-region = <&cont_splash_mem>;
++		};
++	};
+ 
+ 	/* Both produced by Master KTZ8869, unfortunately gpio 14 and 15 aren't
+ 	 * wired to Master KTZ8869 in MP units, so vddpos and vddneg will always be active
+@@ -164,6 +202,11 @@ pmic_glink_sbu: endpoint {
+ 	};
+ 
+ 	reserved-memory {
++		cont_splash_mem: splash-region@fc800000 {
++			reg = <0x0 0xfc800000 0x0 0x2b00000>;
++			no-map;
++		};
++
+ 		gunyah_hyp_mem: gunyah-hyp@80000000 {
+ 			reg = <0x0 0x80000000 0x0 0xe00000>;
+ 			no-map;
