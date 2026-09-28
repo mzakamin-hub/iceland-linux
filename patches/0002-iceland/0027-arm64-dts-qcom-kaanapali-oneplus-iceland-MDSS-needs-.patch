@@ -1,0 +1,37 @@
+From c64bc125681d1e832d7e6106412dad98183ab8dc Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 28 Sep 2026 13:46:03 +0300
+Subject: [PATCH 27/27] arm64: dts: qcom: kaanapali-oneplus-iceland: MDSS needs
+ the INT2 GDSC as well
+
+The display is powered by both core GDSCs of the display clock controller, as in the stock kernel
+(canoe-sde: "core_gdsc", "core_int2_gdsc"). List both on the MDSS node, so the native display keeps
+MDSS_CORE_INT2 on after the boot framebuffer is released.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 6495b96af..96d01ebba 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1080,6 +1080,13 @@ backlight@11 {
+ };
+ 
+ &mdss {
++	/*
++	 * The display needs both core GDSCs, as in the stock kernel (canoe-sde: "core_gdsc", "core_int2_gdsc").
++	 * With INT2 off the DPU stops scanning out even though the KMS reports the panel on.
++	 */
++	power-domains = <&dispcc DISP_CC_MDSS_CORE_GDSC>,
++			<&dispcc DISP_CC_MDSS_CORE_INT2_GDSC>;
++
+ 	status = "okay";
+ };
+ 
+-- 
+2.43.0
+

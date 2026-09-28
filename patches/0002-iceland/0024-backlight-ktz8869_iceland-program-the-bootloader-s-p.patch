@@ -1,0 +1,110 @@
+From faf9da929472d38671c69ae6fe6ba40e7cc58a0b Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 28 Sep 2026 13:11:40 +0300
+Subject: [PATCH 24/27] backlight: ktz8869_iceland: program the bootloader's
+ per-IC values
+
+ABL (11.A.38) leaves both KTZ8869s configured and the LCD bias on. The driver wrote one table to both
+ICs, which is not what ABL programs. Read back on the tablet (PC kit pc-005):
+- BL_DIMMING is 0x44 on both ICs (driver: 0x48)
+- the slave has BL_CFG2 0x8d and BL_OPTION2 0x77 (driver: 0xeb and 0x76)
+
+Program the stock values per IC and write only the registers that differ. Run the bias enable
+sequence (0x9c, 5 ms, 0x9e) only when the bias is not already configured and on, so probe does not
+glitch the panel supplies while the splash screen is up.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/video/backlight/ktz8869_iceland.c | 73 ++++++++++++++++++-----
+ 1 file changed, 58 insertions(+), 15 deletions(-)
+
+diff --git a/drivers/video/backlight/ktz8869_iceland.c b/drivers/video/backlight/ktz8869_iceland.c
+index 52532a303..16279b9ab 100644
+--- a/drivers/video/backlight/ktz8869_iceland.c
++++ b/drivers/video/backlight/ktz8869_iceland.c
+@@ -95,23 +95,66 @@ static const struct backlight_ops ktz8869_backlight_ops = {
+ 	.update_status = ktz8869_backlight_update_status,
+ };
+ 
++struct ktz8869_reg {
++	u8 reg;
++	u8 val;
++};
++
++/*
++ * Values the stock bootloader (ABL, 11.A.38) leaves in both ICs, read back on the tablet: the master drives
++ * the LCD bias and half the LED strings, the slave the other strings with its own BL_CFG2/BL_OPTION2.
++ */
++static const struct ktz8869_reg ktz8869_bias_cfg[] = {
++	{ LCD_BOOST_CFG, 0x28 }, { OUTP_CFG, 0x1E }, { OUTN_CFG, 0x1E },
++};
++
++static const struct ktz8869_reg ktz8869_bl_cfg_master[] = {
++	{ BL_DIMMING, 0x44 }, { BL_CFG1, 0xB3 }, { BL_CFG2, 0xEB }, { BL_OPTION2, 0x76 },
++	{ PWM_RAMP_TIME, 0xF8 }, { BL_EN, 0x77 },
++};
++
++static const struct ktz8869_reg ktz8869_bl_cfg_slave[] = {
++	{ BL_DIMMING, 0x44 }, { BL_CFG1, 0xB3 }, { BL_CFG2, 0x8D }, { BL_OPTION2, 0x77 },
++	{ PWM_RAMP_TIME, 0xF8 }, { BL_EN, 0x77 },
++};
++
++/* Write only the registers that differ; returns how many were written */
++static int ktz8869_apply(struct regmap *map, const struct ktz8869_reg *t, int n)
++{
++	unsigned int v;
++	int i, changed = 0;
++
++	for (i = 0; i < n; i++) {
++		if (regmap_read(map, t[i].reg, &v) || v != t[i].val) {
++			regmap_write(map, t[i].reg, t[i].val);
++			changed++;
++		}
++	}
++
++	return changed;
++}
++
+ static void ktz8869_init(struct ktz8869 *ktz)
+ {
+-	/* LCD Bias config */
+-	ktz8869_write(ktz, LCD_BOOST_CFG, 0x28, KTZ_MASTER);
+-	ktz8869_write(ktz, OUTP_CFG, 0x1E, KTZ_MASTER);
+-	ktz8869_write(ktz, OUTN_CFG, 0x1E, KTZ_MASTER);
+-	ktz8869_write(ktz, LCD_BIAS_CFG1, 0x9C, KTZ_MASTER);
+-	mdelay(5);
+-	ktz8869_write(ktz, LCD_BIAS_CFG1, 0x9E, KTZ_MASTER);
+-
+-	/* Backlight config */
+-	ktz8869_write(ktz, BL_DIMMING, 0x48, KTZ_BOTH);
+-	ktz8869_write(ktz, BL_CFG1, 0xB3, KTZ_BOTH);
+-	ktz8869_write(ktz, BL_CFG2, 0xEB, KTZ_BOTH);
+-	ktz8869_write(ktz, BL_OPTION2, 0x76, KTZ_BOTH);
+-	ktz8869_write(ktz, PWM_RAMP_TIME, 0xF8, KTZ_BOTH);
+-	ktz8869_write(ktz, BL_EN, 0x77, KTZ_BOTH);
++	unsigned int bias = 0;
++	int n;
++
++	/* LCD bias: only (re)run the enable sequence if the bootloader has not left it configured and on */
++	n = ktz8869_apply(ktz->regmap, ktz8869_bias_cfg, ARRAY_SIZE(ktz8869_bias_cfg));
++	regmap_read(ktz->regmap, LCD_BIAS_CFG1, &bias);
++	if (n || bias != 0x9E) {
++		regmap_write(ktz->regmap, LCD_BIAS_CFG1, 0x9C);
++		mdelay(5);
++		regmap_write(ktz->regmap, LCD_BIAS_CFG1, 0x9E);
++	}
++	dev_info(&ktz->client->dev, "LCD bias %s (%d config register(s) changed)\n",
++		 (n || bias != 0x9E) ? "enabled" : "already on", n);
++
++	/* Backlight config, per IC */
++	n = ktz8869_apply(ktz->regmap, ktz8869_bl_cfg_master, ARRAY_SIZE(ktz8869_bl_cfg_master));
++	if (ktz_b)
++		n += ktz8869_apply(ktz_b->regmap, ktz8869_bl_cfg_slave, ARRAY_SIZE(ktz8869_bl_cfg_slave));
++	dev_info(&ktz->client->dev, "backlight config: %d register(s) changed\n", n);
+ }
+ 
+ static int ktz8869_probe(struct i2c_client *client)
+-- 
+2.43.0
+

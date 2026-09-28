@@ -1,0 +1,54 @@
+From c1b9c4605f32268f4928fc429b3f935c617ed3db Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 28 Sep 2026 13:11:40 +0300
+Subject: [PATCH 25/27] drm/msm/dpu: also keep a video-mode boot splash
+
+dpu_boot_splash() treats a DSI INTF as running a bootloader splash only when command-mode autorefresh
+is on. The OnePlus Pad 4 panel (NT36536, dual DSI) runs in video mode: ABL leaves the INTF timing
+engines scanning the splash out. The check fails, so MDSS is reset at probe and the screen (and the
+kernel console on the splash framebuffer) dies seconds before the KMS takes over.
+
+Also count a DSI INTF with its timing engine enabled as a running splash. To stop it, turn the timing
+engine off, wait a frame as for autorefresh, then reset MDSS as before.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c | 7 +++++++
+ drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c     | 2 +-
+ 2 files changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
+index acd170f8f..6aa58f252 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
+@@ -591,6 +591,13 @@ bool dpu_hw_intf_boot_autorefresh(void __iomem *addr, bool stop)
+ {
+ 	struct dpu_hw_intf intf = { .hw.blk_addr = addr };
+ 
++	/* Video mode: the timing engine keeps scanning the splash out on its own */
++	if (DPU_REG_READ(&intf.hw, INTF_TIMING_ENGINE_EN) & BIT(0)) {
++		if (stop)
++			DPU_REG_WRITE(&intf.hw, INTF_TIMING_ENGINE_EN, 0);
++		return true;
++	}
++
+ 	if (!dpu_hw_intf_get_autorefresh_config(&intf, NULL))
+ 		return false;
+ 
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
+index 9be9dd1c2..1b64f7406 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
+@@ -1520,7 +1520,7 @@ static const struct of_device_id dpu_dt_match[] = {
+ };
+ MODULE_DEVICE_TABLE(of, dpu_dt_match);
+ 
+-/* Check for, or stop, a bootloader splash screen running on autorefresh */
++/* Check for, or stop, a bootloader splash screen: command mode on autorefresh, or video mode */
+ bool dpu_boot_splash(struct device *mdss, bool stop)
+ {
+ 	const struct of_device_id *match = NULL;
+-- 
+2.43.0
+

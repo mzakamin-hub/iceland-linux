@@ -1,0 +1,72 @@
+From 53452ee190ba345fa2edcbaf3eb2731718afdf9e Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 28 Sep 2026 13:46:03 +0300
+Subject: [PATCH 26/27] drm/msm/mdss: attach all power domains of the MDSS
+
+The driver core attaches a device's power domain only when there is exactly one. The kaanapali MDSS is
+powered by two GDSCs, MDSS_CORE and MDSS_CORE_INT2 (the stock kernel's SDE node lists both, as
+"core_gdsc" and "core_int2_gdsc").
+
+With only MDSS_CORE described, nothing holds MDSS_CORE_INT2 once the boot framebuffer is released: on
+the OnePlus Pad 4 the KMS brings the panel up (DSI-1 connected and enabled, panel power mode 0x9e,
+backlight on), then INT2 is off and the DPU scans nothing out (PC relay kit pc-006b).
+
+When the MDSS node lists more than one power domain, attach them all with device links, powered on at
+probe (msm_mdss_reset() touches the hardware) and afterwards with the MDSS runtime PM.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/msm_mdss.c | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+
+diff --git a/drivers/gpu/drm/msm/msm_mdss.c b/drivers/gpu/drm/msm/msm_mdss.c
+index 15d2893c4..bb2e0a7d3 100644
+--- a/drivers/gpu/drm/msm/msm_mdss.c
++++ b/drivers/gpu/drm/msm/msm_mdss.c
+@@ -13,6 +13,7 @@
+ #include <linux/irqchip/chained_irq.h>
+ #include <linux/of_platform.h>
+ #include <linux/platform_device.h>
++#include <linux/pm_domain.h>
+ #include <linux/pm_runtime.h>
+ #include <linux/reset.h>
+ 
+@@ -422,9 +423,14 @@ static int mdp5_mdss_parse_clock(struct platform_device *pdev, struct clk_bulk_d
+ 	return num_clocks;
+ }
+ 
++static const struct dev_pm_domain_attach_data mdss_pd_data = {
++	.pd_flags = PD_FLAG_DEV_LINK_ON,
++};
++
+ static struct msm_mdss *msm_mdss_init(struct platform_device *pdev, bool is_mdp5)
+ {
+ 	const struct msm_mdss_data *mdss_data;
++	struct dev_pm_domain_list *pd_list;
+ 	struct msm_mdss *msm_mdss;
+ 	int ret;
+ 	int irq;
+@@ -466,6 +472,19 @@ static struct msm_mdss *msm_mdss_init(struct platform_device *pdev, bool is_mdp5
+ 
+ 	msm_mdss->dev = &pdev->dev;
+ 
++	/*
++	 * The driver core attaches a single power domain only. Some MDSS are
++	 * powered by more than one (kaanapali: the MDSS_CORE and MDSS_CORE_INT2
++	 * GDSCs): attach them all, powered on now and then with the device.
++	 */
++	if (of_count_phandle_with_args(pdev->dev.of_node, "power-domains",
++				       "#power-domain-cells") > 1) {
++		ret = devm_pm_domain_attach_list(&pdev->dev, &mdss_pd_data, &pd_list);
++		if (ret < 0)
++			return ERR_PTR(dev_err_probe(&pdev->dev, ret,
++						     "failed to attach power domains\n"));
++	}
++
+ 	ret = msm_mdss_reset(msm_mdss);
+ 	if (ret)
+ 		return ERR_PTR(ret);
+-- 
+2.43.0
+
