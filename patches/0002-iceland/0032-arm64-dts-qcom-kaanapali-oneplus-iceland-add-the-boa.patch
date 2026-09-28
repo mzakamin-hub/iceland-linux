@@ -1,0 +1,95 @@
+From 535e9b4bf51e433ee1e5df246cf31f9745a686b5 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 28 Sep 2026 19:57:04 +0300
+Subject: [PATCH 32/34] arm64: dts: qcom: kaanapali-oneplus-iceland: add the
+ board and flash thermistors
+
+Stock reads two 100k thermistors through the PMK8850 ADC: the board one on PMH0101's AMUX5 THM input and the
+flash one on its AMUX1 GPIO1 input, each with a 125 C passive trip and thermal monitoring. Describe them the same
+way so the skin and flash temperatures show up as thermal zones.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ .../dts/qcom/kaanapali-oneplus-iceland.dts    | 51 +++++++++++++++++++
+ 1 file changed, 51 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 4b75e424f..9da2d9733 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -17,6 +17,7 @@
+ #include "pmh0110-kaanapali.dtsi"    /* SPMI0: SID-3/5/6/8 */
+ #include "pmih0108-kaanapali.dtsi"   /* SPMI1: SID-7       */
+ #include "pmk8850.dtsi"              /* SPMI0: SID-0       */
++#include "qcom-adc5-gen4.h"
+ 
+ /delete-node/ &pdp_mem;
+ /delete-node/ &adspslpi_mem;
+@@ -1333,6 +1334,25 @@ &pmih0108_e1_eusb2_repeater {
+ 	vdd3-supply = <&vreg_l5b_3p1>;
+ };
+ 
++&pmk8850_vadc {
++	/* PMH0101 (SID 1) thermistors, 100k pull-up (stock: pmh0101_board_therm, pmh0101_flash_therm) */
++	channel@148 {
++		reg = <ADC5_GEN4_AMUX5_THM_100K_PU(0, 1)>;
++		label = "board_therm";
++		qcom,ratiometric;
++		qcom,hw-settle-time = <200>;
++		qcom,adc-tm;
++	};
++
++	channel@14a {
++		reg = <ADC5_GEN4_AMUX1_GPIO_100K_PU(0, 1)>;
++		label = "flash_therm";
++		qcom,ratiometric;
++		qcom,hw-settle-time = <200>;
++		qcom,adc-tm;
++	};
++};
++
+ &pon_resin {
+ 	linux,code = <KEY_VOLUMEUP>;
+ 
+@@ -1604,6 +1624,37 @@ &usb_dp_qmpphy {
+ 	status = "okay";
+ };
+ 
++&{/thermal-zones} {
++	/* stock trips both at 125 C (passive, no cooling map) */
++	board-thermal {
++		polling-delay-passive = <1000>;
++		polling-delay = <0>;
++		thermal-sensors = <&pmk8850_vadc ADC5_GEN4_AMUX5_THM_100K_PU(0, 1)>;
++
++		trips {
++			board-hot {
++				temperature = <125000>;
++				hysteresis = <1000>;
++				type = "passive";
++			};
++		};
++	};
++
++	flash-thermal {
++		polling-delay-passive = <1000>;
++		polling-delay = <0>;
++		thermal-sensors = <&pmk8850_vadc ADC5_GEN4_AMUX1_GPIO_100K_PU(0, 1)>;
++
++		trips {
++			flash-hot {
++				temperature = <125000>;
++				hysteresis = <1000>;
++				type = "passive";
++			};
++		};
++	};
++};
++
+ /* CPU thermal trips mirroring stock 11.A.38 */
+ /*
+  * kaanapali.dtsi only has hot (120 C) and critical (125 C) CPU trips. Stock throttles from 105 C (thermal
+-- 
+2.43.0
+

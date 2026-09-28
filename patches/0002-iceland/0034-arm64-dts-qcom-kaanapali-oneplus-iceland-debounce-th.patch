@@ -1,0 +1,29 @@
+From 82b27fda44f8d5ee3e6d9b190b412c68d1377b35 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 28 Sep 2026 19:57:05 +0300
+Subject: [PATCH 34/34] arm64: dts: qcom: kaanapali-oneplus-iceland: debounce
+ the lid switch
+
+Stock debounces the hall sensor for 15 ms.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 323006367..792664acc 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -175,6 +175,7 @@ switch-lid {
+ 			gpios = <&tlmm 98 GPIO_ACTIVE_LOW>;
+ 			linux,input-type = <EV_SW>;
+ 			linux,code = <SW_LID>;
++			debounce-interval = <15>;
+ 			wakeup-source;
+ 			wakeup-event-action = <EV_ACT_DEASSERTED>;
+ 		};
+-- 
+2.43.0
+
