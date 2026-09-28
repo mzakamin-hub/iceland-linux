@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: GPL-2.0-only
+# Manual-only kernel build (Actions minutes on private repos count against the account).
+# Start it from the Actions tab -> "kernel" -> Run workflow.
+name: kernel
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kernel-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang lld llvm flex bison bc libssl-dev libelf-dev \
+            device-tree-compiler zstd cpio
+
+      - name: Prepare source (upstream tag + patch queue, tree hashes verified)
+        run: scripts/prepare.sh "$RUNNER_TEMP/src"
+
+      - name: Build
+        run: scripts/build.sh "$RUNNER_TEMP/src" "$RUNNER_TEMP/out"
+
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: iceland-kernel-${{ github.sha }}
+          path: ${{ runner.temp }}/out/dist/
+          retention-days: 14
