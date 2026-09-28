@@ -1,16 +1,22 @@
-From 30e68f020f1d3af89368badaf26f5f924dcbe17d Mon Sep 17 00:00:00 2001
+From 22eb65df088ebe428eef4bc04d13d26c28af69b9 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 28 Sep 2026 02:56:23 +0000
 Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: Describe ABL's
  splash framebuffer
 
 Add a simple-framebuffer for ABL's splash buffer (3392x2400 at
-0xfc800000) with the display clocks of both DSI links, the MDSS GDSC and
-an MMCX vote, and reserve its memory (it lies inside a RAM range ABL
-reports). Without these votes the display pipeline is released once
-boot settles and the LCD shows white; with them the framebuffer console
-stays up until the MSM KMS driver takes over. Modelled on the OnePlus 15
-(infiniti) framebuffer node, plus the DSI1 clocks for the dual-DSI panel.
+0xfc800000), holding the MDSS AHB/MDP/LUT/VSYNC/ESC clocks, the display
+AXI clock, the MDSS GDSC and an MMCX vote, and reserve its memory (it
+lies inside a RAM range ABL reports). Modelled on the OnePlus 15
+(infiniti) node, with two Pad 4 differences found on the tablet:
+
+- ABL runs the MDP at 650 MHz for the 3392x2400@144 dual-DSI panel,
+  which needs MMCX TURBO; an SVS vote (as on the OnePlus 15) lowered the
+  rail under the running display engine and the LCD turned white as soon
+  as simpledrm probed.
+- The DSI byte/pixel clocks are not listed: their parents are the DSI
+  PHY PLLs, unknown to Linux until the PHYs probe, so enabling them as
+  orphans could re-program what ABL set up.
 
 Signed-off-by: mzak <mzak.amin@gmail.com>
 ---
@@ -18,7 +24,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 44 insertions(+), 1 deletion(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 3ea11107c35b..3726b5278e58 100644
+index 3ea11107c35b..6be6411c2005 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -42,7 +42,45 @@ aliases {
@@ -44,23 +50,23 @@ index 3ea11107c35b..3726b5278e58 100644
 +			stride = <(3392 * 4)>;
 +			format = "a8r8g8b8";
 +
++			/*
++			 * The DSI byte/pixel clocks are left out on purpose: their parents are the
++			 * DSI PHY PLLs, unknown to Linux until the DSI PHYs probe, and enabling them
++			 * as orphans could re-program what ABL set up.
++			 */
 +			clocks = <&gcc GCC_DISP_HF_AXI_CLK>,
 +				 <&dispcc DISP_CC_MDSS_AHB_CLK>,
 +				 <&dispcc DISP_CC_MDSS_MDP_CLK>,
 +				 <&dispcc DISP_CC_MDSS_MDP_LUT_CLK>,
 +				 <&dispcc DISP_CC_MDSS_VSYNC_CLK>,
-+				 <&dispcc DISP_CC_MDSS_BYTE0_CLK>,
-+				 <&dispcc DISP_CC_MDSS_BYTE0_INTF_CLK>,
-+				 <&dispcc DISP_CC_MDSS_PCLK0_CLK>,
 +				 <&dispcc DISP_CC_MDSS_ESC0_CLK>,
-+				 <&dispcc DISP_CC_MDSS_BYTE1_CLK>,
-+				 <&dispcc DISP_CC_MDSS_BYTE1_INTF_CLK>,
-+				 <&dispcc DISP_CC_MDSS_PCLK1_CLK>,
 +				 <&dispcc DISP_CC_MDSS_ESC1_CLK>;
 +
++			/* ABL runs the MDP at 650 MHz for 3392x2400@144 dual DSI: needs TURBO */
 +			power-domains = <&rpmhpd RPMHPD_MMCX>,
 +					<&dispcc DISP_CC_MDSS_CORE_GDSC>;
-+			required-opps = <&rpmhpd_opp_svs>;
++			required-opps = <&rpmhpd_opp_turbo>;
 +
 +			memory-region = <&cont_splash_mem>;
 +		};
