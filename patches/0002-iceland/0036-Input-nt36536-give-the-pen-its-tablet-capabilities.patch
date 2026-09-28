@@ -1,0 +1,120 @@
+From 14707c1700849235a2f32d2bc8cfa5303ee83fcc Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 28 Sep 2026 22:28:26 +0300
+Subject: [PATCH 36/37] Input: nt36536: give the pen its tablet capabilities
+
+libinput ignores the driver's pen device (cage and GNOME Shell on the OnePlus Pad 4 log "NVTCapacitivePen:
+libinput bug: missing tablet capabilities: btn-stylus resolution. Ignoring this device"): a tablet device needs
+a stylus button and a resolution on its axes. Declare BTN_STYLUS/BTN_STYLUS2 and report the two pen buttons the
+firmware already decodes (pen_btn1/pen_btn2 were parsed and dropped), and set the axes' resolution from the
+common touchscreen properties "touchscreen-x-mm"/"touchscreen-y-mm" (units per mm from the controller's
+abs_x_max/abs_y_max), for the pen's ABS_X/ABS_Y and the touch's ABS_MT_POSITION_X/Y alike.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ drivers/input/touchscreen/nt36536/nt36xxx.c | 26 +++++++++++++++++++++
+ drivers/input/touchscreen/nt36536/nt36xxx.h |  1 +
+ 2 files changed, 27 insertions(+)
+
+diff --git a/drivers/input/touchscreen/nt36536/nt36xxx.c b/drivers/input/touchscreen/nt36536/nt36xxx.c
+index 1ec7fd9e2..e1850fc15 100644
+--- a/drivers/input/touchscreen/nt36536/nt36xxx.c
++++ b/drivers/input/touchscreen/nt36536/nt36xxx.c
+@@ -725,6 +725,8 @@ static void release_pen_event(void) {
+ 		input_report_abs(ts->pen_input_dev, ABS_DISTANCE, 0);
+ 		input_report_key(ts->pen_input_dev, BTN_TOUCH, 0);
+ 		input_report_key(ts->pen_input_dev, BTN_TOOL_PEN, 0);
++		input_report_key(ts->pen_input_dev, BTN_STYLUS, 0);
++		input_report_key(ts->pen_input_dev, BTN_STYLUS2, 0);
+ 		input_sync(ts->pen_input_dev);
+ 	}
+ }
+@@ -1026,6 +1028,8 @@ static irqreturn_t nvt_ts_work_func(int irq, void *data)
+ 				input_report_abs(ts->pen_input_dev, ABS_TILT_Y, pen_tilt_y);
+ 				input_report_abs(ts->pen_input_dev, ABS_DISTANCE, pen_distance);
+ 				input_report_key(ts->pen_input_dev, BTN_TOOL_PEN, !!pen_distance || !!pen_pressure);
++				input_report_key(ts->pen_input_dev, BTN_STYLUS, pen_btn1);
++				input_report_key(ts->pen_input_dev, BTN_STYLUS2, pen_btn2);
+ 				// TBD: pen battery event report
+ 				// NVT_LOG("pen_battery=%d\n", pen_battery);
+ 			} else if (pen_format_id == 0xF0) {
+@@ -1043,6 +1047,8 @@ static irqreturn_t nvt_ts_work_func(int irq, void *data)
+ 			input_report_abs(ts->pen_input_dev, ABS_DISTANCE, 0);
+ 			input_report_key(ts->pen_input_dev, BTN_TOUCH, 0);
+ 			input_report_key(ts->pen_input_dev, BTN_TOOL_PEN, 0);
++			input_report_key(ts->pen_input_dev, BTN_STYLUS, 0);
++			input_report_key(ts->pen_input_dev, BTN_STYLUS2, 0);
+ 		}
+ 
+ 		input_sync(ts->pen_input_dev);
+@@ -1210,6 +1216,21 @@ static void nvt_resume_work(struct work_struct *work)
+ return:
+ 	Executive outcomes. 0---succeed. negative---failed
+ *******************************************************/
++/*
++ * The physical size from the DT ("touchscreen-x-mm" / "touchscreen-y-mm", the common touchscreen binding) gives the
++ * axes a resolution in units/mm. libinput refuses a tablet (pen) device without one, and the compositors use it to
++ * map the touch surface to the panel.
++ */
++static void nvt_set_abs_res(struct nvt_ts_data *ts, struct input_dev *dev, unsigned int axis_x, unsigned int axis_y)
++{
++	u32 x_mm = 0, y_mm = 0;
++
++	if (!device_property_read_u32(&ts->client->dev, "touchscreen-x-mm", &x_mm) && x_mm)
++		input_abs_set_res(dev, axis_x, DIV_ROUND_CLOSEST(ts->abs_x_max, x_mm));
++	if (!device_property_read_u32(&ts->client->dev, "touchscreen-y-mm", &y_mm) && y_mm)
++		input_abs_set_res(dev, axis_y, DIV_ROUND_CLOSEST(ts->abs_y_max, y_mm));
++}
++
+ static int32_t nvt_ts_probe(struct spi_device *client)
+ {
+ 	int32_t ret = 0;
+@@ -1331,6 +1352,7 @@ static int32_t nvt_ts_probe(struct spi_device *client)
+ 	input_set_abs_params(ts->input_dev, ABS_MT_TOUCH_MAJOR, 0, 255, 0, 0);    //area = 255
+ 	input_set_abs_params(ts->input_dev, ABS_MT_POSITION_X, 0, ts->abs_x_max - 1, 0, 0);
+ 	input_set_abs_params(ts->input_dev, ABS_MT_POSITION_Y, 0, ts->abs_y_max - 1, 0, 0);
++	nvt_set_abs_res(ts, ts->input_dev, ABS_MT_POSITION_X, ABS_MT_POSITION_Y);
+ #endif //TOUCH_MAX_FINGER_NUM > 1
+ 
+ 	sprintf(ts->phys, "input/ts");
+@@ -1358,6 +1380,7 @@ static int32_t nvt_ts_probe(struct spi_device *client)
+ 		ts->pen_input_dev->evbit[0] = BIT_MASK(EV_SYN) | BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
+ 		ts->pen_input_dev->keybit[BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH);
+ 		ts->pen_input_dev->keybit[BIT_WORD(BTN_TOOL_PEN)] |= BIT_MASK(BTN_TOOL_PEN);
++		ts->pen_input_dev->keybit[BIT_WORD(BTN_STYLUS)] |= BIT_MASK(BTN_STYLUS) | BIT_MASK(BTN_STYLUS2);
+ 		//ts->pen_input_dev->keybit[BIT_WORD(BTN_TOOL_RUBBER)] |= BIT_MASK(BTN_TOOL_RUBBER);
+ 		ts->pen_input_dev->propbit[0] = BIT(INPUT_PROP_DIRECT);
+ 
+@@ -1367,6 +1390,7 @@ static int32_t nvt_ts_probe(struct spi_device *client)
+ 		input_set_abs_params(ts->pen_input_dev, ABS_DISTANCE, 0, PEN_DISTANCE_MAX, 0, 0);
+ 		input_set_abs_params(ts->pen_input_dev, ABS_TILT_X, PEN_TILT_MIN, PEN_TILT_MAX, 0, 0);
+ 		input_set_abs_params(ts->pen_input_dev, ABS_TILT_Y, PEN_TILT_MIN, PEN_TILT_MAX, 0, 0);
++		nvt_set_abs_res(ts, ts->pen_input_dev, ABS_X, ABS_Y);
+ 
+ 		sprintf(ts->pen_phys, "input/pen");
+ 		ts->pen_input_dev->name = NVT_PEN_NAME;
+@@ -1623,6 +1647,8 @@ static int32_t nvt_ts_suspend(struct device *dev)
+ 		input_report_abs(ts->pen_input_dev, ABS_DISTANCE, 0);
+ 		input_report_key(ts->pen_input_dev, BTN_TOUCH, 0);
+ 		input_report_key(ts->pen_input_dev, BTN_TOOL_PEN, 0);
++		input_report_key(ts->pen_input_dev, BTN_STYLUS, 0);
++		input_report_key(ts->pen_input_dev, BTN_STYLUS2, 0);
+ 		input_sync(ts->pen_input_dev);
+ 	}
+ 
+diff --git a/drivers/input/touchscreen/nt36536/nt36xxx.h b/drivers/input/touchscreen/nt36536/nt36xxx.h
+index 0d7b4375f..97cf0972d 100644
+--- a/drivers/input/touchscreen/nt36536/nt36xxx.h
++++ b/drivers/input/touchscreen/nt36536/nt36xxx.h
+@@ -21,6 +21,7 @@
+ #include <linux/delay.h>
+ #include <linux/input.h>
+ #include <linux/of.h>
++#include <linux/property.h>
+ #include <linux/spi/spi.h>
+ #include <linux/uaccess.h>
+ #include <linux/version.h>
+-- 
+2.43.0
+

@@ -1,0 +1,34 @@
+From 22d0d9742085f67df04604709c3f87c475808c23 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 28 Sep 2026 22:28:27 +0300
+Subject: [PATCH 37/37] arm64: dts: qcom: kaanapali-oneplus-iceland: give the
+ touchscreen its physical size
+
+The panel's active area is 274 x 193 mm (the DSI connector reports it); with "touchscreen-x-mm" and
+"touchscreen-y-mm" the nt36536 driver sets a resolution on the touch and pen axes (33920 x 24000 units), which
+libinput requires for the pen and the compositors use for the touch-to-output mapping.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 792664acc..5055138d8 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1396,6 +1396,10 @@ touchscreen@0 {
+ 
+ 		novatek,pen-support;
+ 
++		/* the panel is 274 x 193 mm: a resolution for the touch and pen axes */
++		touchscreen-x-mm = <274>;
++		touchscreen-y-mm = <193>;
++
+ 		panel = <&display_panel>;
+ 
+ 		firmware-name = "novatek/novatek_nt36536_fw.bin";
+-- 
+2.43.0
+
