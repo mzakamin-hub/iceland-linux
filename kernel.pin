@@ -1,0 +1,10 @@
+# Upstream base the patch queue applies to (sourced by scripts/prepare.sh).
+UPSTREAM_URL=https://github.com/torvalds/linux
+UPSTREAM_TAG=v7.2
+UPSTREAM_COMMIT=8d3ae59288f1e7d58d76558a6ee96d533bc5019f
+UPSTREAM_TREE=a25d6a94ad99aa059aa6dc728c45052fb2968352
+
+# After patches/0001-map220v the tree must equal map220v/sm8850-mainline iceland-7.2 at this commit.
+MAP220V_URL=https://github.com/map220v/sm8850-mainline
+MAP220V_COMMIT=bc3e5fc83c9c3c127c48617caa25d5018b62def8
+MAP220V_TREE=11a87aa8dd13491e4708a73ccc77c3f841ec9e84
