@@ -1,0 +1,35 @@
+From 44fd0239b5dc5c21c9c2144aab6ea74b77c4aae9 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 28 Sep 2026 18:55:08 +0300
+Subject: [PATCH 29/31] power: supply: qcom_battmgr: report the Oplus gauge
+ voltage and current in uV/uA
+
+The Oplus charger firmware's fuel gauge snapshot gives the battery voltage in mV and the current in mA, but
+power_supply expects uV and uA (as the USB supply and the gauge's own capacity values already are). The Pad 4
+reported VOLTAGE_NOW=3871 while its PMIC log says VBAT 3873 mV. Scale both by 1000.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/power/supply/qcom_battmgr.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
+index 6d717ef8f..ec2b60789 100644
+--- a/drivers/power/supply/qcom_battmgr.c
++++ b/drivers/power/supply/qcom_battmgr.c
+@@ -1784,8 +1784,9 @@ static void qcom_battmgr_oplus_gauge_callback(struct qcom_battmgr *battmgr,
+ 
+ 	battmgr->unit = QCOM_BATTMGR_UNIT_mAh;
+ 	battmgr->status.temperature = le32_to_cpu(data[OPLUS_GAUGE_TEMP]);
+-	battmgr->status.current_now = -(s32)le32_to_cpu(data[OPLUS_GAUGE_CURRENT]);
+-	battmgr->status.voltage_now = le32_to_cpu(data[OPLUS_GAUGE_VOLTAGE]);
++	/* the gauge reports mA and mV; power_supply wants uA and uV */
++	battmgr->status.current_now = -(s32)le32_to_cpu(data[OPLUS_GAUGE_CURRENT]) * 1000;
++	battmgr->status.voltage_now = le32_to_cpu(data[OPLUS_GAUGE_VOLTAGE]) * 1000;
+ 	battmgr->status.percent = le32_to_cpu(data[OPLUS_GAUGE_SOC]) / 100;
+ 	battmgr->status.capacity = le32_to_cpu(data[OPLUS_GAUGE_REMAINING]) * 1000;
+ 	battmgr->status.soh_percent = le32_to_cpu(data[OPLUS_GAUGE_SOH]);
+-- 
+2.43.0
+

@@ -1,0 +1,71 @@
+From a02a8b4e8dd22ffb55929da1c44cff07d2e7f3ca Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 28 Sep 2026 18:57:52 +0300
+Subject: [PATCH 30/31] arm64: dts: qcom: kaanapali-oneplus-iceland: add the
+ lid switch
+
+The Pad 4 has a BU52053NVX hall sensor on TLMM 98 for the keyboard/folio cover (stock requests an edge IRQ named
+"lid" on it; the line reads high with the cover open, no pull). Describe it as a gpio-keys SW_LID switch that can
+wake the system when the cover opens.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../dts/qcom/kaanapali-oneplus-iceland.dts    | 20 ++++++++++++++++++-
+ 1 file changed, 19 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 96d01ebba..d12c3da1e 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -6,6 +6,7 @@
+ /dts-v1/;
+ 
+ #include <dt-bindings/gpio/gpio.h>
++#include <dt-bindings/input/gpio-keys.h>
+ #include <dt-bindings/input/linux-event-codes.h>
+ #include <dt-bindings/leds/common.h>
+ #include <dt-bindings/regulator/qcom,rpmh-regulator.h>
+@@ -155,7 +156,7 @@ bi_tcxo_ao_div2: bi-tcxo-ao-div2-clk {
+ 	gpio-keys {
+ 		compatible = "gpio-keys";
+ 
+-		pinctrl-0 = <&key_vol_down_default>;
++		pinctrl-0 = <&key_vol_down_default>, <&lid_default>;
+ 		pinctrl-names = "default";
+ 
+ 		key-volume-down {
+@@ -166,6 +167,16 @@ key-volume-down {
+ 			linux,can-disable;
+ 			wakeup-source;
+ 		};
++
++		/* BU52053NVX hall sensor: low while the cover's magnet is near */
++		switch-lid {
++			label = "Lid";
++			gpios = <&tlmm 98 GPIO_ACTIVE_LOW>;
++			linux,input-type = <EV_SW>;
++			linux,code = <SW_LID>;
++			wakeup-source;
++			wakeup-event-action = <EV_ACT_DEASSERTED>;
++		};
+ 	};
+ 
+ 	pmic-glink {
+@@ -1383,6 +1394,13 @@ wcd_tx: codec@0,3 {
+ &tlmm {
+ 	gpio-reserved-ranges = <36 4>;
+ 
++	lid_default: lid-default-state {
++		pins = "gpio98";
++		function = "gpio";
++		drive-strength = <2>;
++		bias-disable;
++	};
++
+ 	wlan_en: wlan-en-state {
+ 		pins = "gpio16";
+ 		function = "gpio";
+-- 
+2.43.0
+
