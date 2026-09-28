@@ -1,0 +1,39 @@
+From c13940c3b2b213d4ae5c1a540fe54b28004517de Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 28 Sep 2026 00:32:56 +0000
+Subject: [PATCH 19/20] arm64: dts: qcom: kaanapali-oneplus-iceland: Match the
+ upstream NT36536 panel driver
+
+The panel is now driven by the upstream panel-novatek-nt36536 driver:
+use its compatible (csot,xn251) and supply names (vsp/vsn for the
+positive and negative LCD bias rails).
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 0848c8adddf0..9dbdda18889f 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1031,7 +1031,7 @@ &mdss_dsi0 {
+ 	status = "okay";
+ 
+ 	display_panel: panel@0 {
+-		compatible = "oneplus,iceland-nt36536", "novatek,nt36536";
++		compatible = "csot,xn251", "novatek,nt36536";
+ 		reg = <0>;
+ 
+ 		//Reset GPIO, TE GPIO, Paired Master TE, Paired Slave TE, Paired Reset
+@@ -1046,8 +1046,8 @@ &fte_sout_1p2_active &fte_sin_1p8_active
+ 		pinctrl-names = "default", "sleep";
+ 
+ 		vddio-supply = <&vreg_l12b_1p9>;
+-		avdd-supply = <&lcd_vddpos_5p5>;
+-		avee-supply = <&lcd_vddneg_5p5>;
++		vsp-supply = <&lcd_vddpos_5p5>;
++		vsn-supply = <&lcd_vddneg_5p5>;
+ 
+ 		reset-gpios = <&tlmm 171 GPIO_ACTIVE_LOW>;
+ 		backlight = <&backlight>;

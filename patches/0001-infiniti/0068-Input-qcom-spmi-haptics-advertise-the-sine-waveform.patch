@@ -1,0 +1,26 @@
+From 83cceb936e8c3c41ff84a39303f670b030a5d96d Mon Sep 17 00:00:00 2001
+From: Victor Fuentes <victor@vlinkz.dev>
+Date: Wed, 23 Sep 2026 07:48:23 -0700
+Subject: [PATCH 068/138] Input: qcom-spmi-haptics - advertise the sine
+ waveform
+
+haptics_upload_effect() plays FF_PERIODIC/FF_SINE effects, but probe
+never sets FF_SINE, so input_ff_upload() rejects them with -EINVAL.
+
+Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
+---
+ drivers/input/misc/qcom-spmi-haptics.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/input/misc/qcom-spmi-haptics.c b/drivers/input/misc/qcom-spmi-haptics.c
+index f589ac137403..2e2dd9d84e0d 100644
+--- a/drivers/input/misc/qcom-spmi-haptics.c
++++ b/drivers/input/misc/qcom-spmi-haptics.c
+@@ -1159,6 +1159,7 @@ static int qcom_haptics_probe(struct platform_device *pdev)
+ 
+ 	input_set_capability(input, EV_FF, FF_CONSTANT);
+ 	input_set_capability(input, EV_FF, FF_PERIODIC);
++	input_set_capability(input, EV_FF, FF_SINE);
+ 	input_set_capability(input, EV_FF, FF_CUSTOM);
+ 	input_set_capability(input, EV_FF, FF_GAIN);
+ 

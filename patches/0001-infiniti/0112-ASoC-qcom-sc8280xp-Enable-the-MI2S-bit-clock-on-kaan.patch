@@ -1,0 +1,25 @@
+From 94764193c00f5c66fce85a6a5816635bbd2a857e Mon Sep 17 00:00:00 2001
+From: Victor Fuentes <victor@vlinkz.dev>
+Date: Wed, 29 Jul 2026 01:18:05 -0700
+Subject: [PATCH 112/138] ASoC: qcom: sc8280xp: Enable the MI2S bit clock on
+ kaanapali
+
+As on hawi, for boards with I2S amplifiers.
+
+Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
+---
+ sound/soc/qcom/sc8280xp.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/sound/soc/qcom/sc8280xp.c b/sound/soc/qcom/sc8280xp.c
+index 4d48e1012cd4..bd7b98568e39 100644
+--- a/sound/soc/qcom/sc8280xp.c
++++ b/sound/soc/qcom/sc8280xp.c
+@@ -458,6 +458,7 @@ static const struct qcom_snd_soc_common kaanapali_priv_data = {
+ 	.driver_name = "kaanapali",
+ 	.dapm_widgets = sc8280xp_dapm_widgets,
+ 	.num_dapm_widgets = ARRAY_SIZE(sc8280xp_dapm_widgets),
++	.mi2s_bclk_enable = true,
+ 	.wcd_jack = true,
+ };
+ 

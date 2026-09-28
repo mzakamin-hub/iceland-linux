@@ -1,0 +1,40 @@
+From cb98bdb2879d7808fb6e79f8801c619ea97836c5 Mon Sep 17 00:00:00 2001
+From: Victor Fuentes <victor@vlinkz.dev>
+Date: Tue, 28 Jul 2026 23:59:13 -0700
+Subject: [PATCH 102/138] drm/msm/dpu: don't unbalance vblank_refcount on a
+ kickoff timeout
+
+The raw unregister on the error path left the interrupt masked for good.
+
+Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_cmd.c | 2 --
+ drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c | 2 --
+ 2 files changed, 4 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_cmd.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_cmd.c
+index 45079ee59cf6..5b8010fc370c 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_cmd.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_cmd.c
+@@ -200,8 +200,6 @@ static int _dpu_encoder_phys_cmd_handle_ppdone_timeout(
+ 			  cmd_enc->pp_timeout_report_cnt,
+ 			  atomic_read(&phys_enc->pending_kickoff_cnt));
+ 		msm_disp_snapshot_state(drm_enc->dev);
+-		dpu_core_irq_unregister_callback(phys_enc->dpu_kms,
+-				phys_enc->irq[INTR_IDX_RDPTR]);
+ 	}
+ 
+ 	atomic_add_unless(&phys_enc->pending_kickoff_cnt, -1, 0);
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
+index 39aab52658ce..90fc4565f07a 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
+@@ -572,8 +572,6 @@ static void dpu_encoder_phys_vid_prepare_for_kickoff(
+ 				ctl->idx, rc);
+ 		msm_disp_snapshot_state(drm_enc->dev);
+ 		phys_enc->enable_state = DPU_ENC_ERR_NEEDS_HW_RESET;
+-		dpu_core_irq_unregister_callback(phys_enc->dpu_kms,
+-				phys_enc->irq[INTR_IDX_VSYNC]);
+ 	}
+ }
+ 

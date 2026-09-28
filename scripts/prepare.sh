@@ -6,8 +6,8 @@
 #
 #   scripts/prepare.sh [SRC_DIR]     (default: ./src)
 #
-# Checks: upstream commit matches kernel.pin; after the map220v series the tree hash must equal
-# map220v's published tree (proves the queue reproduces the base exactly).
+# Checks: upstream commit matches kernel.pin; after each series the tree hash must equal the
+# TREE_AFTER_<series> value in kernel.pin (proves the queue reproduces the sources exactly).
 set -euo pipefail
 top=$(cd "$(dirname "$0")/.." && pwd)
 src=${1:-$top/src}
@@ -31,10 +31,12 @@ for series in "$top"/patches/*/; do
 	# committer = whoever runs the build; author/date/message come from the patch
 	git -c user.name="${GIT_COMMITTER_NAME:-iceland-build}" -c user.email="${GIT_COMMITTER_EMAIL:-build@localhost}" \
 		am -q --keep-cr --committer-date-is-author-date "$series"*.patch
-	if [ "$name" = 0001-map220v ]; then
+	var="TREE_AFTER_$(echo "$name" | tr -c 'A-Za-z0-9_\n' '_')"
+	want=${!var:-}
+	if [ -n "$want" ]; then
 		tree=$(git rev-parse HEAD^{tree})
-		[ "$tree" = "$MAP220V_TREE" ] || { echo "tree after map220v series $tree != $MAP220V_TREE"; exit 1; }
-		echo "  tree matches map220v $MAP220V_COMMIT"
+		[ "$tree" = "$want" ] || { echo "tree after $name is $tree, expected $want"; exit 1; }
+		echo "  tree matches $var"
 	fi
 done
 echo "source ready: $src ($(git rev-parse --short HEAD))"

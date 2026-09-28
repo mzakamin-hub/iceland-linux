@@ -1,0 +1,339 @@
+From 4ddc548f42e66f4942f728cadf1a862c6777b268 Mon Sep 17 00:00:00 2001
+From: Victor Fuentes <victor@vlinkz.dev>
+Date: Wed, 23 Sep 2026 08:43:09 -0700
+Subject: [PATCH 103/138] drm/msm/mdss: keep a bootloader splash screen until
+ the KMS takes over
+
+Defer the MDSS reset while autorefresh runs on a DSI interface, so the
+panel keeps showing the firmware framebuffer until the KMS takes over.
+
+Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c |  13 +++
+ drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.h |   2 +
+ drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c     |  45 +++++++++
+ drivers/gpu/drm/msm/msm_drv.h               |   7 ++
+ drivers/gpu/drm/msm/msm_kms.c               |   3 +
+ drivers/gpu/drm/msm/msm_mdss.c              | 106 +++++++++++++++-----
+ 6 files changed, 153 insertions(+), 23 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
+index ac82b69aedf6..acd170f8f27d 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
+@@ -587,6 +587,19 @@ static void dpu_hw_intf_disable_autorefresh(struct dpu_hw_intf *intf,
+ 
+ }
+ 
++bool dpu_hw_intf_boot_autorefresh(void __iomem *addr, bool stop)
++{
++	struct dpu_hw_intf intf = { .hw.blk_addr = addr };
++
++	if (!dpu_hw_intf_get_autorefresh_config(&intf, NULL))
++		return false;
++
++	if (stop)
++		dpu_hw_intf_setup_autorefresh_config(&intf, 0, false);
++
++	return true;
++}
++
+ static void dpu_hw_intf_program_intf_cmd_cfg(struct dpu_hw_intf *intf,
+ 					     struct dpu_hw_intf_cmd_mode_cfg *cmd_mode_cfg)
+ {
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.h
+index badd26305fc9..4d135ae80b55 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.h
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.h
+@@ -132,4 +132,6 @@ struct dpu_hw_intf *dpu_hw_intf_init(struct drm_device *dev,
+ 				     void __iomem *addr,
+ 				     const struct dpu_mdss_version *mdss_rev);
+ 
++bool dpu_hw_intf_boot_autorefresh(void __iomem *addr, bool stop);
++
+ #endif /*_DPU_HW_INTF_H */
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
+index da3556eb6ecc..9be9dd1c2cde 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
+@@ -10,7 +10,9 @@
+ #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
+ 
+ #include <linux/debugfs.h>
++#include <linux/delay.h>
+ #include <linux/dma-buf.h>
++#include <linux/of_address.h>
+ #include <linux/of_irq.h>
+ #include <linux/pm_opp.h>
+ 
+@@ -1518,6 +1520,49 @@ static const struct of_device_id dpu_dt_match[] = {
+ };
+ MODULE_DEVICE_TABLE(of, dpu_dt_match);
+ 
++/* Check for, or stop, a bootloader splash screen running on autorefresh */
++bool dpu_boot_splash(struct device *mdss, bool stop)
++{
++	const struct of_device_id *match = NULL;
++	const struct dpu_mdss_cfg *catalog;
++	void __iomem *mmio = NULL;
++	struct device_node *np;
++	bool running = false;
++	int i;
++
++	for_each_available_child_of_node(mdss->of_node, np) {
++		match = of_match_node(dpu_dt_match, np);
++		if (match)
++			break;
++	}
++	if (!match)
++		return false;
++
++	catalog = match->data;
++	i = of_property_match_string(np, "reg-names", "mdp");
++
++	if (catalog->mdss_ver->core_major_ver >= 5 && i >= 0)
++		mmio = of_iomap(np, i);
++
++	of_node_put(np);
++	if (!mmio)
++		return false;
++
++	for (i = 0; i < catalog->intf_count; i++) {
++		if (catalog->intf[i].type == INTF_DSI)
++			running |= dpu_hw_intf_boot_autorefresh(mmio + catalog->intf[i].base,
++								stop);
++	}
++
++	iounmap(mmio);
++
++	/* One frame at 50 Hz */
++	if (running && stop)
++		msleep(20);
++
++	return running;
++}
++
+ static struct platform_driver dpu_driver = {
+ 	.probe = dpu_dev_probe,
+ 	.remove = dpu_dev_remove,
+diff --git a/drivers/gpu/drm/msm/msm_drv.h b/drivers/gpu/drm/msm/msm_drv.h
+index eb4bbae8557b..2264bd65ebbb 100644
+--- a/drivers/gpu/drm/msm/msm_drv.h
++++ b/drivers/gpu/drm/msm/msm_drv.h
+@@ -410,17 +410,24 @@ static inline void msm_mdp_unregister(void) {}
+ #ifdef CONFIG_DRM_MSM_DPU
+ void msm_dpu_register(void);
+ void msm_dpu_unregister(void);
++bool dpu_boot_splash(struct device *mdss, bool stop);
+ #else
+ static inline void msm_dpu_register(void) {}
+ static inline void msm_dpu_unregister(void) {}
++static inline bool dpu_boot_splash(struct device *mdss, bool stop)
++{
++	return false;
++}
+ #endif
+ 
+ #ifdef CONFIG_DRM_MSM_MDSS
+ void msm_mdss_register(void);
+ void msm_mdss_unregister(void);
++void msm_mdss_take_over_splash(struct device *dev);
+ #else
+ static inline void msm_mdss_register(void) {}
+ static inline void msm_mdss_unregister(void) {}
++static inline void msm_mdss_take_over_splash(struct device *dev) {}
+ #endif
+ 
+ #ifdef CONFIG_DEBUG_FS
+diff --git a/drivers/gpu/drm/msm/msm_kms.c b/drivers/gpu/drm/msm/msm_kms.c
+index e5d0ea629448..54f42aa62ae3 100644
+--- a/drivers/gpu/drm/msm/msm_kms.c
++++ b/drivers/gpu/drm/msm/msm_kms.c
+@@ -268,6 +268,9 @@ int msm_drm_kms_init(struct device *dev, const struct drm_driver *drv)
+ 	struct drm_crtc *crtc;
+ 	int ret;
+ 
++	/* While the firmware framebuffer still keeps the display powered */
++	msm_mdss_take_over_splash(dev->parent);
++
+ 	/* the fw fb could be anywhere in memory */
+ 	ret = aperture_remove_all_conflicting_devices(drv->name);
+ 	if (ret)
+diff --git a/drivers/gpu/drm/msm/msm_mdss.c b/drivers/gpu/drm/msm/msm_mdss.c
+index 9087c4b290db..15d2893c4a34 100644
+--- a/drivers/gpu/drm/msm/msm_mdss.c
++++ b/drivers/gpu/drm/msm/msm_mdss.c
+@@ -44,6 +44,7 @@ struct msm_mdss {
+ 	struct icc_path *mdp_path[2];
+ 	u32 num_mdp_paths;
+ 	struct icc_path *reg_bus_path;
++	struct reset_control *splash_reset;
+ };
+ 
+ static int msm_mdss_parse_data_bus_icc_path(struct device *dev,
+@@ -228,10 +229,31 @@ static void msm_mdss_6x_setup_ubwc(struct msm_mdss *msm_mdss)
+ 	 (((minor) & 0xfff) << 16) |	\
+ 	 ((step) & 0xffff))
+ 
++static void msm_mdss_setup_ubwc(struct msm_mdss *msm_mdss)
++{
++	u32 hw_rev;
++
++	/*
++	 * Register access requires MDSS_MDP_CLK, which is not enabled by the
++	 * mdss on mdp5 hardware. Skip it for now.
++	 */
++	if (msm_mdss->is_mdp5 || !msm_mdss->mdss_data)
++		return;
++
++	hw_rev = readl_relaxed(msm_mdss->mmio + REG_MDSS_HW_VERSION);
++
++	if (hw_rev >= MDSS_HW_VER(6, 0, 0))
++		msm_mdss_6x_setup_ubwc(msm_mdss);
++	else if (hw_rev >= MDSS_HW_VER(5, 0, 0))
++		msm_mdss_5x_setup_ubwc(msm_mdss);
++	else if (hw_rev >= MDSS_HW_VER(4, 0, 0))
++		msm_mdss_4x_setup_ubwc(msm_mdss);
++	/* else UBWC 1.0 or none, no params to program */
++}
++
+ static int msm_mdss_enable(struct msm_mdss *msm_mdss)
+ {
+ 	int ret, i;
+-	u32 hw_rev;
+ 
+ 	/*
+ 	 * Several components have AXI clocks that can only be turned on if
+@@ -258,24 +280,9 @@ static int msm_mdss_enable(struct msm_mdss *msm_mdss)
+ 		return ret;
+ 	}
+ 
+-	/*
+-	 * Register access requires MDSS_MDP_CLK, which is not enabled by the
+-	 * mdss on mdp5 hardware. Skip it for now.
+-	 */
+-	if (msm_mdss->is_mdp5 || !msm_mdss->mdss_data)
+-		return 0;
+-
+-	hw_rev = readl_relaxed(msm_mdss->mmio + REG_MDSS_HW_VERSION);
+-
+-	if (hw_rev >= MDSS_HW_VER(6, 0, 0))
+-		msm_mdss_6x_setup_ubwc(msm_mdss);
+-	else if (hw_rev >= MDSS_HW_VER(5, 0, 0))
+-		msm_mdss_5x_setup_ubwc(msm_mdss);
+-	else if (hw_rev >= MDSS_HW_VER(4, 0, 0))
+-		msm_mdss_4x_setup_ubwc(msm_mdss);
+-	/* else UBWC 1.0 or none, no params to program */
++	msm_mdss_setup_ubwc(msm_mdss);
+ 
+-	return ret;
++	return 0;
+ }
+ 
+ static int msm_mdss_disable(struct msm_mdss *msm_mdss)
+@@ -300,15 +307,18 @@ static void msm_mdss_destroy(struct msm_mdss *msm_mdss)
+ 
+ 	pm_runtime_suspend(msm_mdss->dev);
+ 	pm_runtime_disable(msm_mdss->dev);
++	reset_control_put(msm_mdss->splash_reset);
+ 	irq_domain_remove(msm_mdss->irq_controller.domain);
+ 	msm_mdss->irq_controller.domain = NULL;
+ 	irq = platform_get_irq(pdev, 0);
+ 	irq_set_chained_handler_and_data(irq, NULL, NULL);
+ }
+ 
+-static int msm_mdss_reset(struct device *dev)
++static int msm_mdss_reset(struct msm_mdss *msm_mdss)
+ {
++	struct device *dev = msm_mdss->dev;
+ 	struct reset_control *reset;
++	int ret;
+ 
+ 	reset = reset_control_get_optional_exclusive(dev, NULL);
+ 	if (!reset) {
+@@ -319,6 +329,25 @@ static int msm_mdss_reset(struct device *dev)
+ 				     "failed to acquire mdss reset\n");
+ 	}
+ 
++	if (!msm_mdss->is_mdp5) {
++		bool splash;
++
++		ret = clk_bulk_prepare_enable(msm_mdss->num_clocks, msm_mdss->clocks);
++		if (ret) {
++			reset_control_put(reset);
++			return ret;
++		}
++
++		splash = dpu_boot_splash(dev, false);
++		clk_bulk_disable_unprepare(msm_mdss->num_clocks, msm_mdss->clocks);
++
++		/* Keep the splash screen until the KMS takes over */
++		if (splash) {
++			msm_mdss->splash_reset = reset;
++			return 0;
++		}
++	}
++
+ 	reset_control_assert(reset);
+ 	/*
+ 	 * Tests indicate that reset has to be held for some period of time,
+@@ -332,6 +361,37 @@ static int msm_mdss_reset(struct device *dev)
+ 	return 0;
+ }
+ 
++static struct platform_driver mdss_platform_driver;
++
++void msm_mdss_take_over_splash(struct device *dev)
++{
++	struct msm_mdss *msm_mdss;
++	struct reset_control *reset;
++
++	if (!dev || dev->driver != &mdss_platform_driver.driver)
++		return;
++
++	msm_mdss = dev_get_drvdata(dev);
++	reset = msm_mdss->splash_reset;
++	if (!reset)
++		return;
++
++	msm_mdss->splash_reset = NULL;
++
++	pm_runtime_get_sync(dev);
++
++	dpu_boot_splash(dev, true);
++
++	reset_control_assert(reset);
++	msleep(20);
++	reset_control_deassert(reset);
++	reset_control_put(reset);
++
++	msm_mdss_setup_ubwc(msm_mdss);
++
++	pm_runtime_put_sync(dev);
++}
++
+ /*
+  * MDP5 MDSS uses at most three specified clocks.
+  */
+@@ -369,10 +429,6 @@ static struct msm_mdss *msm_mdss_init(struct platform_device *pdev, bool is_mdp5
+ 	int ret;
+ 	int irq;
+ 
+-	ret = msm_mdss_reset(&pdev->dev);
+-	if (ret)
+-		return ERR_PTR(ret);
+-
+ 	msm_mdss = devm_kzalloc(&pdev->dev, sizeof(*msm_mdss), GFP_KERNEL);
+ 	if (!msm_mdss)
+ 		return ERR_PTR(-ENOMEM);
+@@ -410,6 +466,10 @@ static struct msm_mdss *msm_mdss_init(struct platform_device *pdev, bool is_mdp5
+ 
+ 	msm_mdss->dev = &pdev->dev;
+ 
++	ret = msm_mdss_reset(msm_mdss);
++	if (ret)
++		return ERR_PTR(ret);
++
+ 	irq = platform_get_irq(pdev, 0);
+ 	if (irq < 0)
+ 		return ERR_PTR(irq);

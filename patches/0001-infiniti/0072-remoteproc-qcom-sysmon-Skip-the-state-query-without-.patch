@@ -1,0 +1,29 @@
+From 84d7a9daf401091646b8b3effeb4e6f3542f3271 Mon Sep 17 00:00:00 2001
+From: Victor Fuentes <victor@vlinkz.dev>
+Date: Wed, 23 Sep 2026 08:36:37 -0700
+Subject: [PATCH 072/138] remoteproc: qcom: sysmon: Skip the state query
+ without a shutdown-ack IRQ
+
+The interrupt is optional, and querying a negative IRQ warns on every
+late attach of such a subsystem.
+
+Fixes: 16472c99f469 ("remoteproc: qcom: pas: Add late attach support for subsystems")
+
+Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
+---
+ drivers/remoteproc/qcom_sysmon.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/remoteproc/qcom_sysmon.c b/drivers/remoteproc/qcom_sysmon.c
+index 61e1038328e8..54a6b25201f0 100644
+--- a/drivers/remoteproc/qcom_sysmon.c
++++ b/drivers/remoteproc/qcom_sysmon.c
+@@ -739,7 +739,7 @@ bool qcom_sysmon_shutdown_irq_state(struct qcom_sysmon *sysmon)
+ 	bool shutdown_state;
+ 	int ret;
+ 
+-	if (!sysmon)
++	if (!sysmon || sysmon->shutdown_irq <= 0)
+ 		return false;
+ 
+ 	ret = irq_get_irqchip_state(sysmon->shutdown_irq,

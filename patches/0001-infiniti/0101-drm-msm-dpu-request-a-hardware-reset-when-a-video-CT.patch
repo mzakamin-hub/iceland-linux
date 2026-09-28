@@ -1,0 +1,25 @@
+From 4527d4a9ca6138f0d24099a569ad5516b280cf3e Mon Sep 17 00:00:00 2001
+From: Victor Fuentes <victor@vlinkz.dev>
+Date: Wed, 29 Jul 2026 01:17:36 -0700
+Subject: [PATCH 101/138] drm/msm/dpu: request a hardware reset when a video
+ CTL soft reset fails
+
+Otherwise the CTL stays in reset. The command encoder already does this.
+
+Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
+index ba810f26ea30..39aab52658ce 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
+@@ -571,6 +571,7 @@ static void dpu_encoder_phys_vid_prepare_for_kickoff(
+ 		DPU_ERROR_VIDENC(phys_enc, "ctl %d reset failure: %d\n",
+ 				ctl->idx, rc);
+ 		msm_disp_snapshot_state(drm_enc->dev);
++		phys_enc->enable_state = DPU_ENC_ERR_NEEDS_HW_RESET;
+ 		dpu_core_irq_unregister_callback(phys_enc->dpu_kms,
+ 				phys_enc->irq[INTR_IDX_VSYNC]);
+ 	}

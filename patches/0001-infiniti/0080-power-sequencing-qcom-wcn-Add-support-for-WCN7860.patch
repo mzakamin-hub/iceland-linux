@@ -1,0 +1,52 @@
+From 3629a1fa45777d974300c5366486997aed2165b2 Mon Sep 17 00:00:00 2001
+From: Victor Fuentes <victor@vlinkz.dev>
+Date: Wed, 29 Jul 2026 00:24:47 -0700
+Subject: [PATCH 080/138] power: sequencing: qcom-wcn: Add support for WCN7860
+
+Compared to WCN7850 it takes VDD_CX and the antenna supply instead of
+VDD and VDD_IO.
+
+Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
+---
+ drivers/power/sequencing/pwrseq-qcom-wcn.c | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/drivers/power/sequencing/pwrseq-qcom-wcn.c b/drivers/power/sequencing/pwrseq-qcom-wcn.c
+index d41793e1fcd9..8627a217dcab 100644
+--- a/drivers/power/sequencing/pwrseq-qcom-wcn.c
++++ b/drivers/power/sequencing/pwrseq-qcom-wcn.c
+@@ -401,6 +401,23 @@ static const struct pwrseq_qcom_wcn_pdata pwrseq_wcn7850_of_data = {
+ 	.targets = pwrseq_qcom_wcn_targets,
+ };
+ 
++static const char *const pwrseq_wcn7860_vregs[] = {
++	"vddio1p2",
++	"vddant",
++	"vddaon",
++	"vdddig",
++	"vddrfa1p8",
++	"vddrfa1p2",
++	"vddcx",
++};
++
++static const struct pwrseq_qcom_wcn_pdata pwrseq_wcn7860_of_data = {
++	.vregs = pwrseq_wcn7860_vregs,
++	.num_vregs = ARRAY_SIZE(pwrseq_wcn7860_vregs),
++	.pwup_delay_ms = 50,
++	.targets = pwrseq_qcom_wcn_targets,
++};
++
+ static int pwrseq_qcom_wcn_match_regulator(struct pwrseq_device *pwrseq,
+ 					   struct device *dev,
+ 					   const char *name)
+@@ -576,6 +593,10 @@ static const struct of_device_id pwrseq_qcom_wcn_of_match[] = {
+ 		.compatible = "qcom,wcn7850-pmu",
+ 		.data = &pwrseq_wcn7850_of_data,
+ 	},
++	{
++		.compatible = "qcom,wcn7860-pmu",
++		.data = &pwrseq_wcn7860_of_data,
++	},
+ 	{
+ 		.compatible = "qcom,wcn6750-pmu",
+ 		.data = &pwrseq_wcn6750_of_data,

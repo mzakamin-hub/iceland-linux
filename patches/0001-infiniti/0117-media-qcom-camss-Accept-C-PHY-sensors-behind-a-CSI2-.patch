@@ -1,0 +1,239 @@
+From 577174b8aba4373cfdcdca3789e4144ad948a623 Mon Sep 17 00:00:00 2001
+From: Victor Fuentes <victor@vlinkz.dev>
+Date: Thu, 24 Sep 2026 11:56:56 -0700
+Subject: [PATCH 117/138] media: qcom: camss: Accept C-PHY sensors behind a
+ CSI2 PHY
+
+Based on David Heidelberg's C-PHY series.
+
+Link: https://lore.kernel.org/r/20260729-qcom-cphy-v9-0-1f8d9fdab037@ixit.cz
+
+Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
+---
+ .../platform/qcom/camss/camss-csid-gen4.c     |  2 ++
+ .../media/platform/qcom/camss/camss-csid.c    |  8 ++++-
+ .../media/platform/qcom/camss/camss-csid.h    |  6 ++++
+ .../media/platform/qcom/camss/camss-csiphy.c  | 12 +++++--
+ .../media/platform/qcom/camss/camss-csiphy.h  |  2 ++
+ drivers/media/platform/qcom/camss/camss.c     | 35 +++++++++++++------
+ drivers/media/platform/qcom/camss/camss.h     |  2 +-
+ 7 files changed, 52 insertions(+), 15 deletions(-)
+
+diff --git a/drivers/media/platform/qcom/camss/camss-csid-gen4.c b/drivers/media/platform/qcom/camss/camss-csid-gen4.c
+index bc52e4a1135c..3b7a72154bf1 100644
+--- a/drivers/media/platform/qcom/camss/camss-csid-gen4.c
++++ b/drivers/media/platform/qcom/camss/camss-csid-gen4.c
+@@ -63,6 +63,7 @@
+ #define		CSI2_RX_CFG0_NUM_ACTIVE_LANES		0
+ #define		CSI2_RX_CFG0_DL0_INPUT_SEL		4
+ #define		CSI2_RX_CFG0_PHY_NUM_SEL		20
++#define		CSI2_RX_CFG0_PHY_TYPE_SEL		24
+ #define		CSI2_RX_CFG0_TPG_MUX_EN			BIT(27)
+ #define		CSI2_RX_CFG0_TPG_MUX_SEL		GENMASK(29, 28)
+ #define		CSI2_RX_CFG0_PHY_SEL_BASE_IDX		1
+@@ -147,6 +148,7 @@ static void __csid_configure_rx(struct csid_device *csid,
+ 
+ 	val = (phy->lane_cnt - 1) << CSI2_RX_CFG0_NUM_ACTIVE_LANES;
+ 	val |= phy->lane_assign << CSI2_RX_CFG0_DL0_INPUT_SEL;
++	val |= phy->phy_sel << CSI2_RX_CFG0_PHY_TYPE_SEL;
+ 
+ 	if (camss->tpg && csid->tpg_linked &&
+ 	    camss->tpg[phy->csiphy_id].testgen.mode != TPG_PAYLOAD_MODE_DISABLED) {
+diff --git a/drivers/media/platform/qcom/camss/camss-csid.c b/drivers/media/platform/qcom/camss/camss-csid.c
+index 48459b46a981..19c6cd94a136 100644
+--- a/drivers/media/platform/qcom/camss/camss-csid.c
++++ b/drivers/media/platform/qcom/camss/camss-csid.c
+@@ -547,7 +547,8 @@ static int csid_set_clock_rates(struct csid_device *csid)
+ 	fmt = csid_get_fmt_entry(csid->res->formats->formats, csid->res->formats->nformats,
+ 				 csid->fmt[MSM_CSIPHY_PAD_SINK].code);
+ 	link_freq = camss_get_link_freq(&csid->subdev.entity, fmt->bpp,
+-					csid->phy.lane_cnt);
++					csid->phy.lane_cnt,
++					csid->phy.phy_sel == CSID_PHY_SEL_CPHY);
+ 	if (link_freq < 0)
+ 		link_freq = 0;
+ 
+@@ -1278,6 +1279,7 @@ static int csid_link_setup(struct media_entity *entity,
+ 			csid->phy.lane_cnt = tpg->res->lane_cnt;
+ 			csid->phy.csiphy_id = tpg->id;
+ 			csid->phy.lane_assign = csid_get_lane_assign(NULL, csid->phy.lane_cnt);
++			csid->phy.phy_sel = CSID_PHY_SEL_DPHY;
+ 			csid->tpg_linked = true;
+ 		} else {
+ 			csiphy = v4l2_get_subdevdata(sd);
+@@ -1292,6 +1294,10 @@ static int csid_link_setup(struct media_entity *entity,
+ 			lane_cfg = &csiphy->cfg.csi2->lane_cfg;
+ 			csid->phy.lane_cnt = lane_cfg->num_data;
+ 			csid->phy.lane_assign = csid_get_lane_assign(lane_cfg, lane_cfg->num_data);
++			if (lane_cfg->phy_cfg == V4L2_MBUS_CSI2_CPHY)
++				csid->phy.phy_sel = CSID_PHY_SEL_CPHY;
++			else
++				csid->phy.phy_sel = CSID_PHY_SEL_DPHY;
+ 			csid->tpg_linked = false;
+ 		}
+ 	}
+diff --git a/drivers/media/platform/qcom/camss/camss-csid.h b/drivers/media/platform/qcom/camss/camss-csid.h
+index 4f31ad303c4e..6d66c193038a 100644
+--- a/drivers/media/platform/qcom/camss/camss-csid.h
++++ b/drivers/media/platform/qcom/camss/camss-csid.h
+@@ -44,6 +44,11 @@ enum csid_testgen_mode {
+ 	CSID_PAYLOAD_MODE_NUM_SUPPORTED_GEN2 = 9, /* excluding disabled */
+ };
+ 
++enum csid_phy_sel {
++	CSID_PHY_SEL_DPHY = 0,
++	CSID_PHY_SEL_CPHY = 1
++};
++
+ struct csid_format_info {
+ 	u32 code;
+ 	u8 data_type;
+@@ -70,6 +75,7 @@ struct csid_phy_config {
+ 	u32 lane_assign;
+ 	u32 en_vc;
+ 	u8 need_vc_update;
++	enum csid_phy_sel phy_sel;
+ };
+ 
+ struct csid_device;
+diff --git a/drivers/media/platform/qcom/camss/camss-csiphy.c b/drivers/media/platform/qcom/camss/camss-csiphy.c
+index aaed7d0309dd..f1b9f27adb42 100644
+--- a/drivers/media/platform/qcom/camss/camss-csiphy.c
++++ b/drivers/media/platform/qcom/camss/camss-csiphy.c
+@@ -147,7 +147,9 @@ static int csiphy_set_clock_rates_legacy(struct csiphy_device *csiphy)
+ 				csiphy->fmt[MSM_CSIPHY_PAD_SINK].code);
+ 	u8 num_lanes = csiphy->cfg.csi2->lane_cfg.num_data;
+ 
+-	link_freq = camss_get_link_freq(&csiphy->subdev.entity, bpp, num_lanes);
++	link_freq = camss_get_link_freq(&csiphy->subdev.entity, bpp, num_lanes,
++					csiphy->cfg.csi2->lane_cfg.phy_cfg ==
++					V4L2_MBUS_CSI2_CPHY);
+ 	if (link_freq < 0)
+ 		link_freq  = 0;
+ 
+@@ -274,7 +276,9 @@ static int csiphy_stream_on_legacy(struct csiphy_device *csiphy)
+ 	u8 num_lanes = csiphy->cfg.csi2->lane_cfg.num_data;
+ 	u8 val;
+ 
+-	link_freq = camss_get_link_freq(&csiphy->subdev.entity, bpp, num_lanes);
++	link_freq = camss_get_link_freq(&csiphy->subdev.entity, bpp, num_lanes,
++					csiphy->cfg.csi2->lane_cfg.phy_cfg ==
++					V4L2_MBUS_CSI2_CPHY);
+ 
+ 	if (link_freq < 0) {
+ 		dev_err(csiphy->camss->dev,
+@@ -336,7 +340,9 @@ static int csiphy_stream_on(struct csiphy_device *csiphy)
+ 
+ 	dphy_cfg = &dphy_opts.mipi_dphy;
+ 
+-	link_freq = camss_get_link_freq(&csiphy->subdev.entity, bpp, num_lanes);
++	link_freq = camss_get_link_freq(&csiphy->subdev.entity, bpp, num_lanes,
++					csiphy->cfg.csi2->lane_cfg.phy_cfg ==
++					V4L2_MBUS_CSI2_CPHY);
+ 
+ 	if (link_freq <= 0) {
+ 		dev_err(dev,
+diff --git a/drivers/media/platform/qcom/camss/camss-csiphy.h b/drivers/media/platform/qcom/camss/camss-csiphy.h
+index 8c3319f2ca1c..1e4f803f1887 100644
+--- a/drivers/media/platform/qcom/camss/camss-csiphy.h
++++ b/drivers/media/platform/qcom/camss/camss-csiphy.h
+@@ -32,11 +32,13 @@ struct csiphy_lane {
+ 
+ /**
+  * struct csiphy_lanes_cfg - CSIPHY lanes configuration
++ * @phy_cfg:  interface selection (C-PHY or D-PHY)
+  * @num_data: number of data lanes
+  * @data:     data lanes configuration
+  * @clk:      clock lane configuration (only for D-PHY)
+  */
+ struct csiphy_lanes_cfg {
++	enum v4l2_mbus_type phy_cfg;
+ 	int num_data;
+ 	struct csiphy_lane *data;
+ 	struct csiphy_lane clk;
+diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
+index b862f067936c..80d47b302881 100644
+--- a/drivers/media/platform/qcom/camss/camss.c
++++ b/drivers/media/platform/qcom/camss/camss.c
+@@ -4912,12 +4912,16 @@ struct media_pad *camss_find_sensor_pad(struct media_entity *entity)
+  * camss_get_link_freq - Get link frequency from sensor
+  * @entity: Media entity in the current pipeline
+  * @bpp: Number of bits per pixel for the current format
+- * @lanes: Number of lanes in the link to the sensor
++ * @lanes: Number of lanes (trios for C-PHY) in the link to the sensor
++ * @cphy: The link uses C-PHY
++ *
++ * A C-PHY trio carries 16 bits per 7 symbols, and its link frequency is half
++ * the symbol rate, see Documentation/driver-api/media/tx-rx.rst.
+  *
+  * Return link frequency on success or a negative error code otherwise
+  */
+ s64 camss_get_link_freq(struct media_entity *entity, unsigned int bpp,
+-			unsigned int lanes)
++			unsigned int lanes, bool cphy)
+ {
+ 	struct media_pad *sensor_pad;
+ 
+@@ -4925,7 +4929,8 @@ s64 camss_get_link_freq(struct media_entity *entity, unsigned int bpp,
+ 	if (!sensor_pad)
+ 		return -ENODEV;
+ 
+-	return v4l2_get_link_freq(sensor_pad, bpp, 2 * lanes);
++	return v4l2_get_link_freq(sensor_pad, 16 * bpp,
++				  2 * lanes * (cphy ? 7 : 16));
+ }
+ 
+ /*
+@@ -5044,11 +5049,17 @@ static int camss_parse_endpoint_node(struct device *dev,
+ 	if (ret)
+ 		return ret;
+ 
+-	/*
+-	 * Most SoCs support both D-PHY and C-PHY standards, but currently only
+-	 * D-PHY is supported in the driver.
+-	 */
+-	if (vep.bus_type != V4L2_MBUS_CSI2_DPHY) {
++	switch (vep.bus_type) {
++	case V4L2_MBUS_CSI2_CPHY:
++		/* Only the CSI2 PHY driver knows how to program C-PHY trios */
++		if (!lane_base) {
++			dev_err(dev, "C-PHY needs a CSI2 PHY device\n");
++			return -EINVAL;
++		}
++		break;
++	case V4L2_MBUS_CSI2_DPHY:
++		break;
++	default:
+ 		dev_err(dev, "Unsupported bus type %d\n", vep.bus_type);
+ 		return -EINVAL;
+ 	}
+@@ -5056,10 +5067,14 @@ static int camss_parse_endpoint_node(struct device *dev,
+ 	csd->interface.csiphy_id = vep.base.port;
+ 
+ 	mipi_csi2 = &vep.bus.mipi_csi2;
+-	lncfg->clk.pos = mipi_csi2->clock_lane;
+-	lncfg->clk.pol = mipi_csi2->lane_polarities[0];
++	lncfg->phy_cfg = vep.bus_type;
+ 	lncfg->num_data = mipi_csi2->num_data_lanes;
+ 
++	if (lncfg->phy_cfg == V4L2_MBUS_CSI2_DPHY) {
++		lncfg->clk.pos = mipi_csi2->clock_lane;
++		lncfg->clk.pol = mipi_csi2->lane_polarities[0];
++	}
++
+ 	lncfg->data = devm_kcalloc(dev,
+ 				   lncfg->num_data, sizeof(*lncfg->data),
+ 				   GFP_KERNEL);
+diff --git a/drivers/media/platform/qcom/camss/camss.h b/drivers/media/platform/qcom/camss/camss.h
+index fadba57c5efa..60c59ad4eb61 100644
+--- a/drivers/media/platform/qcom/camss/camss.h
++++ b/drivers/media/platform/qcom/camss/camss.h
+@@ -171,7 +171,7 @@ int camss_enable_clocks(int nclocks, struct camss_clock *clock,
+ void camss_disable_clocks(int nclocks, struct camss_clock *clock);
+ struct media_pad *camss_find_sensor_pad(struct media_entity *entity);
+ s64 camss_get_link_freq(struct media_entity *entity, unsigned int bpp,
+-			unsigned int lanes);
++			unsigned int lanes, bool cphy);
+ int camss_get_pixel_clock(struct media_entity *entity, u64 *pixel_clock);
+ int camss_pm_domain_on(struct camss *camss, int id);
+ void camss_pm_domain_off(struct camss *camss, int id);

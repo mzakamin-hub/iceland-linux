@@ -1,0 +1,63 @@
+From e90df3301a1e3a1c9c90f2936f0e654e711f0e6b Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 28 Sep 2026 00:31:24 +0000
+Subject: [PATCH 13/20] power: supply: qcom_battmgr: Use the Oplus charger
+ firmware support on the OnePlus Pad 4
+
+The OnePlus Pad 4 runs the same Oplus charger firmware on SOCCP as the
+OnePlus 15. Match a oneplus,iceland-pmic-glink compatible to the
+existing QCOM_BATTMGR_OPLUS variant and use it in the iceland DT.
+
+This replaces map220v's separate OPLUS_BATTMGR_KAANAPALI variant
+(map220v/sm8850-mainline 2bc508d899d "qcom_battmgr: Add basic support
+for Kaanapali OnePlus SOCCP FW"), whose features (OTG, input current)
+are covered by the fuller Oplus support already in the tree.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ .../devicetree/bindings/soc/qcom/qcom,pmic-glink.yaml         | 4 +++-
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts        | 3 ++-
+ drivers/power/supply/qcom_battmgr.c                           | 1 +
+ 3 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/Documentation/devicetree/bindings/soc/qcom/qcom,pmic-glink.yaml b/Documentation/devicetree/bindings/soc/qcom/qcom,pmic-glink.yaml
+index f905df373721..5c46a74c0a60 100644
+--- a/Documentation/devicetree/bindings/soc/qcom/qcom,pmic-glink.yaml
++++ b/Documentation/devicetree/bindings/soc/qcom/qcom,pmic-glink.yaml
+@@ -40,7 +40,9 @@ properties:
+           - const: qcom,pmic-glink
+       - description: Kaanapali running the Oplus charger firmware
+         items:
+-          - const: oneplus,infiniti-pmic-glink
++          - enum:
++              - oneplus,iceland-pmic-glink
++              - oneplus,infiniti-pmic-glink
+           - const: qcom,kaanapali-pmic-glink
+           - const: qcom,pmic-glink
+       - items:
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 1ae707d30164..065d384b837c 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -114,7 +114,8 @@ key-volume-down {
+ 	};
+ 
+ 	pmic-glink {
+-		compatible = "qcom,kaanapali-pmic-glink";
++		compatible = "oneplus,iceland-pmic-glink", "qcom,kaanapali-pmic-glink",
++			     "qcom,pmic-glink";
+ 		#address-cells = <1>;
+ 		#size-cells = <0>;
+ 		orientation-gpios = <&tlmm 60 GPIO_ACTIVE_HIGH>;
+diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
+index 4cc263457d8a..6d717ef8fb68 100644
+--- a/drivers/power/supply/qcom_battmgr.c
++++ b/drivers/power/supply/qcom_battmgr.c
+@@ -1978,6 +1978,7 @@ static const struct of_device_id qcom_battmgr_of_variants[] = {
+ 	{ .compatible = "qcom,sc8280xp-pmic-glink", .data = (void *)QCOM_BATTMGR_SC8280XP },
+ 	{ .compatible = "qcom,sm8550-pmic-glink", .data = (void *)QCOM_BATTMGR_SM8550 },
+ 	{ .compatible = "qcom,x1e80100-pmic-glink", .data = (void *)QCOM_BATTMGR_X1E80100 },
++	{ .compatible = "oneplus,iceland-pmic-glink", .data = (void *)QCOM_BATTMGR_OPLUS },
+ 	{ .compatible = "oneplus,infiniti-pmic-glink", .data = (void *)QCOM_BATTMGR_OPLUS },
+ 	/* Unmatched devices falls back to QCOM_BATTMGR_SM8350 */
+ 	{}

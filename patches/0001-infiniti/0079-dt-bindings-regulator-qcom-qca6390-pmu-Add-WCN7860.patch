@@ -1,0 +1,58 @@
+From 0756c9d4891075799befc1f2b1c0f73b7e91a860 Mon Sep 17 00:00:00 2001
+From: Victor Fuentes <victor@vlinkz.dev>
+Date: Wed, 29 Jul 2026 01:14:26 -0700
+Subject: [PATCH 079/138] dt-bindings: regulator: qcom,qca6390-pmu: Add WCN7860
+
+The WCN7860 PMU additionally takes VDD_CX and an antenna supply.
+
+Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
+---
+ .../bindings/regulator/qcom,qca6390-pmu.yaml  | 21 +++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/regulator/qcom,qca6390-pmu.yaml b/Documentation/devicetree/bindings/regulator/qcom,qca6390-pmu.yaml
+index 105174df7df2..7ccbb07c1580 100644
+--- a/Documentation/devicetree/bindings/regulator/qcom,qca6390-pmu.yaml
++++ b/Documentation/devicetree/bindings/regulator/qcom,qca6390-pmu.yaml
+@@ -27,6 +27,7 @@ properties:
+           - qcom,wcn6750-pmu
+           - qcom,wcn6855-pmu
+           - qcom,wcn7850-pmu
++          - qcom,wcn7860-pmu
+ 
+   vdd-supply:
+     description: VDD supply regulator handle
+@@ -37,6 +38,12 @@ properties:
+   vddasd-supply:
+     description: VDD_ASD supply regulator handle
+ 
++  vddant-supply:
++    description: VDD antenna-share supply regulator handle
++
++  vddcx-supply:
++    description: VDD_CX supply regulator handle
++
+   vdddig-supply:
+     description: VDD_DIG supply regulator handle
+ 
+@@ -182,6 +189,20 @@ allOf:
+         - vdddig-supply
+         - vddrfa1p2-supply
+         - vddrfa1p8-supply
++  - if:
++      properties:
++        compatible:
++          contains:
++            const: qcom,wcn7860-pmu
++    then:
++      required:
++        - vddant-supply
++        - vddaon-supply
++        - vddcx-supply
++        - vdddig-supply
++        - vddio1p2-supply
++        - vddrfa1p2-supply
++        - vddrfa1p8-supply
+ 
+ additionalProperties: false
+ 

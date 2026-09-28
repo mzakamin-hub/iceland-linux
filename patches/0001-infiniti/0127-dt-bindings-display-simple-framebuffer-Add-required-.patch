@@ -1,0 +1,29 @@
+From 037d531beb314fbcc8a0557e01f0a2e877dd0fc2 Mon Sep 17 00:00:00 2001
+From: Victor Fuentes <victor@vlinkz.dev>
+Date: Wed, 23 Sep 2026 12:27:58 -0700
+Subject: [PATCH 127/138] dt-bindings: display: simple-framebuffer: Add
+ required-opps
+
+A running boot framebuffer can need a minimum performance state until
+the display driver takes over.
+
+Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
+---
+ .../devicetree/bindings/display/simple-framebuffer.yaml       | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/display/simple-framebuffer.yaml b/Documentation/devicetree/bindings/display/simple-framebuffer.yaml
+index 45ffdebc9d86..a201c96d740c 100644
+--- a/Documentation/devicetree/bindings/display/simple-framebuffer.yaml
++++ b/Documentation/devicetree/bindings/display/simple-framebuffer.yaml
+@@ -79,6 +79,10 @@ properties:
+   power-domains:
+     description: List of power domains used by the framebuffer.
+ 
++  required-opps:
++    description: Performance states the power domains must provide for the
++      framebuffer to be scanned out, in the order of the power-domains.
++
+   width:
+     $ref: /schemas/types.yaml#/definitions/uint32
+     description: Width of the framebuffer in pixels

@@ -1,0 +1,361 @@
+From 7e09c25cbbc030ac57c20a4b2e48df519e0f4da6 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 28 Sep 2026 00:30:20 +0000
+Subject: [PATCH 07/20] drm/panel: nt36536: Add the OnePlus Pad 4 (iceland)
+ CSOT panel
+
+Add the CSOT XN251 LCD used in the OnePlus Pad 4: 3392x2400, dual DSI,
+4 lanes per link, DSC with two 848x20 slices in one packet, video mode
+at 144/120/90/60/30 Hz. Brightness is controlled by two external
+KTZ8869 backlight ICs, so the panel uses the DT backlight.
+
+This panel needs the PPS before sleep out, so let an init sequence send
+it itself (init_sends_pps) and pass the DSC config to init sequences.
+
+The init sequence, modes and DSC parameters are taken from map220v's
+standalone iceland NT36536 driver (map220v/sm8850-mainline commit
+6b790f157d1 "drm/panel: Add driver for NT36536 panels"). DSC stays at
+1.1 as in that driver: 1.2 showed slice decode errors on mainline.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ .../display/panel/novatek,nt36536.yaml        |   3 +-
+ drivers/gpu/drm/panel/panel-novatek-nt36536.c | 267 +++++++++++++++++-
+ 2 files changed, 264 insertions(+), 6 deletions(-)
+
+diff --git a/Documentation/devicetree/bindings/display/panel/novatek,nt36536.yaml b/Documentation/devicetree/bindings/display/panel/novatek,nt36536.yaml
+index 1e86f5329b22..3eb66f9d8b32 100644
+--- a/Documentation/devicetree/bindings/display/panel/novatek,nt36536.yaml
++++ b/Documentation/devicetree/bindings/display/panel/novatek,nt36536.yaml
+@@ -13,7 +13,7 @@ description:
+   The Novatek NT36536 is a generic DSI Panel IC used to drive dsi
+   panels. Support video mode panels from China Star Optoelectronics
+   Technology (CSOT), such as PP8807HB1-1 which is a dual-link 10-bit
+-  panel.
++  panel, and XN251 (OnePlus Pad 4) which is a dual-link 8-bit panel.
+ 
+ allOf:
+   - $ref: panel-common-dual.yaml#
+@@ -23,6 +23,7 @@ properties:
+     items:
+       - enum:
+           - csot,pp8807hb1-1
++          - csot,xn251
+       - const: novatek,nt36536
+ 
+   reg:
+diff --git a/drivers/gpu/drm/panel/panel-novatek-nt36536.c b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
+index 8bd125650168..8d0ac3bc6397 100644
+--- a/drivers/gpu/drm/panel/panel-novatek-nt36536.c
++++ b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
+@@ -2,6 +2,7 @@
+ /*
+  * Novatek NT36536 DriverIC panels driver
+  * Copyright (c) 2026 Pengyu Luo <mitltlatltl@gmail.com>
++ * OnePlus Pad 4 panel data: Copyright (c) 2026 map220v <map220v300@gmail.com>
+  *
+  * Based on the sample code which is generated with
+  * linux-mdss-dsi-panel-driver-generator
+@@ -46,7 +47,10 @@ struct panel_desc {
+ 	const struct drm_display_mode *modes;
+ 	unsigned int num_modes;
+ 
+-	int (*init_sequence)(struct mipi_dsi_multi_context *dsi_ctx);
++	int (*init_sequence)(struct mipi_dsi_multi_context *dsi_ctx,
++			     const struct drm_dsc_config *dsc);
++	/* init_sequence sends the PPS itself (before sleep out) */
++	bool init_sends_pps;
+ 
+ 	bool is_dual_dsi;
+ 	bool has_dcs_backlight;
+@@ -97,7 +101,7 @@ static int novatek_prepare(struct drm_panel *panel)
+ 
+ 	novatek_reset(ctx);
+ 
+-	ret = ctx->desc->init_sequence(&dsi_ctx);
++	ret = ctx->desc->init_sequence(&dsi_ctx, &ctx->dsc);
+ 	if (ret < 0) {
+ 		dev_err(dev, "Failed to initialize panel: %d\n", ret);
+ 		gpiod_set_value_cansleep(ctx->reset_gpio, 1);
+@@ -106,8 +110,10 @@ static int novatek_prepare(struct drm_panel *panel)
+ 		return ret;
+ 	}
+ 
+-	drm_dsc_pps_payload_pack(&pps, &ctx->dsc);
+-	mipi_dsi_picture_parameter_set_multi(&dsi_ctx, &pps);
++	if (!ctx->desc->init_sends_pps) {
++		drm_dsc_pps_payload_pack(&pps, &ctx->dsc);
++		mipi_dsi_picture_parameter_set_multi(&dsi_ctx, &pps);
++	}
+ 	mipi_dsi_compression_mode_multi(&dsi_ctx, true);
+ 	mipi_dsi_msleep(&dsi_ctx, 28);
+ 
+@@ -209,7 +215,8 @@ static struct backlight_device *novatek_create_backlight(struct novatek *ctx)
+ 					      &novatek_bl_ops, &props);
+ }
+ 
+-static int csot_pp8807hb1_1_init_seq(struct mipi_dsi_multi_context *dsi_ctx)
++static int csot_pp8807hb1_1_init_seq(struct mipi_dsi_multi_context *dsi_ctx,
++				     const struct drm_dsc_config *dsc)
+ {
+ 	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0xff, 0x20);
+ 	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0xfb, 0x01);
+@@ -466,8 +473,258 @@ static const struct panel_desc csot_pp8807hb1_1_desc = {
+ 	.has_dcs_backlight = false,
+ };
+ 
++static int csot_iceland_init_seq(struct mipi_dsi_multi_context *dsi_ctx,
++				 const struct drm_dsc_config *dsc)
++{
++	struct drm_dsc_picture_parameter_set pps;
++
++
++	/* Manufacture Command Set (CMD2_P3): CABC Function Setting */
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0xFF, 0x23);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0xFB, 0x01);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x00, 0x60);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x07, 0x20);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x08, 0x01);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x09, 0x5A);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x11, 0x05);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x12, 0xA0);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x13, 0x01);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x15, 0xEA);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x16, 0x17);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x0A, 0x8E);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x0B, 0x8E);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x0C, 0x8E);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x0D, 0x00);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x19, 0x00);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x1A, 0x04);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x1B, 0x08);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x1C, 0x0C);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x1D, 0x10);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x1E, 0x14);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x1F, 0x18);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x20, 0x1C);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x21, 0x20);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x22, 0x24);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x23, 0x28);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x24, 0x2C);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x25, 0x30);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x26, 0x34);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x27, 0x38);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x28, 0x3C);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x2A, 0x20);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x2B, 0x20);
++
++	/* UI MODE 55=01 */
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x30, 0xFF);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x31, 0xFD);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x32, 0xFC);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x33, 0xFA);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x34, 0xF8);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x35, 0xF6);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x36, 0xF4);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x37, 0xF2);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x38, 0xF0);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x39, 0xEE);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x3A, 0xEC);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x3B, 0xEA);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x3D, 0xE9);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x3F, 0xE8);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x40, 0xE7);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x41, 0xE6);
++
++	/* STILL MODE 55=02 */
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x45, 0xFF);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x46, 0xF9);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x47, 0xF6);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x48, 0xF2);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x49, 0xF0);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x4A, 0xEC);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x4B, 0xE8);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x4C, 0xE4);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x4D, 0xE0);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x4E, 0xDE);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x4F, 0xD9);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x50, 0xD6);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x51, 0xD4);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x52, 0xC2);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x53, 0xD0);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x54, 0xCD);
++
++	/* MOVING MODE 55=03 */
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x58, 0xFF);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x59, 0xF6);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x5A, 0xF0);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x5B, 0xEB);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x5C, 0xE8);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x5D, 0xE5);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x5E, 0xE3);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x5F, 0xE0);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x60, 0xDE);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x61, 0xDA);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x62, 0xD7);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x63, 0xD4);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x64, 0xD2);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x65, 0xD0);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x66, 0xCC);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x67, 0xC8);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x6E, 0xB3);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x6F, 0xD0);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x70, 0x00);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x71, 0xB3);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x89, 0xA4);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x8B, 0xC1);
++
++	/* Manufacture Command Set (CMD2_P0): Power / DDB Code / MTP / Gamma setting */
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0xff, 0x20);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0xfb, 0x01);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x07, 0x46);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x30, 0x10);
++
++	/* Manufacture Command Set (CMD2_P6): LTPS Display and In-cell Timing page3 */
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0xff, 0x26);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0xfb, 0x01);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x0d, 0x03);
++
++	/* Engineer Command Set (CMD3_PageA): Engineer Page A */
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0xff, 0xe0);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0xfb, 0x01);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0xbb, 0x00);
++
++	/* Engineer Command Set (CMD3_PageB): Engineer Page B */
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0xff, 0xf0);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0xfb, 0x01);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0xe6, 0x02);
++
++	/* Manufacture Command Set (CMD2_P7): LTPS Display and In-cell Timing page4 */
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0xff, 0x27);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0xfb, 0x01);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0xd0, 0x31);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0xd1, 0x05);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0xde, 0x40);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0xdf, 0x02);
++
++	/* User Command Set (CMD1): Basic Display Control Setting */
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0xff, 0x10);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0xfb, 0x01);//Don't reload registers from MTP/Default values
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x3b, 0x03, 0x12, 0x1a, 0x04, 0x04, 0x01, 0x80, 0x36, 0x36);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0xb3, 0x40);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x51, 0x07, 0xff);//Set brightness(controls PWM signal to KTZ8869 chips)
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x53, 0x2c);//Enable backlight and dimming for CABC
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x55, 0x00);
++
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0x90, 0x03);//Enable DSC
++
++	/* This panel needs the PPS before sleep out */
++	drm_dsc_pps_payload_pack(&pps, dsc);
++	mipi_dsi_picture_parameter_set_multi(dsi_ctx, &pps);
++
++	mipi_dsi_dcs_exit_sleep_mode_multi(dsi_ctx);
++	mipi_dsi_msleep(dsi_ctx, 120);
++	mipi_dsi_dcs_set_display_on_multi(dsi_ctx);
++	mipi_dsi_msleep(dsi_ctx, 10);
++
++	return dsi_ctx->accum_err;
++}
++
++static const struct drm_display_mode csot_iceland_modes[] = {
++	{
++		/* 144Hz */
++		.clock = (3392 + 68 + 32 + 40) * (2400 + 26 + 2 + 52) * 144 / 1000,
++		.hdisplay = 3392,
++		.hsync_start = 3392 + 68,
++		.hsync_end = 3392 + 68 + 32,
++		.htotal = 3392 + 68 + 32 + 40,
++		.vdisplay = 2400,
++		.vsync_start = 2400 + 26,
++		.vsync_end = 2400 + 26 + 2,
++		.vtotal = 2400 + 26 + 2 + 52,
++	},
++	{
++		/* 120Hz */
++		.clock = (3392 + 100 + 64 + 104) * (2400 + 26 + 2 + 272) * 120 / 1000,
++		.hdisplay = 3392,
++		.hsync_start = 3392 + 100,
++		.hsync_end = 3392 + 100 + 64,
++		.htotal = 3392 + 100 + 64 + 104,
++		.vdisplay = 2400,
++		.vsync_start = 2400 + 26,
++		.vsync_end = 2400 + 26 + 2,
++		.vtotal = 2400 + 26 + 2 + 272,
++	},
++	{
++		/* 90Hz */
++		.clock = (3392 + 420 + 160 + 320) * (2400 + 26 + 2 + 52) * 90 / 1000,
++		.hdisplay = 3392,
++		.hsync_start = 3392 + 420,
++		.hsync_end = 3392 + 420 + 160,
++		.htotal = 3392 + 420 + 160 + 320,
++		.vdisplay = 2400,
++		.vsync_start = 2400 + 26,
++		.vsync_end = 2400 + 26 + 2,
++		.vtotal = 2400 + 26 + 2 + 52,
++	},
++	{
++		/* 60Hz */
++		.clock = (3392 + 100 + 64 + 104) * (2400 + 2726 + 2 + 272) * 60 / 1000,
++		.hdisplay = 3392,
++		.hsync_start = 3392 + 100,
++		.hsync_end = 3392 + 100 + 64,
++		.htotal = 3392 + 100 + 64 + 104,
++		.vdisplay = 2400,
++		.vsync_start = 2400 + 2726,
++		.vsync_end = 2400 + 2726 + 2,
++		.vtotal = 2400 + 2726 + 2 + 272,
++	},
++	{
++		/* 30Hz */
++		.clock = (3392 + 100 + 64 + 104) * (2400 + 8126 + 2 + 272) * 30 / 1000,
++		.hdisplay = 3392,
++		.hsync_start = 3392 + 100,
++		.hsync_end = 3392 + 100 + 64,
++		.htotal = 3392 + 100 + 64 + 104,
++		.vdisplay = 2400,
++		.vsync_start = 2400 + 8126,
++		.vsync_end = 2400 + 8126 + 2,
++		.vtotal = 2400 + 8126 + 2 + 272,
++	}
++};
++
++static struct drm_dsc_config csot_iceland_dsc_cfg = {
++	.dsc_version_major = 1,
++	/*
++	 * Downstream uses DSC 1.2; with 1.2 some content shows slice decode
++	 * errors on mainline, 1.1 does not.
++	 */
++	.dsc_version_minor = 1,
++	.slice_height = 20,
++	.slice_width = 848,
++	.slice_count = 2,
++	.bits_per_component = 8,
++	.bits_per_pixel = 8 << 4,
++	.block_pred_enable = true,
++};
++
++/* OnePlus Pad 4 (iceland): CSOT XN251 LCD, driven by 2x KTZ8869 */
++static const struct panel_desc csot_iceland_desc = {
++	.width_mm = 274,
++	.height_mm = 193,
++	.bpc = 8,
++	.lanes = 4,
++	.format = MIPI_DSI_FMT_RGB888,
++	.mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_CLOCK_NON_CONTINUOUS |
++		      MIPI_DSI_MODE_LPM | MIPI_DSI_MODE_DSC_ALL_SLICES_IN_PKT,
++	.dsc_cfg = &csot_iceland_dsc_cfg,
++	.modes = csot_iceland_modes,
++	.num_modes = ARRAY_SIZE(csot_iceland_modes),
++	.init_sequence = csot_iceland_init_seq,
++	.init_sends_pps = true,
++	.is_dual_dsi = true,
++	.has_dcs_backlight = false,
++};
++
+ static const struct of_device_id novatek_of_match[] = {
+ 	{ .compatible = "csot,pp8807hb1-1", .data = &csot_pp8807hb1_1_desc },
++	{ .compatible = "csot,xn251", .data = &csot_iceland_desc },
+ 	{ /* sentinel */ }
+ };
+ MODULE_DEVICE_TABLE(of, novatek_of_match);

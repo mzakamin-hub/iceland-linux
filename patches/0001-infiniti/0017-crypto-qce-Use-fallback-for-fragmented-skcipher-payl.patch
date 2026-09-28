@@ -1,0 +1,48 @@
+From 54201f021f32cf642917a7fad7862b1bdcf415f2 Mon Sep 17 00:00:00 2001
+From: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
+Date: Tue, 22 Sep 2026 14:57:20 +0200
+Subject: [PATCH 017/138] crypto: qce - Use fallback for fragmented skcipher
+ payloads
+
+The crypto engine reliably processes AES requests only when the payload
+is a single contiguous buffer. A payload split across multiple
+scatterlist entries makes the engine stall waiting for input, failing
+the request with a hardware operation error. This was uncovered by the
+crypto self-tests, which feed the algorithms randomly fragmented
+buffers.
+
+Detect a payload that spans more than one scatterlist entry, in either
+the source or the destination, and route the request to the software
+fallback.
+
+Cc: stable@vger.kernel.org
+Fixes: 25b71d61d631 ("crypto: qce - Improve the conditions for requesting AES fallback cipher")
+Tested-by: Kuldeep Singh <kuldeep.singh@oss.qualcomm.com>
+Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
+---
+ drivers/crypto/qce/skcipher.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/crypto/qce/skcipher.c b/drivers/crypto/qce/skcipher.c
+index 2f4ecfcd16c7..690b0eb57445 100644
+--- a/drivers/crypto/qce/skcipher.c
++++ b/drivers/crypto/qce/skcipher.c
+@@ -261,13 +261,17 @@ static int qce_skcipher_crypt(struct skcipher_request *req, int encrypt)
+ 	 * needed in all versions of CE)
+ 	 * AES-CTR with a partial final block (the CE stalls waiting for a full
+ 	 * block of input).
++	 * A payload fragmented across more than one scatterlist entry (the CE
++	 * stalls waiting for input in that case too).
+ 	 */
+ 	if (IS_AES(rctx->flags) &&
+ 	    ((keylen != AES_KEYSIZE_128 && keylen != AES_KEYSIZE_256) ||
+ 	    (IS_CTR(rctx->flags) && !IS_ALIGNED(req->cryptlen, AES_BLOCK_SIZE)) ||
+ 	    (IS_XTS(rctx->flags) && ((req->cryptlen <= aes_sw_max_len) ||
+ 	    (req->cryptlen > QCE_SECTOR_SIZE &&
+-	    req->cryptlen % QCE_SECTOR_SIZE))))) {
++	    req->cryptlen % QCE_SECTOR_SIZE))) ||
++	    sg_nents_for_len(req->src, req->cryptlen) > 1 ||
++	    sg_nents_for_len(req->dst, req->cryptlen) > 1)) {
+ 		skcipher_request_set_tfm(&rctx->fallback_req, ctx->fallback);
+ 		skcipher_request_set_callback(&rctx->fallback_req,
+ 					      req->base.flags,

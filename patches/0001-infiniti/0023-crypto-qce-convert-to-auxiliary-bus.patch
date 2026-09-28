@@ -1,0 +1,420 @@
+From 5a17df5343d73b0b2a93201e0719aa18056d424f Mon Sep 17 00:00:00 2001
+From: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
+Date: Tue, 22 Sep 2026 14:57:26 +0200
+Subject: [PATCH 023/138] crypto: qce - convert to auxiliary bus
+
+This driver is disabled in arm64 defconfig but one of its
+functionalities - scaling down the interconnect votes to 0 when unused -
+will be moved to an always-enabled core qce driver. This upcoming core
+driver will also be in charge of registering the qcrypto device on the
+auxiliary bus so that it may be enabled if desired.
+
+As the first step: convert the driver to using the auxiliary bus and
+remove the interconnect management from the code. Update the power
+management as required and make sure to use the parent struct device
+for DMA.
+
+Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
+---
+ drivers/crypto/Kconfig        |  2 +
+ drivers/crypto/qce/aead.c     | 12 ++---
+ drivers/crypto/qce/core.c     | 93 ++++++++++++++++-------------------
+ drivers/crypto/qce/core.h     |  5 +-
+ drivers/crypto/qce/sha.c      | 12 ++---
+ drivers/crypto/qce/skcipher.c | 12 ++---
+ 6 files changed, 66 insertions(+), 70 deletions(-)
+
+diff --git a/drivers/crypto/Kconfig b/drivers/crypto/Kconfig
+index adcbe1585189..b3fa1f6135bc 100644
+--- a/drivers/crypto/Kconfig
++++ b/drivers/crypto/Kconfig
+@@ -530,6 +530,8 @@ config CRYPTO_DEV_QCE
+ 	tristate "Qualcomm crypto engine offloader"
+ 	depends on ARCH_QCOM || COMPILE_TEST
+ 	depends on HAS_IOMEM
++	depends on PM
++	select AUXILIARY_BUS
+ 	help
+ 	  This driver supports Qualcomm crypto engine offloader hardware. To
+ 	  compile this driver as a module, choose M here. The module will be
+diff --git a/drivers/crypto/qce/aead.c b/drivers/crypto/qce/aead.c
+index 46ae10cf005d..ac207375595e 100644
+--- a/drivers/crypto/qce/aead.c
++++ b/drivers/crypto/qce/aead.c
+@@ -44,9 +44,9 @@ static void qce_aead_done(void *data)
+ 		dev_dbg(qce->dev, "aead dma termination error (%d)\n",
+ 			error);
+ 	if (diff_dst)
+-		dma_unmap_sg(qce->dev, rctx->src_sg, rctx->src_nents, dir_src);
++		dma_unmap_sg(qce->dma_dev, rctx->src_sg, rctx->src_nents, dir_src);
+ 
+-	dma_unmap_sg(qce->dev, rctx->dst_sg, rctx->dst_nents, dir_dst);
++	dma_unmap_sg(qce->dma_dev, rctx->dst_sg, rctx->dst_nents, dir_dst);
+ 
+ 	if (IS_CCM(rctx->flags)) {
+ 		if (req->assoclen) {
+@@ -442,14 +442,14 @@ qce_aead_async_req_handle(struct crypto_async_request *async_req)
+ 
+ 	if (ret)
+ 		return ret;
+-	dst_nents = dma_map_sg(qce->dev, rctx->dst_sg, rctx->dst_nents, dir_dst);
++	dst_nents = dma_map_sg(qce->dma_dev, rctx->dst_sg, rctx->dst_nents, dir_dst);
+ 	if (!dst_nents) {
+ 		ret = -EIO;
+ 		goto error_free;
+ 	}
+ 
+ 	if (diff_dst) {
+-		src_nents = dma_map_sg(qce->dev, rctx->src_sg, rctx->src_nents, dir_src);
++		src_nents = dma_map_sg(qce->dma_dev, rctx->src_sg, rctx->src_nents, dir_src);
+ 		if (src_nents < 0) {
+ 			ret = src_nents;
+ 			goto error_unmap_dst;
+@@ -478,9 +478,9 @@ qce_aead_async_req_handle(struct crypto_async_request *async_req)
+ 	qce_dma_terminate_all(&qce->dma);
+ error_unmap_src:
+ 	if (diff_dst)
+-		dma_unmap_sg(qce->dev, req->src, rctx->src_nents, dir_src);
++		dma_unmap_sg(qce->dma_dev, req->src, rctx->src_nents, dir_src);
+ error_unmap_dst:
+-	dma_unmap_sg(qce->dev, rctx->dst_sg, rctx->dst_nents, dir_dst);
++	dma_unmap_sg(qce->dma_dev, rctx->dst_sg, rctx->dst_nents, dir_dst);
+ error_free:
+ 	if (IS_CCM(rctx->flags) && rctx->assoclen) {
+ 		sg_free_table(&rctx->src_tbl);
+diff --git a/drivers/crypto/qce/core.c b/drivers/crypto/qce/core.c
+index 5b1bf7a50f88..31f1ad8938ab 100644
+--- a/drivers/crypto/qce/core.c
++++ b/drivers/crypto/qce/core.c
+@@ -3,15 +3,16 @@
+  * Copyright (c) 2010-2014, The Linux Foundation. All rights reserved.
+  */
+ 
++#include <linux/auxiliary_bus.h>
+ #include <linux/cleanup.h>
+ #include <linux/clk.h>
+ #include <linux/device.h>
++#include <linux/device-id/auxiliary.h>
+ #include <linux/dma-mapping.h>
+-#include <linux/interconnect.h>
+ #include <linux/interrupt.h>
+ #include <linux/module.h>
+ #include <linux/moduleparam.h>
+-#include <linux/platform_device.h>
++#include <linux/of_address.h>
+ #include <linux/pm.h>
+ #include <linux/pm_runtime.h>
+ #include <linux/types.h>
+@@ -28,8 +29,6 @@ module_param(do_register_algos, bool, 0444);
+ 
+ #define QCE_QUEUE_LENGTH	1
+ 
+-#define QCE_DEFAULT_MEM_BANDWIDTH	393600
+-
+ static const struct qce_algo_ops *qce_ops[] = {
+ #ifdef CONFIG_CRYPTO_DEV_QCE_SKCIPHER
+ 	&skcipher_ops,
+@@ -93,11 +92,6 @@ static int qce_handle_queue(struct qce_device *qce,
+ 	struct crypto_async_request *async_req, *backlog;
+ 	int ret, err;
+ 
+-	PM_RUNTIME_ACQUIRE_AUTOSUSPEND(qce->dev, pm);
+-	ret = PM_RUNTIME_ACQUIRE_ERR(&pm);
+-	if (ret)
+-		return ret;
+-
+ 	scoped_guard(mutex, &qce->lock) {
+ 		if (req)
+ 			ret = crypto_enqueue_request(&qce->queue, req);
+@@ -120,8 +114,21 @@ static int qce_handle_queue(struct qce_device *qce,
+ 			crypto_request_complete(backlog, -EINPROGRESS);
+ 	}
+ 
++	/*
++	 * Hold the device resumed across that whole window instead of just
++	 * across this function, or autosuspend could gate the engine clocks
++	 * while the DMA is still in flight.
++	 */
++	err = pm_runtime_resume_and_get(qce->dev);
++	if (err) {
++		qce->result = err;
++		schedule_work(&qce->done_work);
++		return ret;
++	}
++
+ 	err = qce_handle_request(async_req);
+ 	if (err) {
++		pm_runtime_put_autosuspend(qce->dev);
+ 		qce->result = err;
+ 		schedule_work(&qce->done_work);
+ 	}
+@@ -154,6 +161,7 @@ static int qce_async_request_enqueue(struct qce_device *qce,
+ 
+ static void qce_async_request_done(struct qce_device *qce, int ret)
+ {
++	pm_runtime_put_autosuspend(qce->dev);
+ 	qce->result = ret;
+ 	schedule_work(&qce->done_work);
+ }
+@@ -194,10 +202,12 @@ static int qce_check_version(struct qce_device *qce)
+ 	return 0;
+ }
+ 
+-static int qce_crypto_probe(struct platform_device *pdev)
++static int qce_crypto_probe(struct auxiliary_device *auxdev,
++			    const struct auxiliary_device_id *id)
+ {
+-	struct device *dev = &pdev->dev;
++	struct device *dev = &auxdev->dev;
+ 	struct qce_device *qce;
++	struct resource res;
+ 	int ret;
+ 
+ 	qce = devm_kzalloc(dev, sizeof(*qce), GFP_KERNEL);
+@@ -205,13 +215,18 @@ static int qce_crypto_probe(struct platform_device *pdev)
+ 		return -ENOMEM;
+ 
+ 	qce->dev = dev;
+-	platform_set_drvdata(pdev, qce);
++	qce->dma_dev = dev->parent;
++	auxiliary_set_drvdata(auxdev, qce);
++
++	ret = of_address_to_resource(dev->of_node, 0, &res);
++	if (ret)
++		return ret;
+ 
+-	qce->base = devm_platform_ioremap_resource(pdev, 0);
++	qce->base = devm_ioremap_resource(dev, &res);
+ 	if (IS_ERR(qce->base))
+ 		return PTR_ERR(qce->base);
+ 
+-	ret = dma_set_mask_and_coherent(dev, DMA_BIT_MASK(32));
++	ret = dma_set_mask_and_coherent(qce->dma_dev, DMA_BIT_MASK(32));
+ 	if (ret < 0)
+ 		return ret;
+ 
+@@ -227,10 +242,6 @@ static int qce_crypto_probe(struct platform_device *pdev)
+ 	if (IS_ERR(qce->bus))
+ 		return PTR_ERR(qce->bus);
+ 
+-	qce->mem_path = devm_of_icc_get(dev, "memory");
+-	if (IS_ERR(qce->mem_path))
+-		return PTR_ERR(qce->mem_path);
+-
+ 	/*
+ 	 * Enable runtime PM after clocks and ICC path are acquired so that
+ 	 * the resume callback can enable clocks and apply the ICC bandwidth
+@@ -240,7 +251,10 @@ static int qce_crypto_probe(struct platform_device *pdev)
+ 	if (ret)
+ 		return ret;
+ 
+-	PM_RUNTIME_ACQUIRE_AUTOSUSPEND(dev, pm);
++	pm_runtime_set_autosuspend_delay(dev, 100);
++	pm_runtime_use_autosuspend(dev);
++
++	PM_RUNTIME_ACQUIRE_IF_ENABLED_AUTOSUSPEND(dev, pm);
+ 	ret = PM_RUNTIME_ACQUIRE_ERR(&pm);
+ 	if (ret)
+ 		return ret;
+@@ -269,31 +283,17 @@ static int qce_crypto_probe(struct platform_device *pdev)
+ 			return ret;
+ 	}
+ 
+-	/* Configure autosuspend after successful init */
+-	pm_runtime_set_autosuspend_delay(dev, 100);
+-	pm_runtime_use_autosuspend(dev);
+-	pm_runtime_mark_last_busy(dev);
+-
+ 	return 0;
+ }
+ 
+ static int qce_runtime_suspend(struct device *dev)
+ {
+ 	struct qce_device *qce = dev_get_drvdata(dev);
+-	int ret;
+ 
+ 	clk_disable_unprepare(qce->core);
+ 	clk_disable_unprepare(qce->iface);
+ 	clk_disable_unprepare(qce->bus);
+ 
+-	ret = icc_set_bw(qce->mem_path, 0, 0);
+-	if (ret) {
+-		clk_prepare_enable(qce->bus);
+-		clk_prepare_enable(qce->iface);
+-		clk_prepare_enable(qce->core);
+-		return ret;
+-	}
+-
+ 	return 0;
+ }
+ 
+@@ -302,14 +302,9 @@ static int qce_runtime_resume(struct device *dev)
+ 	struct qce_device *qce = dev_get_drvdata(dev);
+ 	int ret;
+ 
+-	ret = icc_set_bw(qce->mem_path, QCE_DEFAULT_MEM_BANDWIDTH,
+-			 QCE_DEFAULT_MEM_BANDWIDTH);
+-	if (ret)
+-		return ret;
+-
+ 	ret = clk_prepare_enable(qce->core);
+ 	if (ret)
+-		goto err_core;
++		return ret;
+ 
+ 	ret = clk_prepare_enable(qce->iface);
+ 	if (ret)
+@@ -325,8 +320,7 @@ static int qce_runtime_resume(struct device *dev)
+ 	clk_disable_unprepare(qce->iface);
+ err_iface:
+ 	clk_disable_unprepare(qce->core);
+-err_core:
+-	icc_set_bw(qce->mem_path, 0, 0);
++
+ 	return ret;
+ }
+ 
+@@ -335,25 +329,22 @@ static const struct dev_pm_ops qce_crypto_pm_ops = {
+ 	SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend, pm_runtime_force_resume)
+ };
+ 
+-static const struct of_device_id qce_crypto_of_match[] = {
+-	{ .compatible = "qcom,crypto-v5.1", },
+-	{ .compatible = "qcom,crypto-v5.4", },
+-	{ .compatible = "qcom,qce", },
++static const struct auxiliary_device_id qce_crypto_ids[] = {
++	{ .name = "qce.crypto", },
+ 	{}
+ };
+-MODULE_DEVICE_TABLE(of, qce_crypto_of_match);
++MODULE_DEVICE_TABLE(auxiliary, qce_crypto_ids);
+ 
+-static struct platform_driver qce_crypto_driver = {
++static struct auxiliary_driver qce_crypto_driver = {
+ 	.probe = qce_crypto_probe,
++	.id_table = qce_crypto_ids,
+ 	.driver = {
+-		.name = KBUILD_MODNAME,
+-		.of_match_table = qce_crypto_of_match,
++		.name = "qce-crypto",
+ 		.pm = pm_ptr(&qce_crypto_pm_ops),
+ 	},
+ };
+-module_platform_driver(qce_crypto_driver);
++module_auxiliary_driver(qce_crypto_driver);
+ 
+ MODULE_LICENSE("GPL v2");
+ MODULE_DESCRIPTION("Qualcomm crypto engine driver");
+-MODULE_ALIAS("platform:" KBUILD_MODNAME);
+ MODULE_AUTHOR("The Linux Foundation");
+diff --git a/drivers/crypto/qce/core.h b/drivers/crypto/qce/core.h
+index eb6fa7a8b64a..6eda6e617b81 100644
+--- a/drivers/crypto/qce/core.h
++++ b/drivers/crypto/qce/core.h
+@@ -20,6 +20,9 @@
+  * @result: result of current transform
+  * @base: virtual IO base
+  * @dev: pointer to device structure
++ * @dma_dev: pointer to the device to use for DMA mapping calls; this is the
++ *           auxiliary bus device's parent, which is the one that actually
++ *           went through DMA/IOMMU configuration
+  * @core: core device clock
+  * @iface: interface clock
+  * @bus: bus clock
+@@ -37,8 +40,8 @@ struct qce_device {
+ 	int result;
+ 	void __iomem *base;
+ 	struct device *dev;
++	struct device *dma_dev;
+ 	struct clk *core, *iface, *bus;
+-	struct icc_path *mem_path;
+ 	struct qce_dma_data dma;
+ 	int burst_size;
+ 	unsigned int pipe_pair_id;
+diff --git a/drivers/crypto/qce/sha.c b/drivers/crypto/qce/sha.c
+index 586efed68d36..f62f7296a04a 100644
+--- a/drivers/crypto/qce/sha.c
++++ b/drivers/crypto/qce/sha.c
+@@ -47,8 +47,8 @@ static void qce_ahash_done(void *data)
+ 	if (error)
+ 		dev_dbg(qce->dev, "ahash dma termination error (%d)\n", error);
+ 
+-	dma_unmap_sg(qce->dev, req->src, rctx->src_nents, DMA_TO_DEVICE);
+-	dma_unmap_sg(qce->dev, &rctx->result_sg, 1, DMA_FROM_DEVICE);
++	dma_unmap_sg(qce->dma_dev, req->src, rctx->src_nents, DMA_TO_DEVICE);
++	dma_unmap_sg(qce->dma_dev, &rctx->result_sg, 1, DMA_FROM_DEVICE);
+ 
+ 	memcpy(rctx->digest, result->auth_iv, digestsize);
+ 	if (req->result && rctx->last_blk)
+@@ -93,13 +93,13 @@ static int qce_ahash_async_req_handle(struct crypto_async_request *async_req)
+ 		return rctx->src_nents;
+ 	}
+ 
+-	ret = dma_map_sg(qce->dev, req->src, rctx->src_nents, DMA_TO_DEVICE);
++	ret = dma_map_sg(qce->dma_dev, req->src, rctx->src_nents, DMA_TO_DEVICE);
+ 	if (!ret)
+ 		return -EIO;
+ 
+ 	sg_init_one(&rctx->result_sg, qce->dma.result_buf, QCE_RESULT_BUF_SZ);
+ 
+-	ret = dma_map_sg(qce->dev, &rctx->result_sg, 1, DMA_FROM_DEVICE);
++	ret = dma_map_sg(qce->dma_dev, &rctx->result_sg, 1, DMA_FROM_DEVICE);
+ 	if (!ret) {
+ 		ret = -EIO;
+ 		goto error_unmap_src;
+@@ -121,9 +121,9 @@ static int qce_ahash_async_req_handle(struct crypto_async_request *async_req)
+ error_terminate:
+ 	qce_dma_terminate_all(&qce->dma);
+ error_unmap_dst:
+-	dma_unmap_sg(qce->dev, &rctx->result_sg, 1, DMA_FROM_DEVICE);
++	dma_unmap_sg(qce->dma_dev, &rctx->result_sg, 1, DMA_FROM_DEVICE);
+ error_unmap_src:
+-	dma_unmap_sg(qce->dev, req->src, rctx->src_nents, DMA_TO_DEVICE);
++	dma_unmap_sg(qce->dma_dev, req->src, rctx->src_nents, DMA_TO_DEVICE);
+ 	return ret;
+ }
+ 
+diff --git a/drivers/crypto/qce/skcipher.c b/drivers/crypto/qce/skcipher.c
+index b80e579df621..fcbc5cb87966 100644
+--- a/drivers/crypto/qce/skcipher.c
++++ b/drivers/crypto/qce/skcipher.c
+@@ -49,8 +49,8 @@ static void qce_skcipher_done(void *data)
+ 			error);
+ 
+ 	if (diff_dst)
+-		dma_unmap_sg(qce->dev, rctx->src_sg, rctx->src_nents, dir_src);
+-	dma_unmap_sg(qce->dev, rctx->dst_sg, rctx->dst_nents, dir_dst);
++		dma_unmap_sg(qce->dma_dev, rctx->src_sg, rctx->src_nents, dir_src);
++	dma_unmap_sg(qce->dma_dev, rctx->dst_sg, rctx->dst_nents, dir_dst);
+ 
+ 	sg_free_table(&rctx->dst_tbl);
+ 
+@@ -139,14 +139,14 @@ qce_skcipher_async_req_handle(struct crypto_async_request *async_req)
+ 	sg_mark_end(sg);
+ 	rctx->dst_sg = rctx->dst_tbl.sgl;
+ 
+-	dst_nents = dma_map_sg(qce->dev, rctx->dst_sg, rctx->dst_nents, dir_dst);
++	dst_nents = dma_map_sg(qce->dma_dev, rctx->dst_sg, rctx->dst_nents, dir_dst);
+ 	if (!dst_nents) {
+ 		ret = -EIO;
+ 		goto error_free;
+ 	}
+ 
+ 	if (diff_dst) {
+-		src_nents = dma_map_sg(qce->dev, req->src, rctx->src_nents, dir_src);
++		src_nents = dma_map_sg(qce->dma_dev, req->src, rctx->src_nents, dir_src);
+ 		if (!src_nents) {
+ 			ret = -EIO;
+ 			goto error_unmap_dst;
+@@ -175,9 +175,9 @@ qce_skcipher_async_req_handle(struct crypto_async_request *async_req)
+ 	qce_dma_terminate_all(&qce->dma);
+ error_unmap_src:
+ 	if (diff_dst)
+-		dma_unmap_sg(qce->dev, req->src, rctx->src_nents, dir_src);
++		dma_unmap_sg(qce->dma_dev, req->src, rctx->src_nents, dir_src);
+ error_unmap_dst:
+-	dma_unmap_sg(qce->dev, rctx->dst_sg, rctx->dst_nents, dir_dst);
++	dma_unmap_sg(qce->dma_dev, rctx->dst_sg, rctx->dst_nents, dir_dst);
+ error_free:
+ 	sg_free_table(&rctx->dst_tbl);
+ 	return ret;
