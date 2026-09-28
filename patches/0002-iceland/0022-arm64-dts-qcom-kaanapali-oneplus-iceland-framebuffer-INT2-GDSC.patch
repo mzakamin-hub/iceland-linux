@@ -1,0 +1,35 @@
+From 1eeed73c7d89ffcc023ef11f393ee6e90cb3fe29 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 28 Sep 2026 10:38:23 +0300
+Subject: [PATCH 2/2] arm64: dts: qcom: kaanapali-oneplus-iceland: framebuffer
+ also holds the MDSS INT2 GDSC
+
+ABL's scanout needs DISP_CC_MDSS_CORE_INT2_GDSC. With no consumer, dispcc's genpd sync_state
+(of_genpd_sync_state) powers it off when the framebuffer probes, whatever pd_ignore_unused says, and the
+panel turns white. Linux tests 7 and 7b showed it off-0 in every run.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 081fff201..541be2ed0 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -82,7 +82,10 @@ framebuffer: framebuffer@fc800000 {
+ 			power-domains = <&rpmhpd RPMHPD_MMCX>,
+ 					<&rpmhpd RPMHPD_MX>,
+ 					<&rpmhpd RPMHPD_MXC>,
+-					<&dispcc DISP_CC_MDSS_CORE_GDSC>;
++					<&dispcc DISP_CC_MDSS_CORE_GDSC>,
++					/* ABL leaves INT2 on for the scanout; without a user, dispcc's genpd
++					 * sync_state powers it off (pd_ignore_unused does not cover sync_state) */
++					<&dispcc DISP_CC_MDSS_CORE_INT2_GDSC>;
+ 			required-opps = <&rpmhpd_opp_turbo>,
+ 					<&rpmhpd_opp_turbo>,
+ 					<&rpmhpd_opp_turbo>;
+-- 
+2.43.0
+
