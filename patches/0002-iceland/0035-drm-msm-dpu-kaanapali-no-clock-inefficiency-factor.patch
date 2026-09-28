@@ -1,0 +1,31 @@
+From 52169f5e88187b1a0dd6b352b28dd3c5186b29c2 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 28 Sep 2026 20:28:29 +0300
+Subject: [PATCH] drm/msm/dpu: kaanapali: no clock inefficiency factor
+
+The OnePlus Pad 4's 144 Hz mode (3532 x 2480 @ 144 Hz, 1261 MHz) needs 630.5 MHz per layer mixer after the 3D
+merge split; the 5 % factor makes it 662 MHz, above the 650 MHz core clock, and the mode is pruned. Stock runs it
+with the same 650 MHz MDP. Try without the factor.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_13_0_kaanapali.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_13_0_kaanapali.h b/drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_13_0_kaanapali.h
+index 85f455a9f..a0a8ea822 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_13_0_kaanapali.h
++++ b/drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_13_0_kaanapali.h
+@@ -449,7 +449,7 @@ static const struct dpu_perf_cfg kaanapali_perf_data = {
+ 		{.rd_enable = 1, .wr_enable = 1},
+ 		{.rd_enable = 1, .wr_enable = 0}
+ 	},
+-	.clk_inefficiency_factor = 105,
++	.clk_inefficiency_factor = 100,
+ 	.bw_inefficiency_factor = 120,
+ };
+ 
+-- 
+2.43.0
+
