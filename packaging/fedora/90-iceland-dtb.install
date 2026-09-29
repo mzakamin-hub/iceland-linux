@@ -1,0 +1,43 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# kernel-install plugin (kernel-iceland): put the Pad 4 device tree where U-Boot's EFI boot manager looks for
+# `fdtfile` on the EFI system partition: <ESP>/dtb/qcom/kaanapali-oneplus-iceland.dtb. U-Boot applies its fixups
+# (ABL's memory map) to that file before handing it to GRUB/Linux, so the kernel always gets a DT that matches
+# the tablet. The previous file is kept as <ESP>/dtb.prev/... for a manual rollback.
+#
+# Deliberately NOT done: a GRUB `devicetree` line. GRUB would load the raw file and bypass U-Boot's memory fixups
+# unless the EFI DT fixup protocol works end to end (to be proven in the RAM rehearsal first).
+COMMAND="$1"; KERNEL_VERSION="$2"
+DTB_REL=qcom/kaanapali-oneplus-iceland.dtb
+SRC=/usr/lib/modules/$KERNEL_VERSION/dtb/$DTB_REL
+
+esp=""
+if command -v bootctl >/dev/null 2>&1; then esp=$(bootctl --print-esp-path 2>/dev/null); fi
+[ -n "$esp" ] || for d in /boot/efi /efi /boot; do
+	if [ -d "$d/EFI" ]; then esp=$d; break; fi
+done
+[ -n "$esp" ] || { echo "90-iceland-dtb: no EFI system partition found, DT not installed" >&2; exit 0; }
+
+case "$COMMAND" in
+add)
+	[ -f "$SRC" ] || exit 0
+	# only the newest installed kernel-iceland DT goes to the ESP (U-Boot has one fdtfile for all entries)
+	newest=$(ls -1d /usr/lib/modules/*/dtb/$DTB_REL 2>/dev/null | sed 's|/usr/lib/modules/||; s|/dtb/.*||' | sort -V | tail -n1)
+	[ "$newest" = "$KERNEL_VERSION" ] || exit 0
+	mkdir -p "$esp/dtb/qcom" "$esp/dtb.prev/qcom"
+	if [ -f "$esp/dtb/$DTB_REL" ] && ! cmp -s "$SRC" "$esp/dtb/$DTB_REL"; then
+		cp -f "$esp/dtb/$DTB_REL" "$esp/dtb.prev/$DTB_REL"
+	fi
+	cp -f "$SRC" "$esp/dtb/$DTB_REL.new" && sync && mv -f "$esp/dtb/$DTB_REL.new" "$esp/dtb/$DTB_REL"
+	[ "${KERNEL_INSTALL_VERBOSE:-0}" -gt 0 ] && echo "90-iceland-dtb: $SRC -> $esp/dtb/$DTB_REL"
+	;;
+remove)
+	# restore the newest remaining kernel's DT if the removed one was on the ESP
+	newest=$(ls -1d /usr/lib/modules/*/dtb/$DTB_REL 2>/dev/null | grep -v "/$KERNEL_VERSION/" | sed 's|/usr/lib/modules/||; s|/dtb/.*||' | sort -V | tail -n1)
+	if [ -n "$newest" ] && cmp -s "$SRC" "$esp/dtb/$DTB_REL" 2>/dev/null; then
+		cp -f "/usr/lib/modules/$newest/dtb/$DTB_REL" "$esp/dtb/$DTB_REL"
+	fi
+	;;
+esac
+exit 0
