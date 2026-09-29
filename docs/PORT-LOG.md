@@ -85,4 +85,4 @@ Proof:
 - iceland-mainline S16-S19: `relay/results/pc-026-critical-items.md`, sessions 26r-26u.
 - area-audio-1 (2026-09-29): all six amplifiers engage on stereo, each side exactly its three, and the user heard
   GNOME's Sound test.
-Not queued yet: the audioreach volume-max patch (its -EINVAL path is still untested).
+0051: the audioreach volume control stays within the topology maximum (area-audio-2: writes above 2056 rejected with EINVAL).
