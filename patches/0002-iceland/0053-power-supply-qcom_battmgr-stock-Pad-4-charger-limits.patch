@@ -1,0 +1,392 @@
+From 2cb130c0f25ad61f4ca525701a37d6e37e3fa432 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Tue, 29 Sep 2026 06:00:37 +0000
+Subject: [PATCH] power: supply: qcom_battmgr: stock Pad 4 charger limits and
+ host charge controls
+
+The OnePlus charger-firmware support applied the OnePlus 15's settings to
+every OnePlus board: a 12 V PD request, 3 A input and 4 A charge current,
+whatever the charger type. On the Pad 4 that asked a PC's USB port for
+1.2-1.9 A (stock: 500 mA), and 12 V is above its stock VBUS
+over-voltage limit of 11 V. The Pad 4's stock 11.A.38 limits (DT node
+oplus,wired) depend on the charger type:
+
+  type      input power       input current        charge current
+  SDP       2.5 W             500 mA               600 mA
+  CDP       7.5 W             1.5 A                1600 mA
+  DCP       10 W              2 A                  2200 mA
+  PD        13.5 W            2 A at 5 V,          3300 mA
+                              1.5 A at 9 V
+  unknown   2.5 W             500 mA               2200 mA
+
+(input-power-mw, pd-iclmax-ma and fccmax-ma for the normal temperature
+regions). Stock asks for 9 V only while the battery is below 4.5 V
+(vbatt_pdqc_to_9v_thr). Use these on "oneplus,iceland-pmic-glink":
+- read the charger type the way the sysfs path does on this firmware
+  (USB_ADAP_TYPE, mapped); an Apple brick, which stock's tables don't
+  list, gets the "unknown" limits;
+- lower the input current before asking for 9 V, and don't ask for 9 V
+  if that write failed;
+- keep the lower (9 V) input current if VBUS can't be read afterwards;
+- warn when a firmware write the limits depend on fails, and log the
+  type and limits chosen at each attach.
+Other boards keep the previous behaviour.
+
+Expose two controls on the OnePlus battery for a host-side guard:
+- POWER_SUPPLY_PROP_CHARGE_BEHAVIOUR (auto / inhibit-charge), through the
+  firmware's OPLUS_CHG_EN. The firmware doesn't keep it across attaches,
+  so it is sent again at every attach and re-asserted by the attach
+  poll while a charger is in;
+- a writable CONSTANT_CHARGE_CURRENT_MAX that can only lower the charge
+  current, for stock's lower currents below 0 C and at 45-53 C. 0 is
+  refused (charge_behaviour stops charging), and before the first
+  attach the stock-limit boards report no value.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/power/supply/qcom_battmgr.c | 239 +++++++++++++++++++++++++++-
+ 1 file changed, 237 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
+index 25cd1b932..2b3043640 100644
+--- a/drivers/power/supply/qcom_battmgr.c
++++ b/drivers/power/supply/qcom_battmgr.c
+@@ -398,6 +398,11 @@ struct qcom_battmgr {
+ 	unsigned int otg_redetects;
+ 	bool charger_configured;
+ 	u32 oplus_value;
++	/* per-board charger limits (see qcom_battmgr_oplus_limits) and the host's charge inhibit */
++	bool chg_stock_limits;
++	unsigned int chg_fcc_ua;	/* the charge current set at the last attach */
++	unsigned int chg_fcc_host_ua;	/* the host's cap (constant_charge_current_max), 0 = none */
++	bool chg_inhibit;
+ 	unsigned long gauge_time;
+ 
+ 	/*
+@@ -628,6 +633,14 @@ static int qcom_battmgr_bat_sc8280xp_update(struct qcom_battmgr *battmgr,
+ 	return ret;
+ }
+ 
++static unsigned int qcom_battmgr_oplus_fcc_ua(struct qcom_battmgr *battmgr, unsigned int fcc_ua)
++{
++	if (battmgr->chg_fcc_host_ua)
++		fcc_ua = min(fcc_ua, battmgr->chg_fcc_host_ua);
++
++	return fcc_ua;
++}
++
+ static int qcom_battmgr_bat_get_property(struct power_supply *psy,
+ 					 enum power_supply_property psp,
+ 					 union power_supply_propval *val)
+@@ -639,6 +652,21 @@ static int qcom_battmgr_bat_get_property(struct power_supply *psy,
+ 	if (!battmgr->service_up)
+ 		return -EAGAIN;
+ 
++	if (psp == POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX) {
++		/* the stock-limit boards have no charge current until the first charger attach */
++		if (battmgr->chg_stock_limits && !battmgr->chg_fcc_ua)
++			return -ENODATA;
++		val->intval = qcom_battmgr_oplus_fcc_ua(battmgr, battmgr->chg_fcc_ua ?:
++							OPLUS_CHARGER_FCC_UA);
++		return 0;
++	}
++
++	if (psp == POWER_SUPPLY_PROP_CHARGE_BEHAVIOUR) {
++		val->intval = battmgr->chg_inhibit ? POWER_SUPPLY_CHARGE_BEHAVIOUR_INHIBIT_CHARGE :
++						     POWER_SUPPLY_CHARGE_BEHAVIOUR_AUTO;
++		return 0;
++	}
++
+ 	if (battmgr->variant == QCOM_BATTMGR_SC8280XP ||
+ 	    battmgr->variant == QCOM_BATTMGR_X1E80100)
+ 		ret = qcom_battmgr_bat_sc8280xp_update(battmgr, psp);
+@@ -893,6 +921,8 @@ static int qcom_battmgr_bat_is_writeable(struct power_supply *psy,
+ 	switch (psp) {
+ 	case POWER_SUPPLY_PROP_CHARGE_CONTROL_START_THRESHOLD:
+ 	case POWER_SUPPLY_PROP_CHARGE_CONTROL_END_THRESHOLD:
++	case POWER_SUPPLY_PROP_CHARGE_BEHAVIOUR:
++	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX:
+ 		return 1;
+ 	default:
+ 		return 0;
+@@ -901,6 +931,9 @@ static int qcom_battmgr_bat_is_writeable(struct power_supply *psy,
+ 	return 0;
+ }
+ 
++static int qcom_battmgr_oplus_set_charge_behaviour(struct qcom_battmgr *battmgr, int behaviour);
++static int qcom_battmgr_oplus_set_fcc(struct qcom_battmgr *battmgr, int fcc_ua);
++
+ static int qcom_battmgr_bat_set_property(struct power_supply *psy,
+ 					 enum power_supply_property psp,
+ 					 const union power_supply_propval *pval)
+@@ -915,6 +948,10 @@ static int qcom_battmgr_bat_set_property(struct power_supply *psy,
+ 		return qcom_battmgr_set_charge_start_threshold(battmgr, pval->intval);
+ 	case POWER_SUPPLY_PROP_CHARGE_CONTROL_END_THRESHOLD:
+ 		return qcom_battmgr_set_charge_end_threshold(battmgr, pval->intval);
++	case POWER_SUPPLY_PROP_CHARGE_BEHAVIOUR:
++		return qcom_battmgr_oplus_set_charge_behaviour(battmgr, pval->intval);
++	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX:
++		return qcom_battmgr_oplus_set_fcc(battmgr, pval->intval);
+ 	default:
+ 		return -EINVAL;
+ 	}
+@@ -1073,6 +1110,8 @@ static const enum power_supply_property oplus_bat_props[] = {
+ 	POWER_SUPPLY_PROP_CHARGE_NOW,
+ 	POWER_SUPPLY_PROP_CYCLE_COUNT,
+ 	POWER_SUPPLY_PROP_STATE_OF_HEALTH,
++	POWER_SUPPLY_PROP_CHARGE_BEHAVIOUR,
++	POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX,
+ };
+ 
+ static const struct power_supply_desc oplus_bat_psy_desc = {
+@@ -1081,6 +1120,10 @@ static const struct power_supply_desc oplus_bat_psy_desc = {
+ 	.properties = oplus_bat_props,
+ 	.num_properties = ARRAY_SIZE(oplus_bat_props),
+ 	.get_property = qcom_battmgr_bat_get_property,
++	.set_property = qcom_battmgr_bat_set_property,
++	.property_is_writeable = qcom_battmgr_bat_is_writeable,
++	.charge_behaviours = BIT(POWER_SUPPLY_CHARGE_BEHAVIOUR_AUTO) |
++			     BIT(POWER_SUPPLY_CHARGE_BEHAVIOUR_INHIBIT_CHARGE),
+ };
+ 
+ static int qcom_battmgr_ac_get_property(struct power_supply *psy,
+@@ -1830,20 +1873,204 @@ static int qcom_battmgr_oplus_set(struct qcom_battmgr *battmgr, int property, u3
+ 	return qcom_battmgr_request_property(battmgr, OPLUS_PROPERTY_SET, property, value);
+ }
+ 
++/*
++ * The OnePlus Pad 4 (iceland) charger limits are its stock 11.A.38 values for the charger types mainline supports
++ * (DT node oplus,wired; the charge-pump fast charging, SuperVOOC/PPS/UFCS, is not supported):
++ * - input-power-mw [unknown SDP CDP DCP VOOC QC PD] = 2500 2500 7500 10000 30000 13500 13500, and
++ *   pd-iclmax-ma = qc-iclmax-ma = 2000: the input current is min(power / VBUS, 2000 mA for PD);
++ * - fccmax-ma groups [unknown SDP CDP DCP VOOC QC PD ...] = 2200 600 1600 2200 3300 3300 3300 mA in the normal
++ *   temperature regions (iceland-battery-guard lowers it per temperature region through
++ *   constant_charge_current_max);
++ * - PD at 9 V (cool_down_pdqc_vol_mv), and only while the battery is below 4.5 V (vbatt_pdqc_to_9v_thr).
++ * The firmware reports VOOC/SVOOC adapters as DCP here, so they get the DCP limits. Stock's tables have no Apple
++ * entry, so an Apple brick gets the "unknown" limits.
++ */
++#define ICELAND_PD_ICL_MA		2000
++#define ICELAND_PD_MV			9000
++#define ICELAND_PD_9V_VBAT_MAX_UV	4500000
++
++static void qcom_battmgr_iceland_type_limits(unsigned int type, unsigned int *power_mw,
++					     unsigned int *fcc_ma)
++{
++	switch (type) {
++	case POWER_SUPPLY_USB_TYPE_SDP:
++		*power_mw = 2500;
++		*fcc_ma = 600;
++		break;
++	case POWER_SUPPLY_USB_TYPE_CDP:
++		*power_mw = 7500;
++		*fcc_ma = 1600;
++		break;
++	case POWER_SUPPLY_USB_TYPE_DCP:
++		*power_mw = 10000;
++		*fcc_ma = 2200;
++		break;
++	case POWER_SUPPLY_USB_TYPE_PD:
++	case POWER_SUPPLY_USB_TYPE_PD_DRP:
++	case POWER_SUPPLY_USB_TYPE_PD_PPS:
++		*power_mw = 13500;
++		*fcc_ma = 3300;
++		break;
++	default:	/* unknown, Type-C current, ACA, Apple brick: the stock "unknown" limits */
++		*power_mw = 2500;
++		*fcc_ma = 2200;
++		break;
++	}
++}
++
++static unsigned int qcom_battmgr_iceland_icl_ua(unsigned int type, unsigned int power_mw,
++						unsigned int vbus_mv)
++{
++	unsigned int icl_ma = power_mw * 1000 / vbus_mv;
++
++	if (type == POWER_SUPPLY_USB_TYPE_PD || type == POWER_SUPPLY_USB_TYPE_PD_DRP ||
++	    type == POWER_SUPPLY_USB_TYPE_PD_PPS)
++		icl_ma = min(icl_ma, ICELAND_PD_ICL_MA);
++
++	return icl_ma * 1000;
++}
++
++/*
++ * constant_charge_current_max: the host can lower the charge current (never raise it above the attach value).
++ * 0 is refused rather than read as "no cap": use charge_behaviour to stop charging.
++ */
++static int qcom_battmgr_oplus_set_fcc(struct qcom_battmgr *battmgr, int fcc_ua)
++{
++	int ret = 0;
++
++	if (battmgr->variant != QCOM_BATTMGR_OPLUS || fcc_ua <= 0)
++		return -EINVAL;
++
++	mutex_lock(&battmgr->lock);
++	battmgr->chg_fcc_host_ua = fcc_ua;
++	if (battmgr->chg_fcc_ua)
++		ret = qcom_battmgr_request_property(battmgr, BATTMGR_BAT_PROPERTY_SET,
++						    BATT_CHG_CTRL_LIM,
++						    qcom_battmgr_oplus_fcc_ua(battmgr, battmgr->chg_fcc_ua));
++	mutex_unlock(&battmgr->lock);
++
++	return ret;
++}
++
++/* charge_behaviour: the host can stop charging (e.g. a thermal or safety guard) through OPLUS_CHG_EN */
++static int qcom_battmgr_oplus_set_charge_behaviour(struct qcom_battmgr *battmgr, int behaviour)
++{
++	int ret;
++
++	if (battmgr->variant != QCOM_BATTMGR_OPLUS)
++		return -EINVAL;
++
++	switch (behaviour) {
++	case POWER_SUPPLY_CHARGE_BEHAVIOUR_AUTO:
++	case POWER_SUPPLY_CHARGE_BEHAVIOUR_INHIBIT_CHARGE:
++		break;
++	default:
++		return -EINVAL;
++	}
++
++	mutex_lock(&battmgr->lock);
++	battmgr->chg_inhibit = behaviour == POWER_SUPPLY_CHARGE_BEHAVIOUR_INHIBIT_CHARGE;
++	ret = qcom_battmgr_oplus_set(battmgr, OPLUS_CHG_EN, !battmgr->chg_inhibit);
++	mutex_unlock(&battmgr->lock);
++
++	return ret;
++}
++
+ /*
+  * The firmware starts every charger attach at 5 V and 2 A and leaves it to
+  * the host to ask for more.
+  */
++/* A firmware write the limits depend on failed: say so, the charger keeps its previous (firmware) setting */
++static void qcom_battmgr_iceland_check(struct qcom_battmgr *battmgr, int ret, const char *what)
++{
++	if (ret)
++		dev_warn(battmgr->dev, "charger setup: %s failed: %d\n", what, ret);
++}
++
++static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
++{
++	unsigned int type, power_mw, fcc_ma, icl_ua, mv;
++	bool pd;
++	int ret;
++
++	mutex_lock(&battmgr->lock);
++	/* the host's inhibit is not kept by the firmware across attaches: send it again on every attach */
++	qcom_battmgr_iceland_check(battmgr, qcom_battmgr_oplus_set(battmgr, OPLUS_CHG_EN, !battmgr->chg_inhibit),
++				   "charge enable");
++
++	/* the charger type as the sysfs path reads it on this firmware: USB_ADAP_TYPE, mapped */
++	ret = qcom_battmgr_request_property(battmgr, BATTMGR_USB_PROPERTY_GET, USB_ADAP_TYPE, 0);
++	type = ret ? POWER_SUPPLY_USB_TYPE_UNKNOWN : battmgr->usb.usb_type;
++	qcom_battmgr_iceland_type_limits(type, &power_mw, &fcc_ma);
++	pd = type == POWER_SUPPLY_USB_TYPE_PD || type == POWER_SUPPLY_USB_TYPE_PD_DRP ||
++	     type == POWER_SUPPLY_USB_TYPE_PD_PPS;
++
++	battmgr->chg_fcc_ua = fcc_ma * 1000;
++	icl_ua = qcom_battmgr_iceland_icl_ua(type, power_mw, 5000);
++	qcom_battmgr_iceland_check(battmgr, qcom_battmgr_oplus_set(battmgr, OPLUS_USB_INPUT_CURR_LIMIT, icl_ua),
++				   "input current limit");
++	qcom_battmgr_iceland_check(battmgr,
++				   qcom_battmgr_request_property(battmgr, BATTMGR_BAT_PROPERTY_SET,
++								 BATT_CHG_CTRL_LIM,
++								 qcom_battmgr_oplus_fcc_ua(battmgr,
++											   battmgr->chg_fcc_ua)),
++				   "charge current limit");
++	mv = 0;		/* VBUS is only read after a 9 V request */
++
++	/* stock asks for 9 V only below 4.5 V; lower the input current first so 9 V never exceeds the power */
++	if (pd && !qcom_battmgr_oplus_update_gauge(battmgr) &&
++	    battmgr->status.voltage_now < ICELAND_PD_9V_VBAT_MAX_UV) {
++		icl_ua = qcom_battmgr_iceland_icl_ua(type, power_mw, ICELAND_PD_MV);
++		ret = qcom_battmgr_oplus_set(battmgr, OPLUS_USB_INPUT_CURR_LIMIT, icl_ua);
++		qcom_battmgr_iceland_check(battmgr, ret, "9 V input current limit");
++		/* no 9 V request unless the lower current is in place */
++		if (!ret)
++			qcom_battmgr_iceland_check(battmgr,
++						   qcom_battmgr_oplus_set(battmgr, OPLUS_SET_PDO, ICELAND_PD_MV),
++						   "9 V request");
++		mutex_unlock(&battmgr->lock);
++
++		msleep(OPLUS_PDO_SETTLE_MS);
++
++		mutex_lock(&battmgr->lock);
++		ret = qcom_battmgr_request_property(battmgr, BATTMGR_USB_PROPERTY_GET,
++						    USB_VOLT_NOW, 0);
++		mv = ret ? 0 : battmgr->usb.voltage_now / 1000;
++		/*
++		 * The charger stayed at 5 V: the 5 V input current again. If VBUS could not be read, keep the lower
++		 * 9 V current (fail low: VBUS may be 9 V).
++		 */
++		if (!ret && mv <= ICELAND_PD_MV - 2000) {
++			icl_ua = qcom_battmgr_iceland_icl_ua(type, power_mw, 5000);
++			qcom_battmgr_iceland_check(battmgr,
++						   qcom_battmgr_oplus_set(battmgr, OPLUS_USB_INPUT_CURR_LIMIT,
++									  icl_ua),
++						   "input current limit");
++		}
++	}
++	mutex_unlock(&battmgr->lock);
++
++	dev_info(battmgr->dev, "charger: type %u, input limit %u uA, charge limit %u uA, VBUS after 9 V request %u mV%s\n",
++		 type, icl_ua, qcom_battmgr_oplus_fcc_ua(battmgr, battmgr->chg_fcc_ua), mv,
++		 battmgr->chg_inhibit ? ", charging inhibited" : "");
++}
++
+ static void qcom_battmgr_oplus_setup_charger(struct qcom_battmgr *battmgr)
+ {
+ 	static const unsigned int pdo_mv[] = { 12000, 9000 };
+ 	unsigned int i, mv;
+ 	int ret;
+ 
++	if (battmgr->chg_stock_limits) {
++		qcom_battmgr_iceland_setup_charger(battmgr);
++		return;
++	}
++
+ 	mutex_lock(&battmgr->lock);
++	battmgr->chg_fcc_ua = OPLUS_CHARGER_FCC_UA;
+ 	qcom_battmgr_oplus_set(battmgr, OPLUS_USB_INPUT_CURR_LIMIT, OPLUS_CHARGER_ICL_UA);
+ 	qcom_battmgr_request_property(battmgr, BATTMGR_BAT_PROPERTY_SET, BATT_CHG_CTRL_LIM,
+-				      OPLUS_CHARGER_FCC_UA);
++				      qcom_battmgr_oplus_fcc_ua(battmgr, battmgr->chg_fcc_ua));
+ 	mutex_unlock(&battmgr->lock);
+ 
+ 	for (i = 0; i < ARRAY_SIZE(pdo_mv); i++) {
+@@ -1907,6 +2134,10 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+ 			battmgr->otg_released = true;
+ 		}
+ 
++		/* keep the host's inhibit asserted while a charger is in, whatever the firmware does on its own */
++		if (battmgr->usb.online && battmgr->chg_inhibit)
++			qcom_battmgr_oplus_set(battmgr, OPLUS_CHG_EN, 0);
++
+ 		setup_charger = battmgr->usb.online && !battmgr->charger_configured;
+ 		battmgr->charger_configured = battmgr->usb.online;
+ 		next = OPLUS_CID_IDLE_POLL_MS;
+@@ -1945,7 +2176,7 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+ static void qcom_battmgr_oplus_enable(struct qcom_battmgr *battmgr)
+ {
+ 	mutex_lock(&battmgr->lock);
+-	qcom_battmgr_oplus_set(battmgr, OPLUS_CHG_EN, 1);
++	qcom_battmgr_oplus_set(battmgr, OPLUS_CHG_EN, !battmgr->chg_inhibit);
+ 	qcom_battmgr_oplus_set(battmgr, OPLUS_USB_OTG_AP_ENABLE, 1);
+ 	mutex_unlock(&battmgr->lock);
+ 
+@@ -2044,6 +2275,10 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
+ 	else
+ 		battmgr->variant = QCOM_BATTMGR_SM8350;
+ 
++	if (battmgr->variant == QCOM_BATTMGR_OPLUS)
++		battmgr->chg_stock_limits = device_is_compatible(dev->parent,
++								 "oneplus,iceland-pmic-glink");
++
+ 	ret = qcom_battmgr_charge_control_thresholds_init(battmgr);
+ 	if (ret < 0)
+ 		return dev_err_probe(dev, ret,
+-- 
+2.43.0
+
