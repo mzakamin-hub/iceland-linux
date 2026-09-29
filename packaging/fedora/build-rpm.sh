@@ -8,7 +8,10 @@ set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd); top=$(cd "$here/../.." && pwd)
 out=$(realpath "$1"); dest=$(realpath -m "$2"); rel=${3:-1}
 dist=$out/dist
-kver=$(cat "$out/include/config/kernel.release")
+# the version is the modules directory inside the build's modules tarball (not include/config/kernel.release,
+# which changes if anything is rebuilt in that tree afterwards)
+kver=$(zstd -dc "$dist"/modules-*.tar.zst | tar -t 2>/dev/null | sed -n 's|^lib/modules/\([^/]*\)/$|\1|p' | head -n1)
+[ -n "$kver" ] || { echo "no lib/modules/<kver>/ in the modules tarball"; exit 1; }
 # rpm Version can't contain '-': 7.3.0-rc4-iceland-00161-gabc -> 7.3.0~rc4.iceland.00161.gabc
 pkgver=$(echo "$kver" | sed 's/-rc/~rc/; s/-/./g')
 work=$(mktemp -d); trap 'rm -rf "$work"' EXIT
