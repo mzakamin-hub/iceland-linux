@@ -64,3 +64,25 @@ NEW = our own commit replacing a map220v commit (map220v credited in the message
 2. Panel PPS is sent before sleep out (map220v order) via `init_sends_pps`.
 3. SOCCP: map220v's extra SOCCP→EBI1 interconnect vote is not carried (infiniti's SOCCP node is used).
 4. Battery: infiniti's Oplus charger support replaces map220v's simpler variant.
+
+## The speaker chain (0038-0050)
+Stock drives the six TFA9865 over **TDM-LPAIF-RX-PRIMARY** (8 slots x 32 bit, 48 kHz), not Primary MI2S. The
+working chain, link by link:
+1. **DT link on PRIMARY_TDM_RX_0** with the slot layout (0038).
+2. **Classic TDM endpoint in audioreach** (0041): the stock ADSP has no Audio Interface (QAIF) module.
+3. **The TDM bit clock:** in q6prm (0042), voted from the DT (0043).
+4. **The TDM back ends at 32 bit, one channel per slot** (0044); default 6/8-channel maps (0045).
+5. **A device-subgraph MFC** in the Pad 4 topology (iceland-mainline `audio/topology`), so the 2-ch/16-bit stream
+   is converted to the 8-ch/32-bit endpoint format. Without it the stream ran 8x too fast.
+6. **Stock TDM tables for each amplifier** (0046): reg 0x20 = 0x6f91; the speaker/sense slots 0-5 in regs
+   0x21/0x22, from the stock container. The old tables were for a 2-slot I2S frame.
+7. **MANSCONF after every power-up** (0047). The amplifier's manager waits in "wait for source settings" until
+   MANSCONF ("I2C configured") is set, and it clears MANSCONF itself while the TDM setup doesn't match the frame.
+8. **A TDM channel map** (0048) and the **Pad 4 card** spreading stereo as FL FR FL FR FL FR FL FR (0049): left =
+   slots 0/2/4 (i2c0 0x34/0x36/0x37), right = slots 1/3/5 (i2c22). The DT compatible `oneplus,iceland-sndcard`
+   (0050).
+Proof:
+- iceland-mainline S16-S19: `relay/results/pc-026-critical-items.md`, sessions 26r-26u.
+- area-audio-1 (2026-09-29): all six amplifiers engage on stereo, each side exactly its three, and the user heard
+  GNOME's Sound test.
+Not queued yet: the audioreach volume-max patch (its -EINVAL path is still untested).

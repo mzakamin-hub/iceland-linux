@@ -1,0 +1,53 @@
+From be400033502a6d2ede292c87145bbaf631af4f04 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Tue, 29 Sep 2026 12:51:39 +0000
+Subject: [PATCH 48/50] ASoC: qcom: q6apm-lpass-dais: accept a channel map on
+ the TDM ports
+
+A board may need a specific channel layout on a TDM back end, for
+example stereo spread over several amplifiers each listening to its own
+slot. Let the TDM ports take a channel map through set_channel_map, as
+the codec DMA ports already do: the even (RX) ports use the rx map, the
+odd (TX) ports the tx map.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ sound/soc/qcom/qdsp6/q6apm-lpass-dais.c | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/sound/soc/qcom/qdsp6/q6apm-lpass-dais.c b/sound/soc/qcom/qdsp6/q6apm-lpass-dais.c
+index e204fd59e..3298a7b2b 100644
+--- a/sound/soc/qcom/qdsp6/q6apm-lpass-dais.c
++++ b/sound/soc/qcom/qdsp6/q6apm-lpass-dais.c
+@@ -126,6 +126,20 @@ static int q6dma_set_channel_map(struct snd_soc_dai *dai,
+ 		for (i = 0; i < rx_num; i++)
+ 			cfg->channel_map[i] = rx_ch_mask[i];
+ 
++		break;
++	case PRIMARY_TDM_RX_0 ... QUINARY_TDM_TX_7:
++		/* even ids are the RX (playback) ports, odd ids the TX ports */
++		if (dai->id & 0x1) {
++			if (!tx_ch_mask || tx_num > AR_PCM_MAX_NUM_CHANNEL)
++				return -EINVAL;
++			for (i = 0; i < tx_num; i++)
++				cfg->channel_map[i] = tx_ch_mask[i];
++		} else {
++			if (!rx_ch_mask || rx_num > APM_PORT_MAX_AUDIO_CHAN_CNT)
++				return -EINVAL;
++			for (i = 0; i < rx_num; i++)
++				cfg->channel_map[i] = rx_ch_mask[i];
++		}
+ 		break;
+ 	default:
+ 		dev_err(dai->dev, "%s: invalid dai id 0x%x\n",
+@@ -439,6 +453,7 @@ static const struct snd_soc_dai_ops q6tdm_ops = {
+ 	.startup	= q6apm_lpass_dai_startup,
+ 	.shutdown	= q6i2s_lpass_dai_shutdown,
+ 	.set_tdm_slot	= q6tdm_set_tdm_slot,
++	.set_channel_map = q6dma_set_channel_map,
+ 	.hw_params	= q6dma_hw_params,
+ 	.set_fmt	= q6i2s_set_fmt,
+ 	.set_sysclk	= q6i2s_set_sysclk,
+-- 
+2.43.0
+

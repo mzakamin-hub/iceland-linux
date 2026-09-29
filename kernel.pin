@@ -10,4 +10,4 @@ INFINITI_URL=https://github.com/infiniti-mainline/linux
 INFINITI_COMMIT=10650ae7bef447d04eb820bfc0c2d5a98d83e4e2
 TREE_AFTER_0001_infiniti=6e2c971263e6c89db6baef3e54c0a3429307a253
 # 0002-iceland = OnePlus Pad 4 series (map220v/sm8850-mainline iceland-7.2 ported + our fixes):
-TREE_AFTER_0002_iceland=520e184e2eb6474931eccc43efff4d6a68d5ed14
+TREE_AFTER_0002_iceland=ad75fb9f18dbae1adb8411c7649067688679589a
