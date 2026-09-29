@@ -1,0 +1,129 @@
+From 1a31d239b1db4ee4df1043fc385d855f8d9090d1 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Tue, 29 Sep 2026 01:51:44 +0300
+Subject: [PATCH 39/45] power: supply: qcom_battmgr: design capacity from the
+ DT battery node, plausible charge only
+
+The OPLUS gauge snapshot on the OnePlus Pad 4 carries no design capacity and its remaining word is not a charge
+(1.59e6 against an FCC of 13789 mAh). Take CHARGE_FULL_DESIGN from a simple-battery node referenced by
+monitored-battery when the firmware reports none, and offer CHARGE_NOW only when the snapshot value is at most
+the last full capacity. The Pad 4 DT gets its battery node with stock's 13380 mAh.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ .../dts/qcom/kaanapali-oneplus-iceland.dts    |  8 +++++
+ drivers/power/supply/qcom_battmgr.c           | 29 +++++++++++++++++--
+ 2 files changed, 35 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index e6dab93ef..16066d23d 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -44,6 +44,11 @@ aliases {
+ 		serial1 = &uart18;
+ 	};
+ 
++	battery: battery {
++		compatible = "simple-battery";
++		charge-full-design-microamp-hours = <13380000>;
++	};
++
+ 	chosen {
+ 		#address-cells = <2>;
+ 		#size-cells = <2>;
+@@ -184,6 +189,9 @@ switch-lid {
+ 	pmic-glink {
+ 		compatible = "oneplus,iceland-pmic-glink", "qcom,kaanapali-pmic-glink",
+ 			     "qcom,pmic-glink";
++
++		/* stock's gauge: 13380 mAh design capacity (POWER_SUPPLY_CHARGE_FULL_DESIGN under LineageOS) */
++		monitored-battery = <&battery>;
+ 		#address-cells = <1>;
+ 		#size-cells = <0>;
+ 		orientation-gpios = <&tlmm 60 GPIO_ACTIVE_HIGH>;
+diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
+index ec2b60789..25cd1b932 100644
+--- a/drivers/power/supply/qcom_battmgr.c
++++ b/drivers/power/supply/qcom_battmgr.c
+@@ -373,6 +373,9 @@ struct qcom_battmgr {
+ 	struct power_supply *usb_psy;
+ 	struct power_supply *wls_psy;
+ 
++	/* from the DT battery node (simple-battery), used when the firmware reports no design capacity */
++	u32 dt_design_capacity;
++
+ 	enum qcom_battmgr_unit unit;
+ 
+ 	int error;
+@@ -693,7 +696,9 @@ static int qcom_battmgr_bat_get_property(struct power_supply *psy,
+ 	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
+ 		if (unit != QCOM_BATTMGR_UNIT_mAh)
+ 			return -ENODATA;
+-		val->intval = battmgr->info.design_capacity;
++		val->intval = battmgr->info.design_capacity ?: battmgr->dt_design_capacity;
++		if (!val->intval)
++			return -ENODATA;
+ 		break;
+ 	case POWER_SUPPLY_PROP_CHARGE_FULL:
+ 		if (unit != QCOM_BATTMGR_UNIT_mAh)
+@@ -706,7 +711,7 @@ static int qcom_battmgr_bat_get_property(struct power_supply *psy,
+ 		val->intval = battmgr->info.capacity_low;
+ 		break;
+ 	case POWER_SUPPLY_PROP_CHARGE_NOW:
+-		if (unit != QCOM_BATTMGR_UNIT_mAh)
++		if (unit != QCOM_BATTMGR_UNIT_mAh || !battmgr->status.capacity)
+ 			return -ENODATA;
+ 		val->intval = battmgr->status.capacity;
+ 		break;
+@@ -1792,6 +1797,12 @@ static void qcom_battmgr_oplus_gauge_callback(struct qcom_battmgr *battmgr,
+ 	battmgr->status.soh_percent = le32_to_cpu(data[OPLUS_GAUGE_SOH]);
+ 	battmgr->info.cycle_count = le32_to_cpu(data[OPLUS_GAUGE_CYCLE_COUNT]);
+ 	battmgr->info.last_full_capacity = le32_to_cpu(data[OPLUS_GAUGE_FCC]) * 1000;
++	/*
++	 * Not every OPLUS gauge fills the "remaining" word with a charge (the Pad 4's QBG reports ~1.59e6 against
++	 * an FCC of 13789 mAh): keep it only when it is plausible, else CHARGE_NOW is not offered.
++	 */
++	if (battmgr->status.capacity > battmgr->info.last_full_capacity)
++		battmgr->status.capacity = 0;
+ 
+ out_complete:
+ 	complete(&battmgr->ack);
+@@ -1987,6 +1998,18 @@ static const struct of_device_id qcom_battmgr_of_variants[] = {
+ 
+ static char *qcom_battmgr_battery[] = { "battery" };
+ 
++/* the design capacity from a DT simple-battery node (monitored-battery), when the firmware has none */
++static void qcom_battmgr_dt_battery_info(struct qcom_battmgr *battmgr)
++{
++	struct power_supply_battery_info *info;
++
++	if (power_supply_get_battery_info(battmgr->bat_psy, &info))
++		return;
++	if (info->charge_full_design_uah > 0)
++		battmgr->dt_design_capacity = info->charge_full_design_uah;
++	power_supply_put_battery_info(battmgr->bat_psy, info);
++}
++
+ static int qcom_battmgr_probe(struct auxiliary_device *adev,
+ 			      const struct auxiliary_device_id *id)
+ {
+@@ -2037,6 +2060,7 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
+ 		if (IS_ERR(battmgr->bat_psy))
+ 			return dev_err_probe(dev, PTR_ERR(battmgr->bat_psy),
+ 					     "failed to register battery power supply\n");
++		qcom_battmgr_dt_battery_info(battmgr);
+ 
+ 		battmgr->ac_psy = devm_power_supply_register(dev, &sc8280xp_ac_psy_desc, &psy_cfg_supply);
+ 		if (IS_ERR(battmgr->ac_psy))
+@@ -2064,6 +2088,7 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
+ 		if (IS_ERR(battmgr->bat_psy))
+ 			return dev_err_probe(dev, PTR_ERR(battmgr->bat_psy),
+ 					     "failed to register battery power supply\n");
++		qcom_battmgr_dt_battery_info(battmgr);
+ 
+ 		battmgr->usb_psy = devm_power_supply_register(dev, &sm8350_usb_psy_desc, &psy_cfg_supply);
+ 		if (IS_ERR(battmgr->usb_psy))
+-- 
+2.43.0
+

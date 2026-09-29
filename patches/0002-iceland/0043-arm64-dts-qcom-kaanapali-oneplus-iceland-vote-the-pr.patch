@@ -1,0 +1,43 @@
+From 7438707f0bf4fabd3806d48fc0ffac8153b4da45 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Tue, 29 Sep 2026 07:35:51 +0300
+Subject: [PATCH 43/45] arm64: dts: qcom: kaanapali-oneplus-iceland: vote the
+ primary TDM bit clock
+
+The speakers' back end (PRIMARY_TDM_RX_0, LPASS as the TDM master as in the stock configuration) needs its
+bit clock requested from the PRM before the graph starts: give the DAI its "bclk" from the PRM clock
+controller, as the OnePlus 15 device tree does for its MI2S speakers; the machine driver sets it to
+8 slots x 32 bit x 48 kHz = 12.288 MHz.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ .../boot/dts/qcom/kaanapali-oneplus-iceland.dts      | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index bd4fc183f..b191f5b39 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1376,6 +1376,18 @@ &pon_resin {
+ 	status = "okay";
+ };
+ 
++&q6apmbedai {
++	#address-cells = <1>;
++	#size-cells = <0>;
++
++	/* the speakers' TDM port: LPASS drives bit clock and frame sync (stock: internal sync) */
++	dai@18 {
++		reg = <PRIMARY_TDM_RX_0>;
++		clocks = <&q6prmcc LPASS_CLK_ID_PRI_TDM_IBIT LPASS_CLK_ATTRIBUTE_COUPLE_NO>;
++		clock-names = "bclk";
++	};
++};
++
+ &remoteproc_adsp {
+ 	firmware-name = "qcom/kaanapali/iceland/adsp.mbn",
+ 			"qcom/kaanapali/iceland/adsp_dtb.mbn";
+-- 
+2.43.0
+

@@ -1,0 +1,33 @@
+From 25b7a098ba920f9c107fc84b069f219e114fdee8 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Tue, 29 Sep 2026 02:05:51 +0300
+Subject: [PATCH 40/45] arm64: dts: qcom: kaanapali-oneplus-iceland: the PCIe0
+ WAKE# line is active low
+
+With GPIO_ACTIVE_HIGH the wake GPIO (TLMM 104, pulled up, pinctrl state wake-n) reads active all the time, so
+the root port dedicated wake IRQ fires as soon as the system enters s2idle: on the OnePlus Pad 4 every suspend
+with Wi-Fi enabled returned within a second with pm_wakeup_irq = 0000:00:00.0:wakeup, and slept for the full RTC
+alarm once that wakeup was disabled. PCIe WAKE# is an active-low open-drain signal.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 16066d23d..bd4fc183f 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1225,7 +1225,7 @@ &pcie0_phy {
+ };
+ 
+ &pcie_port0 {
+-	wake-gpios = <&tlmm 104 GPIO_ACTIVE_HIGH>;
++	wake-gpios = <&tlmm 104 GPIO_ACTIVE_LOW>;
+ 	reset-gpios = <&tlmm 102 GPIO_ACTIVE_LOW>;
+ 
+ 	wifi@0 {
+-- 
+2.43.0
+
