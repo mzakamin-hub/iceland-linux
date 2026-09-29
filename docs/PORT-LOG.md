@@ -86,3 +86,4 @@ Proof:
 - area-audio-1 (2026-09-29): all six amplifiers engage on stereo, each side exactly its three, and the user heard
   GNOME's Sound test.
 0051: the audioreach volume control stays within the topology maximum (area-audio-2: writes above 2056 rejected with EINVAL).
+0052: the WCD939x analog TX gain scale, 1.5 dB per step without a mute (measured in area-audio-2, reported in area-audio-4).
