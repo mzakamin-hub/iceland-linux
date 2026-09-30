@@ -1,0 +1,32 @@
+From 18b32803010f26778d84ce1499c69c8e2b8e92e2 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Wed, 30 Sep 2026 10:39:54 +0300
+Subject: [PATCH] arm64: dts: qcom: kaanapali: allow non-secure ADSP FastRPC
+ sessions
+
+Mark the ADSP FastRPC node as a non-secure domain, as on SM8650, so the
+fastrpc driver also creates /dev/fastrpc-adsp. Userspace such as
+hexagonrpcd needs it to start the sensors protection domain on the ADSP;
+without it only /dev/fastrpc-adsp-secure exists.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali.dtsi | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
+index 5d7511836..d3d30e442 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
++++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
+@@ -3456,6 +3456,7 @@ fastrpc {
+ 					compatible = "qcom,kaanapali-fastrpc";
+ 					qcom,glink-channels = "fastrpcglink-apps-dsp";
+ 					label = "adsp";
++					qcom,non-secure-domain;
+ 					#address-cells = <1>;
+ 					#size-cells = <0>;
+ 
+-- 
+2.43.0
+
