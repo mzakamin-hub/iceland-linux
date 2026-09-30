@@ -1,0 +1,56 @@
+From 19d78a9705122f8ee41eb72fd452201093e70726 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Wed, 30 Sep 2026 09:26:32 +0300
+Subject: [PATCH] drm/msm/dpu: trigger CTL_START in the encoder cleanup only
+ for writeback
+
+dpu_encoder_helper_phys_cleanup() ends with CTL_FLUSH and CTL_START for
+both of its callers, the writeback and the video encoder. CTL_START
+starts a writeback (or command mode) frame; the video encoder never uses
+it, it has no trigger_start op and its timing engine latches the flush.
+
+On DPU 13.0 (SM8850, Kaanapali) the CTL_START written here, after the
+video timing engine is off, breaks the enable that follows in the same
+commit, i.e. every modeset of a DSI video panel such as a refresh-rate
+change: the new flush stays pending in CTL_FLUSH (all blocks in use:
+INTF, merge 3D, DSC, the DMA pipe, both mixers), the source pipe never
+fetches and the panel stays black until the display is powered off and
+on again, which power-collapses the MDSS. A CTL reset at the enable does
+not help.
+
+On the OnePlus Pad 4 (DSI video panel, 144/120/60 Hz), judged by a
+camera: with CTL_START skipped for video, 5 of 5 live rate changes kept
+the picture; without, 0 of 3.
+
+Only trigger CTL_START for writeback.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+index d919c6213..74246be6a 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+@@ -2344,7 +2344,15 @@ void dpu_encoder_helper_phys_cleanup(struct dpu_encoder_phys *phys_enc)
+ 		ctl->ops.reset_intf_cfg(ctl, &intf_cfg);
+ 
+ 	ctl->ops.trigger_flush(ctl);
+-	ctl->ops.trigger_start(ctl);
++	/*
++	 * CTL_START kicks writeback here (command mode does not come here).
++	 * The video encoder never uses it: the timing engine latches the
++	 * flush. On DPU 13.x a CTL_START written once the timing engine is
++	 * off keeps the flush of an enable in the same commit (a modeset)
++	 * from latching, and the panel stays black.
++	 */
++	if (phys_enc->hw_wb)
++		ctl->ops.trigger_start(ctl);
+ 	ctl->ops.clear_pending_flush(ctl);
+ }
+ 
+-- 
+2.43.0
+
