@@ -1,0 +1,55 @@
+From d1f448728b5fe01fee61546382f7e88bde0a97cf Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Tue, 29 Sep 2026 23:33:27 +0300
+Subject: [PATCH 54/57] arm64: dts: qcom: kaanapali-oneplus-iceland: the stock
+ GPU levels
+
+The Pad 4's stock GPU table for its speed bin (0xfc) has an 1100 MHz
+level (TURBO_L2, ACD 0x88295ffd, bus index 11 = 20832031 kBps) between
+1050 and 1200 MHz, and votes bus index 9 (16500000 kBps) at 1000 and
+1050 MHz where kaanapali.dtsi votes 12449218 and 20832031 kBps. Take the
+stock values for this board.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../dts/qcom/kaanapali-oneplus-iceland.dts    | 23 +++++++++++++++++++
+ 1 file changed, 23 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index a99d97ee0..28283c08f 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -977,6 +977,29 @@ vreg_s4j_0p7: smps4 {
+ 	};
+ };
+ 
++&gpu_opp_table {
++	/*
++	 * The Pad 4's stock GPU levels (qcom,gpu-pwrlevels for speed bin 0xfc):
++	 * 1000 and 1050 MHz vote bus-table index 9 (16.5 GB/s), and there is
++	 * an 1100 MHz TURBO_L2 level between 1050 and 1200 MHz.
++	 */
++	opp-1000000000 {
++		opp-peak-kBps = <16500000>;
++	};
++
++	opp-1050000000 {
++		opp-peak-kBps = <16500000>;
++	};
++
++	opp-1100000000 {
++		opp-hz = /bits/ 64 <1100000000>;
++		opp-level = <RPMH_REGULATOR_LEVEL_TURBO_L2>;
++		opp-peak-kBps = <20832031>;
++		opp-supported-hw = <0x07>;
++		qcom,opp-acd-level = <0x88295ffd>;
++	};
++};
++
+ &gpu_zap_shader {
+ 	firmware-name = "qcom/kaanapali/iceland/gen80200_zap.mbn";
+ };
+-- 
+2.43.0
+

@@ -1,0 +1,277 @@
+From 4987a37af8b9bd6258c50a7acb2abd5e05c06f80 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Wed, 30 Sep 2026 01:03:34 +0300
+Subject: [PATCH 56/57] arm64: dts: qcom: kaanapali-oneplus-iceland: skin, XO
+ and USB-C thermal zones from stock
+
+Stock OxygenOS 11.A.38 watches three board sensors that the DT did not
+describe, and throttles or shuts down on them:
+
+- the skin thermistor (pmh0101_skin_therm, stock sys-therm-2). Stock
+  marks it at 48/49/50/60/61/90 C and throttles in its userspace thermal
+  service: the high-temperature protection steps in at 48 C (out at
+  46), protects at 51 C (out at 49) with the deepest gear of its table
+  (CPU 998400/883200 kHz, GPU 342 MHz) and shuts down at 70.0 C
+  (odm sys_high_temp_protect, sys_thermal_control_config). Here the
+  kernel does it: from 48 C the step-wise governor throttles as far as
+  needed, down to that gear at most; 51 C applies the gear at once;
+  70 C is critical;
+- the XO thermistor (pmk8850_xo_therm, stock sys-therm-0). Stock limits
+  the GPU from state 5 (826 MHz) and pauses CPUs 2-7 at 78 C
+  (hysteresis 8), takes CPUs 3-7 offline at 80 C (hysteresis 10) and
+  shuts down at 90 C. Mainline has no CPU pause or hotplug cooling
+  device, so both CPU steps hold the clusters at their lowest frequency;
+- the USB-C connector thermistors: usb_therm (stock sys-therm-11) and
+  the L/R pair that stock's connector protection reads (PMIH010x GPIO 6
+  and 18, kept high-impedance as stock does). Stock reads the L/R pair
+  as plain voltages and converts them in its charging driver; here the
+  ADC's 100k thermistor conversion does it, which needs the ratiometric
+  reading (read absolute they showed a steady 57 C next to a 30 C
+  board). The charging action (stop at 57 C, 69 C above a 50 C battery)
+  is taken by the userspace charging guard; the trips only mark the
+  limit.
+
+The cooling states match stock's: the cpufreq and GPU level tables are
+the same (cpu0 state 22 = 998400 kHz, cpu6 state 27 = 883200 kHz, GPU
+state 13 = 342 MHz, state 5 = 826 MHz).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ .../dts/qcom/kaanapali-oneplus-iceland.dts    | 206 ++++++++++++++++++
+ 1 file changed, 206 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 28283c08f..a03027e4d 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1375,6 +1375,9 @@ &pmih0108_e1_eusb2_repeater {
+ };
+ 
+ &pmk8850_vadc {
++	pinctrl-0 = <&usbtemp_l_default>, <&usbtemp_r_default>;
++	pinctrl-names = "default";
++
+ 	/* PMH0101 (SID 1) thermistors, 100k pull-up (stock: pmh0101_board_therm, pmh0101_flash_therm) */
+ 	channel@148 {
+ 		reg = <ADC5_GEN4_AMUX5_THM_100K_PU(0, 1)>;
+@@ -1391,6 +1394,64 @@ channel@14a {
+ 		qcom,hw-settle-time = <200>;
+ 		qcom,adc-tm;
+ 	};
++
++	/* stock: pmh0101_skin_therm (sys-therm-2), the skin thermistor */
++	channel@144 {
++		reg = <ADC5_GEN4_AMUX1_THM_100K_PU(0, 1)>;
++		label = "skin_therm";
++		qcom,ratiometric;
++		qcom,hw-settle-time = <200>;
++		qcom,adc-tm;
++	};
++
++	/* stock: pmih010x_usb_therm / usb_con_therm_adc (sys-therm-11), a USB-C connector thermistor */
++	channel@2747 {
++		reg = <ADC5_GEN4_AMUX4_THM_100K_PU(1, 7)>;
++		label = "usb_therm";
++		qcom,ratiometric;
++		qcom,hw-settle-time = <200>;
++		qcom,adc-tm;
++	};
++
++	/*
++	 * stock: usb_temp_adc_l / usb_temp_adc_r, the two USB-C connector thermistors that stock's connector
++	 * protection (oplus,mms_wired usbtemp) reads, on PMIH010x GPIO 6 and GPIO 18. Stock reads them as plain
++	 * voltages and converts in its charging driver; here the ADC's own 100k thermistor conversion does it,
++	 * which needs the ratiometric reading (as flash_therm on the same channel type). Read absolute, both
++	 * showed a steady 57 C next to a 30 C board (area-thermal-1).
++	 */
++	channel@274a {
++		reg = <ADC5_GEN4_AMUX1_GPIO_100K_PU(1, 7)>;
++		label = "usb_temp_l";
++		qcom,ratiometric;
++		qcom,hw-settle-time = <200>;
++		qcom,adc-tm;
++	};
++
++	channel@275e {
++		reg = <ADC5_GEN4_AMUX5_GPIO_100K_PU(1, 7)>;
++		label = "usb_temp_r";
++		qcom,ratiometric;
++		qcom,hw-settle-time = <200>;
++		qcom,adc-tm;
++	};
++};
++
++&pmih0108_e1_gpios {
++	/* stock usbtemp_l_gpio_default / usbtemp_r_gpio_default: the pins stay high-impedance for the ADC */
++	usbtemp_l_default: usbtemp-l-default-state {
++		pins = "gpio6";
++		function = "normal";
++		bias-high-impedance;
++		bias-disable;
++	};
++
++	usbtemp_r_default: usbtemp-r-default-state {
++		pins = "gpio18";
++		function = "normal";
++		bias-high-impedance;
++		bias-disable;
++	};
+ };
+ 
+ &pon_resin {
+@@ -1709,6 +1770,151 @@ flash-hot {
+ 			};
+ 		};
+ 	};
++
++	/*
++	 * Skin. Stock marks this sensor (sys-therm-2) at 48, 49, 50, 60, 61 and 90 C and leaves the throttling to
++	 * its userspace thermal service; that service's high-temperature protection steps in at 48 C (out at 46),
++	 * protects at 51 C (out at 49) with the deepest gear of its table (CPU level 13 = 998400 / 883200 kHz,
++	 * GPU level 6 = 342 MHz) and shuts down at 70.0 C (odm sys_high_temp_protect, sys_thermal_control_config).
++	 * The same steps are done here in the kernel: from 48 C the step-wise governor throttles as far as needed,
++	 * down to that deepest gear at most; at 51 C the deepest gear applies at once; 70 C shuts down.
++	 * Cooling states: cpufreq-cpu0 22 = 998400 kHz, cpufreq-cpu6 27 = 883200 kHz, GPU 13 = 342 MHz.
++	 */
++	skin-thermal {
++		polling-delay-passive = <1000>;
++		polling-delay = <2000>;
++		thermal-sensors = <&pmk8850_vadc ADC5_GEN4_AMUX1_THM_100K_PU(0, 1)>;
++
++		trips {
++			skin_alert0: skin-alert0 {
++				temperature = <48000>;
++				hysteresis = <2000>;
++				type = "passive";
++			};
++
++			skin_alert1: skin-alert1 {
++				temperature = <51000>;
++				hysteresis = <2000>;
++				type = "passive";
++			};
++
++			skin-critical {
++				temperature = <70000>;
++				hysteresis = <0>;
++				type = "critical";
++			};
++		};
++
++		cooling-maps {
++			map0 {
++				trip = <&skin_alert0>;
++				cooling-device = <&cpu0 0 22>,
++						 <&cpu6 0 27>,
++						 <&gpu 0 13>;
++			};
++
++			map1 {
++				trip = <&skin_alert1>;
++				cooling-device = <&cpu0 22 22>,
++						 <&cpu6 27 27>,
++						 <&gpu 13 13>;
++			};
++		};
++	};
++
++	/*
++	 * XO / board: stock sys-therm-0 = pmk8850_xo_therm. At 78 C (hysteresis 8) stock limits the GPU from
++	 * state 5 (826 MHz) upwards and pauses CPUs 2-7; at 80 C (hysteresis 10) it takes CPUs 3-7 offline; at
++	 * 90 C it shuts down. Mainline has no CPU pause or hotplug cooling device, so both CPU steps hold the
++	 * clusters at their lowest frequency instead.
++	 */
++	xo-thermal {
++		polling-delay-passive = <1000>;
++		polling-delay = <2000>;
++		thermal-sensors = <&pmk8850_vadc ADC5_GEN4_AMUX1_THM_100K_PU(0, 0)>;
++
++		trips {
++			xo_alert0: xo-alert0 {
++				temperature = <78000>;
++				hysteresis = <8000>;
++				type = "passive";
++			};
++
++			xo_alert1: xo-alert1 {
++				temperature = <80000>;
++				hysteresis = <10000>;
++				type = "passive";
++			};
++
++			xo-critical {
++				temperature = <90000>;
++				hysteresis = <0>;
++				type = "critical";
++			};
++		};
++
++		cooling-maps {
++			map0 {
++				trip = <&xo_alert0>;
++				cooling-device = <&gpu 5 THERMAL_NO_LIMIT>,
++						 <&cpu0 27 27>,
++						 <&cpu6 28 28>;
++			};
++
++			map1 {
++				trip = <&xo_alert1>;
++				cooling-device = <&cpu0 27 27>,
++						 <&cpu6 28 28>;
++			};
++		};
++	};
++
++	/*
++	 * USB-C connector. Stock's connector protection stops charging at 57 C (69 C with the battery above
++	 * 50 C) on the L/R thermistors; that is done by iceland-battery-guard in userspace, which reads all three
++	 * zones. The trips only mark the stock limit.
++	 */
++	usb-therm-thermal {
++		polling-delay-passive = <1000>;
++		polling-delay = <5000>;
++		thermal-sensors = <&pmk8850_vadc ADC5_GEN4_AMUX4_THM_100K_PU(1, 7)>;
++
++		trips {
++			usb-therm-hot {
++				temperature = <57000>;
++				hysteresis = <5000>;
++				type = "passive";
++			};
++		};
++	};
++
++	usb-temp-l-thermal {
++		polling-delay-passive = <1000>;
++		polling-delay = <5000>;
++		thermal-sensors = <&pmk8850_vadc ADC5_GEN4_AMUX1_GPIO_100K_PU(1, 7)>;
++
++		trips {
++			usb-temp-l-hot {
++				temperature = <57000>;
++				hysteresis = <5000>;
++				type = "passive";
++			};
++		};
++	};
++
++	usb-temp-r-thermal {
++		polling-delay-passive = <1000>;
++		polling-delay = <5000>;
++		thermal-sensors = <&pmk8850_vadc ADC5_GEN4_AMUX5_GPIO_100K_PU(1, 7)>;
++
++		trips {
++			usb-temp-r-hot {
++				temperature = <57000>;
++				hysteresis = <5000>;
++				type = "passive";
++			};
++		};
++	};
+ };
+ 
+ /* CPU thermal trips mirroring stock 11.A.38 */
+-- 
+2.43.0
+
