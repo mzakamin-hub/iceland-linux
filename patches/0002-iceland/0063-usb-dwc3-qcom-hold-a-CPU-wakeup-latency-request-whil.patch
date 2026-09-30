@@ -1,0 +1,104 @@
+From 320c54661807615ff7f85a97d683b6cd66c235cc Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Wed, 30 Sep 2026 15:57:40 +0300
+Subject: [PATCH] usb: dwc3: qcom: hold a CPU wakeup latency request while
+ active
+
+On SM8850 (OnePlus Pad 4) fast inbound transfers - the host writing into
+the controller at 15 MB/s or more - hang the SoC while the CPUs are
+allowed to power collapse: interrupts from the PMIC go missing first,
+then the watchdog resets the board. With the power-collapse idle states
+disabled, or with a 2 us CPU latency request held, the same transfers
+run at 36 MB/s without a problem. The downstream dwc3-msm driver holds
+exactly that request while USB is busy (qcom,pm-qos-latency = <2>).
+
+Hold a 2 us CPU latency request while the controller is active and
+release it when the glue suspends, so an idle or disconnected port
+costs nothing.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/usb/dwc3/dwc3-qcom.c | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/drivers/usb/dwc3/dwc3-qcom.c b/drivers/usb/dwc3/dwc3-qcom.c
+index ac68b4218..0664fdb84 100644
+--- a/drivers/usb/dwc3/dwc3-qcom.c
++++ b/drivers/usb/dwc3/dwc3-qcom.c
+@@ -15,6 +15,7 @@
+ #include <linux/platform_device.h>
+ #include <linux/phy/phy.h>
+ #include <linux/usb/of.h>
++#include <linux/pm_qos.h>
+ #include <linux/reset.h>
+ #include <linux/iopoll.h>
+ #include <linux/usb/hcd.h>
+@@ -50,6 +51,14 @@
+ #define APPS_USB_AVG_BW 0
+ #define APPS_USB_PEAK_BW MBps_to_icc(40)
+ 
++/*
++ * CPU wakeup latency the controller needs while it is active. Fast inbound
++ * transfers with the CPUs allowed to power collapse hang some SoCs (seen on
++ * SM8850); the downstream dwc3-msm driver holds the same 2 us request while
++ * USB is busy.
++ */
++#define DWC3_QCOM_PM_QOS_LATENCY_US	2
++
+ /* Qualcomm SoCs with multiport support has up to 4 ports */
+ #define DWC3_QCOM_MAX_PORTS	4
+ 
+@@ -85,6 +94,8 @@ struct dwc3_qcom {
+ 	struct icc_path		*icc_path_apps;
+ 
+ 	enum usb_role		current_role;
++
++	struct pm_qos_request	pm_qos_req;
+ };
+ 
+ #define to_dwc3_qcom(d) container_of((d), struct dwc3_qcom, dwc)
+@@ -364,6 +375,7 @@ static int dwc3_qcom_suspend(struct dwc3_qcom *qcom, bool wakeup)
+ 		dwc3_qcom_enable_interrupts(qcom);
+ 	}
+ 
++	cpu_latency_qos_update_request(&qcom->pm_qos_req, PM_QOS_DEFAULT_VALUE);
+ 	qcom->is_suspended = true;
+ 
+ 	return 0;
+@@ -395,6 +407,7 @@ static int dwc3_qcom_resume(struct dwc3_qcom *qcom, bool wakeup)
+ 				  PWR_EVNT_LPM_IN_L2_MASK | PWR_EVNT_LPM_OUT_L2_MASK);
+ 	}
+ 
++	cpu_latency_qos_update_request(&qcom->pm_qos_req, DWC3_QCOM_PM_QOS_LATENCY_US);
+ 	qcom->is_suspended = false;
+ 
+ 	return 0;
+@@ -705,6 +718,7 @@ static int dwc3_qcom_probe(struct platform_device *pdev)
+ 	probe_data.res = &res;
+ 	probe_data.ignore_clocks_and_resets = true;
+ 	probe_data.properties = DWC3_DEFAULT_PROPERTIES;
++	cpu_latency_qos_add_request(&qcom->pm_qos_req, DWC3_QCOM_PM_QOS_LATENCY_US);
+ 	ret = dwc3_core_probe(&probe_data);
+ 	if (ret)  {
+ 		ret = dev_err_probe(dev, ret, "failed to register DWC3 Core\n");
+@@ -725,6 +739,8 @@ static int dwc3_qcom_probe(struct platform_device *pdev)
+ remove_core:
+ 	dwc3_core_remove(&qcom->dwc);
+ clk_disable:
++	if (cpu_latency_qos_request_active(&qcom->pm_qos_req))
++		cpu_latency_qos_remove_request(&qcom->pm_qos_req);
+ 	clk_bulk_disable_unprepare(qcom->num_clocks, qcom->clks);
+ 
+ 	return ret;
+@@ -741,6 +757,7 @@ static void dwc3_qcom_remove(struct platform_device *pdev)
+ 	dwc3_core_remove(&qcom->dwc);
+ 	clk_bulk_disable_unprepare(qcom->num_clocks, qcom->clks);
+ 	dwc3_qcom_interconnect_exit(qcom);
++	cpu_latency_qos_remove_request(&qcom->pm_qos_req);
+ 
+ 	pm_runtime_put_noidle(qcom->dev);
+ }
+-- 
+2.43.0
+
