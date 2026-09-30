@@ -1,0 +1,69 @@
+From 0ddb7bd8e6f93e02a6e3651bd0a4d8657b7a70d4 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Wed, 30 Sep 2026 10:07:42 +0300
+Subject: [PATCH 60/60] drm/msm/mdss: wait for the MDSS to leave reset in the
+ splash take-over
+
+msm_mdss_take_over_splash() resets the MDSS and programs the UBWC setup
+right after deasserting the reset. msm_mdss_setup_ubwc() reads the
+hardware version first and skips the setup when it reads 0, which it
+can while the block is still coming out of reset. The display then
+stays powered into the first modeset, so nothing programs UBWC again
+until the next MDSS power cycle.
+
+On the OnePlus Pad 4 (DPU 13.0, UBWC 6.0) this showed up after some
+boots as pink/blue speckled textures in the first GNOME session, gone
+after a display off/on. Register dumps of that state: UBWC_STATIC 0x0e
+instead of 0x103e (highest bank bit 13 instead of 16), UBWC_CTRL_2 1
+instead of 5, PREDICTION_MODE 0 instead of 1, and the source pipe
+reporting UBWC decode errors.
+
+Poll the hardware version after the reset before the UBWC setup.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/msm_mdss.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/drivers/gpu/drm/msm/msm_mdss.c b/drivers/gpu/drm/msm/msm_mdss.c
+index bb2e0a7d3..b1335fe37 100644
+--- a/drivers/gpu/drm/msm/msm_mdss.c
++++ b/drivers/gpu/drm/msm/msm_mdss.c
+@@ -11,6 +11,7 @@
+ #include <linux/irqchip.h>
+ #include <linux/irqdesc.h>
+ #include <linux/irqchip/chained_irq.h>
++#include <linux/iopoll.h>
+ #include <linux/of_platform.h>
+ #include <linux/platform_device.h>
+ #include <linux/pm_domain.h>
+@@ -368,6 +369,7 @@ void msm_mdss_take_over_splash(struct device *dev)
+ {
+ 	struct msm_mdss *msm_mdss;
+ 	struct reset_control *reset;
++	u32 hw_rev;
+ 
+ 	if (!dev || dev->driver != &mdss_platform_driver.driver)
+ 		return;
+@@ -388,6 +390,17 @@ void msm_mdss_take_over_splash(struct device *dev)
+ 	reset_control_deassert(reset);
+ 	reset_control_put(reset);
+ 
++	/*
++	 * The MDSS reads back 0 until it is out of reset, and
++	 * msm_mdss_setup_ubwc() skips the UBWC setup on a zero hardware
++	 * version. The display stays powered from here into the first
++	 * modeset, so a skipped setup lasts until the next power cycle: the
++	 * DPU then decodes UBWC buffers with the reset values. Wait for it.
++	 */
++	if (readl_poll_timeout(msm_mdss->mmio + REG_MDSS_HW_VERSION, hw_rev,
++			       hw_rev, 10, 20000))
++		dev_warn(dev, "MDSS still in reset after the splash take-over\n");
++
+ 	msm_mdss_setup_ubwc(msm_mdss);
+ 
+ 	pm_runtime_put_sync(dev);
+-- 
+2.43.0
+
