@@ -1,0 +1,36 @@
+From 7e9db2fc8863e11a66cc11ff00d517c501f47b41 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Wed, 30 Sep 2026 14:45:06 +0300
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: enable the video
+ codec
+
+Enable Iris with the firmware the Pad 4 ships (vpu40_2v, the image its
+stock video driver loads on this SKU). The video_mem carve-out in
+kaanapali.dtsi matches the stock reservation.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index a03027e4d..26a1eb8cd 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1139,6 +1139,12 @@ &mdss {
+ 	status = "okay";
+ };
+ 
++&iris {
++	firmware-name = "qcom/kaanapali/iceland/vpu40_2v.mbn";
++
++	status = "okay";
++};
++
+ &mdss_dsi0 {
+ 	vdda-supply = <&vreg_l1d_1p2>;
+ 	qcom,dual-dsi-mode;
+-- 
+2.43.0
+
