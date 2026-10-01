@@ -1,0 +1,280 @@
+From 9c0f83a7fbd816ab1e7ac7d053a990faf6ac3971 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 00:42:13 +0300
+Subject: [PATCH 71/72] power: supply: qcom_battmgr: OPLUS: charge, averaged
+ current and status for user space
+
+UPower estimates the remaining time as charge / current and takes the
+state from the status and from the sign of the current. On the OnePlus
+Pad 4 all three were unusable:
+
+- CHARGE_NOW read "No data available": the "remaining" word of the gauge
+  snapshot is not a charge there (it has read 5888254, 17 and 0 against a
+  full charge capacity of 13786 mAh). Report the gauge's state of charge
+  (0.01 % steps) of its full charge capacity instead; the firmware's own
+  charge counter gives the same number.
+- CURRENT_NOW was one 1 Hz gauge sample that swings by hundreds of mA.
+  Report the mean of the last 12 samples, taken every 5 s in the attach
+  poll (the vendor's gauge period). A charger change, the host's charge
+  inhibit and a gap of more than 30 s restart the mean; with a charger in,
+  a mean within 20 mA reads 0.
+- STATUS was forced to Charging whenever USB was online, also while a weak
+  port could not hold the load. Derive it from the mean: Full at 100 % with
+  a charger in, Charging or Discharging by its sign, Not charging at 0.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ drivers/power/supply/qcom_battmgr.c | 165 +++++++++++++++++++++++++---
+ 1 file changed, 151 insertions(+), 14 deletions(-)
+
+diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
+index 4546a9e86..38f521408 100644
+--- a/drivers/power/supply/qcom_battmgr.c
++++ b/drivers/power/supply/qcom_battmgr.c
+@@ -8,6 +8,8 @@
+ #include <linux/delay.h>
+ #include <linux/devm-helpers.h>
+ #include <linux/jiffies.h>
++#include <linux/ktime.h>
++#include <linux/math64.h>
+ #include <linux/module.h>
+ #include <linux/mutex.h>
+ #include <linux/nvmem-consumer.h>
+@@ -137,6 +139,20 @@ enum qcom_battmgr_variant {
+ #define OPLUS_GAUGE_FCC			6
+ #define OPLUS_GAUGE_SOH			8
+ 
++/*
++ * The battery current for user space: the gauge word is an instantaneous 1 Hz
++ * reading. It is sampled about as often as the stock gauge topic is updated
++ * (oplus,topic-update-interval = 5000 ms) and averaged over one minute.
++ */
++#define OPLUS_CURR_SAMPLE_MS		5000
++#define OPLUS_CURR_SAMPLES		12
++#define OPLUS_CURR_GAP_MS		(6 * OPLUS_CURR_SAMPLE_MS)
++/*
++ * With a charger in, a mean current inside this band is neither charging nor
++ * discharging (the gauge reads -9..+2 mA with charging inhibited).
++ */
++#define OPLUS_CURR_DEADBAND_UA		20000
++
+ #define OPLUS_CID_GRACE_MS		500
+ #define OPLUS_CID_POLL_MS		2000
+ #define OPLUS_CID_IDLE_POLL_MS		5000
+@@ -405,6 +421,16 @@ struct qcom_battmgr {
+ 	bool chg_inhibit;
+ 	unsigned long gauge_time;
+ 
++	/* the mean of the last gauge current samples, see qcom_battmgr_oplus_sample() */
++	int curr_samples[OPLUS_CURR_SAMPLES];
++	unsigned int curr_count;
++	unsigned int curr_next;
++	int curr_avg;
++	s64 curr_time_ms;
++	bool curr_online;
++	bool curr_inhibit;
++	int last_status;
++
+ 	/*
+ 	 * @lock is used to prevent concurrent power supply requests to the
+ 	 * firmware, as it then stops responding.
+@@ -517,6 +543,113 @@ static int qcom_battmgr_oplus_update_gauge(struct qcom_battmgr *battmgr)
+ 	return ret;
+ }
+ 
++static bool qcom_battmgr_oplus_online(struct qcom_battmgr *battmgr)
++{
++	return battmgr->usb.online || battmgr->wireless.online;
++}
++
++/*
++ * The battery current reported to user space. The gauge's reading is
++ * instantaneous and swings by hundreds of mA with the load, and so does every
++ * time estimate computed from it: report the one-minute mean instead (as
++ * bq27xxx reports its gauge's average current). With a charger in, a mean
++ * inside the gauge's noise is reported as 0, so that "Not charging" never
++ * comes with a small current of either sign.
++ */
++static int qcom_battmgr_oplus_current(struct qcom_battmgr *battmgr)
++{
++	int curr = battmgr->curr_count ? battmgr->curr_avg : battmgr->status.current_now;
++
++	if (qcom_battmgr_oplus_online(battmgr) && abs(curr) <= OPLUS_CURR_DEADBAND_UA)
++		return 0;
++
++	return curr;
++}
++
++/*
++ * The firmware updates its status lazily, and it says Charging for as long as
++ * a charger is in: also when the gauge is full, when the host inhibited
++ * charging and when the charger (a PC's USB port) gives less than the system
++ * draws. Derive the status from the gauge instead, the way adc-battery-helper
++ * and bq27xxx do: a full gauge is Full, else the sign of the mean current
++ * decides between Charging and Discharging and no current is Not charging.
++ */
++static int qcom_battmgr_oplus_status(struct qcom_battmgr *battmgr)
++{
++	int status = battmgr->status.status;
++	int curr;
++
++	if (!qcom_battmgr_oplus_online(battmgr))
++		return status == POWER_SUPPLY_STATUS_CHARGING ?
++			POWER_SUPPLY_STATUS_DISCHARGING : status;
++
++	if (status != POWER_SUPPLY_STATUS_CHARGING &&
++	    status != POWER_SUPPLY_STATUS_DISCHARGING)
++		return status;
++
++	if (battmgr->status.percent != (unsigned int)-1 &&
++	    battmgr->status.percent >= 100)
++		return POWER_SUPPLY_STATUS_FULL;
++
++	curr = qcom_battmgr_oplus_current(battmgr);
++	if (curr > 0)
++		return POWER_SUPPLY_STATUS_CHARGING;
++	if (curr < 0)
++		return POWER_SUPPLY_STATUS_DISCHARGING;
++
++	return POWER_SUPPLY_STATUS_NOT_CHARGING;
++}
++
++/*
++ * Take one gauge current sample into the mean. Called from the attach poll
++ * with the lock held and usb.online fresh. Returns true if the status
++ * reported to user space changed.
++ */
++static bool qcom_battmgr_oplus_sample(struct qcom_battmgr *battmgr)
++{
++	bool online = qcom_battmgr_oplus_online(battmgr);
++	s64 now = ktime_to_ms(ktime_get_boottime());
++	s64 sum = 0;
++	unsigned int i;
++	int status;
++
++	if (battmgr->curr_count &&
++	    now - battmgr->curr_time_ms < OPLUS_CURR_SAMPLE_MS - 500)
++		return false;
++
++	if (qcom_battmgr_oplus_update_gauge(battmgr))
++		return false;
++
++	/*
++	 * A charger attach or detach and the host's inhibit step the current,
++	 * and after a gap (suspend) the old samples say nothing: a new mean.
++	 */
++	if (online != battmgr->curr_online ||
++	    battmgr->chg_inhibit != battmgr->curr_inhibit ||
++	    now - battmgr->curr_time_ms > OPLUS_CURR_GAP_MS) {
++		battmgr->curr_count = 0;
++		battmgr->curr_next = 0;
++	}
++	battmgr->curr_online = online;
++	battmgr->curr_inhibit = battmgr->chg_inhibit;
++	battmgr->curr_time_ms = now;
++
++	battmgr->curr_samples[battmgr->curr_next] = battmgr->status.current_now;
++	battmgr->curr_next = (battmgr->curr_next + 1) % OPLUS_CURR_SAMPLES;
++	if (battmgr->curr_count < OPLUS_CURR_SAMPLES)
++		battmgr->curr_count++;
++	for (i = 0; i < battmgr->curr_count; i++)
++		sum += battmgr->curr_samples[i];
++	battmgr->curr_avg = div_s64(sum, battmgr->curr_count);
++
++	status = qcom_battmgr_oplus_status(battmgr);
++	if (status == battmgr->last_status)
++		return false;
++	battmgr->last_status = status;
++
++	return true;
++}
++
+ static bool qcom_battmgr_oplus_is_gauge_prop(enum power_supply_property psp)
+ {
+ 	switch (psp) {
+@@ -582,6 +715,8 @@ static int qcom_battmgr_bat_sm8350_update(struct qcom_battmgr *battmgr,
+ 
+ 	mutex_lock(&battmgr->lock);
+ 	if (battmgr->variant == QCOM_BATTMGR_OPLUS && psp == POWER_SUPPLY_PROP_STATUS) {
++		/* the status is derived from the gauge too: refresh it (best effort) */
++		qcom_battmgr_oplus_update_gauge(battmgr);
+ 		ret = qcom_battmgr_request_property(battmgr, BATTMGR_USB_PROPERTY_GET,
+ 						    USB_ONLINE, 0);
+ 		if (ret)
+@@ -678,15 +813,8 @@ static int qcom_battmgr_bat_get_property(struct power_supply *psy,
+ 	switch (psp) {
+ 	case POWER_SUPPLY_PROP_STATUS:
+ 		val->intval = battmgr->status.status;
+-		/* The Oplus firmware updates the status lazily */
+-		if (battmgr->variant == QCOM_BATTMGR_OPLUS) {
+-			bool online = battmgr->usb.online || battmgr->wireless.online;
+-
+-			if (online && val->intval == POWER_SUPPLY_STATUS_DISCHARGING)
+-				val->intval = POWER_SUPPLY_STATUS_CHARGING;
+-			else if (!online && val->intval == POWER_SUPPLY_STATUS_CHARGING)
+-				val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
+-		}
++		if (battmgr->variant == QCOM_BATTMGR_OPLUS)
++			val->intval = qcom_battmgr_oplus_status(battmgr);
+ 		break;
+ 	case POWER_SUPPLY_PROP_CHARGE_TYPE:
+ 		val->intval = battmgr->info.charge_type;
+@@ -717,6 +845,8 @@ static int qcom_battmgr_bat_get_property(struct power_supply *psy,
+ 		break;
+ 	case POWER_SUPPLY_PROP_CURRENT_NOW:
+ 		val->intval = battmgr->status.current_now;
++		if (battmgr->variant == QCOM_BATTMGR_OPLUS)
++			val->intval = qcom_battmgr_oplus_current(battmgr);
+ 		break;
+ 	case POWER_SUPPLY_PROP_POWER_NOW:
+ 		val->intval = battmgr->status.power_now;
+@@ -1841,11 +1971,13 @@ static void qcom_battmgr_oplus_gauge_callback(struct qcom_battmgr *battmgr,
+ 	battmgr->info.cycle_count = le32_to_cpu(data[OPLUS_GAUGE_CYCLE_COUNT]);
+ 	battmgr->info.last_full_capacity = le32_to_cpu(data[OPLUS_GAUGE_FCC]) * 1000;
+ 	/*
+-	 * Not every OPLUS gauge fills the "remaining" word with a charge (the Pad 4's QBG reports ~1.59e6 against
+-	 * an FCC of 13789 mAh): keep it only when it is plausible, else CHARGE_NOW is not offered.
++	 * The "remaining" word of the gauge snapshot is not a charge on every OPLUS gauge (the Pad 4's QBG has
++	 * shown 5888254, 17 and 0 there against an FCC of 13786 mAh; stock reads its remaining charge with a
++	 * separate request). CHARGE_NOW is the gauge's state of charge (0.01 % steps) of its full charge
++	 * capacity, as cw2015_battery derives it; the firmware's BATT_CHG_COUNTER gives the same number.
+ 	 */
+-	if (battmgr->status.capacity > battmgr->info.last_full_capacity)
+-		battmgr->status.capacity = 0;
++	battmgr->status.capacity = le32_to_cpu(data[OPLUS_GAUGE_FCC]) *
++				   min(le32_to_cpu(data[OPLUS_GAUGE_SOC]), 10000U) / 10;
+ 
+ out_complete:
+ 	complete(&battmgr->ack);
+@@ -2101,7 +2233,7 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+ 	struct qcom_battmgr *battmgr = container_of(to_delayed_work(work),
+ 						    struct qcom_battmgr, cid_work);
+ 	unsigned int next = OPLUS_CID_POLL_MS;
+-	bool attached, setup_charger = false;
++	bool attached, setup_charger = false, status_changed = false;
+ 	int ret;
+ 
+ 	if (!battmgr->service_up)
+@@ -2119,6 +2251,8 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+ 	if (ret)
+ 		goto out_unlock;
+ 
++	status_changed = qcom_battmgr_oplus_sample(battmgr);
++
+ 	if (!attached || battmgr->usb.online) {
+ 		if (battmgr->otg_boost_on) {
+ 			qcom_battmgr_oplus_set(battmgr, OPLUS_USB_OTG_VBUS_ENABLE, 0);
+@@ -2167,6 +2301,9 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+ out_unlock:
+ 	mutex_unlock(&battmgr->lock);
+ 
++	if (status_changed)
++		power_supply_changed(battmgr->bat_psy);
++
+ 	if (setup_charger)
+ 		qcom_battmgr_oplus_setup_charger(battmgr);
+ 
+-- 
+2.43.0
+
