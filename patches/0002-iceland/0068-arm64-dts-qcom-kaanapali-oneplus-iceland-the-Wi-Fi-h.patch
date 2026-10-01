@@ -1,0 +1,33 @@
+From d8e314f7cff5aa1ff66626f7bd8337f1ca5a9e8b Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Thu, 1 Oct 2026 23:25:43 +0300
+Subject: [PATCH 68/68] arm64: dts: qcom: kaanapali-oneplus-iceland: the Wi-Fi
+ hardware has no SBS
+
+The vendor's Wi-Fi configuration for the Pad 4 disables SBS (enable_sbs=0,
+"the hardware does not support sbs mode"). Without it scans that cover the
+whole 5 GHz band lose the networks on channels 36-64.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 26a1eb8cd..abe082adc 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1261,6 +1261,9 @@ wifi@0 {
+ 		compatible = "pci17cb,110e";
+ 		reg = <0x10000 0x0 0x0 0x0 0x0>;
+ 
++		/* stock: enable_sbs=0, "the hardware does not support sbs mode" */
++		qcom,no-sbs;
++
+ 		vddrfacmn-supply = <&vreg_pmu_rfa_cmn>;
+ 		vddaon-supply = <&vreg_pmu_aon_0p59>;
+ 		vddwlcx-supply = <&vreg_pmu_wlcx_0p8>;
+-- 
+2.43.0
+
