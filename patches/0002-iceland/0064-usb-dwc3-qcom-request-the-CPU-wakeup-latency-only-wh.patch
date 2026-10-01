@@ -1,0 +1,154 @@
+From 4d8f3f717d01c308fa2f25259aba4bd5cb6ca39c Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Thu, 1 Oct 2026 20:50:57 +0300
+Subject: [PATCH] usb: dwc3: qcom: request the CPU wakeup latency only while
+ USB is busy
+
+Holding the 2 us CPU wakeup latency request whenever the controller is
+active keeps the CPUs out of every idle state deeper than WFI for as long
+as a data cable or an accessory is attached. The downstream dwc3-msm driver
+makes the request only while the controller is busy: it samples the
+interrupt count every 100 ms, requests the latency at 200 interrupts or more
+per sample, then checks every 2 s and drops the request below 400 per
+sample. Do the same.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ drivers/usb/dwc3/dwc3-qcom.c | 62 ++++++++++++++++++++++++++++++++----
+ 1 file changed, 55 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/usb/dwc3/dwc3-qcom.c b/drivers/usb/dwc3/dwc3-qcom.c
+index 0664fdb84..ab98c2d7f 100644
+--- a/drivers/usb/dwc3/dwc3-qcom.c
++++ b/drivers/usb/dwc3/dwc3-qcom.c
+@@ -18,6 +18,7 @@
+ #include <linux/pm_qos.h>
+ #include <linux/reset.h>
+ #include <linux/iopoll.h>
++#include <linux/kernel_stat.h>
+ #include <linux/usb/hcd.h>
+ #include <linux/usb.h>
+ #include "core.h"
+@@ -52,12 +53,17 @@
+ #define APPS_USB_PEAK_BW MBps_to_icc(40)
+ 
+ /*
+- * CPU wakeup latency the controller needs while it is active. Fast inbound
+- * transfers with the CPUs allowed to power collapse hang some SoCs (seen on
+- * SM8850); the downstream dwc3-msm driver holds the same 2 us request while
+- * USB is busy.
++ * CPU wakeup latency (us) requested while USB is busy: fast transfers with the
++ * CPUs allowed to power collapse hang some SoCs (seen on SM8850). As in the
++ * downstream dwc3-msm driver the controller's interrupt count is sampled: at
++ * 200 interrupts or more in 100 ms the request is made; while it is held the
++ * count is checked every 2 s and the request dropped below 400 per sample.
+  */
+ #define DWC3_QCOM_PM_QOS_LATENCY_US	2
++#define DWC3_QCOM_QOS_SAMPLE_MS		100
++#define DWC3_QCOM_QOS_THRESHOLD		200
++#define DWC3_QCOM_QOS_BUSY_SAMPLE_MS	2000
++#define DWC3_QCOM_QOS_BUSY_THRESHOLD	400
+ 
+ /* Qualcomm SoCs with multiport support has up to 4 ports */
+ #define DWC3_QCOM_MAX_PORTS	4
+@@ -96,6 +102,10 @@ struct dwc3_qcom {
+ 	enum usb_role		current_role;
+ 
+ 	struct pm_qos_request	pm_qos_req;
++	struct delayed_work	qos_work;
++	int			qos_irq;
++	unsigned int		qos_irq_count;
++	bool			qos_busy;
+ };
+ 
+ #define to_dwc3_qcom(d) container_of((d), struct dwc3_qcom, dwc)
+@@ -346,6 +356,40 @@ static void dwc3_qcom_enable_interrupts(struct dwc3_qcom *qcom)
+ 		dwc3_qcom_enable_port_interrupts(&qcom->ports[i]);
+ }
+ 
++static void dwc3_qcom_qos_work(struct work_struct *work)
++{
++	struct dwc3_qcom *qcom = container_of(work, struct dwc3_qcom, qos_work.work);
++	unsigned int threshold = qcom->qos_busy ? DWC3_QCOM_QOS_BUSY_THRESHOLD : DWC3_QCOM_QOS_THRESHOLD;
++	unsigned int count = kstat_irqs_usr(qcom->qos_irq);
++	bool busy = count - qcom->qos_irq_count >= threshold;
++
++	qcom->qos_irq_count = count;
++	if (busy != qcom->qos_busy) {
++		cpu_latency_qos_update_request(&qcom->pm_qos_req,
++					       busy ? DWC3_QCOM_PM_QOS_LATENCY_US : PM_QOS_DEFAULT_VALUE);
++		qcom->qos_busy = busy;
++	}
++
++	schedule_delayed_work(&qcom->qos_work,
++			      msecs_to_jiffies(busy ? DWC3_QCOM_QOS_BUSY_SAMPLE_MS : DWC3_QCOM_QOS_SAMPLE_MS));
++}
++
++static void dwc3_qcom_qos_start(struct dwc3_qcom *qcom)
++{
++	if (qcom->qos_irq <= 0)
++		return;
++
++	qcom->qos_irq_count = kstat_irqs_usr(qcom->qos_irq);
++	schedule_delayed_work(&qcom->qos_work, msecs_to_jiffies(DWC3_QCOM_QOS_SAMPLE_MS));
++}
++
++static void dwc3_qcom_qos_stop(struct dwc3_qcom *qcom)
++{
++	cancel_delayed_work_sync(&qcom->qos_work);
++	cpu_latency_qos_update_request(&qcom->pm_qos_req, PM_QOS_DEFAULT_VALUE);
++	qcom->qos_busy = false;
++}
++
+ static int dwc3_qcom_suspend(struct dwc3_qcom *qcom, bool wakeup)
+ {
+ 	u32 val;
+@@ -375,7 +419,7 @@ static int dwc3_qcom_suspend(struct dwc3_qcom *qcom, bool wakeup)
+ 		dwc3_qcom_enable_interrupts(qcom);
+ 	}
+ 
+-	cpu_latency_qos_update_request(&qcom->pm_qos_req, PM_QOS_DEFAULT_VALUE);
++	dwc3_qcom_qos_stop(qcom);
+ 	qcom->is_suspended = true;
+ 
+ 	return 0;
+@@ -407,7 +451,7 @@ static int dwc3_qcom_resume(struct dwc3_qcom *qcom, bool wakeup)
+ 				  PWR_EVNT_LPM_IN_L2_MASK | PWR_EVNT_LPM_OUT_L2_MASK);
+ 	}
+ 
+-	cpu_latency_qos_update_request(&qcom->pm_qos_req, DWC3_QCOM_PM_QOS_LATENCY_US);
++	dwc3_qcom_qos_start(qcom);
+ 	qcom->is_suspended = false;
+ 
+ 	return 0;
+@@ -718,7 +762,9 @@ static int dwc3_qcom_probe(struct platform_device *pdev)
+ 	probe_data.res = &res;
+ 	probe_data.ignore_clocks_and_resets = true;
+ 	probe_data.properties = DWC3_DEFAULT_PROPERTIES;
+-	cpu_latency_qos_add_request(&qcom->pm_qos_req, DWC3_QCOM_PM_QOS_LATENCY_US);
++	INIT_DELAYED_WORK(&qcom->qos_work, dwc3_qcom_qos_work);
++	qcom->qos_irq = platform_get_irq_byname_optional(pdev, "dwc_usb3");
++	cpu_latency_qos_add_request(&qcom->pm_qos_req, PM_QOS_DEFAULT_VALUE);
+ 	ret = dwc3_core_probe(&probe_data);
+ 	if (ret)  {
+ 		ret = dev_err_probe(dev, ret, "failed to register DWC3 Core\n");
+@@ -733,6 +779,7 @@ static int dwc3_qcom_probe(struct platform_device *pdev)
+ 	device_init_wakeup(&pdev->dev, wakeup_source);
+ 
+ 	qcom->is_suspended = false;
++	dwc3_qcom_qos_start(qcom);
+ 
+ 	return 0;
+ 
+@@ -754,6 +801,7 @@ static void dwc3_qcom_remove(struct platform_device *pdev)
+ 	if (pm_runtime_resume_and_get(qcom->dev) < 0)
+ 		return;
+ 
++	cancel_delayed_work_sync(&qcom->qos_work);
+ 	dwc3_core_remove(&qcom->dwc);
+ 	clk_bulk_disable_unprepare(qcom->num_clocks, qcom->clks);
+ 	dwc3_qcom_interconnect_exit(qcom);
+-- 
+2.43.0
+
