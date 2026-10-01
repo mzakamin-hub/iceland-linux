@@ -1,0 +1,43 @@
+From 36f09b6ebe7b0cf4a252169526f8d2ffe7e730ea Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Thu, 1 Oct 2026 23:57:37 +0300
+Subject: [PATCH 69/70] soc: qcom: socinfo: add SM8850P
+
+SoC id 661 is the SM8850P ("CanoeP" in the vendor device tree,
+ro.soc.model SM8850P), used in the OnePlus Pad 4. Without a name the
+machine attribute of soc0 falls back to the board's model string.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ drivers/soc/qcom/socinfo.c         | 1 +
+ include/dt-bindings/arm/qcom,ids.h | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/drivers/soc/qcom/socinfo.c b/drivers/soc/qcom/socinfo.c
+index 1836e226a..f44cd0acb 100644
+--- a/drivers/soc/qcom/socinfo.c
++++ b/drivers/soc/qcom/socinfo.c
+@@ -534,6 +534,7 @@ static const struct soc_id soc_id[] = {
+ 	{ qcom_board_id(QCS6690) },
+ 	{ qcom_board_id(SM7750) },
+ 	{ qcom_board_id(SM8850) },
++	{ qcom_board_id(SM8850P) },
+ 	{ qcom_board_id(IPQ5404) },
+ 	{ qcom_board_id(QCS9100) },
+ 	{ qcom_board_id(QCS8300) },
+diff --git a/include/dt-bindings/arm/qcom,ids.h b/include/dt-bindings/arm/qcom,ids.h
+index 2cf433f61..6964c947c 100644
+--- a/include/dt-bindings/arm/qcom,ids.h
++++ b/include/dt-bindings/arm/qcom,ids.h
+@@ -293,6 +293,7 @@
+ #define QCOM_ID_QCS6690			658
+ #define QCOM_ID_SM7750			659
+ #define QCOM_ID_SM8850			660
++#define QCOM_ID_SM8850P			661
+ #define QCOM_ID_IPQ5404			671
+ #define QCOM_ID_QCS9100			667
+ #define QCOM_ID_QCS8300			674
+-- 
+2.43.0
+

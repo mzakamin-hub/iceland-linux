@@ -1,0 +1,58 @@
+From 2a9099a9df0af43a4d5aed52112bf6038aafef16 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Thu, 1 Oct 2026 23:57:37 +0300
+Subject: [PATCH 70/70] arm64: cpuinfo: print a model name for the Qualcomm
+ Oryon cores
+
+Desktop software reads the processor name from the "model name" line of
+/proc/cpuinfo (GNOME Settings through libgtop); arm64 prints that line only
+for 32-bit tasks, so the About page shows no processor at all. Print it for
+the cores of the SM8850 family (implementer 0x51, part 0x002).
+
+This is a local carry: upstream decided against model names in the arm64
+cpuinfo. The alternative is patched libgtop and util-linux packages.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ arch/arm64/kernel/cpuinfo.c | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/arch/arm64/kernel/cpuinfo.c b/arch/arm64/kernel/cpuinfo.c
+index 45c63f3d7..34c7f72ba 100644
+--- a/arch/arm64/kernel/cpuinfo.c
++++ b/arch/arm64/kernel/cpuinfo.c
+@@ -219,6 +219,21 @@ static const char *const compat_hwcap2_str[] = {
+ };
+ #endif /* CONFIG_COMPAT */
+ 
++/*
++ * A "model name" for native tasks, only for the CPUs listed here. Desktop
++ * software (GNOME Settings through libgtop; lscpu for a part number it does
++ * not know) takes the processor name from this line.
++ */
++static const char *cpuinfo_model_name(u32 midr)
++{
++	switch (midr & MIDR_CPU_MODEL_MASK) {
++	case MIDR_CPU_MODEL(ARM_CPU_IMP_QCOM, 0x002):
++		return "Qualcomm Oryon";
++	}
++
++	return NULL;
++}
++
+ static int c_show(struct seq_file *m, void *v)
+ {
+ 	int j;
+@@ -236,6 +251,8 @@ static int c_show(struct seq_file *m, void *v)
+ 	if (compat)
+ 		seq_printf(m, "model name\t: ARMv8 Processor rev %d (%s)\n",
+ 			   MIDR_REVISION(midr), COMPAT_ELF_PLATFORM);
++	else if (cpuinfo_model_name(midr))
++		seq_printf(m, "model name\t: %s\n", cpuinfo_model_name(midr));
+ 
+ 	seq_printf(m, "BogoMIPS\t: %lu.%02lu\n",
+ 		   loops_per_jiffy / (500000UL/HZ),
+-- 
+2.43.0
+
