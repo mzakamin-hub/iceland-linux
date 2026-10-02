@@ -1,0 +1,71 @@
+From 1dd3792262ead2ec607103768d1595025e999cc2 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 16:43:13 +0300
+Subject: [PATCH 127/138] arm64: dts: qcom: pmih0108-kaanapali: add the second
+ temperature alarm
+
+The PMIH0108 has a second, "lite" temperature alarm at 0xc00 next to
+the one at 0xa00. Describe it with a thermal zone, using the trip points
+of the vendor tree: 125 C passive, 135 C hot and 145 C critical. The
+driver programs 125 C as the warning and 145 C as the hardware shutdown
+threshold, the values the vendor kernel sets.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../boot/dts/qcom/pmih0108-kaanapali.dtsi     | 32 +++++++++++++++++++
+ 1 file changed, 32 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/pmih0108-kaanapali.dtsi b/arch/arm64/boot/dts/qcom/pmih0108-kaanapali.dtsi
+index b73b0e82c..c0958e8d6 100644
+--- a/arch/arm64/boot/dts/qcom/pmih0108-kaanapali.dtsi
++++ b/arch/arm64/boot/dts/qcom/pmih0108-kaanapali.dtsi
+@@ -32,6 +32,31 @@ trip2 {
+ 				};
+ 			};
+ 		};
++
++		pmih-lite-thermal {
++			polling-delay-passive = <100>;
++			thermal-sensors = <&pmih0108_e1_temp_alarm_lite>;
++
++			trips {
++				trip0 {
++					temperature = <125000>;
++					hysteresis = <0>;
++					type = "passive";
++				};
++
++				trip1 {
++					temperature = <135000>;
++					hysteresis = <0>;
++					type = "hot";
++				};
++
++				trip2 {
++					temperature = <145000>;
++					hysteresis = <0>;
++					type = "critical";
++				};
++			};
++		};
+ 	};
+ };
+ 
+@@ -49,6 +74,13 @@ pmih0108_e1_temp_alarm: temp-alarm@a00 {
+ 			#thermal-sensor-cells = <0>;
+ 		};
+ 
++		pmih0108_e1_temp_alarm_lite: temp-alarm@c00 {
++			compatible = "qcom,spmi-temp-alarm";
++			reg = <0xc00>;
++			interrupts = <0x7 0xc 0x0 IRQ_TYPE_EDGE_BOTH>;
++			#thermal-sensor-cells = <0>;
++		};
++
+ 		pmih0108_e1_gpios: gpio@8800 {
+ 			compatible = "qcom,pmih0108-gpio", "qcom,spmi-gpio";
+ 			reg = <0x8800>;
+-- 
+2.43.0
+

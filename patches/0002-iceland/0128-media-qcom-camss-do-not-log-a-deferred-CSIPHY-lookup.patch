@@ -1,0 +1,44 @@
+From 39cb082e24a4c43fbd8f690002e3b25e4b3cad81 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 16:43:13 +0300
+Subject: [PATCH 128/138] media: qcom: camss: do not log a deferred CSIPHY
+ lookup as an error
+
+When the CSI PHYs are separate devices, msm_csiphy_subdev_init() gets
+them with devm_phy_get_by_of_node(), which returns -EPROBE_DEFER until
+the PHY driver has bound. camss_init_subdevices() reports every failure
+with dev_err(), so a CAMSS module that loads before the PHY module, as
+it can when udev loads both at boot, prints "csiphy 4 init fail" and
+then binds normally on the retry.
+
+Use dev_err_probe(): real errors are still printed, a deferral is
+recorded as the deferred-probe reason instead.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/media/platform/qcom/camss/camss.c | 8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
+index 80d47b302..22d8c95c3 100644
+--- a/drivers/media/platform/qcom/camss/camss.c
++++ b/drivers/media/platform/qcom/camss/camss.c
+@@ -5215,11 +5215,9 @@ static int camss_init_subdevices(struct camss *camss)
+ 							    res->csiphy_res[i].csiphy.id);
+ 		}
+ 
+-		if (ret < 0) {
+-			dev_err(camss->dev, "csiphy %d init fail\n",
+-				res->csiphy_res[i].csiphy.id);
+-			return ret;
+-		}
++		if (ret < 0)
++			return dev_err_probe(camss->dev, ret, "csiphy %d init fail\n",
++					     res->csiphy_res[i].csiphy.id);
+ 	}
+ 
+ 	if (camss->tpg) {
+-- 
+2.43.0
+

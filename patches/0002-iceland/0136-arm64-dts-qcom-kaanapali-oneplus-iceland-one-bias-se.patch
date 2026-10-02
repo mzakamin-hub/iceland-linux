@@ -1,0 +1,58 @@
+From ec0730d48a4e4f0a0cbf7b5315cc9a63cd9d5de3 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 16:43:16 +0300
+Subject: [PATCH 136/138] arm64: dts: qcom: kaanapali-oneplus-iceland: one bias
+ setting for the thermistor pins
+
+The three PMIH0108 pins that feed USB-C and charge-pump thermistors to
+the ADC carry both bias-high-impedance and bias-disable, as in the
+vendor tree. The generic pinconf parser reports "cannot have multiple
+bias configurations" for each of them at every boot. Keep
+bias-high-impedance, which switches the pad off for the ADC.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index ac59bcc8a..d935ba33c 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1874,19 +1874,21 @@ channel@275e {
+ };
+ 
+ &pmih0108_e1_gpios {
+-	/* stock usbtemp_l_gpio_default / usbtemp_r_gpio_default: the pins stay high-impedance for the ADC */
++	/*
++	 * stock usbtemp_l_gpio_default / usbtemp_r_gpio_default: the pins stay
++	 * high-impedance for the ADC (stock also lists bias-disable; one bias
++	 * setting per state here, the pad is switched off either way)
++	 */
+ 	usbtemp_l_default: usbtemp-l-default-state {
+ 		pins = "gpio6";
+ 		function = "normal";
+ 		bias-high-impedance;
+-		bias-disable;
+ 	};
+ 
+ 	usbtemp_r_default: usbtemp-r-default-state {
+ 		pins = "gpio18";
+ 		function = "normal";
+ 		bias-high-impedance;
+-		bias-disable;
+ 	};
+ 
+ 	/* stock svooc_mos_btb_therm_default */
+@@ -1894,7 +1896,6 @@ chg_cp_therm_default: chg-cp-therm-default-state {
+ 		pins = "gpio15";
+ 		function = "normal";
+ 		bias-high-impedance;
+-		bias-disable;
+ 	};
+ 
+ 	/*
+-- 
+2.43.0
+

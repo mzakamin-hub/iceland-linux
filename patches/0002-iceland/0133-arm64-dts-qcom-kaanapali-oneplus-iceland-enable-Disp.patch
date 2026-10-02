@@ -1,0 +1,46 @@
+From 360d0e56a796d678493254d098122af76c95507b Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 16:43:15 +0300
+Subject: [PATCH 133/138] arm64: dts: qcom: kaanapali-oneplus-iceland: enable
+ DisplayPort over USB-C
+
+The USB-C port carries DisplayPort alt mode: the combo PHY provides the
+DP lanes, the WCD9395 USB-SS switch routes AUX on the SBU lines and the
+charger firmware reports hot-plug through pmic_glink. All of that is
+already described; enable the DP controller and allow all four link
+rates, as the vendor tree does.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../boot/dts/qcom/kaanapali-oneplus-iceland.dts    | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index a2416ee04..7455dda42 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1434,6 +1434,20 @@ &iris {
+ 	status = "okay";
+ };
+ 
++/*
++ * DisplayPort alt mode on the USB-C port: hot-plug from the charger
++ * firmware through pmic_glink, the DP lanes on the combo PHY, AUX on the
++ * SBU lines through the WCD9395 USB-SS switch. All four link rates, as
++ * the vendor tree's swing tables.
++ */
++&mdss_dp0 {
++	status = "okay";
++};
++
++&mdss_dp0_out {
++	link-frequencies = /bits/ 64 <1620000000 2700000000 5400000000 8100000000>;
++};
++
+ &mdss_dsi0 {
+ 	vdda-supply = <&vreg_l1d_1p2>;
+ 	qcom,dual-dsi-mode;
+-- 
+2.43.0
+

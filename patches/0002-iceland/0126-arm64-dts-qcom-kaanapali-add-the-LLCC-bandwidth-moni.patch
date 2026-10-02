@@ -1,0 +1,92 @@
+From b29565eecef7a1dd8e24238153379f27eeb93018 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 16:43:13 +0300
+Subject: [PATCH 126/138] arm64: dts: qcom: kaanapali: add the LLCC bandwidth
+ monitor
+
+Describe the BWMON v5 that measures the traffic between the LLCC and
+the DDR, so that the bandwidth vote on that path follows the load as on
+the vendor kernel. The interrupt, register block and count unit are the
+vendor tree's qcom,bwmon-ddr@31091000; the OPP table is the vendor DDR
+frequency table times the 4-byte DDR bus width.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali.dtsi | 60 +++++++++++++++++++++++++
+ 1 file changed, 60 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
+index 7ad84e4a5..106eda604 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
++++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
+@@ -7763,6 +7763,66 @@ compute-cb@13 {
+ 			};
+ 		};
+ 
++		pmu@31091000 {
++			compatible = "qcom,kaanapali-llcc-bwmon", "qcom,sc7280-llcc-bwmon";
++			reg = <0x0 0x31091000 0x0 0x1000>;
++
++			interrupts = <GIC_SPI 81 IRQ_TYPE_LEVEL_HIGH>;
++
++			interconnects = <&mc_virt MASTER_LLCC QCOM_ICC_TAG_ACTIVE_ONLY
++					 &mc_virt SLAVE_EBI1 QCOM_ICC_TAG_ACTIVE_ONLY>;
++
++			operating-points-v2 = <&llcc_bwmon_opp_table>;
++
++			llcc_bwmon_opp_table: opp-table {
++				compatible = "operating-points-v2";
++
++				opp-0 {
++					opp-peak-kBps = <2188000>;
++				};
++
++				opp-1 {
++					opp-peak-kBps = <5412000>;
++				};
++
++				opp-2 {
++					opp-peak-kBps = <6220000>;
++				};
++
++				opp-3 {
++					opp-peak-kBps = <6832000>;
++				};
++
++				opp-4 {
++					opp-peak-kBps = <8368000>;
++				};
++
++				opp-5 {
++					opp-peak-kBps = <10944000>;
++				};
++
++				opp-6 {
++					opp-peak-kBps = <12748000>;
++				};
++
++				opp-7 {
++					opp-peak-kBps = <14744000>;
++				};
++
++				opp-8 {
++					opp-peak-kBps = <16896000>;
++				};
++
++				opp-9 {
++					opp-peak-kBps = <19136000>;
++				};
++
++				opp-10 {
++					opp-peak-kBps = <21332000>;
++				};
++			};
++		};
++
+ 		/* Cluster 0 */
+ 		pmu@310b3400 {
+ 			compatible = "qcom,kaanapali-cpu-bwmon", "qcom,sdm845-bwmon";
+-- 
+2.43.0
+

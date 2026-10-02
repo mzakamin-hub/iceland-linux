@@ -1,0 +1,37 @@
+From 62903522ac977b061b9e04c1fce7bc732f7c40bc Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 16:43:14 +0300
+Subject: [PATCH 129/138] dt-bindings: eeprom: at24: add an optional I/O supply
+
+Some boards need a second rail switched on before the EEPROM can be
+reached, for example the rail that feeds the I2C pull-ups of a camera
+module whose EEPROM is powered from another rail. Document vio-supply
+for it.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ Documentation/devicetree/bindings/eeprom/at24.yaml | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/eeprom/at24.yaml b/Documentation/devicetree/bindings/eeprom/at24.yaml
+index ef88f4692..b5d2cd9c6 100644
+--- a/Documentation/devicetree/bindings/eeprom/at24.yaml
++++ b/Documentation/devicetree/bindings/eeprom/at24.yaml
+@@ -213,6 +213,13 @@ properties:
+     description:
+       phandle of the regulator that provides the supply voltage.
+ 
++  vio-supply:
++    description:
++      phandle of a regulator the I2C interface of the chip needs besides its
++      supply, for example the rail that feeds the bus pull-ups when that is
++      not the supply of the chip itself. Switched on before and off after
++      vcc-supply.
++
+ required:
+   - compatible
+   - reg
+-- 
+2.43.0
+

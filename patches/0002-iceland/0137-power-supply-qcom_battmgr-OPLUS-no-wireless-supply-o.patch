@@ -1,0 +1,75 @@
+From 10212c5963ffb03d25d66c517a363b66eac8d844 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 16:43:16 +0300
+Subject: [PATCH 137/138] power: supply: qcom_battmgr: OPLUS: no wireless
+ supply on the OnePlus Pad 4
+
+The battery manager registers a wireless charger power supply for every
+SM8350-style firmware. The OnePlus Pad 4 has no wireless charging
+receiver, so user space lists a wireless supply that cannot exist; the
+vendor kernel registers none.
+
+Do not register it for the "oneplus,iceland-pmic-glink" board, and skip
+the wireless notification when the supply is absent. The wireless online
+state that the OPLUS charging code checks is only updated by reads of
+that supply; it reads 0 on this board and now stays at its initial 0,
+so charging behaves exactly as before.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/power/supply/qcom_battmgr.c | 17 ++++++++++++-----
+ 1 file changed, 12 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
+index 535d23fa1..8b910a0d9 100644
+--- a/drivers/power/supply/qcom_battmgr.c
++++ b/drivers/power/supply/qcom_battmgr.c
+@@ -423,6 +423,8 @@ struct qcom_battmgr {
+ 	u32 oplus_value;
+ 	/* per-board charger limits (see qcom_battmgr_oplus_limits) and the host's charge inhibit */
+ 	bool chg_stock_limits;
++	/* the board has no wireless charging receiver: no wireless power supply */
++	bool no_wireless;
+ 	unsigned int chg_fcc_ua;	/* the charge current set at the last attach */
+ 	unsigned int chg_fcc_host_ua;	/* the host's cap (constant_charge_current_max), 0 = none */
+ 	bool chg_inhibit;
+@@ -1766,7 +1768,8 @@ static void qcom_battmgr_notification(struct qcom_battmgr *battmgr,
+ 			queue_work(system_dfl_long_wq, &battmgr->plug_work);
+ 		break;
+ 	case NOTIF_WLS_PROPERTY:
+-		power_supply_changed(battmgr->wls_psy);
++		if (battmgr->wls_psy)
++			power_supply_changed(battmgr->wls_psy);
+ 		break;
+ 	default:
+ 		if (battmgr->variant == QCOM_BATTMGR_OPLUS)
+@@ -2753,6 +2756,7 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
+ 	if (battmgr->variant == QCOM_BATTMGR_OPLUS)
+ 		battmgr->chg_stock_limits = device_is_compatible(dev->parent,
+ 								 "oneplus,iceland-pmic-glink");
++	battmgr->no_wireless = device_is_compatible(dev->parent, "oneplus,iceland-pmic-glink");
+ 
+ 	ret = qcom_battmgr_charge_control_thresholds_init(battmgr);
+ 	if (ret < 0)
+@@ -2805,10 +2809,13 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
+ 			return dev_err_probe(dev, PTR_ERR(battmgr->usb_psy),
+ 					     "failed to register USB power supply\n");
+ 
+-		battmgr->wls_psy = devm_power_supply_register(dev, &sm8350_wls_psy_desc, &psy_cfg_supply);
+-		if (IS_ERR(battmgr->wls_psy))
+-			return dev_err_probe(dev, PTR_ERR(battmgr->wls_psy),
+-					     "failed to register wireless charing power supply\n");
++		if (!battmgr->no_wireless) {
++			battmgr->wls_psy = devm_power_supply_register(dev, &sm8350_wls_psy_desc,
++								      &psy_cfg_supply);
++			if (IS_ERR(battmgr->wls_psy))
++				return dev_err_probe(dev, PTR_ERR(battmgr->wls_psy),
++						     "failed to register wireless charing power supply\n");
++		}
+ 	}
+ 
+ 	ret = devm_work_autocancel(dev, &battmgr->enable_work,
+-- 
+2.43.0
+

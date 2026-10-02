@@ -1,0 +1,32 @@
+From 010a8a473ee570908394e7a563b3e0d4a396851b Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 16:43:14 +0300
+Subject: [PATCH 132/138] soc: qcom: pmic_pdcharger_ulog: add the SoCCP channel
+
+On SoCs where the battery and USB-C firmware runs on the SoCCP instead
+of the ADSP, such as Kaanapali, the firmware offers its log on the
+"PMIC_LOGS_SOCCP_APPS" channel, just as pmic_glink itself uses
+"PMIC_RTR_SOCCP_APPS" there. The messages are the same. Match that
+channel too.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/soc/qcom/pmic_pdcharger_ulog.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/soc/qcom/pmic_pdcharger_ulog.c b/drivers/soc/qcom/pmic_pdcharger_ulog.c
+index 39f412bbf..50f52ca75 100644
+--- a/drivers/soc/qcom/pmic_pdcharger_ulog.c
++++ b/drivers/soc/qcom/pmic_pdcharger_ulog.c
+@@ -148,6 +148,7 @@ static void pmic_pdcharger_ulog_rpmsg_remove(struct rpmsg_device *rpdev)
+ 
+ static const struct rpmsg_device_id pmic_pdcharger_ulog_rpmsg_id_match[] = {
+ 	{ "PMIC_LOGS_ADSP_APPS" },
++	{ "PMIC_LOGS_SOCCP_APPS" },
+ 	{}
+ };
+ /*
+-- 
+2.43.0
+

@@ -1,0 +1,43 @@
+From 0212b02f8fc3375b20f952832c23b601285868f3 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 16:43:15 +0300
+Subject: [PATCH 135/138] arm64: dts: qcom: kaanapali-oneplus-iceland: disable
+ the WSA macros
+
+The OnePlus Pad 4 drives its speakers through TFA9865 amplifiers on the
+primary TDM port and has no WSA amplifier; the WSA SoundWire masters are
+already disabled. Both WSA macros still bind and each keeps its TX MCLK
+running. Disable them, as the vendor tree does.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../boot/dts/qcom/kaanapali-oneplus-iceland.dts      | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 71d2e65c0..ac59bcc8a 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1433,6 +1433,18 @@ &i2c_master_hub {
+ 	status = "okay";
+ };
+ 
++/*
++ * No WSA amplifier on this board (the speakers are TFA9865 on the primary
++ * TDM port): both WSA macros off, as in the vendor tree.
++ */
++&lpass_wsa2macro {
++	status = "disabled";
++};
++
++&lpass_wsamacro {
++	status = "disabled";
++};
++
+ &mdss {
+ 	/*
+ 	 * The display needs both core GDSCs, as in the stock kernel (canoe-sde: "core_gdsc", "core_int2_gdsc").
+-- 
+2.43.0
+

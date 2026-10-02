@@ -1,0 +1,30 @@
+From cb544ca82828357a180af493b745d69a22c26bca Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 16:43:12 +0300
+Subject: [PATCH 125/138] dt-bindings: interconnect: qcom,msm8998-bwmon: Add
+ Kaanapali LLCC BWMON
+
+Kaanapali has a BWMON v5 between the LLCC and the DDR, compatible with
+the SC7280 one. Document its compatible.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../devicetree/bindings/interconnect/qcom,msm8998-bwmon.yaml     | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/Documentation/devicetree/bindings/interconnect/qcom,msm8998-bwmon.yaml b/Documentation/devicetree/bindings/interconnect/qcom,msm8998-bwmon.yaml
+index 21b4e0472..455ec9f97 100644
+--- a/Documentation/devicetree/bindings/interconnect/qcom,msm8998-bwmon.yaml
++++ b/Documentation/devicetree/bindings/interconnect/qcom,msm8998-bwmon.yaml
+@@ -50,6 +50,7 @@ properties:
+           - enum:
+               - qcom,eliza-llcc-bwmon
+               - qcom,hawi-llcc-bwmon
++              - qcom,kaanapali-llcc-bwmon
+               - qcom,qcs615-llcc-bwmon
+               - qcom,qcs8300-llcc-bwmon
+               - qcom,sa8775p-llcc-bwmon
+-- 
+2.43.0
+
