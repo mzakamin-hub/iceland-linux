@@ -1,0 +1,247 @@
+From 96b98f60af12adc64f2fd2f6e1583697dc998746 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 07:18:00 +0300
+Subject: [PATCH 76/76] arm64: dts: qcom: kaanapali-oneplus-iceland:
+ low-battery limiting (BCL)
+
+Describe the BCL blocks of PMH0101 (system rail) and PMIH0108 (battery
+side) with the vendor's alarm tables per battery temperature and current
+alarms, and the thermal zones the vendor binds to them:
+
+- alarm level 0 / 1 / 2 of either PMIC: the GPU at most one state down,
+  from state 3 (1000 MHz), from state 5 (826 MHz);
+- "nearly empty" (5 % or less): the CPU clusters up to state 11
+  (2227200 kHz) and 15 (2438400 kHz), the GPU up to state 5.
+
+The vendor's maps also limit the modem and the DSPs, which have no
+cooling devices here. The vendor's level 2 map of PMH0101 names the other
+PMIC's trip; the intended GPU state 5 is used.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ .../dts/qcom/kaanapali-oneplus-iceland.dts    | 201 ++++++++++++++++++
+ 1 file changed, 201 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 0fd098499..a20feecde 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1950,6 +1950,47 @@ &usb_dp_qmpphy {
+ 	status = "okay";
+ };
+ 
++/*
++ * Battery current limiting (BCL), as on stock: the PMICs raise three alarm levels when the system rail (PMH0101)
++ * or the battery (PMIH0108) voltage sags below a threshold or the battery current is above 13.5 / 15 A. The
++ * voltage thresholds follow the battery temperature: rows of <upper temperature in 0.1 C, level 0, 1, 2 in mV>,
++ * stock's bcl,dynamic_vbat_data.
++ */
++&spmi_bus0 {
++	pmic@1 {
++		pmh0101_bcl: bcl@4700 {
++			compatible = "qcom,pmh0101-bcl";
++			reg = <0x4700>;
++			interrupts = <0x1 0x47 0x0 IRQ_TYPE_EDGE_RISING>,
++				     <0x1 0x47 0x1 IRQ_TYPE_EDGE_RISING>,
++				     <0x1 0x47 0x2 IRQ_TYPE_EDGE_RISING>;
++			interrupt-names = "bcl-lvl0", "bcl-lvl1", "bcl-lvl2";
++			qcom,vbat-thresholds = <(-50) 3050 2700 2500>,
++					       <100 2950 2700 2500>,
++					       <1000 2850 2700 2500>;
++			#thermal-sensor-cells = <1>;
++		};
++	};
++};
++
++&spmi_bus1 {
++	pmic@7 {
++		pmih0108_e1_bcl: bcl@4700 {
++			compatible = "qcom,pmih0108-bcl";
++			reg = <0x4700>;
++			interrupts = <0x7 0x47 0x0 IRQ_TYPE_EDGE_RISING>,
++				     <0x7 0x47 0x1 IRQ_TYPE_EDGE_RISING>,
++				     <0x7 0x47 0x2 IRQ_TYPE_EDGE_RISING>;
++			interrupt-names = "bcl-lvl0", "bcl-lvl1", "bcl-lvl2";
++			qcom,vbat-thresholds = <(-50) 3000 3000 2600>,
++					       <100 2900 2900 2600>,
++					       <1000 2800 2800 2600>;
++			qcom,ibat-thresholds-milliamp = <13500 15000>;
++			#thermal-sensor-cells = <1>;
++		};
++	};
++};
++
+ &{/thermal-zones} {
+ 	/* stock trips both at 125 C (passive, no cooling map) */
+ 	board-thermal {
+@@ -2078,6 +2119,166 @@ map1 {
+ 		};
+ 	};
+ 
++	/*
++	 * Battery current limiting. Stock's zones pmih010x-bcl-lvl0..2 (battery side) and pmh0101-bcl-lvl0..2
++	 * (system rail) read 1 while the PMIC reports the alarm level and are then polled every 100 ms. On the
++	 * Pad 4 they cap the GPU: level 0 by at most one state (1100 MHz), level 1 at state 3 (1000 MHz), level 2
++	 * at state 5 (826 MHz); stock's modem maps have no counterpart here.
++	 */
++	bcl-bat-0-thermal {
++		polling-delay-passive = <100>;
++		polling-delay = <0>;
++		thermal-sensors = <&pmih0108_e1_bcl 0>;
++
++		trips {
++			bcl_bat_lvl0: bcl-alarm {
++				temperature = <1>;
++				hysteresis = <0>;
++				type = "passive";
++			};
++		};
++
++		cooling-maps {
++			map0 {
++				trip = <&bcl_bat_lvl0>;
++				cooling-device = <&gpu 0 1>;
++			};
++		};
++	};
++
++	bcl-bat-1-thermal {
++		polling-delay-passive = <100>;
++		polling-delay = <0>;
++		thermal-sensors = <&pmih0108_e1_bcl 1>;
++
++		trips {
++			bcl_bat_lvl1: bcl-alarm {
++				temperature = <1>;
++				hysteresis = <0>;
++				type = "passive";
++			};
++		};
++
++		cooling-maps {
++			map0 {
++				trip = <&bcl_bat_lvl1>;
++				cooling-device = <&gpu 3 3>;
++			};
++		};
++	};
++
++	bcl-bat-2-thermal {
++		polling-delay-passive = <100>;
++		polling-delay = <0>;
++		thermal-sensors = <&pmih0108_e1_bcl 2>;
++
++		trips {
++			bcl_bat_lvl2: bcl-alarm {
++				temperature = <1>;
++				hysteresis = <0>;
++				type = "passive";
++			};
++		};
++
++		cooling-maps {
++			map0 {
++				trip = <&bcl_bat_lvl2>;
++				cooling-device = <&gpu 5 5>;
++			};
++		};
++	};
++
++	bcl-vph-0-thermal {
++		polling-delay-passive = <100>;
++		polling-delay = <0>;
++		thermal-sensors = <&pmh0101_bcl 0>;
++
++		trips {
++			bcl_vph_lvl0: bcl-alarm {
++				temperature = <1>;
++				hysteresis = <0>;
++				type = "passive";
++			};
++		};
++
++		cooling-maps {
++			map0 {
++				trip = <&bcl_vph_lvl0>;
++				cooling-device = <&gpu 0 1>;
++			};
++		};
++	};
++
++	bcl-vph-1-thermal {
++		polling-delay-passive = <100>;
++		polling-delay = <0>;
++		thermal-sensors = <&pmh0101_bcl 1>;
++
++		trips {
++			bcl_vph_lvl1: bcl-alarm {
++				temperature = <1>;
++				hysteresis = <0>;
++				type = "passive";
++			};
++		};
++
++		cooling-maps {
++			map0 {
++				trip = <&bcl_vph_lvl1>;
++				cooling-device = <&gpu 3 3>;
++			};
++		};
++	};
++
++	bcl-vph-2-thermal {
++		polling-delay-passive = <100>;
++		polling-delay = <0>;
++		thermal-sensors = <&pmh0101_bcl 2>;
++
++		trips {
++			bcl_vph_lvl2: bcl-alarm {
++				temperature = <1>;
++				hysteresis = <0>;
++				type = "passive";
++			};
++		};
++
++		cooling-maps {
++			map0 {
++				trip = <&bcl_vph_lvl2>;
++				cooling-device = <&gpu 5 5>;
++			};
++		};
++	};
++
++	/*
++	 * Nearly empty. Stock's "socd" zone reads 100 - capacity; from 95 (5 % left) it limits the CPUs one state
++	 * per second down to state 11 (2227200 kHz) on the small cluster and state 15 (2438400 kHz) on the big
++	 * one, and the GPU down to state 5 (826 MHz). Stock's DSP map has no counterpart here.
++	 */
++	socd-thermal {
++		polling-delay-passive = <1000>;
++		polling-delay = <0>;
++		thermal-sensors = <&pmih0108_e1_bcl 3>;
++
++		trips {
++			socd_trip: socd-trip {
++				temperature = <95>;
++				hysteresis = <0>;
++				type = "passive";
++			};
++		};
++
++		cooling-maps {
++			map0 {
++				trip = <&socd_trip>;
++				cooling-device = <&cpu0 THERMAL_NO_LIMIT 11>,
++						 <&cpu6 THERMAL_NO_LIMIT 15>,
++						 <&gpu 0 5>;
++			};
++		};
++	};
++
+ 	/*
+ 	 * USB-C connector. Stock's connector protection stops charging at 57 C (69 C with the battery above
+ 	 * 50 C) on the L/R thermistors; that is done by iceland-battery-guard in userspace, which reads all three
+-- 
+2.43.0
+

@@ -1,0 +1,344 @@
+From 4a7df8811846c928dc14812725631019508a021d Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 07:18:00 +0300
+Subject: [PATCH 74/76] power: supply: qcom_battmgr: OPLUS: charge limit kept
+ by the driver
+
+User space asks for a charge limit through charge_control_start_threshold
+and charge_control_end_threshold (UPower's EnableChargeThreshold, behind
+"Preserve Battery Health" in GNOME Settings). The OnePlus variant had
+neither: its charger firmware acknowledges BATTMGR_CHG_CTRL_LIMIT_EN and
+keeps charging (OnePlus Pad 4: +293 mA before, +286 mA after, its own
+thresholds read 0 / 0), and the vendor's driver does not use that
+request. The vendor's limit is a loop in the kernel: once the state of
+charge has reached the limit it turns the charger off through
+OPLUS_CHG_EN, and on again below a recharge level.
+
+Do the same in the driver, through the OPLUS_CHG_EN write that
+charge_behaviour = inhibit-charge already uses:
+
+- charge_control_end_threshold: 100 (the default) is no limit, lower
+  values are kept at 55 or above. charge_control_start_threshold: 50..95;
+  0, or a value at or above the end threshold, means 5 below the end.
+- Every gauge sample of the attach poll (5 s) compares the state of
+  charge: at or above the end threshold the charger is held off, below
+  the start threshold it is released, in between nothing changes. A limit
+  turned on between the two holds. The hold outlives a detach, so that a
+  charger plugged in again between the two does not top the battery up.
+- The charger is off while user space inhibits or the limit holds: every
+  OPLUS_CHG_EN the driver sends (attach, service start, the poll's
+  re-assert, a charge_behaviour write) uses both. Writing "auto" does not
+  release a hold, and a failed release is retried by the poll.
+- While held with a charger that carries the load the status is
+  "Not charging": the mean current restarts when the charger is turned
+  off or on and skips the reading in hand, which can be from before the
+  change, and until the next reading a positive one does not count as
+  Charging. A charger too weak for the load still reads Discharging.
+
+The thresholds live in the driver only: they survive suspend, and start
+at "no limit" after a boot, for user space to set.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ drivers/power/supply/qcom_battmgr.c | 180 +++++++++++++++++++++++++---
+ 1 file changed, 164 insertions(+), 16 deletions(-)
+
+diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
+index 38f521408..c39a5d97b 100644
+--- a/drivers/power/supply/qcom_battmgr.c
++++ b/drivers/power/supply/qcom_battmgr.c
+@@ -419,6 +419,12 @@ struct qcom_battmgr {
+ 	unsigned int chg_fcc_ua;	/* the charge current set at the last attach */
+ 	unsigned int chg_fcc_host_ua;	/* the host's cap (constant_charge_current_max), 0 = none */
+ 	bool chg_inhibit;
++	/* the charge limit kept by the driver, see qcom_battmgr_oplus_limit_update() */
++	unsigned int chg_limit_end;	/* percent, 100 = no limit */
++	unsigned int chg_limit_start;	/* percent, 0 = CHARGE_CTRL_DELTA_SOC below the end */
++	bool chg_limit_hold;		/* the limit keeps the charger off */
++	bool chg_limit_decided;		/* the hold was decided since the limit was turned on */
++	bool chg_en_retry;		/* turning the charger on again failed, the attach poll retries */
+ 	unsigned long gauge_time;
+ 
+ 	/* the mean of the last gauge current samples, see qcom_battmgr_oplus_sample() */
+@@ -548,6 +554,107 @@ static bool qcom_battmgr_oplus_online(struct qcom_battmgr *battmgr)
+ 	return battmgr->usb.online || battmgr->wireless.online;
+ }
+ 
++/* The host keeps the charger off: user space (charge_behaviour) or the charge limit */
++static bool qcom_battmgr_oplus_inhibited(struct qcom_battmgr *battmgr)
++{
++	return battmgr->chg_inhibit || battmgr->chg_limit_hold;
++}
++
++/* The start threshold in use: the one written, else CHARGE_CTRL_DELTA_SOC below the end */
++static unsigned int qcom_battmgr_oplus_limit_start(struct qcom_battmgr *battmgr)
++{
++	unsigned int end = battmgr->chg_limit_end;
++
++	if (end >= 100)
++		return battmgr->chg_limit_start;
++	if (!battmgr->chg_limit_start || battmgr->chg_limit_start >= end)
++		return end - CHARGE_CTRL_DELTA_SOC;
++
++	return battmgr->chg_limit_start;
++}
++
++/*
++ * The charge limit. The charger firmware acknowledges BATTMGR_CHG_CTRL_LIMIT_EN
++ * and keeps charging, and the vendor's driver does not use that request: its
++ * limit is a loop in the kernel which turns the charger off through
++ * OPLUS_CHG_EN once the state of charge has reached the limit, and on again
++ * below a recharge level. Do the same behind charge_control_end_threshold and
++ * charge_control_start_threshold: at or above the end threshold the charger is
++ * held off, below the start threshold it is released, in between nothing
++ * changes. A limit that is turned on between the two holds, as charging begins
++ * below the start threshold. The hold outlives a detach, so that a charger
++ * plugged in again between the two does not top the battery up.
++ *
++ * Called with the lock held and a fresh gauge snapshot. Returns true if the
++ * hold changed.
++ */
++static bool qcom_battmgr_oplus_limit_update(struct qcom_battmgr *battmgr)
++{
++	unsigned int soc = battmgr->status.percent;
++	unsigned int end = battmgr->chg_limit_end;
++	bool hold = battmgr->chg_limit_hold;
++	int ret;
++
++	/* without a state of charge (soc is -1) the charger stays as it is */
++	if (end >= 100) {
++		hold = false;
++		battmgr->chg_limit_decided = false;
++	} else if (soc <= 100) {
++		if (soc >= end)
++			hold = true;
++		else if (soc < qcom_battmgr_oplus_limit_start(battmgr))
++			hold = false;
++		else if (!battmgr->chg_limit_decided)
++			hold = true;
++		battmgr->chg_limit_decided = true;
++	}
++
++	if (hold == battmgr->chg_limit_hold)
++		return false;
++
++	battmgr->chg_limit_hold = hold;
++	ret = qcom_battmgr_request_property(battmgr, OPLUS_PROPERTY_SET, OPLUS_CHG_EN,
++					    !qcom_battmgr_oplus_inhibited(battmgr));
++	/* the attach poll sends a failed "off" again by itself, and a failed "on" through this */
++	battmgr->chg_en_retry = ret && !qcom_battmgr_oplus_inhibited(battmgr);
++	dev_info(battmgr->dev, "charge limit %u %% (start %u %%): charging %s at %u %%%s\n",
++		 end, qcom_battmgr_oplus_limit_start(battmgr), hold ? "held" : "allowed", soc,
++		 ret ? ", the request failed" : "");
++
++	return true;
++}
++
++/*
++ * charge_control_end_threshold: 100 is no limit, lower values are kept at
++ * CHARGE_CTRL_END_THR_MIN or above. charge_control_start_threshold: 0 is
++ * CHARGE_CTRL_DELTA_SOC below the end threshold (and so is a value at or above
++ * it). UPower writes the start threshold first.
++ */
++static int qcom_battmgr_oplus_set_limit(struct qcom_battmgr *battmgr,
++					enum power_supply_property psp, int soc)
++{
++	bool changed = false;
++
++	if (soc < 0 || soc > 100)
++		return -EINVAL;
++
++	mutex_lock(&battmgr->lock);
++	if (psp == POWER_SUPPLY_PROP_CHARGE_CONTROL_END_THRESHOLD)
++		battmgr->chg_limit_end = max(soc, CHARGE_CTRL_END_THR_MIN);
++	else
++		battmgr->chg_limit_start = soc ? clamp(soc, CHARGE_CTRL_START_THR_MIN,
++						       CHARGE_CTRL_START_THR_MAX) : 0;
++	/* without a gauge reading now, the attach poll applies it a few seconds later */
++	if (!qcom_battmgr_oplus_update_gauge(battmgr))
++		changed = qcom_battmgr_oplus_limit_update(battmgr);
++	mutex_unlock(&battmgr->lock);
++
++	if (changed)
++		power_supply_changed(battmgr->bat_psy);
++
++	return 0;
++}
++
+ /*
+  * The battery current reported to user space. The gauge's reading is
+  * instantaneous and swings by hundreds of mA with the load, and so does every
+@@ -592,6 +699,9 @@ static int qcom_battmgr_oplus_status(struct qcom_battmgr *battmgr)
+ 		return POWER_SUPPLY_STATUS_FULL;
+ 
+ 	curr = qcom_battmgr_oplus_current(battmgr);
++	/* the host turned the charger off and the mean has not restarted yet: the reading is an old one */
++	if (curr > 0 && !battmgr->curr_count && qcom_battmgr_oplus_inhibited(battmgr))
++		return POWER_SUPPLY_STATUS_NOT_CHARGING;
+ 	if (curr > 0)
+ 		return POWER_SUPPLY_STATUS_CHARGING;
+ 	if (curr < 0)
+@@ -611,6 +721,7 @@ static bool qcom_battmgr_oplus_sample(struct qcom_battmgr *battmgr)
+ 	s64 now = ktime_to_ms(ktime_get_boottime());
+ 	s64 sum = 0;
+ 	unsigned int i;
++	bool inhibited, inhibit_changed;
+ 	int status;
+ 
+ 	if (battmgr->curr_count &&
+@@ -620,27 +731,37 @@ static bool qcom_battmgr_oplus_sample(struct qcom_battmgr *battmgr)
+ 	if (qcom_battmgr_oplus_update_gauge(battmgr))
+ 		return false;
+ 
++	/* the charge limit follows the gauge at the same pace */
++	qcom_battmgr_oplus_limit_update(battmgr);
++	inhibited = qcom_battmgr_oplus_inhibited(battmgr);
++	inhibit_changed = inhibited != battmgr->curr_inhibit;
++
+ 	/*
+ 	 * A charger attach or detach and the host's inhibit step the current,
+ 	 * and after a gap (suspend) the old samples say nothing: a new mean.
+ 	 */
+-	if (online != battmgr->curr_online ||
+-	    battmgr->chg_inhibit != battmgr->curr_inhibit ||
++	if (online != battmgr->curr_online || inhibit_changed ||
+ 	    now - battmgr->curr_time_ms > OPLUS_CURR_GAP_MS) {
+ 		battmgr->curr_count = 0;
+ 		battmgr->curr_next = 0;
+ 	}
+ 	battmgr->curr_online = online;
+-	battmgr->curr_inhibit = battmgr->chg_inhibit;
++	battmgr->curr_inhibit = inhibited;
+ 	battmgr->curr_time_ms = now;
+ 
+-	battmgr->curr_samples[battmgr->curr_next] = battmgr->status.current_now;
+-	battmgr->curr_next = (battmgr->curr_next + 1) % OPLUS_CURR_SAMPLES;
+-	if (battmgr->curr_count < OPLUS_CURR_SAMPLES)
+-		battmgr->curr_count++;
+-	for (i = 0; i < battmgr->curr_count; i++)
+-		sum += battmgr->curr_samples[i];
+-	battmgr->curr_avg = div_s64(sum, battmgr->curr_count);
++	/*
++	 * The reading in hand can be from before the charger was turned off or
++	 * on (the gauge gives one a second): the new mean starts with the next.
++	 */
++	if (!inhibit_changed) {
++		battmgr->curr_samples[battmgr->curr_next] = battmgr->status.current_now;
++		battmgr->curr_next = (battmgr->curr_next + 1) % OPLUS_CURR_SAMPLES;
++		if (battmgr->curr_count < OPLUS_CURR_SAMPLES)
++			battmgr->curr_count++;
++		for (i = 0; i < battmgr->curr_count; i++)
++			sum += battmgr->curr_samples[i];
++		battmgr->curr_avg = div_s64(sum, battmgr->curr_count);
++	}
+ 
+ 	status = qcom_battmgr_oplus_status(battmgr);
+ 	if (status == battmgr->last_status)
+@@ -802,6 +923,18 @@ static int qcom_battmgr_bat_get_property(struct power_supply *psy,
+ 		return 0;
+ 	}
+ 
++	/* the OPLUS charge limit is the driver's own, see qcom_battmgr_oplus_limit_update() */
++	if (battmgr->variant == QCOM_BATTMGR_OPLUS &&
++	    psp == POWER_SUPPLY_PROP_CHARGE_CONTROL_START_THRESHOLD) {
++		val->intval = qcom_battmgr_oplus_limit_start(battmgr);
++		return 0;
++	}
++	if (battmgr->variant == QCOM_BATTMGR_OPLUS &&
++	    psp == POWER_SUPPLY_PROP_CHARGE_CONTROL_END_THRESHOLD) {
++		val->intval = battmgr->chg_limit_end;
++		return 0;
++	}
++
+ 	if (battmgr->variant == QCOM_BATTMGR_SC8280XP ||
+ 	    battmgr->variant == QCOM_BATTMGR_X1E80100)
+ 		ret = qcom_battmgr_bat_sc8280xp_update(battmgr, psp);
+@@ -1075,8 +1208,12 @@ static int qcom_battmgr_bat_set_property(struct power_supply *psy,
+ 
+ 	switch (psp) {
+ 	case POWER_SUPPLY_PROP_CHARGE_CONTROL_START_THRESHOLD:
++		if (battmgr->variant == QCOM_BATTMGR_OPLUS)
++			return qcom_battmgr_oplus_set_limit(battmgr, psp, pval->intval);
+ 		return qcom_battmgr_set_charge_start_threshold(battmgr, pval->intval);
+ 	case POWER_SUPPLY_PROP_CHARGE_CONTROL_END_THRESHOLD:
++		if (battmgr->variant == QCOM_BATTMGR_OPLUS)
++			return qcom_battmgr_oplus_set_limit(battmgr, psp, pval->intval);
+ 		return qcom_battmgr_set_charge_end_threshold(battmgr, pval->intval);
+ 	case POWER_SUPPLY_PROP_CHARGE_BEHAVIOUR:
+ 		return qcom_battmgr_oplus_set_charge_behaviour(battmgr, pval->intval);
+@@ -1242,6 +1379,8 @@ static const enum power_supply_property oplus_bat_props[] = {
+ 	POWER_SUPPLY_PROP_STATE_OF_HEALTH,
+ 	POWER_SUPPLY_PROP_CHARGE_BEHAVIOUR,
+ 	POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX,
++	POWER_SUPPLY_PROP_CHARGE_CONTROL_START_THRESHOLD,
++	POWER_SUPPLY_PROP_CHARGE_CONTROL_END_THRESHOLD,
+ };
+ 
+ static const struct power_supply_desc oplus_bat_psy_desc = {
+@@ -2102,7 +2241,8 @@ static int qcom_battmgr_oplus_set_charge_behaviour(struct qcom_battmgr *battmgr,
+ 
+ 	mutex_lock(&battmgr->lock);
+ 	battmgr->chg_inhibit = behaviour == POWER_SUPPLY_CHARGE_BEHAVIOUR_INHIBIT_CHARGE;
+-	ret = qcom_battmgr_oplus_set(battmgr, OPLUS_CHG_EN, !battmgr->chg_inhibit);
++	/* "auto" does not turn the charger on while the charge limit holds it */
++	ret = qcom_battmgr_oplus_set(battmgr, OPLUS_CHG_EN, !qcom_battmgr_oplus_inhibited(battmgr));
+ 	mutex_unlock(&battmgr->lock);
+ 
+ 	return ret;
+@@ -2127,7 +2267,8 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+ 
+ 	mutex_lock(&battmgr->lock);
+ 	/* the host's inhibit is not kept by the firmware across attaches: send it again on every attach */
+-	qcom_battmgr_iceland_check(battmgr, qcom_battmgr_oplus_set(battmgr, OPLUS_CHG_EN, !battmgr->chg_inhibit),
++	qcom_battmgr_iceland_check(battmgr, qcom_battmgr_oplus_set(battmgr, OPLUS_CHG_EN,
++								   !qcom_battmgr_oplus_inhibited(battmgr)),
+ 				   "charge enable");
+ 
+ 	/* the charger type as the sysfs path reads it on this firmware: USB_ADAP_TYPE, mapped */
+@@ -2184,7 +2325,8 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+ 
+ 	dev_info(battmgr->dev, "charger: type %u, input limit %u uA, charge limit %u uA, VBUS after 9 V request %u mV%s\n",
+ 		 type, icl_ua, qcom_battmgr_oplus_fcc_ua(battmgr, battmgr->chg_fcc_ua), mv,
+-		 battmgr->chg_inhibit ? ", charging inhibited" : "");
++		 battmgr->chg_inhibit ? ", charging inhibited" :
++		 battmgr->chg_limit_hold ? ", charging held by the charge limit" : "");
+ }
+ 
+ static void qcom_battmgr_oplus_setup_charger(struct qcom_battmgr *battmgr)
+@@ -2269,8 +2411,13 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+ 		}
+ 
+ 		/* keep the host's inhibit asserted while a charger is in, whatever the firmware does on its own */
+-		if (battmgr->usb.online && battmgr->chg_inhibit)
+-			qcom_battmgr_oplus_set(battmgr, OPLUS_CHG_EN, 0);
++		if (qcom_battmgr_oplus_inhibited(battmgr)) {
++			if (battmgr->usb.online)
++				qcom_battmgr_oplus_set(battmgr, OPLUS_CHG_EN, 0);
++		} else if (battmgr->chg_en_retry &&
++			   !qcom_battmgr_oplus_set(battmgr, OPLUS_CHG_EN, 1)) {
++			battmgr->chg_en_retry = false;
++		}
+ 
+ 		setup_charger = battmgr->usb.online && !battmgr->charger_configured;
+ 		battmgr->charger_configured = battmgr->usb.online;
+@@ -2313,7 +2460,7 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+ static void qcom_battmgr_oplus_enable(struct qcom_battmgr *battmgr)
+ {
+ 	mutex_lock(&battmgr->lock);
+-	qcom_battmgr_oplus_set(battmgr, OPLUS_CHG_EN, !battmgr->chg_inhibit);
++	qcom_battmgr_oplus_set(battmgr, OPLUS_CHG_EN, !qcom_battmgr_oplus_inhibited(battmgr));
+ 	qcom_battmgr_oplus_set(battmgr, OPLUS_USB_OTG_AP_ENABLE, 1);
+ 	mutex_unlock(&battmgr->lock);
+ 
+@@ -2412,6 +2559,7 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
+ 	else
+ 		battmgr->variant = QCOM_BATTMGR_SM8350;
+ 
++	battmgr->chg_limit_end = 100;
+ 	if (battmgr->variant == QCOM_BATTMGR_OPLUS)
+ 		battmgr->chg_stock_limits = device_is_compatible(dev->parent,
+ 								 "oneplus,iceland-pmic-glink");
+-- 
+2.43.0
+

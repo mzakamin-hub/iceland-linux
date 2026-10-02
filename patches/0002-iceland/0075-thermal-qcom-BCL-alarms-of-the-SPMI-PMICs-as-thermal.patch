@@ -1,0 +1,551 @@
+From 69585c074fdef718aff52ce208a3c1b750c9baa8 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 07:18:00 +0300
+Subject: [PATCH 75/76] thermal: qcom: BCL alarms of the SPMI PMICs as thermal
+ sensors
+
+The battery current limit (BCL) block of Qualcomm's PMICs compares the
+battery or system voltage, and on some PMICs the battery current, with
+three programmable levels and raises an interrupt per level. The vendor
+kernel uses it to slow the system down before a weak or cold battery
+sags below the PMIC's under-voltage lockout; mainline has no driver.
+
+Add a small thermal-sensor driver for the generation found in PMH0101
+and PMIH0108: sensors 0-2 read 1 while alarm level 0-2 is up, sensor 3
+reads 100 minus the battery's capacity ("nearly empty"), so that thermal
+zones with ordinary cooling maps can act on them, as the vendor's zones
+do. At probe it logs what the boot firmware left, writes the current
+alarms from the device tree and enables the monitor; on every battery
+event it writes the voltage alarm row for the battery temperature from
+the device tree's table (the vendor's "dynamic vbat" table). These are
+the writes the vendor's driver makes at every boot.
+
+Tested on the OnePlus Pad 4: both blocks probe (revision 5), the alarms
+read back as the table says for 32 C, six interrupts registered with a
+count of 0 on a healthy battery, and thermal emulation on the seven
+zones limits the GPU and the CPUs to the vendor's values and releases
+them.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ drivers/thermal/qcom/Kconfig         |  12 +
+ drivers/thermal/qcom/Makefile        |   1 +
+ drivers/thermal/qcom/qcom-spmi-bcl.c | 472 +++++++++++++++++++++++++++
+ 3 files changed, 485 insertions(+)
+ create mode 100644 drivers/thermal/qcom/qcom-spmi-bcl.c
+
+diff --git a/drivers/thermal/qcom/Kconfig b/drivers/thermal/qcom/Kconfig
+index a8cf7e258..0ccbcf142 100644
+--- a/drivers/thermal/qcom/Kconfig
++++ b/drivers/thermal/qcom/Kconfig
+@@ -55,6 +55,18 @@ config QCOM_SPMI_TEMP_ALARM
+ 	  real time die temperature if an ADC is present or an estimate of the
+ 	  temperature based upon the over temperature stage value.
+ 
++config QCOM_SPMI_BCL
++	tristate "Qualcomm SPMI PMIC battery current limiting alarms"
++	depends on OF && SPMI && THERMAL_OF
++	select REGMAP_SPMI
++	help
++	  This enables the battery current limiting (BCL) block of Qualcomm
++	  PMICs such as PMH0101 and PMIH0108 as thermal sensors. The block
++	  raises alarm levels when the battery or system voltage sags or the
++	  battery current is too high; each level shows up as a sensor that
++	  reads 1 while the alarm is up, so thermal zones can bind cooling
++	  devices to it. A further sensor reports how empty the battery is.
++
+ config QCOM_LMH
+ 	tristate "Qualcomm Limits Management Hardware"
+ 	depends on ARCH_QCOM || COMPILE_TEST
+diff --git a/drivers/thermal/qcom/Makefile b/drivers/thermal/qcom/Makefile
+index 937ba0fe2..bfc28ea1d 100644
+--- a/drivers/thermal/qcom/Makefile
++++ b/drivers/thermal/qcom/Makefile
+@@ -7,4 +7,5 @@ obj-$(CONFIG_QCOM_SPMI_ADC_TM5)	+= qcom-spmi-adc-tm5.o
+ obj-$(CONFIG_QCOM_SPMI_ADC_TM5_GEN3)	+= qcom-spmi-adc-tm5-gen3.o
+ obj-$(CONFIG_QCOM_SPMI_MBG_TM) += qcom-spmi-mbg-tm.o
+ obj-$(CONFIG_QCOM_SPMI_TEMP_ALARM)	+= qcom-spmi-temp-alarm.o
++obj-$(CONFIG_QCOM_SPMI_BCL)	+= qcom-spmi-bcl.o
+ obj-$(CONFIG_QCOM_LMH)		+= lmh.o
+diff --git a/drivers/thermal/qcom/qcom-spmi-bcl.c b/drivers/thermal/qcom/qcom-spmi-bcl.c
+new file mode 100644
+index 000000000..fe67111bc
+--- /dev/null
++++ b/drivers/thermal/qcom/qcom-spmi-bcl.c
+@@ -0,0 +1,472 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Qualcomm SPMI PMIC battery current limiting (BCL) alarms as thermal sensors
++ *
++ * The BCL block of a PMIC compares the battery (or system rail) voltage and
++ * the battery current with programmable thresholds and reports three alarm
++ * levels. Each level is a thermal sensor here: it reads 1 while the PMIC
++ * reports the level and 0 otherwise, so a thermal zone with a passive trip at
++ * 1 binds cooling devices to it (sensor ids 0, 1, 2 = level 0, 1, 2).
++ * Sensor id 3 is the depletion of the battery, 100 - capacity in percent, for
++ * a "nearly empty" zone.
++ *
++ * Register layout and threshold coding follow the downstream bcl_pmic5 driver
++ * (BCL generation 4, digital major revision 5 and later).
++ */
++
++#include <linux/bits.h>
++#include <linux/interrupt.h>
++#include <linux/minmax.h>
++#include <linux/mod_devicetable.h>
++#include <linux/module.h>
++#include <linux/mutex.h>
++#include <linux/notifier.h>
++#include <linux/platform_device.h>
++#include <linux/power_supply.h>
++#include <linux/property.h>
++#include <linux/regmap.h>
++#include <linux/thermal.h>
++#include <linux/workqueue.h>
++
++#define BCL_REVISION2		0x01
++#define BCL_STATUS		0x08
++#define BCL_PARAM_1		0x0e
++#define  BCL_PARAM_HAS_IBAT_ADC	BIT(2)
++#define BCL_MONITOR_EN		0x46
++#define  BCL_MONITOR_EN_BIT	BIT(7)
++#define BCL_VCMP_L0_THR		0x47
++#define BCL_VADC_L0_THR		0x48
++#define BCL_VCMP_L1_THR		0x49
++#define BCL_VCMP_L2_THR		0x4a
++#define BCL_IBAT_HIGH		0x4b
++#define BCL_IBAT_TOO_HIGH	0x4c
++#define BCL_IBAT_TOO_HIGH_ADC	0x4d
++
++#define BCL_MIN_MAJOR		5
++#define BCL_VCMP_STEP_MV	25
++/* 64.879 uV per ADC bit, a 1:3 divider, the upper 8 of 16 bits */
++#define BCL_VADC_THR_LSB_UV	49827
++/* 610.37 uA per ADC bit, the upper 8 of 16 bits */
++#define BCL_IBAT_THR_LSB_UA	156255
++
++#define BCL_LEVELS		3
++#define BCL_SENSOR_DEPLETION	3
++#define BCL_MAX_RANGES		8
++
++/* The battery whose temperature and capacity are followed (qcom_battmgr). */
++#define BCL_BATTERY		"qcom-battmgr-bat"
++
++struct bcl_data {
++	bool l0_is_adc;			/* level 0 compares the ADC value */
++	unsigned int vcmp_base_mv;
++	unsigned int vcmp_max_mv;
++};
++
++struct bcl_chip;
++
++struct bcl_level {
++	struct bcl_chip *chip;
++	struct thermal_zone_device *tz;
++	unsigned int bit;
++	int last;
++};
++
++/* up to @temp (0.1 degree C) the three alarm voltages are @mv */
++struct bcl_range {
++	s32 temp;
++	u32 mv[BCL_LEVELS];
++};
++
++struct bcl_chip {
++	struct device *dev;
++	struct regmap *map;
++	const struct bcl_data *data;
++	unsigned int base;
++	struct bcl_level lvl[BCL_LEVELS];
++	struct thermal_zone_device *depletion_tz;
++	int depletion;
++	struct notifier_block psy_nb;
++	struct work_struct psy_work;
++	struct mutex lock;		/* threshold registers, cur_range */
++	struct bcl_range ranges[BCL_MAX_RANGES];
++	int nranges;
++	int cur_range;
++};
++
++static int bcl_level_get_temp(struct thermal_zone_device *tz, int *temp)
++{
++	struct bcl_level *lvl = thermal_zone_device_priv(tz);
++	struct bcl_chip *chip = lvl->chip;
++	unsigned int status;
++	int ret;
++
++	ret = regmap_read(chip->map, chip->base + BCL_STATUS, &status);
++	if (ret)
++		return ret;
++
++	lvl->last = !!(status & lvl->bit);
++	*temp = lvl->last;
++
++	return 0;
++}
++
++/*
++ * The value only knows 0 and 1, so the trend comes from the level itself:
++ * the step-wise governor then goes to the upper cooling state while the alarm
++ * is up and lets go when it is gone.
++ */
++static int bcl_level_get_trend(struct thermal_zone_device *tz,
++			       const struct thermal_trip *trip,
++			       enum thermal_trend *trend)
++{
++	struct bcl_level *lvl = thermal_zone_device_priv(tz);
++
++	*trend = lvl->last ? THERMAL_TREND_RAISING : THERMAL_TREND_DROPPING;
++
++	return 0;
++}
++
++static const struct thermal_zone_device_ops bcl_level_ops = {
++	.get_temp = bcl_level_get_temp,
++	.get_trend = bcl_level_get_trend,
++};
++
++static int bcl_depletion_get_temp(struct thermal_zone_device *tz, int *temp)
++{
++	struct bcl_chip *chip = thermal_zone_device_priv(tz);
++
++	*temp = READ_ONCE(chip->depletion);
++
++	return 0;
++}
++
++/* The capacity moves slowly: at or above the trip the caps go on step by step. */
++static int bcl_depletion_get_trend(struct thermal_zone_device *tz,
++				   const struct thermal_trip *trip,
++				   enum thermal_trend *trend)
++{
++	struct bcl_chip *chip = thermal_zone_device_priv(tz);
++
++	if (READ_ONCE(chip->depletion) >= trip->temperature)
++		*trend = THERMAL_TREND_RAISING;
++	else
++		*trend = THERMAL_TREND_DROPPING;
++
++	return 0;
++}
++
++static const struct thermal_zone_device_ops bcl_depletion_ops = {
++	.get_temp = bcl_depletion_get_temp,
++	.get_trend = bcl_depletion_get_trend,
++};
++
++static irqreturn_t bcl_irq(int irq, void *data)
++{
++	struct bcl_level *lvl = data;
++
++	thermal_zone_device_update(lvl->tz, THERMAL_TRIP_VIOLATED);
++
++	return IRQ_HANDLED;
++}
++
++static int bcl_write_vbat(struct bcl_chip *chip, int level, unsigned int mv)
++{
++	static const unsigned int vcmp_reg[BCL_LEVELS] = {
++		BCL_VCMP_L0_THR, BCL_VCMP_L1_THR, BCL_VCMP_L2_THR,
++	};
++	const struct bcl_data *data = chip->data;
++	unsigned int reg, val;
++
++	if (mv < data->vcmp_base_mv || mv > data->vcmp_max_mv)
++		return -EINVAL;
++
++	if (level == 0 && data->l0_is_adc) {
++		reg = BCL_VADC_L0_THR;
++		val = mv * 1000 / BCL_VADC_THR_LSB_UV;
++	} else {
++		reg = vcmp_reg[level];
++		val = (mv - data->vcmp_base_mv) / BCL_VCMP_STEP_MV;
++	}
++
++	return regmap_write(chip->map, chip->base + reg, val);
++}
++
++static int bcl_write_ibat(struct bcl_chip *chip, const u32 *ma,
++			  unsigned int param)
++{
++	unsigned int val[2], reg;
++	int i, ret;
++
++	for (i = 0; i < 2; i++) {
++		val[i] = ma[i] * 1000ULL / BCL_IBAT_THR_LSB_UA;
++		if (!val[i] || val[i] > 127)
++			return -EINVAL;
++	}
++
++	ret = regmap_write(chip->map, chip->base + BCL_IBAT_HIGH, val[0]);
++	if (ret)
++		return ret;
++
++	reg = param & BCL_PARAM_HAS_IBAT_ADC ? BCL_IBAT_TOO_HIGH_ADC :
++					       BCL_IBAT_TOO_HIGH;
++
++	return regmap_write(chip->map, chip->base + reg, val[1]);
++}
++
++/* The colder the battery, the earlier the voltage alarms: pick the range. */
++static void bcl_apply_range(struct bcl_chip *chip, int temp)
++{
++	const struct bcl_range *range;
++	int r, i, ret;
++
++	for (r = 0; r < chip->nranges - 1; r++)
++		if (temp <= chip->ranges[r].temp)
++			break;
++
++	if (r == chip->cur_range)
++		return;
++
++	/* stays invalid after a failure, so the next battery event retries */
++	chip->cur_range = -1;
++	range = &chip->ranges[r];
++	for (i = 0; i < BCL_LEVELS; i++) {
++		ret = bcl_write_vbat(chip, i, range->mv[i]);
++		if (ret) {
++			dev_err_ratelimited(chip->dev,
++					    "can't set the level %d voltage: %d\n",
++					    i, ret);
++			return;
++		}
++	}
++	chip->cur_range = r;
++
++	dev_info(chip->dev, "battery at %d: voltage alarms at %u / %u / %u mV\n",
++		 temp, range->mv[0], range->mv[1], range->mv[2]);
++}
++
++static void bcl_psy_work(struct work_struct *work)
++{
++	struct bcl_chip *chip = container_of(work, struct bcl_chip, psy_work);
++	union power_supply_propval val;
++	struct power_supply *psy;
++	int depletion;
++
++	psy = power_supply_get_by_name(BCL_BATTERY);
++	if (!psy)
++		return;
++
++	if (chip->nranges &&
++	    !power_supply_get_property(psy, POWER_SUPPLY_PROP_TEMP, &val)) {
++		mutex_lock(&chip->lock);
++		bcl_apply_range(chip, val.intval);
++		mutex_unlock(&chip->lock);
++	}
++
++	if (chip->depletion_tz &&
++	    !power_supply_get_property(psy, POWER_SUPPLY_PROP_CAPACITY, &val)) {
++		depletion = clamp(100 - val.intval, 0, 100);
++		if (depletion != READ_ONCE(chip->depletion)) {
++			WRITE_ONCE(chip->depletion, depletion);
++			thermal_zone_device_update(chip->depletion_tz,
++						   THERMAL_EVENT_UNSPECIFIED);
++		}
++	}
++
++	power_supply_put(psy);
++}
++
++static int bcl_psy_notify(struct notifier_block *nb, unsigned long event,
++			  void *data)
++{
++	struct bcl_chip *chip = container_of(nb, struct bcl_chip, psy_nb);
++	struct power_supply *psy = data;
++
++	if (event == PSY_EVENT_PROP_CHANGED &&
++	    !strcmp(psy->desc->name, BCL_BATTERY))
++		schedule_work(&chip->psy_work);
++
++	return NOTIFY_OK;
++}
++
++static void bcl_psy_stop(void *data)
++{
++	struct bcl_chip *chip = data;
++
++	power_supply_unreg_notifier(&chip->psy_nb);
++	cancel_work_sync(&chip->psy_work);
++}
++
++/* qcom,vbat-thresholds: rows of <upper temperature (0.1 C), level 0, 1, 2 (mV)> */
++static int bcl_parse_ranges(struct bcl_chip *chip)
++{
++	struct device *dev = chip->dev;
++	u32 cells[BCL_MAX_RANGES * (1 + BCL_LEVELS)];
++	int n, r, i;
++
++	n = device_property_count_u32(dev, "qcom,vbat-thresholds");
++	if (n <= 0)
++		return 0;
++	if (n % (1 + BCL_LEVELS) || n > ARRAY_SIZE(cells))
++		return -EINVAL;
++	if (device_property_read_u32_array(dev, "qcom,vbat-thresholds", cells, n))
++		return -EINVAL;
++
++	chip->nranges = n / (1 + BCL_LEVELS);
++	for (r = 0; r < chip->nranges; r++) {
++		const u32 *row = &cells[r * (1 + BCL_LEVELS)];
++
++		chip->ranges[r].temp = (s32)row[0];
++		if (r && chip->ranges[r].temp <= chip->ranges[r - 1].temp)
++			return -EINVAL;
++		for (i = 0; i < BCL_LEVELS; i++) {
++			if (row[1 + i] < chip->data->vcmp_base_mv ||
++			    row[1 + i] > chip->data->vcmp_max_mv)
++				return -EINVAL;
++			chip->ranges[r].mv[i] = row[1 + i];
++		}
++	}
++
++	return 0;
++}
++
++static int bcl_probe(struct platform_device *pdev)
++{
++	static const char * const irq_names[BCL_LEVELS] = {
++		"bcl-lvl0", "bcl-lvl1", "bcl-lvl2",
++	};
++	struct device *dev = &pdev->dev;
++	unsigned int rev, param = 0, en = 0;
++	struct bcl_chip *chip;
++	u8 thr[7] = { };
++	u32 reg, ibat[2];
++	int i, irq, ret;
++
++	chip = devm_kzalloc(dev, sizeof(*chip), GFP_KERNEL);
++	if (!chip)
++		return -ENOMEM;
++
++	chip->dev = dev;
++	chip->data = device_get_match_data(dev);
++	chip->cur_range = -1;
++	INIT_WORK(&chip->psy_work, bcl_psy_work);
++
++	ret = devm_mutex_init(dev, &chip->lock);
++	if (ret)
++		return ret;
++
++	chip->map = dev_get_regmap(dev->parent, NULL);
++	if (!chip->map)
++		return -ENXIO;
++
++	ret = device_property_read_u32(dev, "reg", &reg);
++	if (ret)
++		return dev_err_probe(dev, ret, "no reg property\n");
++	chip->base = reg;
++
++	ret = regmap_read(chip->map, chip->base + BCL_REVISION2, &rev);
++	if (ret)
++		return dev_err_probe(dev, ret, "can't read the revision\n");
++	if (rev < BCL_MIN_MAJOR)
++		return dev_err_probe(dev, -ENODEV, "revision %u not supported\n", rev);
++
++	regmap_read(chip->map, chip->base + BCL_PARAM_1, &param);
++	regmap_read(chip->map, chip->base + BCL_MONITOR_EN, &en);
++	regmap_bulk_read(chip->map, chip->base + BCL_VCMP_L0_THR, thr, sizeof(thr));
++	dev_info(dev, "revision %u, param %#x, enable %#x, thresholds as found: %*ph\n",
++		 rev, param, en, (int)sizeof(thr), thr);
++
++	ret = bcl_parse_ranges(chip);
++	if (ret)
++		return dev_err_probe(dev, ret, "bad qcom,vbat-thresholds\n");
++
++	if (!device_property_read_u32_array(dev, "qcom,ibat-thresholds-milliamp",
++					    ibat, ARRAY_SIZE(ibat))) {
++		ret = bcl_write_ibat(chip, ibat, param);
++		if (ret)
++			return dev_err_probe(dev, ret, "can't set the current alarms\n");
++	}
++
++	ret = regmap_write(chip->map, chip->base + BCL_MONITOR_EN, BCL_MONITOR_EN_BIT);
++	if (ret)
++		return dev_err_probe(dev, ret, "can't enable the monitor\n");
++
++	for (i = 0; i < BCL_LEVELS; i++) {
++		struct bcl_level *lvl = &chip->lvl[i];
++
++		lvl->chip = chip;
++		lvl->bit = BIT(i);
++		lvl->tz = devm_thermal_of_zone_register(dev, i, lvl, &bcl_level_ops);
++		if (IS_ERR(lvl->tz)) {
++			ret = PTR_ERR(lvl->tz);
++			lvl->tz = NULL;
++			if (ret == -ENODEV)
++				continue;
++			return dev_err_probe(dev, ret, "level %d zone\n", i);
++		}
++
++		irq = platform_get_irq_byname(pdev, irq_names[i]);
++		if (irq < 0)
++			return irq;
++
++		ret = devm_request_threaded_irq(dev, irq, NULL, bcl_irq, IRQF_ONESHOT,
++						irq_names[i], lvl);
++		if (ret)
++			return dev_err_probe(dev, ret, "can't request %s\n", irq_names[i]);
++	}
++
++	chip->depletion_tz = devm_thermal_of_zone_register(dev, BCL_SENSOR_DEPLETION,
++							   chip, &bcl_depletion_ops);
++	if (IS_ERR(chip->depletion_tz)) {
++		ret = PTR_ERR(chip->depletion_tz);
++		chip->depletion_tz = NULL;
++		if (ret != -ENODEV)
++			return dev_err_probe(dev, ret, "depletion zone\n");
++	}
++
++	if (chip->nranges || chip->depletion_tz) {
++		chip->psy_nb.notifier_call = bcl_psy_notify;
++		ret = power_supply_reg_notifier(&chip->psy_nb);
++		if (ret)
++			return ret;
++
++		ret = devm_add_action_or_reset(dev, bcl_psy_stop, chip);
++		if (ret)
++			return ret;
++
++		/* the battery may be there already */
++		schedule_work(&chip->psy_work);
++	}
++
++	return 0;
++}
++
++static const struct bcl_data pmh0101_bcl_data = {
++	.l0_is_adc = false,
++	.vcmp_base_mv = 1500,
++	.vcmp_max_mv = 4000,
++};
++
++static const struct bcl_data pmih0108_bcl_data = {
++	.l0_is_adc = true,
++	.vcmp_base_mv = 2250,
++	.vcmp_max_mv = 3600,
++};
++
++static const struct of_device_id bcl_match[] = {
++	{ .compatible = "qcom,pmh0101-bcl", .data = &pmh0101_bcl_data },
++	{ .compatible = "qcom,pmih0108-bcl", .data = &pmih0108_bcl_data },
++	{ }
++};
++MODULE_DEVICE_TABLE(of, bcl_match);
++
++static struct platform_driver bcl_driver = {
++	.driver = {
++		.name = "qcom-spmi-bcl",
++		.of_match_table = bcl_match,
++	},
++	.probe = bcl_probe,
++};
++module_platform_driver(bcl_driver);
++
++MODULE_DESCRIPTION("Qualcomm SPMI PMIC battery current limiting alarms");
++MODULE_LICENSE("GPL");
+-- 
+2.43.0
+
