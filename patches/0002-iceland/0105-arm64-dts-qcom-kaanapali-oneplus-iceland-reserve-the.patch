@@ -1,0 +1,34 @@
+From 669cae5b67a6ffb3ae6e7f6ccb46e2ad69abc880 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 11:21:28 +0300
+Subject: [PATCH 105/108] arm64: dts: qcom: kaanapali-oneplus-iceland: reserve
+ the pins stock reserves
+
+Stock reserves GPIO 36-43, 74, 119, 120 and 144-147 (qcom,gpios-reserved);
+the board file reserved only 36-39. Nothing here uses the other eleven
+pins. Reserve them too, so that Linux never drives or reconfigures pins
+that stock leaves to the secure world.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index f2c3acb8b..df2ac127b 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1939,7 +1939,8 @@ wcd_tx: codec@0,3 {
+ };
+ 
+ &tlmm {
+-	gpio-reserved-ranges = <36 4>;
++	/* stock's qcom,gpios-reserved: 36-43, 74, 119, 120, 144-147 */
++	gpio-reserved-ranges = <36 8>, <74 1>, <119 2>, <144 4>;
+ 
+ 	/* the pogo data line as a GPIO: low = a dock is attached and unpowered or asleep (stock uart_wake_gpio) */
+ 	pogo_detect_default: pogo-detect-default-state {
+-- 
+2.43.0
+

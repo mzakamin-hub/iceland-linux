@@ -1,0 +1,63 @@
+From bfb2d373129ad427ea0f2511cf9a1cce644b4c7d Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 11:21:28 +0300
+Subject: [PATCH 108/108] drm/panel: nt36536: OnePlus Pad 4: stock's reset
+ sequence
+
+The driver pulses the reset line the same way for every panel: low 11 ms,
+high 1 ms, low 3 ms, high 10 ms. Stock's sequence for the Pad 4's panel
+is high 10 ms, low 5 ms, high 10 ms (qcom,mdss-dsi-reset-sequence).
+
+Let a panel description carry its own high / low / high times and use
+stock's for the Pad 4. The other panel keeps the driver's sequence.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/panel/panel-novatek-nt36536.c | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/drivers/gpu/drm/panel/panel-novatek-nt36536.c b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
+index 0d9b7ec4e..5fb58b1fb 100644
+--- a/drivers/gpu/drm/panel/panel-novatek-nt36536.c
++++ b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
+@@ -42,6 +42,8 @@ struct panel_desc {
+ 	unsigned int bpc;
+ 	unsigned int lanes;
+ 	enum mipi_dsi_pixel_format format;
++	/* reset line high, low, high in ms; all 0: the driver's default sequence */
++	unsigned int reset_ms[3];
+ 	unsigned long mode_flags;
+ 	const struct drm_dsc_config *dsc_cfg;
+ 	const struct drm_display_mode *modes;
+@@ -75,6 +77,18 @@ static inline struct mipi_dsi_device *to_primary_dsi(struct novatek *ctx)
+ 
+ static void novatek_reset(struct novatek *ctx)
+ {
++	const unsigned int *ms = ctx->desc->reset_ms;
++
++	if (ms[0] || ms[1] || ms[2]) {
++		gpiod_set_value_cansleep(ctx->reset_gpio, 0);
++		usleep_range(ms[0] * 1000, ms[0] * 1000 + 1000);
++		gpiod_set_value_cansleep(ctx->reset_gpio, 1);
++		usleep_range(ms[1] * 1000, ms[1] * 1000 + 1000);
++		gpiod_set_value_cansleep(ctx->reset_gpio, 0);
++		usleep_range(ms[2] * 1000, ms[2] * 1000 + 1000);
++		return;
++	}
++
+ 	gpiod_set_value_cansleep(ctx->reset_gpio, 1);
+ 	usleep_range(11000, 12000);
+ 	gpiod_set_value_cansleep(ctx->reset_gpio, 0);
+@@ -717,6 +731,8 @@ static const struct panel_desc csot_iceland_desc = {
+ 	.modes = csot_iceland_modes,
+ 	.num_modes = ARRAY_SIZE(csot_iceland_modes),
+ 	.init_sequence = csot_iceland_init_seq,
++	/* stock: qcom,mdss-dsi-reset-sequence = <1 10>, <0 5>, <1 10> */
++	.reset_ms = { 10, 5, 10 },
+ 	.init_sends_pps = true,
+ 	.is_dual_dsi = true,
+ 	.has_dcs_backlight = false,
+-- 
+2.43.0
+

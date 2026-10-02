@@ -1,0 +1,94 @@
+From 64f07a9dd2fc8458787577d704c9c49c8a3cf377 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 11:21:28 +0300
+Subject: [PATCH 106/108] arm64: dts: qcom: kaanapali-oneplus-iceland: drive
+ strengths and one pull as stock
+
+Four pin settings differed from the pin states stock uses on the Pad 4:
+
+- the camera I2C bus (GPIO 4 / 5) ran at the SoC default of 2 mA; stock's
+  overlay drives it with 8 mA;
+- the speaker TDM port (GPIO 122-125) had 8 mA on every line; stock uses
+  2 mA for bit clock and frame sync and 6 mA for the data lines;
+- the Wi-Fi PERST# line (GPIO 102) had no pull; stock pulls it down;
+- the codec reset line (GPIO 161) had 16 mA; stock uses 4 mA.
+
+Use stock's values.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../dts/qcom/kaanapali-oneplus-iceland.dts     | 18 ++++++++++++------
+ 1 file changed, 12 insertions(+), 6 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index df2ac127b..a478016d4 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1318,6 +1318,11 @@ cam_rear_out: endpoint {
+ 	};
+ };
+ 
++/* stock drives the camera bus with 8 mA (qupv3_se9_i2c_sda_active / _scl_active) */
++&qup_i2c9_data_clk {
++	drive-strength = <8>;
++};
++
+ &i2c14 {
+ 	status = "okay";
+ 
+@@ -2039,7 +2044,7 @@ perst-n-pins {
+ 			pins = "gpio102";
+ 			function = "gpio";
+ 			drive-strength = <2>;
+-			bias-disable;
++			bias-pull-down;
+ 		};
+ 
+ 		clkreq-n-pins {
+@@ -2060,36 +2065,37 @@ wake-n-pins {
+ 	wcd_default: wcd-reset-n-active-state {
+ 		pins = "gpio161";
+ 		function = "gpio";
+-		drive-strength = <16>;
++		drive-strength = <4>;
+ 		bias-disable;
+ 	};
+ 
+ 	i2s0_default: i2s0-default-state {
++		/* drive strengths of stock's tdm0_* states: clock and frame sync 2 mA, data 6 mA */
+ 		sck-pins {
+ 			pins = "gpio122";
+ 			function = "i2s0_sck";
+-			drive-strength = <8>;
++			drive-strength = <2>;
+ 			bias-disable;
+ 		};
+ 
+ 		data0-pins {
+ 			pins = "gpio123";
+ 			function = "i2s0_data0";
+-			drive-strength = <8>;
++			drive-strength = <6>;
+ 			bias-disable;
+ 		};
+ 
+ 		data1-pins {
+ 			pins = "gpio124";
+ 			function = "i2s0_data1";
+-			drive-strength = <8>;
++			drive-strength = <6>;
+ 			bias-disable;
+ 		};
+ 
+ 		ws-pins {
+ 			pins = "gpio125";
+ 			function = "i2s0_ws";
+-			drive-strength = <8>;
++			drive-strength = <2>;
+ 			bias-disable;
+ 		};
+ 	};
+-- 
+2.43.0
+

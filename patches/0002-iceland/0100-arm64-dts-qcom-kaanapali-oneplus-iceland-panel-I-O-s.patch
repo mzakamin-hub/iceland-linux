@@ -1,0 +1,43 @@
+From 7fd72fdbdc82f6ce8168e63856551043d0beaf0c Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 11:21:26 +0300
+Subject: [PATCH 100/108] arm64: dts: qcom: kaanapali-oneplus-iceland: panel
+ I/O supply at stock's 1.9 V
+
+The panel driver enables vddio (L12B) without asking for a voltage, so the
+rail ran at the lower bound of its range, 1.8 V. Stock's power list for
+this panel asks for 1.9 V at 220 mA, and that is what the rail shows under
+stock Android with the screen on.
+
+The LDO moves in 8 mV steps; 1.896 V is the step at stock's value that
+stays within stock's maximum of 1.9 V. Make it the only voltage.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 7f1b07c82..073eaee1f 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -634,10 +634,13 @@ vreg_l11b_1p0: ldo11 {
+ 						   RPMH_REGULATOR_MODE_AUTO>;
+ 		};
+ 
+-		/* OEM change for Display */
++		/*
++		 * The panel's I/O supply. Stock's range is 1.2 .. 1.9 V and its panel power list asks for
++		 * 1.9 V; 1.896 V is the regulator step that does not exceed that.
++		 */
+ 		vreg_l12b_1p9: ldo12 {
+ 			regulator-name = "vreg_l12b_1p9";
+-			regulator-min-microvolt = <1800000>;//OEM set to 1.2V, but it was too low
++			regulator-min-microvolt = <1896000>;
+ 			regulator-max-microvolt = <1896000>;
+ 			regulator-initial-mode = <RPMH_REGULATOR_MODE_AUTO>;
+ 			regulator-allow-set-load;
+-- 
+2.43.0
+

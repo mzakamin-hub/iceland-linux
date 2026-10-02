@@ -1,0 +1,52 @@
+From ab6e3fea61c5ba4d233f600267acb9d13f77d17a Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 11:21:27 +0300
+Subject: [PATCH 102/108] backlight: ktz8869_iceland: give the second IC the
+ values stock's kernel writes
+
+The slave IC was programmed with BL_CFG2 = 0x8D and BL_OPTION2 = 0x77, the
+values the bootloader leaves in it. Stock's kernel driver does not keep
+those: when it first switches the backlight on it writes the same values
+to both ICs (0x03 = 0xEB, 0x11 = 0x76), so under stock Android the slave
+runs with the master's ramp setting and boost current limit.
+
+Use the master's values for the slave as stock's kernel does: the slave's
+current ramp setting and the register that holds its boost current limit
+then are the ones stock runs with.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/video/backlight/ktz8869_iceland.c | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/video/backlight/ktz8869_iceland.c b/drivers/video/backlight/ktz8869_iceland.c
+index 16279b9ab..f6dd2c61a 100644
+--- a/drivers/video/backlight/ktz8869_iceland.c
++++ b/drivers/video/backlight/ktz8869_iceland.c
+@@ -101,8 +101,11 @@ struct ktz8869_reg {
+ };
+ 
+ /*
+- * Values the stock bootloader (ABL, 11.A.38) leaves in both ICs, read back on the tablet: the master drives
+- * the LCD bias and half the LED strings, the slave the other strings with its own BL_CFG2/BL_OPTION2.
++ * The master drives the LCD bias and half the LED strings, the slave the other strings. The bias values and the
++ * master's backlight values are what the stock bootloader (ABL, 11.A.38) leaves in the IC, read back on the
++ * tablet, and what stock's kernel driver writes. ABL leaves the slave's BL_CFG2 / BL_OPTION2 at 0x8D / 0x77;
++ * stock's kernel writes the master's values to both ICs when it first switches the backlight on, so the slave
++ * gets those here too (BL_OPTION2 holds the boost converter's current limit).
+  */
+ static const struct ktz8869_reg ktz8869_bias_cfg[] = {
+ 	{ LCD_BOOST_CFG, 0x28 }, { OUTP_CFG, 0x1E }, { OUTN_CFG, 0x1E },
+@@ -114,7 +117,7 @@ static const struct ktz8869_reg ktz8869_bl_cfg_master[] = {
+ };
+ 
+ static const struct ktz8869_reg ktz8869_bl_cfg_slave[] = {
+-	{ BL_DIMMING, 0x44 }, { BL_CFG1, 0xB3 }, { BL_CFG2, 0x8D }, { BL_OPTION2, 0x77 },
++	{ BL_DIMMING, 0x44 }, { BL_CFG1, 0xB3 }, { BL_CFG2, 0xEB }, { BL_OPTION2, 0x76 },
+ 	{ PWM_RAMP_TIME, 0xF8 }, { BL_EN, 0x77 },
+ };
+ 
+-- 
+2.43.0
+

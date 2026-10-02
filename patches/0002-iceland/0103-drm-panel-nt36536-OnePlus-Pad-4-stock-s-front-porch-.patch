@@ -1,0 +1,44 @@
+From 1f874fb282a54ebc2287ac9e297d948b3398dddc Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 11:21:27 +0300
+Subject: [PATCH 103/108] drm/panel: nt36536: OnePlus Pad 4: stock's front
+ porch for 144 Hz
+
+The 144 Hz mode had a horizontal front porch of 68. Stock's table for this
+panel gives 32 / 16 / 20 (front porch / sync / back porch) per DSI link at
+144 Hz, which is 64 / 32 / 40 for the whole panel; 68 is the sum of the
+three per-link numbers. All other modes already are twice stock's
+per-link values.
+
+Use 64: the line is 3528 instead of 3532 pixel clocks long and the pixel
+clock 1259.9 instead of 1261.3 MHz.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/panel/panel-novatek-nt36536.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/gpu/drm/panel/panel-novatek-nt36536.c b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
+index 8d0ac3bc6..0d9b7ec4e 100644
+--- a/drivers/gpu/drm/panel/panel-novatek-nt36536.c
++++ b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
+@@ -629,11 +629,11 @@ static int csot_iceland_init_seq(struct mipi_dsi_multi_context *dsi_ctx,
+ static const struct drm_display_mode csot_iceland_modes[] = {
+ 	{
+ 		/* 144Hz */
+-		.clock = (3392 + 68 + 32 + 40) * (2400 + 26 + 2 + 52) * 144 / 1000,
++		.clock = (3392 + 64 + 32 + 40) * (2400 + 26 + 2 + 52) * 144 / 1000,
+ 		.hdisplay = 3392,
+-		.hsync_start = 3392 + 68,
+-		.hsync_end = 3392 + 68 + 32,
+-		.htotal = 3392 + 68 + 32 + 40,
++		.hsync_start = 3392 + 64,
++		.hsync_end = 3392 + 64 + 32,
++		.htotal = 3392 + 64 + 32 + 40,
+ 		.vdisplay = 2400,
+ 		.vsync_start = 2400 + 26,
+ 		.vsync_end = 2400 + 26 + 2,
+-- 
+2.43.0
+

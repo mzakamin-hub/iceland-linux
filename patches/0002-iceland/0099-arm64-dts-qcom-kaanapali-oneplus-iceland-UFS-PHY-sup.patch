@@ -1,0 +1,41 @@
+From 76209e74ff640f8a07d7e6320cb18133698290f5 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 11:21:26 +0300
+Subject: [PATCH 099/108] arm64: dts: qcom: kaanapali-oneplus-iceland: UFS PHY
+ supply L4G at stock's 0.912 V
+
+The range of L4G was 0.880 .. 0.920 V. The RPMh regulator driver programs
+the lower bound when the rail is enabled, so the UFS PHY's core supply ran
+at 0.880 V, and the upper bound was above what stock allows.
+
+Stock fixes the rail at 0.912 V (regulator-pmh0110-g-l4: min = max = init =
+912000) and its UFS PHY node asks for exactly that (vdda-phy-min-microvolt
+= <912000>); the vendor kernel shows 912 mV at run time. Use that value.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 086b7136f..7f1b07c82 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -929,10 +929,11 @@ vreg_l3g_1p2: ldo3 {
+ 						   RPMH_REGULATOR_MODE_AUTO>;
+ 		};
+ 
++		/* stock: fixed 0.912 V (the UFS PHY's vdda-phy-min-microvolt) */
+ 		vreg_l4g_0p9: ldo4 {
+ 			regulator-name = "vreg_l4g_0p9";
+-			regulator-min-microvolt = <880000>;
+-			regulator-max-microvolt = <920000>;
++			regulator-min-microvolt = <912000>;
++			regulator-max-microvolt = <912000>;
+ 			regulator-initial-mode = <RPMH_REGULATOR_MODE_AUTO>;
+ 			regulator-allow-set-load;
+ 			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
+-- 
+2.43.0
+

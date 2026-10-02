@@ -1,0 +1,174 @@
+From 103e76b6cf9a70d64dcebb0e9810c8fd5b04f057 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 11:21:25 +0300
+Subject: [PATCH 098/108] power: supply: qcom_battmgr: OPLUS: a plug or an
+ unplug ends the system's sleep
+
+The Oplus charger firmware reports a cable event with a notification on
+its GLINK channel. During suspend-to-idle the interrupt of that channel
+is still served (it is requested IRQF_NO_SUSPEND), so the notification
+is received and handled, but nothing ends the sleep:
+power_supply_changed() only raises a soft wakeup event, and the driver's
+attach poll does not run because no timer does. A sleeping tablet stays
+asleep when a charger is plugged in, and nothing in user space can watch
+the charging.
+
+On a USB notification and on the Oplus notifications, read the port's
+attach state and the charger's presence right away (two requests, which
+work in suspend-to-idle because their replies arrive on the same
+interrupt). If either changed, report a hard wakeup event on the battery
+manager device. The attach poll keeps the last known state fresh while
+the system is awake. The device becomes a wakeup device, so user space
+can turn the plug wake off in power/wakeup, and the wakes are counted in
+the wakeup source statistics.
+
+The vendor driver ends the sleep on every notification of the charger
+firmware (battery, USB and wireless: pm_wakeup_dev_event(dev, 50, true)
+in handle_notification() of oplus_hal_adsp.c), and Android suspends
+again by itself within seconds. A desktop session that was woken stays
+awake for minutes, so here only a change of the cable state wakes; the
+50 ms are the vendor's.
+
+Tested on the OnePlus Pad 4 (kernel q60, area-combo-52; first
+area-combo-51): every suspend-to-idle sleep with the cable in and
+no plug event ended by the RTC alarm only; the battery manager's
+notifications and requests are served inside the sleep without
+waking it.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/power/supply/qcom_battmgr.c | 72 +++++++++++++++++++++++++++++
+ 1 file changed, 72 insertions(+)
+
+diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
+index e8ade86f4..535d23fa1 100644
+--- a/drivers/power/supply/qcom_battmgr.c
++++ b/drivers/power/supply/qcom_battmgr.c
+@@ -18,6 +18,7 @@
+ #include <linux/property.h>
+ #include <linux/soc/qcom/pdr.h>
+ #include <linux/soc/qcom/pmic_glink.h>
++#include <linux/suspend.h>
+ #include <linux/math.h>
+ #include <linux/units.h>
+ 
+@@ -154,6 +155,7 @@ enum qcom_battmgr_variant {
+ #define OPLUS_CURR_DEADBAND_UA		20000
+ 
+ #define OPLUS_CID_GRACE_MS		500
++#define OPLUS_PLUG_WAKE_MS		50	/* oplus_hal_adsp.c: pm_wakeup_dev_event(bcdev->dev, 50, true) */
+ #define OPLUS_CID_POLL_MS		2000
+ #define OPLUS_CID_IDLE_POLL_MS		5000
+ #define OPLUS_OTG_REDETECT_MS		3000
+@@ -408,6 +410,11 @@ struct qcom_battmgr {
+ 	struct work_struct enable_work;
+ 
+ 	struct delayed_work cid_work;
++	/* a cable plugged or pulled ends the system's sleep, see qcom_battmgr_oplus_plug_check() */
++	struct work_struct plug_work;
++	bool plug_known;
++	bool plug_attached;
++	bool plug_online;
+ 	bool otg_sourcing;
+ 	bool otg_boost_on;
+ 	bool otg_released;
+@@ -1658,9 +1665,58 @@ static const struct power_supply_desc sm8350_wls_psy_desc = {
+ 	.get_property = qcom_battmgr_wls_get_property,
+ };
+ 
++/*
++ * A cable plugged into the USB-C port or pulled out of it ends the system's
++ * sleep. The firmware's notification is received during suspend-to-idle (the
++ * interrupt of its channel is not suspended), but that alone wakes nothing,
++ * and the attach poll's timer does not run there. Stock ends the sleep on
++ * every notification of the charger firmware (handle_notification() in
++ * oplus_hal_adsp.c); here only a change of the port's attach state or of the
++ * charger's presence does, so that the state of charge and the charge state
++ * leave the system asleep.
++ *
++ * Called with the lock held and usb.online fresh.
++ */
++static void qcom_battmgr_oplus_plug_check(struct qcom_battmgr *battmgr, bool attached)
++{
++	bool online = battmgr->usb.online;
++
++	if (battmgr->plug_known &&
++	    (attached != battmgr->plug_attached || online != battmgr->plug_online)) {
++		if (pm_suspend_target_state != PM_SUSPEND_ON)
++			dev_info(battmgr->dev, "USB-C %s, charger %s: ending the sleep\n",
++				 attached ? "attached" : "detached", online ? "online" : "offline");
++		pm_wakeup_dev_event(battmgr->dev, OPLUS_PLUG_WAKE_MS, true);
++	}
++
++	battmgr->plug_known = true;
++	battmgr->plug_attached = attached;
++	battmgr->plug_online = online;
++}
++
++static void qcom_battmgr_oplus_plug_work(struct work_struct *work)
++{
++	struct qcom_battmgr *battmgr = container_of(work, struct qcom_battmgr, plug_work);
++
++	if (!battmgr->service_up)
++		return;
++
++	mutex_lock(&battmgr->lock);
++	if (!qcom_battmgr_request_property(battmgr, OPLUS_PROPERTY_GET, OPLUS_USB_CID_STATUS, 0)) {
++		bool attached = battmgr->oplus_value == 1;
++
++		if (!qcom_battmgr_request_property(battmgr, BATTMGR_USB_PROPERTY_GET, USB_ONLINE, 0))
++			qcom_battmgr_oplus_plug_check(battmgr, attached);
++	}
++	mutex_unlock(&battmgr->lock);
++}
++
+ static void qcom_battmgr_oplus_notification(struct qcom_battmgr *battmgr,
+ 					    unsigned int notification)
+ {
++	/* any of these can be a plug or an unplug */
++	queue_work(system_dfl_long_wq, &battmgr->plug_work);
++
+ 	switch (notification) {
+ 	case NOTIF_OPLUS_OTG_ENABLE:
+ 		battmgr->otg_sourcing = true;
+@@ -1706,6 +1762,8 @@ static void qcom_battmgr_notification(struct qcom_battmgr *battmgr,
+ 		break;
+ 	case NOTIF_USB_PROPERTY:
+ 		power_supply_changed(battmgr->usb_psy);
++		if (battmgr->variant == QCOM_BATTMGR_OPLUS)
++			queue_work(system_dfl_long_wq, &battmgr->plug_work);
+ 		break;
+ 	case NOTIF_WLS_PROPERTY:
+ 		power_supply_changed(battmgr->wls_psy);
+@@ -2504,6 +2562,8 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+ 	if (ret)
+ 		goto out_unlock;
+ 
++	qcom_battmgr_oplus_plug_check(battmgr, attached);
++
+ 	status_changed = qcom_battmgr_oplus_sample(battmgr);
+ 
+ 	if (!attached || battmgr->usb.online) {
+@@ -2761,6 +2821,18 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
+ 	if (ret)
+ 		return ret;
+ 
++	ret = devm_work_autocancel(dev, &battmgr->plug_work,
++				   qcom_battmgr_oplus_plug_work);
++	if (ret)
++		return ret;
++
++	if (battmgr->variant == QCOM_BATTMGR_OPLUS) {
++		/* a plug or an unplug wakes the system; user space can turn that off in power/wakeup */
++		ret = devm_device_init_wakeup(dev);
++		if (ret)
++			return ret;
++	}
++
+ 	battmgr->client = devm_pmic_glink_client_alloc(dev, PMIC_GLINK_OWNER_BATTMGR,
+ 						       qcom_battmgr_callback,
+ 						       qcom_battmgr_pdr_notify,
+-- 
+2.43.0
+

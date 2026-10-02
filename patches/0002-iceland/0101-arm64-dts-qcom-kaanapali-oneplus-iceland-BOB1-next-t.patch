@@ -1,0 +1,45 @@
+From 54b2939d4a45f07701d46b081303427ab9b8eac9 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 11:21:26 +0300
+Subject: [PATCH 101/108] arm64: dts: qcom: kaanapali-oneplus-iceland: BOB1
+ next to stock's 3.296 V
+
+BOB1 supplies the WCD9395's microphone-bias regulator. The codec driver
+enables it without a voltage request, so Linux kept whatever the boot
+chain had voted (3.032 V). Stock's codec node asks for 3.296 V
+(qcom,cdc-vdd-mic-bias-voltage), stock's regulator node starts at that
+voltage (qcom,init-voltage), and the vendor kernel shows 3296 mV at run
+time.
+
+The regulator's table moves in 32 mV steps from 3.0 V, so 3.296 V itself
+cannot be asked for: raise the lower bound to 3.288 V, the nearest step
+that does not exceed stock's vote. The upper bound is unchanged.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 073eaee1f..f2c3acb8b 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -520,9 +520,13 @@ regulators-0 {
+ 		vdd-l17-supply = <&vreg_bob2>;
+ 		vdd-l18-supply = <&vreg_s7f_1p2>;
+ 
++		/*
++		 * stock votes 3.296 V for the codec's microphone-bias supply; 3.288 V is the 32 mV step of this
++		 * regulator's table nearest to it without exceeding it
++		 */
+ 		vreg_bob1: bob1 {
+ 			regulator-name = "vreg_bob1";
+-			regulator-min-microvolt = <3008000>;
++			regulator-min-microvolt = <3288000>;
+ 			regulator-max-microvolt = <4000000>;
+ 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+ 		};
+-- 
+2.43.0
+
