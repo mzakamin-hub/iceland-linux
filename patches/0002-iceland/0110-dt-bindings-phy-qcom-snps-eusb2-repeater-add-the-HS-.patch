@@ -1,0 +1,36 @@
+From c121c54646d72478067980601f0e400ede08ff1c Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 11:57:42 +0300
+Subject: [PATCH 110/112] dt-bindings: phy: qcom,snps-eusb2-repeater: add the
+ HS slew rate tuning
+
+The repeater has a register for the high-speed transmit slew rate
+(TUNE_USB2_SLEW) next to the ones that already have a property. Boards
+tune it as they tune amplitude and pre-emphasis.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../devicetree/bindings/phy/qcom,snps-eusb2-repeater.yaml   | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/phy/qcom,snps-eusb2-repeater.yaml b/Documentation/devicetree/bindings/phy/qcom,snps-eusb2-repeater.yaml
+index f29fc335f..7d6c9546b 100644
+--- a/Documentation/devicetree/bindings/phy/qcom,snps-eusb2-repeater.yaml
++++ b/Documentation/devicetree/bindings/phy/qcom,snps-eusb2-repeater.yaml
+@@ -60,6 +60,12 @@ properties:
+     minimum: 0
+     maximum: 7
+ 
++  qcom,tune-usb2-slew:
++    $ref: /schemas/types.yaml#/definitions/uint8
++    description: High-Speed TX slew rate tuning
++    minimum: 0
++    maximum: 7
++
+   qcom,squelch-detector-bp:
+     description:
+       This adjusts the voltage level for the threshold used to detect valid
+-- 
+2.43.0
+

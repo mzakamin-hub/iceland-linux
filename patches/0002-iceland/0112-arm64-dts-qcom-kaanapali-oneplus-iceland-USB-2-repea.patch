@@ -1,0 +1,31 @@
+From 12c40c2baf9d0fce4dd8dbc94f4cac8547f7eaf4 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 11:57:42 +0300
+Subject: [PATCH 112/112] arm64: dts: qcom: kaanapali-oneplus-iceland: USB 2
+ repeater slew rate from stock
+
+Stock's device-mode list for the eUSB2 repeater writes 2 to
+TUNE_USB2_SLEW. Set it.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 601b47203..816ca3b82 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1697,6 +1697,8 @@ &pmih0108_e1_eusb2_repeater {
+ 	qcom,tune-usb2-disc-thres = /bits/ 8 <7>;
+ 	qcom,squelch-detector-bp = <(-2000)>;
+ 	qcom,tune-usb2-preem = /bits/ 8 <3>;
++	/* stock's device-mode list: TUNE_USB2_SLEW (0x55) = 2 */
++	qcom,tune-usb2-slew = /bits/ 8 <2>;
+ };
+ 
+ &pmk8850_gpios {
+-- 
+2.43.0
+
