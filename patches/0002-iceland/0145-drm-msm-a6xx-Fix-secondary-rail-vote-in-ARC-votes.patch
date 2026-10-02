@@ -1,0 +1,46 @@
+From f01fbfe1a3a9432d7c5585d116f5cb2a1f1e7b8c Mon Sep 17 00:00:00 2001
+From: Akhil P Oommen <akhilpo@oss.qualcomm.com>
+Date: Wed, 23 Sep 2026 15:55:42 +0530
+Subject: [PATCH 145/162] drm/msm/a6xx: Fix secondary rail vote in ARC votes
+
+Using the requested level can pick a secondary corner lower than the one
+required to support the chosen primary corner, under-voting the
+dependent rail. To fix this, match against the selected primary voltage
+instead.
+
+Fixes: 4b565ca5a2cb ("drm/msm: Add A6XX device support")
+Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
+Signed-off-by: Akhil P Oommen <akhilpo@oss.qualcomm.com>
+Patchwork: https://patchwork.freedesktop.org/patch/755592/
+Message-ID: <20260923-hawi-gpu-v1-2-0c3c79a1a470@oss.qualcomm.com>
+Signed-off-by: Rob Clark <robin.clark@oss.qualcomm.com>
+[ upsync: commit 128a0edde507 in drm/msm msm-next (for 7.4) ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/adreno/a6xx_gmu.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
+index baf77a620..d07264609 100644
+--- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
++++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
+@@ -1765,10 +1765,14 @@ static int a6xx_gmu_rpmh_arc_votes_init(struct device *dev, u32 *votes,
+ 		/*
+ 		 * Look for a level in in the secondary list that matches. If
+ 		 * nothing fits, use the maximum non zero vote
++		 *
++		 * The secondary rail depends on the primary rail, so match it
++		 * against the quantized primary voltage (which is >= the
++		 * requested level), not the requested level itself.
+ 		 */
+ 
+ 		for (j = 0; j < sec_count; j++) {
+-			if (sec[j] >= level) {
++			if (sec[j] >= pri[pindex]) {
+ 				sindex = j;
+ 				break;
+ 			} else if (sec[j]) {
+-- 
+2.43.0
+

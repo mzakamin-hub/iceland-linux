@@ -1,0 +1,56 @@
+From 625ce8d09ba5ff66f2b7b5c5ce59cd3d9a0fb810 Mon Sep 17 00:00:00 2001
+From: Priyansh Jain <priyansh.jain@oss.qualcomm.com>
+Date: Fri, 8 May 2026 15:37:00 +0530
+Subject: [PATCH 156/162] thermal/drivers/qcom/tsens: Widen temperature limits
+ to match hardware range
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The TSENS v2 software driver currently clamps trip_min_temp and
+trip_max_temp to -40°C and 120°C respectively. However, the
+TSENS v2 hardware temperature threshold registers support a wider
+programmable range from -204°C to +204°C.
+
+On newer chipsets using TSENS v2, devices may legitimately operate
+beyond the existing software limits (for example, up to 130°C). When a
+trip temperature is programmed outside the software clamped range, it is
+constrained to 120°C on the upper end or -40°C on the lower end.
+If the actual temperature continues to exceed this clamped limit, the
+threshold is immediately violated again, which can result in a
+continuous interrupt storm.
+
+Expand the TSENS v2 software trip temperature limits to match the full
+hardware supported range (-204°C to +204°C). This avoids repeated
+threshold reprogramming and ensures correct trip handling on TSENS v2
+based platforms.
+
+Signed-off-by: Priyansh Jain <priyansh.jain@oss.qualcomm.com>
+Signed-off-by: Daniel Lezcano <daniel.lezcano@kernel.org>
+Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
+Link: https://patch.msgid.link/20260508100700.772985-3-priyansh.jain@oss.qualcomm.com
+[ upsync: commit eca1247443d4 in thermal/linux-next (for 7.4) ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/thermal/qcom/tsens-v2.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/thermal/qcom/tsens-v2.c b/drivers/thermal/qcom/tsens-v2.c
+index 2ee117aa9..843dd29fa 100644
+--- a/drivers/thermal/qcom/tsens-v2.c
++++ b/drivers/thermal/qcom/tsens-v2.c
+@@ -54,8 +54,8 @@ static struct tsens_features tsens_v2_feat = {
+ 	.adc		= 0,
+ 	.srot_split	= 1,
+ 	.max_sensors	= 16,
+-	.trip_min_temp	= -40000,
+-	.trip_max_temp	= 120000,
++	.trip_min_temp	= -204000,
++	.trip_max_temp	= 204000,
+ };
+ 
+ static struct tsens_features ipq8074_feat = {
+-- 
+2.43.0
+
