@@ -1,0 +1,107 @@
+From 0c4a48d4f65b52a367f51d32b5d06d023e66f0bb Mon Sep 17 00:00:00 2001
+From: Gaurav Kohli <gaurav.kohli@oss.qualcomm.com>
+Date: Fri, 2 Oct 2026 16:19:50 +0300
+Subject: [PATCH 117/124] dt-bindings: remoteproc: qcom,pas: add #cooling-cells
+ property
+
+Document the optional #cooling-cells property for Qualcomm PAS
+remoteproc nodes so they can be used as thermal cooling devices via
+the QMI Thermal Mitigation Device (TMD) interface.
+
+Qualcomm remote processors expose TMD endpoints that support thermal
+throttling through firmware. The cooling-device specifier uses 3 cells:
+
+  <&phandle device_id min_state max_state>
+
+where device_id selects the TMD endpoint (for example PA, modem, or
+CDSP software mitigation), with constants defined in:
+include/dt-bindings/thermal/qcom,pas.h
+
+Example usage in a thermal zone:
+
+  cooling-maps {
+      map0 {
+          trip = <&cpu_alert>;
+          cooling-device = <&remoteproc_cdsp
+                           QCOM_TMD_CDSP_SW
+                           0 THERMAL_NO_LIMIT>;
+      };
+  };
+
+Reviewed-by: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>
+Acked-by: Daniel Lezcano <daniel.lezcano@oss.qualcomm.com>
+Signed-off-by: Gaurav Kohli <gaurav.kohli@oss.qualcomm.com>
+Link: https://lore.kernel.org/r/20260809-b4-qmi-tmd-v8-1-b15d47adc379@oss.qualcomm.com
+Signed-off-by: Bjorn Andersson <andersson@kernel.org>
+(cherry picked from commit 1a61afc42cff8397cbc430666cf4ce9dec72e076 rproc-next)
+[mzak: backported to 7.3-rc4; content unchanged, MAINTAINERS context only]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../bindings/remoteproc/qcom,pas-common.yaml  |  9 +++++++++
+ MAINTAINERS                                   |  1 +
+ include/dt-bindings/thermal/qcom,pas.h        | 20 +++++++++++++++++++
+ 3 files changed, 30 insertions(+)
+ create mode 100644 include/dt-bindings/thermal/qcom,pas.h
+
+diff --git a/Documentation/devicetree/bindings/remoteproc/qcom,pas-common.yaml b/Documentation/devicetree/bindings/remoteproc/qcom,pas-common.yaml
+index 11faf655f..f75cab6b4 100644
+--- a/Documentation/devicetree/bindings/remoteproc/qcom,pas-common.yaml
++++ b/Documentation/devicetree/bindings/remoteproc/qcom,pas-common.yaml
+@@ -77,6 +77,15 @@ properties:
+       channels and devices related to the ADSP.
+     unevaluatedProperties: false
+ 
++  '#cooling-cells':
++    description: |
++      Cooling device with three cells:
++        Cell 0: Cooling device id as defined in
++                include/dt-bindings/thermal/qcom,pas.h
++        Cell 1: Minimum cooling state
++        Cell 2: Maximum cooling state
++    const: 3
++
+   glink-edge:
+     $ref: /schemas/remoteproc/qcom,glink-edge.yaml#
+     description:
+diff --git a/MAINTAINERS b/MAINTAINERS
+index e5b1b2a67..ef8c635e8 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -3454,6 +3454,7 @@ F:	drivers/watchdog/gunyah_wdt.c
+ F:	include/dt-bindings/arm/qcom,ids.h
+ F:	include/dt-bindings/firmware/qcom,scm.h
+ F:	include/dt-bindings/soc/qcom*
++F:	include/dt-bindings/thermal/qcom,pas.h
+ F:	include/linux/firmware/qcom
+ F:	include/linux/soc/qcom/
+ F:	include/soc/qcom/
+diff --git a/include/dt-bindings/thermal/qcom,pas.h b/include/dt-bindings/thermal/qcom,pas.h
+new file mode 100644
+index 000000000..f603bddef
+--- /dev/null
++++ b/include/dt-bindings/thermal/qcom,pas.h
+@@ -0,0 +1,20 @@
++/* SPDX-License-Identifier: GPL-2.0-only OR BSD-2-Clause */
++/*
++ * Qualcomm PAS remoteproc cooling device indices
++ *
++ * These indices are used in device tree cooling-maps to reference
++ * specific TMD devices provided by PAS-managed remote processors via QMI.
++ *
++ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
++ */
++#ifndef _DT_BINDINGS_THERMAL_QCOM_PAS_H
++#define _DT_BINDINGS_THERMAL_QCOM_PAS_H
++
++/* CDSP thermal mitigation device id */
++#define QCOM_TMD_CDSP_SW	0
++
++/* Modem thermal mitigation device id */
++#define QCOM_TMD_PA	0
++#define QCOM_TMD_MODEM	1
++
++#endif /* _DT_BINDINGS_THERMAL_QCOM_PAS_H */
+-- 
+2.43.0
+

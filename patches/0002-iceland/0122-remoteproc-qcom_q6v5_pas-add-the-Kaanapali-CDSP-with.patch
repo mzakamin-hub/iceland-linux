@@ -1,0 +1,84 @@
+From 46ca7275b96458c92c2c3b4e6137f779ebcda886 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 16:19:51 +0300
+Subject: [PATCH 122/124] remoteproc: qcom_q6v5_pas: add the Kaanapali CDSP
+ with its TMDs
+
+The Kaanapali CDSP is described as "qcom,kaanapali-cdsp-pas" with the
+SM8550 CDSP as fallback and so far used the SM8550 platform data. Give it
+its own entry: the same resources, plus the QMI TMD instance of the CDSP
+(0x43, as on the other CDSPs) and four of its mitigation endpoints, so
+that a Kaanapali board can bind thermal zones to the CDSP and to its
+vector (HVX) and matrix (HMX) units.
+
+The values are those of the OnePlus Pad 4's vendor device tree (TMD
+instance 0x43; endpoints cdsp_sw, cdsp_sw_hvx, cdsp_sw_hmx, cdsp_hw).
+The firmware also lists cdsp_hw_hvx and cdsp_hw_hmx, which the vendor
+tree does not use; they stay unregistered.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/remoteproc/qcom_q6v5_pas.c | 32 ++++++++++++++++++++++++++++++
+ 1 file changed, 32 insertions(+)
+
+diff --git a/drivers/remoteproc/qcom_q6v5_pas.c b/drivers/remoteproc/qcom_q6v5_pas.c
+index 2e6df201b..12c22189c 100644
+--- a/drivers/remoteproc/qcom_q6v5_pas.c
++++ b/drivers/remoteproc/qcom_q6v5_pas.c
+@@ -1072,6 +1072,13 @@ static const struct tmd_name modem_tmd_name[] = {
+ 	{ .name = "modem", .id = QCOM_TMD_MODEM },
+ };
+ 
++static const struct tmd_name kaanapali_cdsp_tmd_name[] = {
++	{ .name = "cdsp_sw", .id = QCOM_TMD_CDSP_SW },
++	{ .name = "cdsp_sw_hvx", .id = QCOM_TMD_CDSP_SW_HVX },
++	{ .name = "cdsp_sw_hmx", .id = QCOM_TMD_CDSP_SW_HMX },
++	{ .name = "cdsp_hw", .id = QCOM_TMD_CDSP_HW },
++};
++
+ static const struct qcom_pas_data adsp_resource_init = {
+ 	.crash_reason_smem = 423,
+ 	.firmware_name = "adsp.mdt",
+@@ -1874,6 +1881,30 @@ static const struct qcom_pas_data sm8750_mpss_resource = {
+ 	.region_assign_vmid = QCOM_SCM_VMID_MSS_MSA,
+ };
+ 
++static const struct qcom_pas_data kaanapali_cdsp_resource = {
++	.crash_reason_smem = 601,
++	.firmware_name = "cdsp.mdt",
++	.dtb_firmware_name = "cdsp_dtb.mdt",
++	.pas_id = 18,
++	.dtb_pas_id = 0x25,
++	.minidump_id = 7,
++	.auto_boot = true,
++	.proxy_pd_names = (char*[]){
++		"cx",
++		"mxc",
++		"nsp",
++		NULL
++	},
++	.load_state = "cdsp",
++	.ssr_name = "cdsp",
++	.sysmon_name = "cdsp",
++	.ssctl_id = 0x17,
++	.smem_host_id = 5,
++	.tmd_instance_id = 0x43,
++	.tmd_name = kaanapali_cdsp_tmd_name,
++	.num_tmd = ARRAY_SIZE(kaanapali_cdsp_tmd_name),
++};
++
+ static const struct qcom_pas_data kaanapali_soccp_resource = {
+ 	.crash_reason_smem = 656,
+ 	.firmware_name = "soccp.mbn",
+@@ -1938,6 +1969,7 @@ static const struct of_device_id qcom_pas_of_match[] = {
+ 	{ .compatible = "qcom,eliza-adsp-pas", .data = &sm8550_adsp_resource },
+ 	{ .compatible = "qcom,eliza-cdsp-pas", .data = &eliza_cdsp_resource },
+ 	{ .compatible = "qcom,glymur-soccp-pas", .data = &glymur_soccp_resource },
++	{ .compatible = "qcom,kaanapali-cdsp-pas", .data = &kaanapali_cdsp_resource },
+ 	{ .compatible = "qcom,kaanapali-soccp-pas", .data = &kaanapali_soccp_resource },
+ 	{ .compatible = "qcom,milos-adsp-pas", .data = &sm8550_adsp_resource },
+ 	{ .compatible = "qcom,milos-cdsp-pas", .data = &milos_cdsp_resource },
+-- 
+2.43.0
+

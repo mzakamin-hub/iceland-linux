@@ -1,0 +1,43 @@
+From 51b8e6a9052f444b85420856ae60bbc5d18bfef6 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 16:19:51 +0300
+Subject: [PATCH 121/124] dt-bindings: thermal: qcom,pas: add the CDSP HVX, HMX
+ and HW TMD ids
+
+The CDSP firmware of Kaanapali (SM8850) offers more thermal mitigation
+devices over QMI TMD than "cdsp_sw" (the CDSP as a whole); on the
+OnePlus Pad 4 it lists cdsp_hw, cdsp_sw, cdsp_sw_hvx, cdsp_sw_hmx,
+cdsp_hw_hvx and cdsp_hw_hmx. The Pad 4's vendor kernel registers four
+of them as cooling devices - cdsp_sw, the vector and matrix unit limits
+cdsp_sw_hvx and cdsp_sw_hmx, and cdsp_hw (maximum levels 12, 11, 12
+and 1) - and binds cdsp_sw_hvx to a PMIC temperature zone.
+
+Add cooling-device ids for the three further endpoints it uses,
+numbered after QCOM_TMD_CDSP_SW within the CDSP's own id space.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ include/dt-bindings/thermal/qcom,pas.h | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/include/dt-bindings/thermal/qcom,pas.h b/include/dt-bindings/thermal/qcom,pas.h
+index f603bddef..409666da1 100644
+--- a/include/dt-bindings/thermal/qcom,pas.h
++++ b/include/dt-bindings/thermal/qcom,pas.h
+@@ -10,8 +10,11 @@
+ #ifndef _DT_BINDINGS_THERMAL_QCOM_PAS_H
+ #define _DT_BINDINGS_THERMAL_QCOM_PAS_H
+ 
+-/* CDSP thermal mitigation device id */
++/* CDSP thermal mitigation device ids */
+ #define QCOM_TMD_CDSP_SW	0
++#define QCOM_TMD_CDSP_SW_HVX	1
++#define QCOM_TMD_CDSP_SW_HMX	2
++#define QCOM_TMD_CDSP_HW	3
+ 
+ /* Modem thermal mitigation device id */
+ #define QCOM_TMD_PA	0
+-- 
+2.43.0
+

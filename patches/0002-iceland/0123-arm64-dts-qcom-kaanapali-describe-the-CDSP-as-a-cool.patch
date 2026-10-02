@@ -1,0 +1,32 @@
+From f84d9a322de792390ea95c49c3ac98885c052283 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 16:19:51 +0300
+Subject: [PATCH 123/124] arm64: dts: qcom: kaanapali: describe the CDSP as a
+ cooling device
+
+Add #cooling-cells to the CDSP so that thermal zones can throttle it
+through its QMI TMD endpoints. The cooling devices appear once the CDSP
+runs and offers its TMD service.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali.dtsi | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
+index b1cccec41..7ad84e4a5 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
++++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
+@@ -7639,6 +7639,8 @@ remoteproc_cdsp: remoteproc@26300000 {
+ 			qcom,smem-states = <&smp2p_cdsp_out 0>;
+ 			qcom,smem-state-names = "stop";
+ 
++			#cooling-cells = <3>;
++
+ 			status = "disabled";
+ 
+ 			glink-edge {
+-- 
+2.43.0
+
