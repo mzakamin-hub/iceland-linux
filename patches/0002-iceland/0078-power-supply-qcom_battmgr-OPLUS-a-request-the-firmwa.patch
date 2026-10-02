@@ -1,0 +1,51 @@
+From 3bddc18822544493486b98aec2e5304ae9c90294 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 08:17:51 +0300
+Subject: [PATCH 78/83] power: supply: qcom_battmgr: OPLUS: a request the
+ firmware rejects is an error
+
+The reply to an OnePlus request (opcodes 0x300 set / 0x301 get) was taken
+as a success whatever its result word said; only the value was stored.
+These requests are the input current limit, charge enable and the 9 V
+request. A write of inhibit-charge to charge_behaviour therefore returned
+success even if the firmware had refused it, and "charger setup ...
+failed" could only fire on a transport error or a timeout.
+
+The vendor's driver checks the result word of every reply, also for these
+opcodes (validate_message(): ret_code != 0 is an error).
+
+Return -EIO for a result other than 0 and log the firmware's code once
+per property.
+
+Tested on the OnePlus Pad 4: every SET and GET of the charger setup
+answers result 0, no "rejected" line, the charger line and the inhibit
+behave as before.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ drivers/power/supply/qcom_battmgr.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
+index c39a5d97b..cf2b0d12a 100644
+--- a/drivers/power/supply/qcom_battmgr.c
++++ b/drivers/power/supply/qcom_battmgr.c
+@@ -2076,6 +2076,14 @@ static void qcom_battmgr_sm8350_callback(struct qcom_battmgr *battmgr,
+ 	case OPLUS_PROPERTY_SET:
+ 	case OPLUS_PROPERTY_GET:
+ 		battmgr->oplus_value = le32_to_cpu(resp->intval.value);
++		/* stock: a reply with a result word other than 0 is an error (validate_message) */
++		if (payload_len == sizeof(resp->intval) && resp->intval.result) {
++			dev_warn_ratelimited(battmgr->dev,
++					     "request %#x property %u rejected by the charger firmware: %u\n",
++					     opcode, le32_to_cpu(resp->intval.property),
++					     le32_to_cpu(resp->intval.result));
++			battmgr->error = -EIO;
++		}
+ 		break;
+ 	default:
+ 		dev_warn(battmgr->dev, "unknown message %#x\n", opcode);
+-- 
+2.43.0
+

@@ -1,0 +1,71 @@
+From 9eff694cdfa2fe84beea4d440993204e7ab78843 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 08:17:52 +0300
+Subject: [PATCH 83/83] arm64: dts: qcom: kaanapali-oneplus-iceland: cool on
+ PMH0110 F / G / I heat
+
+The vendor binds cooling to the 95 C stage of three PMH0110 temperature
+alarms:
+- pmh0110_f_tz: the GPU from cooling state 5 (826 MHz) upwards;
+- pmh0110_g_tz: pause CPUs 2-5;
+- pmh0110_i_tz: pause CPUs 6-7.
+
+The zones and their trips (95 C passive, 115 C hot, 145 C critical) come
+from pmh0110-kaanapali.dtsi without maps. Add the maps. Mainline has no
+CPU pause cooling device, so the cluster is held at its lowest frequency
+instead, as in the XO zone (cpufreq state 27 = 384000 kHz, state 28 =
+768000 kHz). The vendor's fourth map (PMH0110 D: CDSP and modem) has
+nothing to bind to here.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ .../dts/qcom/kaanapali-oneplus-iceland.dts    | 32 +++++++++++++++++++
+ 1 file changed, 32 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 64a38d2ff..4b4803218 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -2379,6 +2379,38 @@ usb-temp-r-hot {
+ 	};
+ };
+ 
++/*
++ * PMIC temperature alarms: stock binds cooling to the 95 C stage of three PMH0110 zones: F -> the GPU from 826 MHz
++ * down, G -> pause CPUs 2-5, I -> pause CPUs 6-7. Mainline has no CPU pause, so the cluster is held at its lowest
++ * frequency instead (as in the XO zone).
++ */
++&{/thermal-zones/pmh0110-f-thermal} {
++	cooling-maps {
++		map0 {
++			trip = <&{/thermal-zones/pmh0110-f-thermal/trips/trip0}>;
++			cooling-device = <&gpu 5 THERMAL_NO_LIMIT>;
++		};
++	};
++};
++
++&{/thermal-zones/pmh0110-g-thermal} {
++	cooling-maps {
++		map0 {
++			trip = <&{/thermal-zones/pmh0110-g-thermal/trips/trip0}>;
++			cooling-device = <&cpu0 27 27>;
++		};
++	};
++};
++
++&{/thermal-zones/pmh0110-i-thermal} {
++	cooling-maps {
++		map0 {
++			trip = <&{/thermal-zones/pmh0110-i-thermal/trips/trip0}>;
++			cooling-device = <&cpu6 28 28>;
++		};
++	};
++};
++
+ /* CPU thermal trips mirroring stock 11.A.38 */
+ /*
+  * kaanapali.dtsi only has hot (120 C) and critical (125 C) CPU trips. Stock throttles from 105 C (thermal
+-- 
+2.43.0
+

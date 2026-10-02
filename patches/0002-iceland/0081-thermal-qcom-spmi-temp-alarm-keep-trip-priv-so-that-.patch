@@ -1,0 +1,109 @@
+From 51125c801f4abd645729dff0b44525c9a9708013 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 08:17:52 +0300
+Subject: [PATCH 81/83] thermal: qcom-spmi-temp-alarm: keep trip->priv so that
+ cooling maps can bind
+
+For the "gen2 rev2" and "lite" alarm variants the driver stores its own
+stage index in trip->priv. For a zone from the device tree thermal_of
+keeps the trip's node there (thermal_of_populate_trip()) and matches the
+"trip" phandle of every cooling map against it
+(thermal_of_should_bind()), so no cooling map of such a zone can match.
+
+Seen on the OnePlus Pad 4: the PMH0110 alarm zones get a cooling map on
+their 95 C trip, the DTB has it, and the zones have no bindings.
+
+Leave trip->priv alone: remember it per stage in the chip and look the
+stage up from it when the core asks to change a trip temperature.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ drivers/thermal/qcom/qcom-spmi-temp-alarm.c | 34 ++++++++++++++++++---
+ 1 file changed, 30 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/thermal/qcom/qcom-spmi-temp-alarm.c b/drivers/thermal/qcom/qcom-spmi-temp-alarm.c
+index fb003ca96..774999dc2 100644
+--- a/drivers/thermal/qcom/qcom-spmi-temp-alarm.c
++++ b/drivers/thermal/qcom/qcom-spmi-temp-alarm.c
+@@ -145,6 +145,8 @@ struct qpnp_tm_chip {
+ 	bool				initialized;
+ 	bool				require_stage2_shutdown;
+ 	long				temp_thresh_map[STAGE_COUNT];
++	/* trip->priv of the trip behind each stage (thermal_of keeps the trip's node there) */
++	void				*trip_priv[STAGE_COUNT];
+ 
+ 	struct iio_channel		*adc;
+ };
+@@ -404,13 +406,32 @@ static int qpnp_tm_gen2_rev2_set_temp_thresh(struct qpnp_tm_chip *chip, unsigned
+ 	return 0;
+ }
+ 
++/*
++ * The stage a trip belongs to. trip->priv is left to its owner: for a zone from
++ * the device tree thermal_of matches the cooling maps against it.
++ */
++static int qpnp_tm_trip_index(struct qpnp_tm_chip *chip, const struct thermal_trip *trip)
++{
++	unsigned int i;
++
++	for (i = 0; i < chip->ntrips && i < STAGE_COUNT; i++) {
++		if (chip->trip_priv[i] == trip->priv)
++			return i;
++	}
++
++	return -EINVAL;
++}
++
+ static int qpnp_tm_gen2_rev2_set_trip_temp(struct thermal_zone_device *tz,
+ 					   const struct thermal_trip *trip, int temp)
+ {
+-	unsigned int trip_index = THERMAL_TRIP_PRIV_TO_INT(trip->priv);
+ 	struct qpnp_tm_chip *chip = thermal_zone_device_priv(tz);
++	int trip_index = qpnp_tm_trip_index(chip, trip);
+ 	int ret;
+ 
++	if (trip_index < 0)
++		return trip_index;
++
+ 	mutex_lock(&chip->lock);
+ 	ret = qpnp_tm_gen2_rev2_set_temp_thresh(chip, trip_index, temp);
+ 	mutex_unlock(&chip->lock);
+@@ -499,10 +520,13 @@ static int qpnp_tm_lite_set_temp_thresh(struct qpnp_tm_chip *chip, unsigned int
+ static int qpnp_tm_lite_set_trip_temp(struct thermal_zone_device *tz,
+ 				      const struct thermal_trip *trip, int temp)
+ {
+-	unsigned int trip_index = THERMAL_TRIP_PRIV_TO_INT(trip->priv);
+ 	struct qpnp_tm_chip *chip = thermal_zone_device_priv(tz);
++	int trip_index = qpnp_tm_trip_index(chip, trip);
+ 	int ret;
+ 
++	if (trip_index < 0)
++		return trip_index;
++
+ 	mutex_lock(&chip->lock);
+ 	ret = qpnp_tm_lite_set_temp_thresh(chip, trip_index, temp);
+ 	mutex_unlock(&chip->lock);
+@@ -563,7 +587,8 @@ static int qpnp_tm_gen2_rev2_configure_trip_temps_cb(struct thermal_trip *trip,
+ 	int ret;
+ 
+ 	mutex_lock(&chip->lock);
+-	trip->priv = THERMAL_INT_TO_TRIP_PRIV(chip->ntrips);
++	if (chip->ntrips < STAGE_COUNT)
++		chip->trip_priv[chip->ntrips] = trip->priv;
+ 	ret = qpnp_tm_gen2_rev2_set_temp_thresh(chip, chip->ntrips, trip->temperature);
+ 	chip->ntrips++;
+ 	mutex_unlock(&chip->lock);
+@@ -617,7 +642,8 @@ static int qpnp_tm_lite_configure_trip_temps_cb(struct thermal_trip *trip, void
+ 	int ret;
+ 
+ 	mutex_lock(&chip->lock);
+-	trip->priv = THERMAL_INT_TO_TRIP_PRIV(chip->ntrips);
++	if (chip->ntrips < STAGE_COUNT)
++		chip->trip_priv[chip->ntrips] = trip->priv;
+ 	ret = qpnp_tm_lite_set_temp_thresh(chip, chip->ntrips, trip->temperature);
+ 	chip->ntrips++;
+ 	mutex_unlock(&chip->lock);
+-- 
+2.43.0
+

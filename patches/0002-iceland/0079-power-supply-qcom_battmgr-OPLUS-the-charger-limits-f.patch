@@ -1,0 +1,94 @@
+From b0ca94500b6286e54e8722946ba76512e958f3b8 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 08:17:52 +0300
+Subject: [PATCH 79/83] power: supply: qcom_battmgr: OPLUS: the charger limits
+ follow the charger type
+
+The charger type was read once, when the charger first showed as online,
+and the limits of that type stayed until the unplug. A charger whose type
+is still unknown at that moment, or that turns from a BC1.2 result into a
+PD contract a second later, kept the first type's limits (500 mA for an
+unknown type, or 5 V on a PD charger).
+
+The vendor applies its limits again at every type change: the firmware's
+USB notification starts usb_type_work, and
+oplus_wired_chg_type_change_work runs the current setup again.
+
+Read the type again in the attach poll (every 5 s while a charger is in)
+and run the same setup when it differs from the type the limits were set
+for. No new numbers: every limit is still the vendor's table. At most
+five type changes are followed per attach; a sixth puts the limits of the
+unknown type (500 mA) in force until the unplug, so that a flapping type
+cannot cause a PD request every 5 s.
+
+Tested on the OnePlus Pad 4 on a PC port: one "charger: type 1, input
+limit 500000 uA" line per attach, no "charger type changed" line.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ drivers/power/supply/qcom_battmgr.c | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
+
+diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
+index cf2b0d12a..e36679bc9 100644
+--- a/drivers/power/supply/qcom_battmgr.c
++++ b/drivers/power/supply/qcom_battmgr.c
+@@ -419,6 +419,9 @@ struct qcom_battmgr {
+ 	unsigned int chg_fcc_ua;	/* the charge current set at the last attach */
+ 	unsigned int chg_fcc_host_ua;	/* the host's cap (constant_charge_current_max), 0 = none */
+ 	bool chg_inhibit;
++	/* the charger type the limits were last set for, and its changes during this attach */
++	unsigned int chg_type;
++	unsigned int chg_type_changes;
+ 	/* the charge limit kept by the driver, see qcom_battmgr_oplus_limit_update() */
+ 	unsigned int chg_limit_end;	/* percent, 100 = no limit */
+ 	unsigned int chg_limit_start;	/* percent, 0 = CHARGE_CTRL_DELTA_SOC below the end */
+@@ -2167,6 +2170,8 @@ static int qcom_battmgr_oplus_set(struct qcom_battmgr *battmgr, int property, u3
+ #define ICELAND_PD_ICL_MA		2000
+ #define ICELAND_PD_MV			9000
+ #define ICELAND_PD_9V_VBAT_MAX_UV	4500000
++/* type changes followed during one attach; one more puts the "unknown" limits in force until the unplug */
++#define ICELAND_TYPE_CHANGES_MAX	5
+ 
+ static void qcom_battmgr_iceland_type_limits(unsigned int type, unsigned int *power_mw,
+ 					     unsigned int *fcc_ma)
+@@ -2282,6 +2287,9 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+ 	/* the charger type as the sysfs path reads it on this firmware: USB_ADAP_TYPE, mapped */
+ 	ret = qcom_battmgr_request_property(battmgr, BATTMGR_USB_PROPERTY_GET, USB_ADAP_TYPE, 0);
+ 	type = ret ? POWER_SUPPLY_USB_TYPE_UNKNOWN : battmgr->usb.usb_type;
++	if (battmgr->chg_type_changes > ICELAND_TYPE_CHANGES_MAX)
++		type = POWER_SUPPLY_USB_TYPE_UNKNOWN;
++	battmgr->chg_type = type;
+ 	qcom_battmgr_iceland_type_limits(type, &power_mw, &fcc_ma);
+ 	pd = type == POWER_SUPPLY_USB_TYPE_PD || type == POWER_SUPPLY_USB_TYPE_PD_DRP ||
+ 	     type == POWER_SUPPLY_USB_TYPE_PD_PPS;
+@@ -2429,6 +2437,25 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+ 
+ 		setup_charger = battmgr->usb.online && !battmgr->charger_configured;
+ 		battmgr->charger_configured = battmgr->usb.online;
++		/*
++		 * The firmware can change the charger type after the first setup (the BC1.2 result first, a PD
++		 * contract later). Stock applies its limits again at every type change
++		 * (oplus_wired_chg_type_change_work): do the same from this poll.
++		 */
++		if (!battmgr->usb.online) {
++			battmgr->chg_type_changes = 0;
++		} else if (battmgr->chg_stock_limits && !setup_charger &&
++			   battmgr->chg_type_changes <= ICELAND_TYPE_CHANGES_MAX &&
++			   !qcom_battmgr_request_property(battmgr, BATTMGR_USB_PROPERTY_GET,
++							  USB_ADAP_TYPE, 0) &&
++			   battmgr->usb.usb_type != battmgr->chg_type) {
++			battmgr->chg_type_changes++;
++			dev_info(battmgr->dev, "charger type changed %u -> %u (change %u)%s\n",
++				 battmgr->chg_type, battmgr->usb.usb_type, battmgr->chg_type_changes,
++				 battmgr->chg_type_changes > ICELAND_TYPE_CHANGES_MAX ?
++				 ": too many, the unknown-type limits until the unplug" : "");
++			setup_charger = true;
++		}
+ 		next = OPLUS_CID_IDLE_POLL_MS;
+ 		goto out_unlock;
+ 	}
+-- 
+2.43.0
+

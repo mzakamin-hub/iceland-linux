@@ -1,0 +1,82 @@
+From fe93b380c56412ba699ea31870a0beed372160c7 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 08:17:51 +0300
+Subject: [PATCH 77/83] thermal: gov_step_wise: drop the request of a trip that
+ needs no mitigation
+
+When the zone temperature is below a trip's threshold and falling,
+get_target_state() asks for the instance's lower state and returns
+THERMAL_NO_TARGET only at a later update, once the current state of the
+cooling device is at or below that lower state.
+
+That is not reliable in two cases:
+
+- The cooling device is shared with other thermal zones. Its current
+  state can be held above instance->lower by another zone, so an
+  instance whose trip was never crossed starts to request its lower
+  state as soon as its zone sees a falling temperature.
+- The zone is not polled. Once its last passive trip has been left there
+  is no further update and the request for instance->lower stays until
+  the next sensor interrupt.
+
+On the OnePlus Pad 4 both come together: the CPU zones (tsens, interrupt
+driven) have a map with a lower state of 14 on their 112 C trip, and the
+skin zone holds the same cpufreq cooling devices at state 18-22 under
+load. After the load both clusters stay at state 14 (1.9 / 2.67 GHz
+instead of 3.6 / 4.4 GHz) with every zone far below its trips.
+Reproduced with thermal emulation alone: skin zone above its upper trip,
+one CPU zone per cluster 90 -> 80 C, skin emulation off: state 14 / 14
+stays.
+
+No mitigation is necessary in that branch, so return THERMAL_NO_TARGET
+at once. A polled zone reaches the same cooling state one polling period
+earlier; with a lower state of 0 nothing changes for the cooling device.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ drivers/thermal/gov_step_wise.c | 19 ++++++++++---------
+ 1 file changed, 10 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/thermal/gov_step_wise.c b/drivers/thermal/gov_step_wise.c
+index ea277c466..9921d8c82 100644
+--- a/drivers/thermal/gov_step_wise.c
++++ b/drivers/thermal/gov_step_wise.c
+@@ -25,9 +25,8 @@
+  *       minimum
+  * If the temperature is lower than a trip point,
+  *    a. if the trend is THERMAL_TREND_RAISING, do nothing
+- *    b. if the trend is THERMAL_TREND_DROPPING, use the minimum applicable
+- *       cooling state for this trip point, or if the cooling state already
+- *       equals lower limit, deactivate the thermal instance
++ *    b. if the trend is THERMAL_TREND_DROPPING, deactivate the thermal
++ *       instance
+  */
+ static unsigned long get_target_state(struct thermal_instance *instance,
+ 				enum thermal_trend trend, bool throttle)
+@@ -65,14 +64,16 @@ static unsigned long get_target_state(struct thermal_instance *instance,
+ 				     min(instance->lower + 1, instance->upper),
+ 				     instance->upper);
+ 	} else if (trend == THERMAL_TREND_DROPPING) {
+-		if (cur_state <= instance->lower)
+-			return THERMAL_NO_TARGET;
+-
+ 		/*
+-		 * If 'throttle' is false, no mitigation is necessary, so
+-		 * request the lower state for this instance.
++		 * If 'throttle' is false, no mitigation is necessary, so drop
++		 * the request of this instance. Asking for instance->lower first
++		 * and dropping the request at a later update is not reliable:
++		 * the current state of a cooling device shared with other zones
++		 * can be held above instance->lower by them, and a zone without
++		 * polling is not updated again after its last passive trip has
++		 * been left, so the request for instance->lower would stay.
+ 		 */
+-		return instance->lower;
++		return THERMAL_NO_TARGET;
+ 	}
+ 
+ 	return instance->target;
+-- 
+2.43.0
+
