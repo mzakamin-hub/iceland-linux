@@ -1,0 +1,70 @@
+From b64d18a17356191a463b48708dee1f2fc07f0e07 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 19:25:24 +0300
+Subject: [PATCH 165/166] arm64: dts: qcom: pmk8850: add the power telemetry
+
+Describe SDAMs 49, 50 and 51 (0xa000, 0xa100, 0xa200), which hold the
+power telemetry's configuration, fractions and data, and the telemetry
+node with its interrupts on SDAMs 0xa2 (report complete) and 0xa1
+(overflow). The node is disabled: boards enable it and name the rails.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/pmk8850.dtsi | 41 +++++++++++++++++++++++++++
+ 1 file changed, 41 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/pmk8850.dtsi b/arch/arm64/boot/dts/qcom/pmk8850.dtsi
+index 7fd14de84..e9c567fe7 100644
+--- a/arch/arm64/boot/dts/qcom/pmk8850.dtsi
++++ b/arch/arm64/boot/dts/qcom/pmk8850.dtsi
+@@ -101,5 +101,46 @@ reboot_reason: reboot-reason@48 {
+ 				bits = <1 7>;
+ 			};
+ 		};
++
++		pmk8850_sdam_49: nvram@a000 {
++			compatible = "qcom,spmi-sdam";
++			reg = <0xa000>;
++			#address-cells = <1>;
++			#size-cells = <1>;
++			ranges = <0 0xa000 0x100>;
++		};
++
++		pmk8850_sdam_50: nvram@a100 {
++			compatible = "qcom,spmi-sdam";
++			reg = <0xa100>;
++			#address-cells = <1>;
++			#size-cells = <1>;
++			ranges = <0 0xa100 0x100>;
++		};
++
++		pmk8850_sdam_51: nvram@a200 {
++			compatible = "qcom,spmi-sdam";
++			reg = <0xa200>;
++			#address-cells = <1>;
++			#size-cells = <1>;
++			ranges = <0 0xa200 0x100>;
++		};
++
++		pmk8850_qpt: power-monitor {
++			compatible = "qcom,pmk8850-qpt";
++			interrupts = <0x0 0xa2 0x1 IRQ_TYPE_EDGE_RISING>,
++				     <0x0 0xa1 0x1 IRQ_TYPE_EDGE_RISING>;
++			interrupt-names = "data-ready",
++					  "overflow";
++			nvmem = <&pmk8850_sdam_49>,
++				<&pmk8850_sdam_50>,
++				<&pmk8850_sdam_51>;
++			nvmem-names = "config",
++				      "frac",
++				      "data";
++			#address-cells = <1>;
++			#size-cells = <0>;
++			status = "disabled";
++		};
+ 	};
+ };
+-- 
+2.43.0
+

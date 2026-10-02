@@ -1,0 +1,1003 @@
+From d32ea56dbcaa3e6b09953007b7cee26fdb9c2c54 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 19:25:24 +0300
+Subject: [PATCH 164/166] hwmon: add a driver for the Qualcomm PMIC power
+ telemetry
+
+The PMK8850 accumulates the output power of the switching regulators
+that supply the CPU clusters, the GPU, the NSP and the SoC's CX / MX
+rails in its SDAM blocks (QPT, Qualcomm power telemetry). Each sample
+period an accumulator grows by its regulator's power in units of a
+scale that the boot firmware configures, so one count is scale x
+sample period of energy. The totals reach the data SDAM once per
+report (about a second) with a time stamp in milliseconds of the
+nominal 32 kHz timer, while the samples are taken from the 32.768 kHz
+sleep clock.
+
+Add a hwmon driver for it:
+
+- the configuration (regulators, sample timer, scale) is read from the
+  configuration SDAM; a regulator is measured when both of its enable
+  bits are set
+- the client costs nothing while it is stopped, and the vendor's user
+  space keeps it stopped until a client asks; so the driver never starts
+  it at probe: the first read of an energy or power attribute starts it
+  with the vendor driver's values (0x80 into the data SDAM's control
+  byte, then the PBS trigger), and it is stopped again idle_ms after the
+  last such read (module parameter, default 10 s), at every system
+  suspend and when the driver goes; while stopped, the accumulators keep
+  their values and no power window spans the stop (the time stamp jumps
+  by the stopped time at the first report)
+- the accumulators are read on demand, with a re-read when the report
+  count moved during the read and a plausibility limit against reads
+  that catch the client mid-write; restarts of the accumulators are
+  followed, so the energy counters stay monotonic
+- per regulator: energyN_input (since probe, with the sleep clock's
+  sample period) and powerN_average over the reports of a window of
+  update_interval ms (count rise x scale / samples, the samples from
+  the report time stamps, as the vendor driver computes its average),
+  with the label from the device tree or "s<k><pmic>" for SMPS k of a
+  PMIC
+- the overflow interrupt is enabled only while the client runs and is
+  handled as the vendor driver does (read the counts, acknowledge
+  through the fraction SDAM's PBS trigger); it is no wakeup source; the
+  per-report interrupt is not used, so the telemetry never wakes the
+  CPUs
+- debugfs qcom_qpt/raw for bring-up: configuration bytes, the decoded
+  timer and scale, the control and time stamp bytes, the raw counts
+
+Register layout and coding follow the vendor's qti_power_telemetry
+driver. Checked on the OnePlus Pad 4: the report time stamps advance
+1022 ms per second of the kernel clock (1024 for 32.768 kHz, 1000 for
+the vendor's 32 kHz), and the fraction SDAM's live per-phase counts sum
+to twice the data counts, the ratio of the 6400 uW unit (spare byte
+set) to CONFIG0's 3200 uW.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ Documentation/hwmon/index.rst          |   1 +
+ Documentation/hwmon/qcom-qpt-hwmon.rst |  58 ++
+ drivers/hwmon/Kconfig                  |  15 +
+ drivers/hwmon/Makefile                 |   1 +
+ drivers/hwmon/qcom-qpt-hwmon.c         | 813 +++++++++++++++++++++++++
+ 5 files changed, 888 insertions(+)
+ create mode 100644 Documentation/hwmon/qcom-qpt-hwmon.rst
+ create mode 100644 drivers/hwmon/qcom-qpt-hwmon.c
+
+diff --git a/Documentation/hwmon/index.rst b/Documentation/hwmon/index.rst
+index 9955a5254..bba26dfd9 100644
+--- a/Documentation/hwmon/index.rst
++++ b/Documentation/hwmon/index.rst
+@@ -233,6 +233,7 @@ Hardware Monitoring Kernel Drivers
+    pxe1610
+    pwm-fan
+    q54sj108a2
++   qcom-qpt-hwmon
+    qnap-mcu-hwmon
+    raspberrypi-hwmon
+    sbrmi
+diff --git a/Documentation/hwmon/qcom-qpt-hwmon.rst b/Documentation/hwmon/qcom-qpt-hwmon.rst
+new file mode 100644
+index 000000000..9e445c5f8
+--- /dev/null
++++ b/Documentation/hwmon/qcom-qpt-hwmon.rst
+@@ -0,0 +1,58 @@
++.. SPDX-License-Identifier: GPL-2.0-only
++
++Kernel driver qcom-qpt-hwmon
++============================
++
++Supported chips:
++
++  * Qualcomm PMK8850 power telemetry (QPT)
++
++    Prefix: 'qcom_qpt'
++
++Description
++-----------
++
++A PBS (programmable boot sequencer) client of the PMK8850 samples the output
++power of up to 23 switching regulators of the PMICs around it (CPU clusters,
++GPU, NSP, the SoC's CX / MX rails, the DDR and I/O bucks) and adds it up in
++the PMK8850's SDAM blocks. The boot firmware writes the configuration: which
++regulators, the sample timer and the scale of one count. The client copies
++the per-regulator totals into the data SDAM once per report (about once a
++second), with a time stamp. The driver never starts the client by itself:
++the first read of an energy or power attribute starts it, and it is stopped
++again ``idle_ms`` milliseconds after the last such read (module parameter,
++default 10000, 0 = never), at every system suspend and when the driver goes.
++While it is stopped it costs nothing and the energy counters stand still. The
++driver reads the accumulators on demand and does not take the per-report
++interrupt, so the telemetry never wakes the CPUs.
++
++The readings are the output power of each regulator, not its input: the
++regulators' conversion losses, the PMICs themselves, the display backlight
++and everything supplied straight from the battery rail are not in them.
++
++Sysfs entries
++-------------
++
++======================= ===================================================
++energyN_input		Energy delivered by regulator N while the telemetry
++			ran since the driver started, in microjoule. Reading
++			it starts the telemetry.
++energyN_label		Name of the rail (from the device tree, or "s<k><p>"
++			for SMPS k of PMIC p).
++powerN_average		Average output power of regulator N over the reports
++			of the last update interval, in microwatt, from the
++			report time stamps. A window that ended more than two
++			intervals ago is measured again, so the read can take
++			one interval or a little more (two reports after a
++			start). Reading it starts the telemetry.
++powerN_label		As energyN_label.
++update_interval		Length of the averaging window in milliseconds
++			(100 to 10000, default 1000).
++======================= ===================================================
++
++Debugfs
++-------
++
++``qcom_qpt/raw`` shows the configuration bytes, the decoded timer and scale,
++the control and time stamp bytes, the raw accumulators and the driver's
++counters (overflows, re-reads, rejected reads).
+diff --git a/drivers/hwmon/Kconfig b/drivers/hwmon/Kconfig
+index fecff8610..fbbf9f5a1 100644
+--- a/drivers/hwmon/Kconfig
++++ b/drivers/hwmon/Kconfig
+@@ -1960,6 +1960,21 @@ config SENSORS_PWM_FAN
+ 	  This driver can also be built as a module. If so, the module
+ 	  will be called pwm-fan.
+ 
++config SENSORS_QCOM_SPMI_QPT
++	tristate "Qualcomm PMIC power telemetry"
++	depends on ARCH_QCOM || COMPILE_TEST
++	depends on NVMEM
++	help
++	  If you say yes here you get support for the power telemetry of
++	  Qualcomm PMICs such as the PMK8850: a PBS client of the PMIC
++	  accumulates the output power of the switching regulators that
++	  supply the CPU clusters, the GPU, the NSP and the SoC's other
++	  rails in the PMIC's SDAM blocks. The driver reports the energy
++	  and the average power of each regulator.
++
++	  This driver can also be built as a module. If so, the module
++	  will be called qcom-qpt-hwmon.
++
+ config SENSORS_QNAP_MCU_HWMON
+ 	tristate "QNAP MCU hardware monitoring"
+ 	depends on MFD_QNAP_MCU
+diff --git a/drivers/hwmon/Makefile b/drivers/hwmon/Makefile
+index 1229b6b39..c277b905f 100644
+--- a/drivers/hwmon/Makefile
++++ b/drivers/hwmon/Makefile
+@@ -205,6 +205,7 @@ obj-$(CONFIG_SENSORS_POWR1220)  += powr1220.o
+ obj-$(CONFIG_SENSORS_PROM21_XHCI)	+= prom21-xhci.o
+ obj-$(CONFIG_SENSORS_PT5161L)	+= pt5161l.o
+ obj-$(CONFIG_SENSORS_PWM_FAN)	+= pwm-fan.o
++obj-$(CONFIG_SENSORS_QCOM_SPMI_QPT)	+= qcom-qpt-hwmon.o
+ obj-$(CONFIG_SENSORS_QNAP_MCU_HWMON)	+= qnap-mcu-hwmon.o
+ obj-$(CONFIG_SENSORS_RASPBERRYPI_HWMON)	+= raspberrypi-hwmon.o
+ obj-$(CONFIG_SENSORS_SBTSI)	+= sbtsi_temp.o
+diff --git a/drivers/hwmon/qcom-qpt-hwmon.c b/drivers/hwmon/qcom-qpt-hwmon.c
+new file mode 100644
+index 000000000..c8ae7cac8
+--- /dev/null
++++ b/drivers/hwmon/qcom-qpt-hwmon.c
+@@ -0,0 +1,813 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Qualcomm PMIC power telemetry (QPT) hardware monitor
++ *
++ * A PBS (programmable boot sequencer) client of the PMK8850 samples the
++ * output power of up to 23 switching regulators of the PMICs around it and
++ * adds it up in three SDAM (shared direct access memory) blocks: the boot
++ * firmware writes the configuration (which regulators, the sample timer, the
++ * scale) into one; the client keeps a live accumulator per regulator phase in
++ * a second ("frac") and copies the per-regulator totals, with a time stamp in
++ * milliseconds of its nominal 32 kHz timer, into the third ("data") at every
++ * report. The client runs once the data SDAM's enable bit is set and the PBS
++ * is triggered.
++ *
++ * Every sample period an accumulator grows by its regulator's power in units
++ * of the scale, so one count is scale x sample period of energy, and the
++ * average power between two reports is the count rise times the scale over
++ * the number of samples, which the time stamps give. The sample timer runs
++ * from the 32.768 kHz sleep clock, while the time stamps count in steps of
++ * the nominal 32 kHz the downstream driver assumes.
++ *
++ * The client costs nothing while it is stopped, and the downstream user space
++ * keeps it stopped until a client asks (its thermal daemon stops it at start).
++ * So does this driver: it never starts the telemetry at probe; the first read
++ * of an energy or power attribute starts it, and it is stopped again after
++ * idle_ms without such a read, at every system suspend and at removal. While
++ * it is stopped the accumulators keep their values and the time stamp stands
++ * still; the first report after a start jumps the time stamp by the time it
++ * was stopped, so no power window spans a stop.
++ *
++ * The driver reads the data SDAM on demand (it does not take the per-report
++ * interrupt, so the telemetry never wakes the CPUs) and exposes per regulator
++ * the energy counted while the telemetry ran and the average power over the
++ * reports of the last update interval as hwmon energy and power channels. The
++ * overflow interrupt is enabled only while the telemetry runs and is handled as
++ * the downstream driver does: the counts are read and the PBS is told to go
++ * on; it never wakes the system (the telemetry is stopped in suspend).
++ * Register layout and coding follow the downstream qti_power_telemetry driver.
++ */
++
++#include <linux/bitfield.h>
++#include <linux/bits.h>
++#include <linux/cleanup.h>
++#include <linux/debugfs.h>
++#include <linux/delay.h>
++#include <linux/device.h>
++#include <linux/hwmon.h>
++#include <linux/interrupt.h>
++#include <linux/ktime.h>
++#include <linux/math64.h>
++#include <linux/minmax.h>
++#include <linux/module.h>
++#include <linux/mutex.h>
++#include <linux/nvmem-consumer.h>
++#include <linux/platform_device.h>
++#include <linux/pm.h>
++#include <linux/property.h>
++#include <linux/seq_file.h>
++#include <linux/unaligned.h>
++#include <linux/workqueue.h>
++
++#define QPT_MAX_CH			23
++
++/* SDAM register map: memory from 0x40, the PBS trigger at 0xe5 */
++#define QPT_SDAM_MEM_START		0x40
++#define QPT_SDAM_TRIG_SET		0xe5
++#define  QPT_SDAM_TRIG			0x01
++/* the client's area in all three SDAMs */
++#define QPT_SDAM_BASE			0x45
++
++/* configuration SDAM, offsets from QPT_SDAM_BASE */
++#define QPT_CFG_READY_MAX_COUNT		0
++#define QPT_CFG_BOB_MAX_COUNT		1
++#define QPT_CFG_HSR_VER			2
++#define QPT_CFG_SPARE			3
++#define QPT_CFG_TIMER_LB		4
++#define QPT_CFG_TIMER_UB		5
++#define QPT_CFG_CONFIG0			6
++#define  QPT_CFG0_SCALE_SHIFT		GENMASK(2, 0)
++#define  QPT_CFG0_TIMER_SLOW		BIT(3)
++#define QPT_CFG_CONFIG1			7
++/* per channel: CONFIG0 (enable, SID), PID, CONFIG1 (enable) */
++#define QPT_CFG_CH(n)			(8 + 3 * (n))
++#define  QPT_CH_CFG0_EN			BIT(7)
++#define  QPT_CH_CFG0_SID		GENMASK(4, 0)
++#define  QPT_CH_CFG1_EN			BIT(3)
++#define QPT_CFG_LEN			QPT_CFG_CH(QPT_MAX_CH)
++
++/* data and frac SDAM, offsets from QPT_SDAM_BASE */
++#define QPT_DATA_ENABLE			0
++#define  QPT_DATA_ENABLE_BIT		BIT(7)
++#define QPT_DATA_BUF_FULL		1
++#define QPT_DATA_READY_COUNT		2
++#define QPT_DATA_BOB_COUNT		3
++#define QPT_DATA_TSTAMP			4
++/* per channel: a 40-bit little-endian accumulator */
++#define QPT_DATA_CH(n)			(8 + 5 * (n))
++#define QPT_DATA_LEN			QPT_DATA_CH(QPT_MAX_CH)
++
++/* scale of one count: 400 uW << CONFIG0[2:0], or 6400 uW if SPARE is set */
++#define QPT_SCALE_UW			400
++#define QPT_SCALE_SPARE_UW		6400
++/*
++ * Sample timer: the time stamps count the nominal 32 kHz of the downstream
++ * driver, the samples are taken from the 32.768 kHz sleep clock; with CONFIG0
++ * bit 3 the timer runs at 10 Hz.
++ */
++#define QPT_TIMER_NOMINAL_HZ		32000
++#define QPT_TIMER_HZ			32768
++#define QPT_TIMER_SLOW_HZ		10
++
++/* bounds of the averaging window (update_interval), ms */
++#define QPT_INTERVAL_MIN_MS		100
++#define QPT_INTERVAL_DEF_MS		1000
++#define QPT_INTERVAL_MAX_MS		10000
++/* energy readings closer together than this share one read of the SDAM */
++#define QPT_REFRESH_MS			50
++/* a count step above this power is a read that caught the PBS mid-write */
++#define QPT_PLAUSIBLE_UW		50000000ULL
++
++static unsigned int qpt_idle_ms = 10000;
++module_param_named(idle_ms, qpt_idle_ms, uint, 0644);
++MODULE_PARM_DESC(idle_ms, "Stop the telemetry this long after the last energy / power read, ms (0: never; default 10000)");
++
++struct qpt_channel {
++	u16 id;			/* SID << 8 | PID of the regulator */
++	u8 slot;		/* its slot in the SDAMs */
++	const char *label;
++	u64 hw;			/* last accumulator value read */
++	u64 total;		/* counts since probe */
++	u64 win[2];		/* totals at the start and the end of the window */
++};
++
++struct qpt {
++	struct device *dev;
++	struct nvmem_device *cfg_sdam;
++	struct nvmem_device *frac_sdam;
++	struct nvmem_device *data_sdam;
++	struct mutex lock;	/* the channel state and the SDAM reads */
++	struct qpt_channel ch[QPT_MAX_CH];
++	unsigned int nch;
++	unsigned int data_len;
++	u8 cfg[QPT_CFG_LEN];
++	u8 data[QPT_DATA_LEN];
++	u64 pj_per_count;	/* energy of one count with the real sample clock */
++	u32 period_us;		/* real sample period */
++	u32 nominal_us;		/* sample period in time stamp units (x 1000) */
++	u32 report_ms;
++	u32 scale_uw;
++	unsigned int interval_ms;
++	ktime_t last_update;
++	u32 tstamp;		/* time stamp of the last report read */
++	ktime_t win_t[2];
++	u32 win_ts[2];
++	u32 start_ts;		/* time stamp frozen at the last start */
++	bool running;		/* the client runs (as far as the driver knows) */
++	int irq;		/* overflow interrupt, enabled while running */
++	bool irq_on;
++	struct delayed_work idle_work;
++	u32 starts;
++	u32 stops;
++	u32 overflows;
++	u32 retries;
++	u32 glitches;
++	u32 cfg_e[QPT_MAX_CH + 1];
++	u32 cfg_p[QPT_MAX_CH + 1];
++	struct hwmon_channel_info info_e;
++	struct hwmon_channel_info info_p;
++	const struct hwmon_channel_info *info[4];
++	struct hwmon_chip_info chip;
++};
++
++static int qpt_trigger(struct nvmem_device *sdam)
++{
++	u8 val = QPT_SDAM_TRIG;
++	int ret;
++
++	ret = nvmem_device_write(sdam, QPT_SDAM_TRIG_SET, 1, &val);
++
++	return ret < 0 ? ret : 0;
++}
++
++static int qpt_set_running(struct qpt *qpt, bool on)
++{
++	u8 val = on ? QPT_DATA_ENABLE_BIT : 0;
++	int ret;
++
++	ret = nvmem_device_write(qpt->data_sdam, QPT_SDAM_BASE + QPT_DATA_ENABLE, 1, &val);
++	if (ret < 0)
++		return ret;
++
++	return qpt_trigger(qpt->data_sdam);
++}
++
++/* Stop the client (with the lock held or with nothing else running). */
++static void qpt_halt(struct qpt *qpt)
++{
++	if (!qpt->running)
++		return;
++	if (qpt->irq_on) {
++		disable_irq_nosync(qpt->irq);
++		qpt->irq_on = false;
++	}
++	if (qpt_set_running(qpt, false))
++		dev_warn(qpt->dev, "could not stop the telemetry\n");
++	qpt->running = false;
++	qpt->stops++;
++}
++
++static void qpt_idle_work(struct work_struct *work)
++{
++	struct qpt *qpt = container_of(to_delayed_work(work), struct qpt, idle_work);
++
++	guard(mutex)(&qpt->lock);
++	qpt_halt(qpt);
++}
++
++static void qpt_remove_action(void *data)
++{
++	struct qpt *qpt = data;
++
++	cancel_delayed_work_sync(&qpt->idle_work);
++	guard(mutex)(&qpt->lock);
++	qpt_halt(qpt);
++}
++
++/* One consistent copy of the data SDAM: the report count must not move during the read. */
++static int qpt_read_data(struct qpt *qpt)
++{
++	u8 count;
++	int i, ret;
++
++	for (i = 0; i < 3; i++) {
++		ret = nvmem_device_read(qpt->data_sdam, QPT_SDAM_BASE, qpt->data_len, qpt->data);
++		if (ret < 0)
++			return ret;
++		ret = nvmem_device_read(qpt->data_sdam, QPT_SDAM_BASE + QPT_DATA_READY_COUNT, 1,
++					&count);
++		if (ret < 0)
++			return ret;
++		if (count == qpt->data[QPT_DATA_READY_COUNT])
++			break;
++		qpt->retries++;
++	}
++	qpt->tstamp = get_unaligned_le32(&qpt->data[QPT_DATA_TSTAMP]);
++
++	return 0;
++}
++
++static u64 qpt_acc(const u8 *p)
++{
++	return get_unaligned_le32(p) | (u64)p[4] << 32;
++}
++
++/* Read the accumulators and add what each one gained to its total. */
++static int qpt_update(struct qpt *qpt)
++{
++	ktime_t now = ktime_get();
++	u64 dt_us = max_t(s64, ktime_us_delta(now, qpt->last_update), 1);
++	u64 max_step = mul_u64_u64_div_u64(QPT_PLAUSIBLE_UW, dt_us, qpt->pj_per_count) + 16;
++	unsigned int i;
++	int ret;
++
++	ret = qpt_read_data(qpt);
++	if (ret)
++		return ret;
++
++	for (i = 0; i < qpt->nch; i++) {
++		struct qpt_channel *c = &qpt->ch[i];
++		u64 v = qpt_acc(&qpt->data[QPT_DATA_CH(c->slot)]);
++		u64 step;
++
++		if (v >= c->hw)
++			step = v - c->hw;
++		else if (v < c->hw / 2)
++			step = v;	/* the client started counting again */
++		else
++			step = U64_MAX;	/* a read that caught the client mid-write */
++
++		if (step > max_step) {
++			qpt->glitches++;
++			continue;
++		}
++		c->hw = v;
++		c->total += step;
++	}
++	qpt->last_update = now;
++
++	return 0;
++}
++
++static int qpt_refresh(struct qpt *qpt)
++{
++	if (ktime_ms_delta(ktime_get(), qpt->last_update) < QPT_REFRESH_MS)
++		return 0;
++
++	return qpt_update(qpt);
++}
++
++/*
++ * A reader needs the telemetry: start the client if it is stopped (stock's
++ * start: 0x80 into the control byte, then the PBS trigger) and push the idle
++ * stop out by idle_ms.
++ */
++static int qpt_use(struct qpt *qpt)
++{
++	unsigned int idle_ms = READ_ONCE(qpt_idle_ms);
++	int ret;
++
++	if (!qpt->running) {
++		ret = qpt_update(qpt);	/* the frozen counts and time stamp */
++		if (ret)
++			return ret;
++		ret = qpt_set_running(qpt, true);
++		if (ret)
++			return ret;
++		qpt->running = true;
++		qpt->starts++;
++		qpt->start_ts = qpt->tstamp;
++		qpt->win_t[1] = 0;	/* no power window across the stop */
++		if (qpt->irq > 0 && !qpt->irq_on) {
++			enable_irq(qpt->irq);
++			qpt->irq_on = true;
++		}
++	}
++
++	if (idle_ms)
++		mod_delayed_work(system_wq, &qpt->idle_work, msecs_to_jiffies(idle_ms));
++	else
++		cancel_delayed_work(&qpt->idle_work);
++
++	return 0;
++}
++
++static void qpt_mark(struct qpt *qpt, int end)
++{
++	unsigned int i;
++
++	qpt->win_t[end] = qpt->last_update;
++	qpt->win_ts[end] = qpt->tstamp;
++	for (i = 0; i < qpt->nch; i++)
++		qpt->ch[i].win[end] = qpt->ch[i].total;
++}
++
++/*
++ * The power window: the reports between two marks at least interval_ms
++ * apart. A window that ended more than two intervals ago is measured again
++ * (the read waits until at least one report has come in).
++ */
++static int qpt_window(struct qpt *qpt)
++{
++	s64 age = qpt->win_t[1] ? ktime_ms_delta(ktime_get(), qpt->win_t[1]) : S64_MAX;
++	unsigned int i;
++	int ret;
++
++	if (age < qpt->interval_ms)
++		return 0;
++
++	ret = qpt_update(qpt);
++	if (ret)
++		return ret;
++
++	if (age <= 2 * qpt->interval_ms && qpt->win_ts[1]) {
++		/* no new report since the window's end: keep the window */
++		if (qpt->tstamp == qpt->win_ts[1])
++			return 0;
++		qpt->win_t[0] = qpt->win_t[1];
++		qpt->win_ts[0] = qpt->win_ts[1];
++		for (i = 0; i < qpt->nch; i++)
++			qpt->ch[i].win[0] = qpt->ch[i].win[1];
++	} else {
++		qpt_mark(qpt, 0);
++		for (i = 0; i < 4; i++) {
++			msleep(qpt->interval_ms);
++			ret = qpt_update(qpt);
++			if (ret)
++				return ret;
++			if (!qpt->win_ts[0] || qpt->win_ts[0] == qpt->start_ts)
++				qpt_mark(qpt, 0);	/* the first report since the start */
++			else if (qpt->tstamp != qpt->win_ts[0])
++				break;
++		}
++	}
++	qpt_mark(qpt, 1);
++
++	return 0;
++}
++
++static umode_t qpt_is_visible(const void *data, enum hwmon_sensor_types type, u32 attr,
++			      int channel)
++{
++	switch (type) {
++	case hwmon_chip:
++		return attr == hwmon_chip_update_interval ? 0644 : 0;
++	case hwmon_energy64:
++		return attr == hwmon_energy_input || attr == hwmon_energy_label ? 0444 : 0;
++	case hwmon_power:
++		return attr == hwmon_power_average || attr == hwmon_power_label ? 0444 : 0;
++	default:
++		return 0;
++	}
++}
++
++static int qpt_read(struct device *dev, enum hwmon_sensor_types type, u32 attr, int channel,
++		    long *val)
++{
++	struct qpt *qpt = dev_get_drvdata(dev);
++	struct qpt_channel *c;
++	u32 dts;
++	int ret;
++
++	guard(mutex)(&qpt->lock);
++
++	switch (type) {
++	case hwmon_chip:
++		if (attr != hwmon_chip_update_interval)
++			return -EOPNOTSUPP;
++		*val = qpt->interval_ms;
++		return 0;
++	case hwmon_energy64:
++		if (attr != hwmon_energy_input)
++			return -EOPNOTSUPP;
++		ret = qpt_use(qpt);
++		if (ret)
++			return ret;
++		ret = qpt_refresh(qpt);
++		if (ret)
++			return ret;
++		c = &qpt->ch[channel];
++		/* uJ = counts x pJ per count / 10^6 */
++		*(s64 *)val = mul_u64_u64_div_u64(c->total, qpt->pj_per_count, 1000000);
++		return 0;
++	case hwmon_power:
++		if (attr != hwmon_power_average)
++			return -EOPNOTSUPP;
++		ret = qpt_use(qpt);
++		if (ret)
++			return ret;
++		ret = qpt_window(qpt);
++		if (ret)
++			return ret;
++		dts = qpt->win_ts[1] - qpt->win_ts[0];
++		if (!qpt->win_ts[0] || qpt->win_ts[0] == qpt->start_ts || !dts)
++			return -ENODATA;
++		c = &qpt->ch[channel];
++		/* uW = counts x scale / samples, samples = time stamp ms / nominal period ms */
++		*val = mul_u64_u64_div_u64((c->win[1] - c->win[0]) * qpt->scale_uw,
++					   qpt->nominal_us, (u64)dts * 1000);
++		return 0;
++	default:
++		return -EOPNOTSUPP;
++	}
++}
++
++static int qpt_read_string(struct device *dev, enum hwmon_sensor_types type, u32 attr,
++			   int channel, const char **str)
++{
++	struct qpt *qpt = dev_get_drvdata(dev);
++
++	if (!(type == hwmon_energy64 && attr == hwmon_energy_label) &&
++	    !(type == hwmon_power && attr == hwmon_power_label))
++		return -EOPNOTSUPP;
++
++	*str = qpt->ch[channel].label;
++
++	return 0;
++}
++
++static int qpt_write(struct device *dev, enum hwmon_sensor_types type, u32 attr, int channel,
++		     long val)
++{
++	struct qpt *qpt = dev_get_drvdata(dev);
++
++	if (type != hwmon_chip || attr != hwmon_chip_update_interval)
++		return -EOPNOTSUPP;
++
++	guard(mutex)(&qpt->lock);
++	qpt->interval_ms = clamp_val(val, QPT_INTERVAL_MIN_MS, QPT_INTERVAL_MAX_MS);
++	qpt->win_t[1] = 0;
++
++	return 0;
++}
++
++static const struct hwmon_ops qpt_hwmon_ops = {
++	.is_visible = qpt_is_visible,
++	.read = qpt_read,
++	.read_string = qpt_read_string,
++	.write = qpt_write,
++};
++
++static const struct hwmon_channel_info * const qpt_chip_info =
++	HWMON_CHANNEL_INFO(chip, HWMON_C_UPDATE_INTERVAL);
++
++static irqreturn_t qpt_overflow_irq(int irq, void *data)
++{
++	struct qpt *qpt = data;
++
++	guard(mutex)(&qpt->lock);
++
++	if (qpt_update(qpt))
++		dev_err_ratelimited(qpt->dev, "could not read the counts at an overflow\n");
++	if (qpt_trigger(qpt->frac_sdam))
++		dev_err_ratelimited(qpt->dev, "could not acknowledge the overflow\n");
++	qpt->overflows++;
++
++	return IRQ_HANDLED;
++}
++
++/* Default names: SID n is PMIC 'a' + n, PID 0x9b + 3 (k - 1) is its SMPS k. */
++static const char *qpt_default_label(struct device *dev, u16 id)
++{
++	unsigned int sid = id >> 8, pid = id & 0xff;
++	char pmic = sid < 26 ? 'a' + sid : '?';
++
++	if (pid >= 0x9b && pid <= 0xb9 && !((pid - 0x9b) % 3))
++		return devm_kasprintf(dev, GFP_KERNEL, "s%u%c", (pid - 0x9b) / 3 + 1, pmic);
++	if (pid == 0xe5 || pid == 0xe7)
++		return devm_kasprintf(dev, GFP_KERNEL, "bob%u%c", pid == 0xe5 ? 1 : 2, pmic);
++
++	return devm_kasprintf(dev, GFP_KERNEL, "sid%u-pid%02x", sid, pid);
++}
++
++static int qpt_parse_config(struct qpt *qpt)
++{
++	const u8 *cfg = qpt->cfg;
++	bool slow = cfg[QPT_CFG_CONFIG0] & QPT_CFG0_TIMER_SLOW;
++	u32 timer = cfg[QPT_CFG_TIMER_UB] << 8 | cfg[QPT_CFG_TIMER_LB];
++	u32 hz = slow ? QPT_TIMER_SLOW_HZ : QPT_TIMER_HZ;
++	u32 nominal_hz = slow ? QPT_TIMER_SLOW_HZ : QPT_TIMER_NOMINAL_HZ;
++	u32 shift = cfg[QPT_CFG_CONFIG1];
++	unsigned int slot, last = 0;
++
++	if (!timer || shift > 16)
++		return dev_err_probe(qpt->dev, -ENODEV,
++				     "no valid sample timer configured (timer %u, shift %u)\n",
++				     timer, shift);
++
++	if (cfg[QPT_CFG_SPARE])
++		qpt->scale_uw = QPT_SCALE_SPARE_UW;
++	else
++		qpt->scale_uw = QPT_SCALE_UW <<
++				FIELD_GET(QPT_CFG0_SCALE_SHIFT, cfg[QPT_CFG_CONFIG0]);
++
++	/* one count = scale x period; uW x us = pJ */
++	qpt->pj_per_count = mul_u64_u32_div((u64)qpt->scale_uw * timer << shift, 1000000, hz);
++	qpt->period_us = min_t(u64, mul_u64_u32_div((u64)timer << shift, 1000000, hz), U32_MAX);
++	qpt->nominal_us = min_t(u64, mul_u64_u32_div((u64)timer << shift, 1000000, nominal_hz),
++				U32_MAX);
++	qpt->report_ms = min_t(u64, div_u64((u64)timer * cfg[QPT_CFG_READY_MAX_COUNT] * 1000,
++					    nominal_hz), U32_MAX);
++
++	for (slot = 0; slot < QPT_MAX_CH; slot++) {
++		const u8 *c = &cfg[QPT_CFG_CH(slot)];
++		struct qpt_channel *ch;
++
++		if (!(c[0] & QPT_CH_CFG0_EN) || !(c[2] & QPT_CH_CFG1_EN))
++			continue;
++
++		ch = &qpt->ch[qpt->nch++];
++		ch->slot = slot;
++		ch->id = FIELD_GET(QPT_CH_CFG0_SID, c[0]) << 8 | c[1];
++		last = slot;
++	}
++
++	if (!qpt->nch)
++		return dev_err_probe(qpt->dev, -ENODEV, "no regulator configured\n");
++
++	qpt->data_len = QPT_DATA_CH(last + 1);
++
++	return 0;
++}
++
++static int qpt_parse_labels(struct qpt *qpt)
++{
++	struct device *dev = qpt->dev;
++	unsigned int i;
++	u32 reg;
++
++	device_for_each_child_node_scoped(dev, child) {
++		if (fwnode_property_read_u32(child, "reg", &reg))
++			continue;
++		for (i = 0; i < qpt->nch; i++)
++			if (qpt->ch[i].id == reg)
++				fwnode_property_read_string(child, "label", &qpt->ch[i].label);
++	}
++
++	for (i = 0; i < qpt->nch; i++) {
++		if (qpt->ch[i].label)
++			continue;
++		qpt->ch[i].label = qpt_default_label(dev, qpt->ch[i].id);
++		if (!qpt->ch[i].label)
++			return -ENOMEM;
++	}
++
++	return 0;
++}
++
++static int qpt_get_sdam(struct qpt *qpt, const char *name, struct nvmem_device **sdam,
++			unsigned int len)
++{
++	*sdam = devm_nvmem_device_get(qpt->dev, name);
++	if (IS_ERR(*sdam))
++		return dev_err_probe(qpt->dev, PTR_ERR(*sdam), "no %s SDAM\n", name);
++
++	if (QPT_SDAM_BASE + len > QPT_SDAM_MEM_START + nvmem_dev_size(*sdam))
++		return dev_err_probe(qpt->dev, -EINVAL, "%s SDAM is too small (%zu bytes)\n",
++				     name, nvmem_dev_size(*sdam));
++
++	return 0;
++}
++
++static int qpt_raw_show(struct seq_file *s, void *unused)
++{
++	struct qpt *qpt = s->private;
++	u8 frac[QPT_DATA_LEN];
++	unsigned int i;
++	int ret;
++
++	guard(mutex)(&qpt->lock);
++
++	ret = qpt_update(qpt);
++	seq_printf(s, "read: %d at %lld ns\n", ret, ktime_to_ns(qpt->last_update));
++	seq_printf(s, "config: %*ph\n", 32, qpt->cfg);
++	seq_printf(s, "config+32: %*ph\n", QPT_CFG_LEN - 32, qpt->cfg + 32);
++	seq_printf(s, "hsr_ver 0x%02x ready_max_count %u bob_max_count %u timer %u config0 0x%02x config1 0x%02x spare 0x%02x\n",
++		   qpt->cfg[QPT_CFG_HSR_VER], qpt->cfg[QPT_CFG_READY_MAX_COUNT],
++		   qpt->cfg[QPT_CFG_BOB_MAX_COUNT],
++		   qpt->cfg[QPT_CFG_TIMER_UB] << 8 | qpt->cfg[QPT_CFG_TIMER_LB],
++		   qpt->cfg[QPT_CFG_CONFIG0], qpt->cfg[QPT_CFG_CONFIG1], qpt->cfg[QPT_CFG_SPARE]);
++	seq_printf(s, "scale_uw %u period_us %u nominal_us %u report_ms %u pj_per_count %llu interval_ms %u\n",
++		   qpt->scale_uw, qpt->period_us, qpt->nominal_us, qpt->report_ms,
++		   qpt->pj_per_count, qpt->interval_ms);
++	seq_printf(s, "enable 0x%02x buf_full 0x%02x ready_count %u bob_count %u tstamp %u running %d\n",
++		   qpt->data[QPT_DATA_ENABLE], qpt->data[QPT_DATA_BUF_FULL],
++		   qpt->data[QPT_DATA_READY_COUNT], qpt->data[QPT_DATA_BOB_COUNT],
++		   qpt->tstamp, qpt->running);
++	seq_printf(s, "starts %u stops %u start_ts %u idle_ms %u overflow_irq %d %s\n", qpt->starts,
++		   qpt->stops, qpt->start_ts, READ_ONCE(qpt_idle_ms), qpt->irq,
++		   qpt->irq_on ? "enabled" : "disabled");
++	seq_printf(s, "window ts %u -> %u at %lld -> %lld ns\n", qpt->win_ts[0], qpt->win_ts[1],
++		   ktime_to_ns(qpt->win_t[0]), ktime_to_ns(qpt->win_t[1]));
++	seq_printf(s, "overflows %u retries %u glitches %u\n", qpt->overflows, qpt->retries,
++		   qpt->glitches);
++	for (i = 0; i < qpt->data_len; i += 32)
++		seq_printf(s, "data+%u: %*ph\n", i, min(32U, qpt->data_len - i), qpt->data + i);
++	if (nvmem_device_read(qpt->frac_sdam, QPT_SDAM_BASE, qpt->data_len, frac) > 0)
++		for (i = 0; i < qpt->data_len; i += 32)
++			seq_printf(s, "frac+%u: %*ph\n", i, min(32U, qpt->data_len - i), frac + i);
++	seq_puts(s, "# index slot id label hw total energy_uj\n");
++	for (i = 0; i < qpt->nch; i++) {
++		struct qpt_channel *c = &qpt->ch[i];
++
++		seq_printf(s, "%u %u 0x%03x %s %llu %llu %llu\n", i, c->slot, c->id, c->label,
++			   c->hw, c->total,
++			   mul_u64_u64_div_u64(c->total, qpt->pj_per_count, 1000000));
++	}
++
++	return 0;
++}
++DEFINE_SHOW_ATTRIBUTE(qpt_raw);
++
++static void qpt_debugfs_remove(void *dir)
++{
++	debugfs_remove_recursive(dir);
++}
++
++static int qpt_probe(struct platform_device *pdev)
++{
++	struct device *dev = &pdev->dev;
++	struct device *hwmon;
++	struct dentry *dir;
++	struct qpt *qpt;
++	unsigned int i;
++	int irq, ret;
++	u8 en;
++
++	qpt = devm_kzalloc(dev, sizeof(*qpt), GFP_KERNEL);
++	if (!qpt)
++		return -ENOMEM;
++	qpt->dev = dev;
++	qpt->interval_ms = QPT_INTERVAL_DEF_MS;
++	ret = devm_mutex_init(dev, &qpt->lock);
++	if (ret)
++		return ret;
++
++	ret = qpt_get_sdam(qpt, "config", &qpt->cfg_sdam, QPT_CFG_LEN);
++	if (ret)
++		return ret;
++	ret = nvmem_device_read(qpt->cfg_sdam, QPT_SDAM_BASE, QPT_CFG_LEN, qpt->cfg);
++	if (ret < 0)
++		return dev_err_probe(dev, ret, "cannot read the configuration\n");
++	ret = qpt_parse_config(qpt);
++	if (ret)
++		return ret;
++	ret = qpt_get_sdam(qpt, "frac", &qpt->frac_sdam, qpt->data_len);
++	if (ret)
++		return ret;
++	ret = qpt_get_sdam(qpt, "data", &qpt->data_sdam, qpt->data_len);
++	if (ret)
++		return ret;
++	ret = qpt_parse_labels(qpt);
++	if (ret)
++		return ret;
++
++	ret = nvmem_device_read(qpt->data_sdam, QPT_SDAM_BASE + QPT_DATA_ENABLE, 1, &en);
++	if (ret < 0)
++		return dev_err_probe(dev, ret, "cannot read the enable bit\n");
++
++	/* the baseline: the totals count from here */
++	qpt->last_update = ktime_get();
++	ret = qpt_read_data(qpt);
++	if (ret)
++		return dev_err_probe(dev, ret, "cannot read the counts\n");
++	for (i = 0; i < qpt->nch; i++)
++		qpt->ch[i].hw = qpt_acc(&qpt->data[QPT_DATA_CH(qpt->ch[i].slot)]);
++	qpt->start_ts = qpt->tstamp;
++	INIT_DELAYED_WORK(&qpt->idle_work, qpt_idle_work);
++
++	/* the overflow interrupt: off until the telemetry runs, never a wakeup */
++	irq = platform_get_irq_byname_optional(pdev, "overflow");
++	if (irq > 0) {
++		ret = devm_request_threaded_irq(dev, irq, NULL, qpt_overflow_irq,
++						IRQF_ONESHOT | IRQF_NO_AUTOEN, "qpt-overflow", qpt);
++		if (ret)
++			return dev_err_probe(dev, ret, "cannot request the overflow interrupt\n");
++		qpt->irq = irq;
++	} else if (irq != -ENXIO) {
++		return dev_err_probe(dev, irq, "overflow interrupt\n");
++	}
++
++	/*
++	 * Running already (the boot firmware): it counts as started and stops
++	 * after idle_ms unless read, as stock's thermal daemon stops it at start.
++	 */
++	if (en & QPT_DATA_ENABLE_BIT) {
++		qpt->running = true;
++		if (qpt->irq > 0) {
++			enable_irq(qpt->irq);
++			qpt->irq_on = true;
++		}
++		if (READ_ONCE(qpt_idle_ms))
++			schedule_delayed_work(&qpt->idle_work,
++					      msecs_to_jiffies(READ_ONCE(qpt_idle_ms)));
++	}
++	/* removal: the idle timer cancelled and the telemetry stopped, before the interrupt goes */
++	ret = devm_add_action_or_reset(dev, qpt_remove_action, qpt);
++	if (ret)
++		return ret;
++	platform_set_drvdata(pdev, qpt);
++
++	for (i = 0; i < qpt->nch; i++) {
++		qpt->cfg_e[i] = HWMON_E_INPUT | HWMON_E_LABEL;
++		qpt->cfg_p[i] = HWMON_P_AVERAGE | HWMON_P_LABEL;
++	}
++	qpt->info_e.type = hwmon_energy64;
++	qpt->info_e.config = qpt->cfg_e;
++	qpt->info_p.type = hwmon_power;
++	qpt->info_p.config = qpt->cfg_p;
++	qpt->info[0] = qpt_chip_info;
++	qpt->info[1] = &qpt->info_e;
++	qpt->info[2] = &qpt->info_p;
++	qpt->chip.ops = &qpt_hwmon_ops;
++	qpt->chip.info = qpt->info;
++
++	hwmon = devm_hwmon_device_register_with_info(dev, "qcom_qpt", qpt, &qpt->chip, NULL);
++	if (IS_ERR(hwmon))
++		return dev_err_probe(dev, PTR_ERR(hwmon), "cannot register the hwmon device\n");
++
++	dir = debugfs_create_dir("qcom_qpt", NULL);
++	debugfs_create_file("raw", 0400, dir, qpt, &qpt_raw_fops);
++	ret = devm_add_action_or_reset(dev, qpt_debugfs_remove, dir);
++	if (ret)
++		return ret;
++
++	dev_info(dev, "%u regulators, count %u uW x %u us, report every %u ms, telemetry %s (starts on a read, stops %u ms after the last)\n",
++		 qpt->nch, qpt->scale_uw, qpt->period_us, qpt->report_ms,
++		 qpt->running ? "running" : "stopped", READ_ONCE(qpt_idle_ms));
++
++	return 0;
++}
++
++/* Suspend always stops the telemetry; the next read after the resume starts it again. */
++static int qpt_suspend(struct device *dev)
++{
++	struct qpt *qpt = dev_get_drvdata(dev);
++
++	cancel_delayed_work_sync(&qpt->idle_work);
++	guard(mutex)(&qpt->lock);
++	qpt_halt(qpt);
++
++	return 0;
++}
++
++static DEFINE_SIMPLE_DEV_PM_OPS(qpt_pm_ops, qpt_suspend, NULL);
++
++static const struct of_device_id qpt_of_match[] = {
++	{ .compatible = "qcom,pmk8850-qpt" },
++	{ }
++};
++MODULE_DEVICE_TABLE(of, qpt_of_match);
++
++static struct platform_driver qpt_driver = {
++	.probe = qpt_probe,
++	.driver = {
++		.name = "qcom-qpt-hwmon",
++		.of_match_table = qpt_of_match,
++		.pm = pm_sleep_ptr(&qpt_pm_ops),
++	},
++};
++module_platform_driver(qpt_driver);
++
++MODULE_DESCRIPTION("Qualcomm PMIC power telemetry hardware monitor");
++MODULE_LICENSE("GPL");
+-- 
+2.43.0
+

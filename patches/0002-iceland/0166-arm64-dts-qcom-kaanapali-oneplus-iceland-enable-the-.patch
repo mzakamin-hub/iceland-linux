@@ -1,0 +1,113 @@
+From eb2bcf017e7aae95c7d3984f7088f7c1f43c5cd8 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 19:25:24 +0300
+Subject: [PATCH 166/166] arm64: dts: qcom: kaanapali-oneplus-iceland: enable
+ the power telemetry
+
+Enable the PMK8850 power telemetry and name the measured bucks as the
+vendor device tree's power zones do: the CPU clusters (cpu-m, cpu-l and
+their second bucks), the GPU and the NSP; the vendor's "debug" zones
+are named after the RPMh level resource on the same buck (cx, mx, mxc,
+mmcx, lcx, mss). The remaining bucks keep the driver's names (s4j, s7g,
+s7f, s2j, s3j, s10d, s7i).
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../dts/qcom/kaanapali-oneplus-iceland.dts    | 80 +++++++++++++++++++
+ 1 file changed, 80 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index d935ba33c..23d085e87 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1790,6 +1790,86 @@ cam_front_mclk_default: cam-front-mclk-default-state {
+ 	};
+ };
+ 
++&pmk8850_qpt {
++	/*
++	 * Rail names: stock's power zones (cpu-*, gpu*, nsp*) and, for its debug zones, the RPMh level
++	 * resource that sits on the same buck. Bucks without a node keep the driver's name (s4j, s7g,
++	 * s7f, s2j, s3j, s10d, s7i = vreg_s4j_0p7 ...). The boot firmware's configuration decides which
++	 * of them are measured.
++	 */
++	status = "okay";
++
++	channel@39b {
++		reg = <0x39b>;
++		label = "mss";
++	};
++
++	channel@39e {
++		reg = <0x39e>;
++		label = "nsp";
++	};
++
++	channel@3a4 {
++		reg = <0x3a4>;
++		label = "nsp-spare";
++	};
++
++	channel@3ad {
++		reg = <0x3ad>;
++		label = "mmcx";
++	};
++
++	channel@59b {
++		reg = <0x59b>;
++		label = "gpu";
++	};
++
++	channel@5b3 {
++		reg = <0x5b3>;
++		label = "mxc";
++	};
++
++	channel@5b6 {
++		reg = <0x5b6>;
++		label = "gpu-spare";
++	};
++
++	channel@6a7 {
++		reg = <0x6a7>;
++		label = "cx";
++	};
++
++	channel@6b0 {
++		reg = <0x6b0>;
++		label = "lcx";
++	};
++
++	channel@6b6 {
++		reg = <0x6b6>;
++		label = "cpu-m";
++	};
++
++	channel@89e {
++		reg = <0x89e>;
++		label = "cpu-l";
++	};
++
++	channel@8b0 {
++		reg = <0x8b0>;
++		label = "cpu-m-spare";
++	};
++
++	channel@8b3 {
++		reg = <0x8b3>;
++		label = "cpu-l-spare";
++	};
++
++	channel@8b6 {
++		reg = <0x8b6>;
++		label = "mx";
++	};
++};
++
+ &pmk8850_vadc {
+ 	pinctrl-0 = <&usbtemp_l_default>, <&usbtemp_r_default>, <&chg_cp_therm_default>;
+ 	pinctrl-names = "default";
+-- 
+2.43.0
+
