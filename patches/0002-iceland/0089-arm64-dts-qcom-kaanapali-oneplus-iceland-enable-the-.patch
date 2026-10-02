@@ -1,0 +1,58 @@
+From feb63ca250a15ece3a713f9d6dcac2b7cc9a2c5a Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 09:07:59 +0300
+Subject: [PATCH 89/89] arm64: dts: qcom: kaanapali-oneplus-iceland: enable the
+ rear camera's focus motor
+
+The focus motor of the rear camera module sits on the camera I2C bus at
+0x0c and speaks the DW9800K protocol of the dw9719 driver (start list
+and position register as the vendor's sensor module data). Its node was
+left disabled because the motor could not probe alone: the pull-ups of
+the bus hang on the 1.8 V I/O rail of the camera modules (L2F), which
+only the sensors switched on.
+
+Give the motor that rail as its vio supply, enable the node and link it
+to the rear sensor with lens-focus. Supplies as in the vendor device
+tree: vio L2F 1.8 V, vaf L16B 2.8 V.
+
+Tested on the OnePlus Pad 4: the motor binds and is linked to the rear
+sensor; a sweep of the lens position changes the sharpness of the
+picture by a factor of 21 with a clear maximum.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 301bc5310..57b9a314c 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1245,12 +1245,11 @@ vcm: actuator@c {
+ 		reg = <0x0c>;
+ 
+ 		vdd-supply = <&vreg_l16b_2p8>;
++		/* the pull-ups of this bus hang on the 1.8 V I/O rail of the camera modules */
++		vio-supply = <&vreg_l2f_1p8>;
+ 
+ 		dongwoon,sac-mode = <2>;
+ 		dongwoon,vcm-prescale = <0x79>;
+-
+-		/* first light without focus: the motor cannot probe before a sensor powers the bus pull-ups */
+-		status = "disabled";
+ 	};
+ 
+ 	/* rear: SmartSens SC1320CS, chip id 0xc658 (stock "icelandmain") */
+@@ -1271,6 +1270,8 @@ camera@36 {
+ 		orientation = <1>;
+ 		rotation = <90>;
+ 
++		lens-focus = <&vcm>;
++
+ 		port {
+ 			cam_rear_out: endpoint {
+ 				link-frequencies = /bits/ 64 <662400000>;
+-- 
+2.43.0
+

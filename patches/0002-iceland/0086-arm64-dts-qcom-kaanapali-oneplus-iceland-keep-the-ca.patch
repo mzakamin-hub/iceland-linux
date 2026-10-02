@@ -1,0 +1,53 @@
+From 9b94093e06d89503ba9513f9fc0260b8b73096a3 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 09:07:58 +0300
+Subject: [PATCH 86/89] arm64: dts: qcom: kaanapali-oneplus-iceland: keep the
+ camera bus level shifters on
+
+The camera I2C lines (i2c9) run through the PMH0101 level shifters 1
+and 2 (GPIO 11/12 and 13/14) between the SoC pads and the camera
+connectors. Without a vote from the application processor they are only
+enabled while the sensor hub keeps one of its sensors streaming, and the
+camera sensors and the focus motor do not answer otherwise. The vendor
+device tree marks both always on; do the same.
+
+Tested on the OnePlus Pad 4: with the sensor hub configured and idle
+both camera sensors answer on the bus (before: neither).
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ .../boot/dts/qcom/kaanapali-oneplus-iceland.dts | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 4b4803218..301bc5310 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -693,6 +693,23 @@ vreg_l18b_1p2: ldo18 {
+ 			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
+ 						   RPMH_REGULATOR_MODE_AUTO>;
+ 		};
++
++		/*
++		 * The level shifters between GPIO 11 / 12 and GPIO 13 / 14 of the
++		 * PMH0101 carry the camera I2C lines (i2c9) between the SoC pads
++		 * and the camera connectors. The vendor tree keeps both on; without
++		 * a vote from here they are on only while the sensor hub keeps one
++		 * of its sensors streaming.
++		 */
++		vreg_ls1b: ls1 {
++			regulator-name = "vreg_ls1b";
++			regulator-always-on;
++		};
++
++		vreg_ls2b: ls2 {
++			regulator-name = "vreg_ls2b";
++			regulator-always-on;
++		};
+ 	};
+ 
+ 	regulators-1 {
+-- 
+2.43.0
+
