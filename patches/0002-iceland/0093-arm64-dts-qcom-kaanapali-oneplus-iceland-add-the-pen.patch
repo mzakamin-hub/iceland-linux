@@ -1,0 +1,165 @@
+From 5817bd7894064c91be92d217006bb60683596479 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 10:38:16 +0300
+Subject: [PATCH 93/93] arm64: dts: qcom: kaanapali-oneplus-iceland: add the
+ pen charger
+
+The pen is charged by a Maxic MT5806 wireless power transmitter on the
+magnet side of the tablet. It sits at 0x2b on the I2C hub bus 1
+(gpio78 / gpio79) behind the PMH0101 level shifters 3 and 4, has its
+interrupt on gpio169 and four control lines on the PMIH0108 (power
+switch gpio8, wake gpio2, scan interval gpio7, transmitter off
+gpio11). Its supply is the PMIC's hBoost converter, which the charger
+firmware owns: 7 V while idle and 10 V for a pen, as in the vendor
+tree.
+
+Enable the bus at the vendor driver's 400 kHz, keep the two level
+shifters on as the vendor tree does, and add the pin states with the
+vendor tree's settings. The interrupt is a wake-up source, as in the
+vendor driver.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../dts/qcom/kaanapali-oneplus-iceland.dts    | 97 +++++++++++++++++++
+ 1 file changed, 97 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 57b9a314c..9b71548cb 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -710,6 +710,21 @@ vreg_ls2b: ls2 {
+ 			regulator-name = "vreg_ls2b";
+ 			regulator-always-on;
+ 		};
++
++		/*
++		 * The level shifters between GPIO 15 / 16 and GPIO 17 / 18 carry
++		 * the I2C lines of the pen charger (i2c_hub_1). The vendor tree
++		 * keeps both on.
++		 */
++		vreg_ls3b: ls3 {
++			regulator-name = "vreg_ls3b";
++			regulator-always-on;
++		};
++
++		vreg_ls4b: ls4 {
++			regulator-name = "vreg_ls4b";
++			regulator-always-on;
++		};
+ 	};
+ 
+ 	regulators-1 {
+@@ -1305,6 +1320,44 @@ backlight@11 {
+ 	};
+ };
+ 
++&i2c_hub_1 {
++	/* the vendor I2C driver's default; the vendor tree sets no other rate for this bus */
++	clock-frequency = <400000>;
++
++	status = "okay";
++
++	/*
++	 * The pen charger on the magnet side: a wireless power transmitter fed
++	 * from the PMIC's hBoost converter, which the charger firmware owns.
++	 * 7 V while idle and 10 V for a pen are the vendor tree's values.
++	 */
++	pen_charger: wireless-charger@2b {
++		compatible = "maxic,mt5806";
++		reg = <0x2b>;
++
++		interrupts-extended = <&tlmm 169 IRQ_TYPE_EDGE_FALLING>;
++
++		enable-gpios = <&pmih0108_e1_gpios 8 GPIO_ACTIVE_HIGH>;
++		wake-gpios = <&pmih0108_e1_gpios 2 GPIO_ACTIVE_HIGH>;
++		scan-gpios = <&pmih0108_e1_gpios 7 GPIO_ACTIVE_HIGH>;
++		tx-off-gpios = <&pmih0108_e1_gpios 11 GPIO_ACTIVE_HIGH>;
++
++		maxic,boost-idle-microvolt = <7000000>;
++		maxic,boost-charge-microvolt = <10000000>;
++
++		pinctrl-0 = <&pen_chg_int_default>, <&pen_chg_ctl_default>,
++			    <&pen_chg_en_default>, <&pen_chg_txoff_default>,
++			    <&pen_chg_i2c_shifter>;
++		pinctrl-names = "default";
++
++		wakeup-source;
++	};
++};
++
++&i2c_master_hub {
++	status = "okay";
++};
++
+ &mdss {
+ 	/*
+ 	 * The display needs both core GDSCs, as in the stock kernel (canoe-sde: "core_gdsc", "core_int2_gdsc").
+@@ -1486,6 +1539,13 @@ key_vol_down_default: key-vol-down-default-state {
+ 		bias-pull-up;
+ 		power-source = <1>;
+ 	};
++
++	/* the pads of level shifters 3 and 4 (the pen charger's I2C lines), as in the vendor tree */
++	pen_chg_i2c_shifter: pen-chg-i2c-shifter-state {
++		pins = "gpio15", "gpio16", "gpio17", "gpio18";
++		function = "normal";
++		bias-high-impedance;
++	};
+ };
+ 
+ &pmh0104_j_e1_gpios {
+@@ -1707,6 +1767,35 @@ chg_cp_therm_default: chg-cp-therm-default-state {
+ 		bias-high-impedance;
+ 		bias-disable;
+ 	};
++
++	/*
++	 * The pen charger's control lines with stock's pin settings (wls_sleep_*,
++	 * wls_scan_*, wls_sw_en_*, wls_off_state_*); the driver sets the levels.
++	 */
++	pen_chg_ctl_default: pen-chg-ctl-default-state {
++		pins = "gpio2", "gpio7";
++		function = "normal";
++		input-disable;
++		bias-disable;
++		power-source = <1>;
++		qcom,drive-strength = <PMIC_GPIO_STRENGTH_LOW>;
++	};
++
++	pen_chg_en_default: pen-chg-en-default-state {
++		pins = "gpio8";
++		function = "normal";
++		input-disable;
++		bias-disable;
++		power-source = <2>;
++		qcom,drive-strength = <PMIC_GPIO_STRENGTH_LOW>;
++	};
++
++	pen_chg_txoff_default: pen-chg-txoff-default-state {
++		pins = "gpio11";
++		function = "normal";
++		input-disable;
++		bias-disable;
++	};
+ };
+ 
+ &pon_resin {
+@@ -1818,6 +1907,14 @@ lid_default: lid-default-state {
+ 		bias-disable;
+ 	};
+ 
++	/* stock wls_charge_int_active */
++	pen_chg_int_default: pen-chg-int-default-state {
++		pins = "gpio169";
++		function = "gpio";
++		drive-strength = <2>;
++		bias-pull-up;
++	};
++
+ 	wlan_en: wlan-en-state {
+ 		pins = "gpio16";
+ 		function = "gpio";
+-- 
+2.43.0
+
