@@ -1,0 +1,137 @@
+From 64faf5b4f23ca0b9ef94284b147247e1f4371fab Mon Sep 17 00:00:00 2001
+From: Konrad Dybcio <konradybcio@kernel.org>
+Date: Fri, 2 Oct 2026 21:07:15 +0300
+Subject: [PATCH 172/174] soc: qcom: smem: support Glymur DRAM info
+
+Glymur firmware provides a version 7 DDR-info SMEM entry whose 872-byte
+layout is different from the one the driver supports today. The data
+contains 16 channel descriptors, 14 DDR frequency slots, four DDR region
+slots, a 10-entry SHUB frequency plan, and v6 misc information. It
+accounts for 616 bytes; the captured SMEM entry has a further 256 zero
+bytes. Add a Glymur-specific version 7 layout and recognize that
+complete entry. Parse the DDR frequencies and highest-bank bit from the
+common fields.
+
+Assisted-by: LLM
+[ backported from the posting of 2026-08-20 as mirrored at https://ratatoskr.run/lkml/2026/08/17440147/t
+  (lore was not reachable); the mirror shows "From: Konrad Dybcio <konradybcio@kernel.org>" and redacts the
+  address of the posting's "Signed-off-by: Konrad Dybcio", so that line is left out here rather than
+  guessed; take it from lore when this is rebased. Applied unchanged; the OnePlus Pad 4 (Kaanapali)
+  firmware reports the same 872-byte entry ("Found an unknown type of DRAM info struct (size = 872)") ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/soc/qcom/smem_dramc.c | 62 +++++++++++++++++++++++++++++++++++
+ 1 file changed, 62 insertions(+)
+
+diff --git a/drivers/soc/qcom/smem_dramc.c b/drivers/soc/qcom/smem_dramc.c
+index 63ebe7f6d..e513ae56b 100644
+--- a/drivers/soc/qcom/smem_dramc.c
++++ b/drivers/soc/qcom/smem_dramc.c
+@@ -27,6 +27,11 @@
+ 
+ #define MAX_SHUB_ENTRIES		8
+ 
++#define MAX_CHAN_NUM_V7_GLYMUR		16
++#define MAX_SHUB_ENTRIES_V7_GLYMUR	10
++#define MAX_DDR_REGIONS_V7_GLYMUR	4
++#define DDR_V7_GLYMUR_RESERVED_SIZE	256
++
+ static struct smem_dram *__dram;
+ 
+ enum ddr_info_version {
+@@ -39,6 +44,7 @@ enum ddr_info_version {
+ 	INFO_V6, /* INFO_V6 seems to only have shipped with 6 DDR regions, unlike V7 */
+ 	INFO_V7,
+ 	INFO_V7_WITH_6_REGIONS,
++	INFO_V7_GLYMUR,
+ };
+ 
+ struct smem_dram {
+@@ -188,6 +194,38 @@ struct ddr_details_v7 {
+ 	struct ddr_regions_v5 ddr_regions;
+ };
+ 
++/* V7, Glymur */
++struct ddr_regions_v7_glymur {
++	__le32 ddr_region_num;
++	__le64 ddr_rank0_size;
++	__le64 ddr_rank1_size;
++	__le64 ddr_cs0_start_addr;
++	__le64 ddr_cs1_start_addr;
++	__le32 highest_bank_addr_bit;
++	struct ddr_region_v5 ddr_region[MAX_DDR_REGIONS_V7_GLYMUR];
++};
++
++struct ddr_details_v7_glymur {
++	u8 manufacturer_id;
++	u8 device_type;
++	struct ddr_part_details ddr_params[MAX_CHAN_NUM_V7_GLYMUR];
++	struct ddr_freq_plan_v5 ddr_freq_tbl;
++	u8 num_channels;
++	u8 sct_config;
++	struct ddr_regions_v7_glymur ddr_regions;
++};
++
++struct shub_freq_plan_entry_v7_glymur {
++	u8 num_shub_freqs;
++	struct shub_freq_table shub_freq[MAX_SHUB_ENTRIES_V7_GLYMUR];
++};
++
++struct ddr_v7_glymur_tail {
++	struct shub_freq_plan_entry_v7_glymur shub_freq_plan;
++	struct ddr_misc_info_v6 misc_info;
++	u8 reserved[DDR_V7_GLYMUR_RESERVED_SIZE];
++};
++
+ /**
+  * qcom_smem_dram_get_hbb(): Get the Highest bank address bit
+  *
+@@ -287,6 +325,23 @@ static void smem_dram_parse_v7_data(struct smem_dram *dram, void *data)
+ 	}
+ }
+ 
++static void smem_dram_parse_v7_glymur_data(struct smem_dram *dram, void *data)
++{
++	struct ddr_details_v7_glymur *details = data;
++
++	dram->hbb = le32_to_cpu(details->ddr_regions.highest_bank_addr_bit);
++
++	for (int i = 0; i < MAX_DDR_FREQ_NUM_V5; i++) {
++		struct ddr_freq_table *freq_entry = &details->ddr_freq_tbl.ddr_freq[i];
++
++		if (freq_entry->freq_khz && freq_entry->enabled) {
++			u32 freq_khz = le32_to_cpu(freq_entry->freq_khz);
++
++			dram->frequencies[dram->num_frequencies++] = 1000 * freq_khz;
++		}
++	}
++}
++
+ /* The structure contains no version field, so we have to perform some guesswork.. */
+ static int smem_dram_infer_struct_version(size_t size)
+ {
+@@ -341,6 +396,10 @@ static int smem_dram_infer_struct_version(size_t size)
+ 		    sizeof(struct shub_freq_plan_entry))
+ 		return INFO_V7_WITH_6_REGIONS;
+ 
++	if (size == sizeof(struct ddr_details_v7_glymur) +
++		    sizeof(struct ddr_v7_glymur_tail))
++		return INFO_V7_GLYMUR;
++
+ 	return INFO_UNKNOWN;
+ }
+ 
+@@ -415,6 +474,9 @@ struct dentry *smem_dram_parse(struct qcom_smem *smem, struct device *dev)
+ 	case INFO_V7_WITH_6_REGIONS:
+ 		smem_dram_parse_v7_data(dram, data);
+ 		break;
++	case INFO_V7_GLYMUR:
++		smem_dram_parse_v7_glymur_data(dram, data);
++		break;
+ 	default:
+ 		return ERR_PTR(-EINVAL);
+ 	}
+-- 
+2.43.0
+

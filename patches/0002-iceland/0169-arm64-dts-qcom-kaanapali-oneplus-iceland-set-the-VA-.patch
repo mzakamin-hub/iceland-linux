@@ -1,0 +1,36 @@
+From 5a3c787c07ea546318d7fd274a2530525bcdd526 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 21:07:14 +0300
+Subject: [PATCH 169/174] arm64: dts: qcom: kaanapali-oneplus-iceland: set the
+ VA macro DMIC rate
+
+The VA macro driver complains when qcom,dmic-sample-rate is missing and
+falls back to a divider of two, i.e. a 4.8 MHz DMIC clock. Describe that
+rate explicitly, as the vendor tree of this tablet and the other
+Kaanapali boards do. The hardware setting does not change.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index ccae84bf9..c503109a9 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1437,6 +1437,11 @@ &i2c_master_hub {
+ 	status = "okay";
+ };
+ 
++&lpass_vamacro {
++	/* the vendor tree's 4.8 MHz (the microphones are the codec's analog inputs) */
++	qcom,dmic-sample-rate = <4800000>;
++};
++
+ /*
+  * No WSA amplifier on this board (the speakers are TFA9865 on the primary
+  * TDM port): both WSA macros off, as in the vendor tree.
+-- 
+2.43.0
+

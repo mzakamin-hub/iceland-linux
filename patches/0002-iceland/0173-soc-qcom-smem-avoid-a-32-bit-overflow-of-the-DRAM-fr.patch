@@ -1,0 +1,79 @@
+From de2e44115cb47c3442851a30b9805aef6d3be5f6 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 21:07:16 +0300
+Subject: [PATCH 173/174] soc: qcom: smem: avoid a 32-bit overflow of the DRAM
+ frequencies
+
+The parsers multiply the 32-bit kHz value by 1000 in 32-bit arithmetic,
+so every frequency above 4.29 GHz wraps (4761600 kHz becomes 466632704
+Hz), which LPDDR5X on current platforms reaches. Do the multiplication
+in unsigned long, the type of the frequency table, and convert the
+v3-with-14-frequencies value from little endian like the others.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/soc/qcom/smem_dramc.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/soc/qcom/smem_dramc.c b/drivers/soc/qcom/smem_dramc.c
+index e513ae56b..e4d6deca5 100644
+--- a/drivers/soc/qcom/smem_dramc.c
++++ b/drivers/soc/qcom/smem_dramc.c
+@@ -257,7 +257,7 @@ static void smem_dram_parse_v3_data(struct smem_dram *dram, void *data)
+ 
+ 		if (freq_entry->freq_khz && freq_entry->enabled) {
+ 			u32 freq_khz = le32_to_cpu(freq_entry->freq_khz);
+-			dram->frequencies[dram->num_frequencies++] = 1000 * freq_khz;
++			dram->frequencies[dram->num_frequencies++] = 1000UL * freq_khz;
+ 		}
+ 	}
+ }
+@@ -270,7 +270,7 @@ static void smem_dram_parse_v3_14freqs_data(struct smem_dram *dram, void *data)
+ 		struct ddr_freq_table *freq_entry = &details->ddr_freq_tbl.ddr_freq[i];
+ 
+ 		if (freq_entry->freq_khz && freq_entry->enabled)
+-			dram->frequencies[dram->num_frequencies++] = 1000 * freq_entry->freq_khz;
++			dram->frequencies[dram->num_frequencies++] = 1000UL * le32_to_cpu(freq_entry->freq_khz);
+ 	}
+ }
+ 
+@@ -286,7 +286,7 @@ static void smem_dram_parse_v4_data(struct smem_dram *dram, void *data)
+ 
+ 		if (freq_entry->freq_khz && freq_entry->enabled) {
+ 			u32 freq_khz = le32_to_cpu(freq_entry->freq_khz);
+-			dram->frequencies[dram->num_frequencies++] = 1000 * freq_khz;
++			dram->frequencies[dram->num_frequencies++] = 1000UL * freq_khz;
+ 		}
+ 	}
+ }
+@@ -303,7 +303,7 @@ static void smem_dram_parse_v5_data(struct smem_dram *dram, void *data)
+ 
+ 		if (freq_entry->freq_khz && freq_entry->enabled) {
+ 			u32 freq_khz = le32_to_cpu(freq_entry->freq_khz);
+-			dram->frequencies[dram->num_frequencies++] = 1000 * freq_khz;
++			dram->frequencies[dram->num_frequencies++] = 1000UL * freq_khz;
+ 		}
+ 	}
+ }
+@@ -320,7 +320,7 @@ static void smem_dram_parse_v7_data(struct smem_dram *dram, void *data)
+ 
+ 		if (freq_entry->freq_khz && freq_entry->enabled) {
+ 			u32 freq_khz = le32_to_cpu(freq_entry->freq_khz);
+-			dram->frequencies[dram->num_frequencies++] = 1000 * freq_khz;
++			dram->frequencies[dram->num_frequencies++] = 1000UL * freq_khz;
+ 		}
+ 	}
+ }
+@@ -337,7 +337,7 @@ static void smem_dram_parse_v7_glymur_data(struct smem_dram *dram, void *data)
+ 		if (freq_entry->freq_khz && freq_entry->enabled) {
+ 			u32 freq_khz = le32_to_cpu(freq_entry->freq_khz);
+ 
+-			dram->frequencies[dram->num_frequencies++] = 1000 * freq_khz;
++			dram->frequencies[dram->num_frequencies++] = 1000UL * freq_khz;
+ 		}
+ 	}
+ }
+-- 
+2.43.0
+

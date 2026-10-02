@@ -1,0 +1,48 @@
+From f4ca2f13e0daf7d2423418dee2407cb7b25e023d Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 21:07:15 +0300
+Subject: [PATCH 171/174] arm64: dts: qcom: kaanapali: enable MCQ support for
+ the UFS controller
+
+The UFS host controller of Kaanapali supports multi-circular queues,
+but its node lacks the MCQ register block, so the driver reports "MCQ
+resource not found in device tree" and falls back to the single
+doorbell.
+
+Describe the MCQ region and use the GIC ITS as the MSI parent for the
+per-queue event-specific interrupts, as on SM8650 and SM8750.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali.dtsi | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
+index 106eda604..987157ba0 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
++++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
+@@ -2771,7 +2771,10 @@ ufs_mem_hc: ufs@1d84000 {
+ 			compatible = "qcom,kaanapali-ufshc",
+ 				     "qcom,ufshc",
+ 				     "jedec,ufs-2.0";
+-			reg = <0x0 0x01d84000 0x0 0x3000>;
++			reg = <0x0 0x01d84000 0x0 0x3000>,
++			      <0x0 0x01da0000 0x0 0x15000>;
++			reg-names = "std",
++				    "mcq";
+ 
+ 			interrupts = <GIC_SPI 265 IRQ_TYPE_LEVEL_HIGH>;
+ 
+@@ -2810,6 +2813,8 @@ &mc_virt SLAVE_EBI1 QCOM_ICC_TAG_ALWAYS>,
+ 			iommus = <&apps_smmu 0x60 0x0>;
+ 			dma-coherent;
+ 
++			msi-parent = <&gic_its 0x60>;
++
+ 			lanes-per-direction = <2>;
+ 			qcom,ice = <&ice>;
+ 
+-- 
+2.43.0
+

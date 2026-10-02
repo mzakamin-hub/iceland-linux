@@ -1,0 +1,41 @@
+From 9ee927f333183f751a8e9977b93408f530d98f86 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 21:07:14 +0300
+Subject: [PATCH 168/174] backlight: ktz8869_iceland: make the vddio supply
+ optional
+
+The OnePlus Pad 4 drives the HWEN pin of both KTZ8869 from a GPIO and
+feeds their VDDIO from an always-on rail; neither the board's device
+tree nor the vendor one describes a supply for it, so every probe
+printed "supply vddio not found, using dummy regulator".
+
+Request vddio as an optional supply and only fail on real errors.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/video/backlight/ktz8869_iceland.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/video/backlight/ktz8869_iceland.c b/drivers/video/backlight/ktz8869_iceland.c
+index f6dd2c61a..d1196bd03 100644
+--- a/drivers/video/backlight/ktz8869_iceland.c
++++ b/drivers/video/backlight/ktz8869_iceland.c
+@@ -183,8 +183,12 @@ static int ktz8869_probe(struct i2c_client *client)
+ 	ret = devm_regulator_get_enable(&client->dev, "vin");
+ 	if (ret)
+ 		return dev_err_probe(&client->dev, ret, "get regulator vin failed\n");
+-	ret = devm_regulator_get_enable(&client->dev, "vddio");
+-	if (ret)
++	/*
++	 * Boards that drive the HWEN pin from a GPIO feed VDDIO from an
++	 * always-on rail and describe no supply for it.
++	 */
++	ret = devm_regulator_get_enable_optional(&client->dev, "vddio");
++	if (ret && ret != -ENODEV)
+ 		return dev_err_probe(&client->dev, ret, "get regulator vddio failed\n");
+ 
+ 	if (id->driver_data == 2) {
+-- 
+2.43.0
+
