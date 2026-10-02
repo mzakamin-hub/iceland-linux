@@ -1,0 +1,53 @@
+From 49a8856b301250b4fce2a0637ee5c13f52106fbb Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 12:59:47 +0300
+Subject: [PATCH 115/116] arm64: dts: qcom: kaanapali-oneplus-iceland: keep the
+ hall sensor's supply on
+
+The cover's hall sensor on TLMM 98 is powered from L1B. Linux never
+voted the rail on: it has no consumer, and another master's vote kept it
+on while the SoC was awake. Once the SoC reached CX collapse in s2idle
+that vote went away, the sensor's output dropped and came back, and
+every sleep ended after half a second on the lid's wake-on-open
+interrupt with the cover open.
+
+On the stock firmware the ADSP's sensor hub owns the hall sensor and
+powers L1B (its I/O rail) while the sensor runs; the stock device tree
+gives Linux the rail at 1.8 V in AUTO mode without ever enabling it.
+Here Linux reads the switch through gpio-keys, so keep the rail on.
+Voltage and mode stay at stock's values.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 816ca3b82..40492d32e 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -538,6 +538,12 @@ vreg_bob2: bob2 {
+ 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+ 		};
+ 
++		/*
++		 * The supply of the cover's hall sensor (BU52053NVX on TLMM 98, the
++		 * gpio-keys lid). On stock the ADSP's sensor hub owns that sensor and
++		 * powers the rail; here Linux reads the switch, so keep the rail on
++		 * for the wake on open, also when the SoC collapses CX in s2idle.
++		 */
+ 		vreg_l1b_1p8: ldo1 {
+ 			regulator-name = "vreg_l1b_1p8";
+ 			regulator-min-microvolt = <1800000>;
+@@ -546,6 +552,7 @@ vreg_l1b_1p8: ldo1 {
+ 			regulator-allow-set-load;
+ 			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
+ 						   RPMH_REGULATOR_MODE_AUTO>;
++			regulator-always-on;
+ 		};
+ 
+ 		vreg_l2b_3p0: ldo2 {
+-- 
+2.43.0
+

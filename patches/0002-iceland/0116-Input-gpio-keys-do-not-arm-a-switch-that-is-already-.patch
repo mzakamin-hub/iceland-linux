@@ -1,0 +1,71 @@
+From 685ce87b2aa2689c16b9ebcc89433f7562c02691 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 2 Oct 2026 12:59:47 +0300
+Subject: [PATCH 116/116] Input: gpio-keys - do not arm a switch that is
+ already released for wakeup on release
+
+A switch whose wakeup-event-action is EV_ACT_DEASSERTED wakes the
+system when it is released. If it is released already when the system
+suspends, it cannot be released again before it has been asserted, and
+the assertion is not a wakeup event: arming it brings nothing.
+
+It can cost the whole sleep. On the OnePlus Pad 4 the cover's hall
+switch (TLMM 98, active low, wake on open) is routed to the PDC, which
+latches one rising edge on the idle-high line each time the SoC leaves
+CX collapse in s2idle, with the supply of the sensor held on. With the
+cover open every such sleep ended at the first CX exit, after half a
+second; with the switch unarmed they ran to their RTC alarm.
+
+Leave such a switch unarmed. Keys and the other wakeup event actions
+are not touched, and a switch that is asserted when the system suspends
+(a closed cover) is armed as before. The error path of
+gpio_keys_enable_wakeup() now disarms only what was armed, like
+gpio_keys_disable_wakeup() does.
+
+Tested on the OnePlus Pad 4 (area-combo-64): with the cover open and
+the lid wake left enabled, every suspend-to-idle sleep that reached
+CX collapse (98 % of a 150 s sleep) ended by the RTC alarm; the edge
+the PDC latches is replayed once at resume without an input event.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/input/keyboard/gpio_keys.c | 15 ++++++++++++++-
+ 1 file changed, 14 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/input/keyboard/gpio_keys.c b/drivers/input/keyboard/gpio_keys.c
+index 129fc4212..5cf141cde 100644
+--- a/drivers/input/keyboard/gpio_keys.c
++++ b/drivers/input/keyboard/gpio_keys.c
+@@ -946,6 +946,18 @@ gpio_keys_button_enable_wakeup(struct gpio_button_data *bdata)
+ {
+ 	int error;
+ 
++	/*
++	 * A switch that wakes the system when it is released, and is released
++	 * already, cannot be released again before it has been asserted, which
++	 * is not a wakeup event. Leave it unarmed: wakeup controllers can latch
++	 * an edge on an idle line when the SoC leaves a power collapse, and
++	 * that would end the sleep for nothing.
++	 */
++	if (bdata->button->type == EV_SW &&
++	    bdata->button->wakeup_event_action == EV_ACT_DEASSERTED &&
++	    bdata->gpiod && gpiod_get_value_cansleep(bdata->gpiod) == 0)
++		return 0;
++
+ 	error = enable_irq_wake(bdata->irq);
+ 	if (error) {
+ 		dev_err(bdata->input->dev.parent,
+@@ -1025,7 +1037,8 @@ gpio_keys_enable_wakeup(struct gpio_keys_drvdata *ddata)
+ err_out:
+ 	while (i--) {
+ 		bdata = &ddata->data[i];
+-		if (bdata->button->wakeup)
++		if (bdata->button->wakeup &&
++		    irqd_is_wakeup_set(irq_get_irq_data(bdata->irq)))
+ 			gpio_keys_button_disable_wakeup(bdata);
+ 		bdata->suspended = false;
+ 	}
+-- 
+2.43.0
+
