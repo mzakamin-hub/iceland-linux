@@ -1,0 +1,94 @@
+From 31a18cdc0942f0484b88b2ad764989a2c4e7317b Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 3 Oct 2026 08:53:16 +0300
+Subject: [PATCH 178/185] power: supply: qcom_battmgr: OPLUS: input current ask
+ at the VBUS in force
+
+The attach setup computes its input current ask at 5 V (for a PD
+charger 13.5 W / 5 V, capped at 2000 mA) and runs the stepped ladder
+with it. When the setup runs while the charger already holds 9 V - a
+type change after the 9 V request, or the release of a host input
+suspend, which does not renegotiate PD - the ladder climbs to 2000 mA
+at 9 V = 18 W, above the stock 13.5 W, until the 9 V branch lowers it to
+1500 mA; with the battery at or above 4.5 V that branch is skipped and
+18 W stays.
+
+Read VBUS at the start of the setup and compute the ask at max(5 V,
+VBUS); when VBUS cannot be read, use 9 V, which errs towards less
+current. The 9 V request is only made from 5 V: at 9 V the ask already
+is the 9 V one. The VBUS at setup goes into the setup's log line.
+Stock: input-power-mw 13500 for PD, pd-iclmax-ma 2000, 9 V only below
+4.5 V (oplus,wired).
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/power/supply/qcom_battmgr.c | 26 +++++++++++++++++++-------
+ 1 file changed, 19 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
+index db153bd11..6be237513 100644
+--- a/drivers/power/supply/qcom_battmgr.c
++++ b/drivers/power/supply/qcom_battmgr.c
+@@ -2584,7 +2584,7 @@ static unsigned int qcom_battmgr_iceland_aicl(struct qcom_battmgr *battmgr, unsi
+ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+ {
+ 	unsigned int type, power_mw, fcc_ma, icl_ua, mv;
+-	unsigned int icl_ask_ua, icl_5v_ua, aicl_mv = 0;
++	unsigned int icl_ask_ua, icl_5v_ua, aicl_mv = 0, vbus_mv;
+ 	bool pd;
+ 	int ret;
+ 
+@@ -2594,6 +2594,15 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+ 								   !qcom_battmgr_oplus_inhibited(battmgr)),
+ 				   "charge enable");
+ 
++	/*
++	 * The input current ask is computed at the VBUS in force. A setup that runs while a PD charger already
++	 * holds 9 V (a type change after the 9 V request, the release of a host input suspend) would otherwise ask
++	 * the 5 V current (2000 mA) at 9 V = 18 W, above stock's 13.5 W, until the 9 V branch lowers it - and not at
++	 * all with the battery at or above 4.5 V. An unreadable VBUS counts as 9 V (fail low).
++	 */
++	ret = qcom_battmgr_request_property(battmgr, BATTMGR_USB_PROPERTY_GET, USB_VOLT_NOW, 0);
++	vbus_mv = ret ? ICELAND_PD_MV : max(battmgr->usb.voltage_now / 1000, 5000U);
++
+ 	/* the charger type as the sysfs path reads it on this firmware: USB_ADAP_TYPE, mapped */
+ 	ret = qcom_battmgr_request_property(battmgr, BATTMGR_USB_PROPERTY_GET, USB_ADAP_TYPE, 0);
+ 	type = ret ? POWER_SUPPLY_USB_TYPE_UNKNOWN : battmgr->usb.usb_type;
+@@ -2633,14 +2642,17 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+ 			 type, qcom_battmgr_oplus_fcc_ua(battmgr, battmgr->chg_fcc_ua));
+ 		return;
+ 	}
+-	/* the input current in stock's steps: up to the type's limit, or the last step the source holds */
+-	icl_ask_ua = qcom_battmgr_iceland_icl_ua(type, power_mw, 5000);
++	/* the input current in stock's steps at the VBUS in force: up to the type's limit, or the last step the source holds */
++	icl_ask_ua = qcom_battmgr_iceland_icl_ua(type, power_mw, vbus_mv);
+ 	icl_5v_ua = qcom_battmgr_iceland_aicl(battmgr, type, icl_ask_ua, &aicl_mv);
+ 	icl_ua = icl_5v_ua;
+ 	mv = 0;		/* VBUS is only read after a 9 V request */
+ 
+-	/* stock asks for 9 V only below 4.5 V; lower the input current first so 9 V never exceeds the power */
+-	if (pd && !qcom_battmgr_oplus_update_gauge(battmgr) &&
++	/*
++	 * Stock asks for 9 V only below 4.5 V; lower the input current first so 9 V never exceeds the power. Only
++	 * from 5 V: at 9 V already the ask above is the 9 V one and no request is needed.
++	 */
++	if (pd && vbus_mv <= ICELAND_PD_MV - 2000 && !qcom_battmgr_oplus_update_gauge(battmgr) &&
+ 	    battmgr->status.voltage_now < ICELAND_PD_9V_VBAT_MAX_UV) {
+ 		icl_ua = min(qcom_battmgr_iceland_icl_ua(type, power_mw, ICELAND_PD_MV), icl_5v_ua);
+ 		ret = qcom_battmgr_oplus_set(battmgr, OPLUS_USB_INPUT_CURR_LIMIT, icl_ua);
+@@ -2672,9 +2684,9 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+ 	}
+ 	mutex_unlock(&battmgr->lock);
+ 
+-	dev_info(battmgr->dev, "charger: type %u, input limit %u uA, charge limit %u uA, VBUS after 9 V request %u mV, AICL %u of %u uA, VBUS %u mV%s\n",
++	dev_info(battmgr->dev, "charger: type %u, input limit %u uA, charge limit %u uA, VBUS after 9 V request %u mV, AICL %u of %u uA, VBUS %u mV, VBUS at setup %u mV%s\n",
+ 		 type, icl_ua, qcom_battmgr_oplus_fcc_ua(battmgr, battmgr->chg_fcc_ua), mv,
+-		 icl_5v_ua, icl_ask_ua, aicl_mv,
++		 icl_5v_ua, icl_ask_ua, aicl_mv, vbus_mv,
+ 		 battmgr->chg_inhibit ? ", charging inhibited" :
+ 		 battmgr->chg_limit_hold ? ", charging held by the charge limit" : "");
+ }
+-- 
+2.43.0
+

@@ -1,0 +1,48 @@
+From 4a58f67b98e8dc34723c22c2544174a5e9e3d741 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 3 Oct 2026 08:53:18 +0300
+Subject: [PATCH 185/185] PCI/pwrctrl: allow the power sequencing driver to be
+ built in
+
+PCI_PWRCTRL_PWRSEQ has no prompt: it is only selected by the drivers of
+the devices it powers (ath11k, ath12k), so it is a module whenever they
+are. A PCIe host driver that is built in then defers its probe until
+the module has been loaded and bound (pci_pwrctrl_power_on_devices()
+returns -EPROBE_DEFER while the pwrctrl device has no driver). On a
+Qualcomm tablet with a WCN7860 the controller probes 11 times before the
+initramfs loads the module, about 1.3 s into the boot.
+
+Give the symbol a prompt, so that a configuration can build it in
+together with its power sequencing provider. Its default and the
+selects are unchanged.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/pci/pwrctrl/Kconfig | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/pci/pwrctrl/Kconfig b/drivers/pci/pwrctrl/Kconfig
+index 9eec767cd..df7232890 100644
+--- a/drivers/pci/pwrctrl/Kconfig
++++ b/drivers/pci/pwrctrl/Kconfig
+@@ -7,9 +7,15 @@ config PCI_PWRCTRL
+ 	tristate
+ 
+ config PCI_PWRCTRL_PWRSEQ
+-	tristate
++	tristate "PCI Power Control driver using the Power Sequencing subsystem"
+ 	select POWER_SEQUENCING
+ 	select PCI_PWRCTRL
++	help
++	  Power control for PCI devices whose supplies are handled by a
++	  power sequencing provider, such as the Qualcomm WCN Wi-Fi /
++	  Bluetooth packages. Drivers of such devices select it; say Y here
++	  to build it in, so that the PCIe controller does not have to wait
++	  for the module before it can power the device and train the link.
+ 
+ config PCI_PWRCTRL_GENERIC
+ 	tristate "Generic PCI Power Control driver for PCI slots and endpoints"
+-- 
+2.43.0
+

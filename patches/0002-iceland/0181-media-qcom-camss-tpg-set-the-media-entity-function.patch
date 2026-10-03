@@ -1,0 +1,39 @@
+From f81ce171ddde791d5258ac3aa1a11b470d6d4f94 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 3 Oct 2026 08:53:17 +0300
+Subject: [PATCH 181/185] media: qcom: camss: tpg: set the media entity
+ function
+
+The test pattern generator sub-devices are registered without a media
+entity function, so the media core warns for each of them at probe:
+
+  qcom-camss 9253000.isp: Entity type for entity msm_tpg0 was not initialized!
+
+Give them the function the other CAMSS sub-devices (CSIPHY, CSID, ISPIF,
+VFE) use, MEDIA_ENT_F_PROC_VIDEO_PIXEL_FORMATTER. MEDIA_ENT_F_CAM_SENSOR
+is not used: camss_find_sensor_pad() would then take a TPG for an image
+sensor and ask it for a link frequency, and libcamera's simple pipeline
+handler would try to create a camera for every TPG.
+
+Fixes: 70b193987c8c ("media: qcom: camss: Add common TPG support")
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/media/platform/qcom/camss/camss-tpg.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/media/platform/qcom/camss/camss-tpg.c b/drivers/media/platform/qcom/camss/camss-tpg.c
+index c5b75132a..f838ea969 100644
+--- a/drivers/media/platform/qcom/camss/camss-tpg.c
++++ b/drivers/media/platform/qcom/camss/camss-tpg.c
+@@ -489,6 +489,7 @@ int msm_tpg_register_entity(struct tpg_device *tpg,
+ 
+ 	tpg->pad.flags = MEDIA_PAD_FL_SOURCE;
+ 
++	sd->entity.function = MEDIA_ENT_F_PROC_VIDEO_PIXEL_FORMATTER;
+ 	sd->entity.ops = &tpg_media_ops;
+ 	ret = media_entity_pads_init(&sd->entity, 1, &tpg->pad);
+ 	if (ret < 0) {
+-- 
+2.43.0
+

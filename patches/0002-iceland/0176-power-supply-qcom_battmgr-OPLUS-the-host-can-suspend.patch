@@ -1,0 +1,315 @@
+From a044cfda0d135853b452f8d579d0b985d58adccd Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 3 Oct 2026 08:53:15 +0300
+Subject: [PATCH 176/185] power: supply: qcom_battmgr: OPLUS: the host can
+ suspend the charger input
+
+When the USB-C connector gets too hot, the vendor's charging stack does
+not only stop charging the battery: its connector protection opens CC,
+suspends the charger input and discharges VBUS (oplus_mms_wired.c,
+oplus_usbtemp_dischg_action()), so that no current flows through the
+hot connector at all and the tablet runs from its battery. Under
+mainline the user-space guard can so far only inhibit charging
+(charge_behaviour), which leaves the system's own draw flowing through
+the connector.
+
+Give the host the input suspend as well: input_current_limit on the
+OPLUS variant's USB supply becomes writable. 0 suspends the charger
+input exactly the way the vendor's driver commands the charger
+firmware, OPLUS_USB_INPUT_CURRENT_LIMIT = 0 (oplus_hal_adsp.c,
+oplus_chg_8350_input_suspend()); any other value ends the suspend with
+the vendor's unsuspend word 0xFFFFFFFF followed by 500 mA, as its
+hardware init does, and a new attach setup from the attach poll, as its
+"rerun icl vote" does. If the firmware refuses the unsuspend word the
+input stays suspended, so the state stays suspended too and the write
+returns the error. The Type-C port and the USB data link are not
+touched: this is the vendor's plain input suspend, not its CC open.
+
+The value written is never applied as a limit: the input current limit
+stays the stock one the attach setup finds for the charger type, so the
+host can take the input away but can never raise it. The attribute
+reads 0 while the suspend is in force: the firmware keeps reporting its
+configured limit through USB_INPUT_CURR_LIMIT (500 mA on a PC port with
+the input at 0 mA), so the state has to come from the driver for user
+space to see it. While the suspend is in force the attach setup writes
+0 in place of its ladder and makes no voltage request, and the attach
+poll sends the 0 again every few seconds while a cable is in, whatever
+the firmware does on its own. The suspend outlives a detach, as the
+vendor's vote does, and a reboot clears it: the first attach setup
+after every service up ends a suspend the firmware may have kept from
+an earlier boot, as the vendor's hardware init does, right before the
+ladder's first step. With the suspend in force the firmware may report
+the charger offline while the cable is in; the attach poll counts that
+state as a charger, so that it does not retry a source attach.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/power/supply/qcom_battmgr.c | 177 +++++++++++++++++++++++++++-
+ 1 file changed, 173 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
+index 8b910a0d9..ceaecc764 100644
+--- a/drivers/power/supply/qcom_battmgr.c
++++ b/drivers/power/supply/qcom_battmgr.c
+@@ -122,6 +122,15 @@ enum qcom_battmgr_variant {
+ #define OPLUS_CHG_EN			70
+ #define OPLUS_SET_PDO			71
+ 
++/*
++ * OPLUS_USB_INPUT_CURR_LIMIT 0 suspends the charger input and 0xFFFFFFFF ends
++ * the suspend (oplus_hal_adsp.c, oplus_chg_8350_input_suspend()); stock writes
++ * 500 mA right after its unsuspend at boot (oplus_chg_8350_hardware_init()).
++ */
++#define OPLUS_USB_ICL_SUSPEND		0
++#define OPLUS_USB_ICL_UNSUSPEND		0xFFFFFFFF
++#define OPLUS_USB_ICL_BOOT_UA		500000
++
+ #define OPLUS_USB_TYPE_APPLE_BRICK_ID	9
+ #define OPLUS_USB_TYPE_SVOOC		13
+ 
+@@ -428,6 +437,9 @@ struct qcom_battmgr {
+ 	unsigned int chg_fcc_ua;	/* the charge current set at the last attach */
+ 	unsigned int chg_fcc_host_ua;	/* the host's cap (constant_charge_current_max), 0 = none */
+ 	bool chg_inhibit;
++	/* the host's input suspend (input_current_limit 0), see qcom_battmgr_oplus_set_input_limit() */
++	bool input_suspend;
++	bool icl_unsuspended;		/* a suspend the firmware kept from an earlier boot was ended */
+ 	/* the charger type the limits were last set for, and its changes during this attach */
+ 	unsigned int chg_type;
+ 	unsigned int chg_type_changes;
+@@ -1510,7 +1522,11 @@ static int qcom_battmgr_usb_get_property(struct power_supply *psy,
+ 		val->intval = battmgr->usb.current_max;
+ 		break;
+ 	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
+-		val->intval = battmgr->usb.current_limit;
++		/*
++		 * With the host's suspend in force the input is at 0 whatever limit the firmware keeps configured
++		 * (it reports that limit, not the suspend): report the state in force, so that user space sees it.
++		 */
++		val->intval = battmgr->input_suspend ? 0 : battmgr->usb.current_limit;
+ 		break;
+ 	case POWER_SUPPLY_PROP_USB_TYPE:
+ 		val->intval = battmgr->usb.usb_type;
+@@ -1572,6 +1588,50 @@ static const struct power_supply_desc sm8350_usb_psy_desc = {
+ 		     BIT(POWER_SUPPLY_USB_TYPE_APPLE_BRICK_ID),
+ };
+ 
++static int qcom_battmgr_oplus_set_input_limit(struct qcom_battmgr *battmgr, int limit_ua);
++
++static int qcom_battmgr_usb_is_writeable(struct power_supply *psy,
++					 enum power_supply_property psp)
++{
++	return psp == POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT;
++}
++
++static int qcom_battmgr_usb_set_property(struct power_supply *psy,
++					 enum power_supply_property psp,
++					 const union power_supply_propval *pval)
++{
++	struct qcom_battmgr *battmgr = power_supply_get_drvdata(psy);
++
++	if (!battmgr->service_up)
++		return -EAGAIN;
++
++	if (psp != POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT)
++		return -EINVAL;
++
++	return qcom_battmgr_oplus_set_input_limit(battmgr, pval->intval);
++}
++
++/* the OPLUS variant: the host can suspend the charger input (input_current_limit 0) */
++static const struct power_supply_desc oplus_usb_psy_desc = {
++	.name = "qcom-battmgr-usb",
++	.type = POWER_SUPPLY_TYPE_USB,
++	.properties = sm8350_usb_props,
++	.num_properties = ARRAY_SIZE(sm8350_usb_props),
++	.get_property = qcom_battmgr_usb_get_property,
++	.set_property = qcom_battmgr_usb_set_property,
++	.property_is_writeable = qcom_battmgr_usb_is_writeable,
++	.usb_types = BIT(POWER_SUPPLY_USB_TYPE_UNKNOWN) |
++		     BIT(POWER_SUPPLY_USB_TYPE_SDP)     |
++		     BIT(POWER_SUPPLY_USB_TYPE_DCP)     |
++		     BIT(POWER_SUPPLY_USB_TYPE_CDP)     |
++		     BIT(POWER_SUPPLY_USB_TYPE_ACA)     |
++		     BIT(POWER_SUPPLY_USB_TYPE_C)       |
++		     BIT(POWER_SUPPLY_USB_TYPE_PD)      |
++		     BIT(POWER_SUPPLY_USB_TYPE_PD_DRP)  |
++		     BIT(POWER_SUPPLY_USB_TYPE_PD_PPS)  |
++		     BIT(POWER_SUPPLY_USB_TYPE_APPLE_BRICK_ID),
++};
++
+ static const u8 sm8350_wls_prop_map[] = {
+ 	[POWER_SUPPLY_PROP_ONLINE] = WLS_ONLINE,
+ 	[POWER_SUPPLY_PROP_VOLTAGE_NOW] = WLS_VOLT_NOW,
+@@ -2322,6 +2382,76 @@ static int qcom_battmgr_oplus_set_charge_behaviour(struct qcom_battmgr *battmgr,
+ 	return ret;
+ }
+ 
++/*
++ * input_current_limit on the USB supply: 0 suspends the charger input, any
++ * other value ends the suspend. That is stock's lever for a too hot USB-C
++ * connector (oplus_mms_wired.c: the WIRED_CHARGE_SUSPEND vote of its usbtemp
++ * protection, oplus_usbtemp_dischg_action(); oplus_hal_adsp.c,
++ * oplus_chg_8350_input_suspend(): OPLUS_USB_INPUT_CURRENT_LIMIT 0, and
++ * 0xFFFFFFFF to end it). The Type-C port and the USB data link are not
++ * touched. The input current limit itself stays the stock one for the charger
++ * type (qcom_battmgr_iceland_setup_charger()): the value written is not applied
++ * as a limit, so the host can take the input away but never raise it. Stock
++ * re-applies its input current vote after the unsuspend ("rerun icl vote",
++ * oplus_chg_wired.c) and at boot writes 500 mA right after it
++ * (oplus_chg_8350_hardware_init()): here the unsuspend is followed by 500 mA
++ * and a new attach setup from the poll, which runs the ladder from its floor.
++ * The suspend outlives a detach, as stock's vote does, and is sent again at
++ * every attach setup and from the poll while a cable is in; a reboot clears
++ * it (stock and this driver both end any suspend at their first setup).
++ */
++static int qcom_battmgr_oplus_set_input_limit(struct qcom_battmgr *battmgr, int limit_ua)
++{
++	bool suspend = !limit_ua;
++	bool changed = false;
++	int ret = 0;
++
++	if (battmgr->variant != QCOM_BATTMGR_OPLUS || limit_ua < 0)
++		return -EINVAL;
++
++	mutex_lock(&battmgr->lock);
++	if (suspend == battmgr->input_suspend)
++		goto out_unlock;
++	if (suspend) {
++		/* the state first: a refused 0 is sent again by the attach poll */
++		battmgr->input_suspend = true;
++		changed = true;
++		ret = qcom_battmgr_oplus_set(battmgr, OPLUS_USB_INPUT_CURR_LIMIT,
++					     OPLUS_USB_ICL_SUSPEND);
++		dev_info(battmgr->dev, "charger input suspended by the host%s\n",
++			 ret ? ", the request failed" : "");
++	} else {
++		/*
++		 * Stock's unsuspend word first. If the firmware refuses it the input stays suspended, so the
++		 * state stays suspended too: the write returns the error, a later write tries again, and the
++		 * next attach setup sends the word again.
++		 */
++		ret = qcom_battmgr_oplus_set(battmgr, OPLUS_USB_INPUT_CURR_LIMIT, OPLUS_USB_ICL_UNSUSPEND);
++		if (ret) {
++			battmgr->icl_unsuspended = false;
++			dev_warn(battmgr->dev, "charger input unsuspend refused by the firmware: %d, the input stays suspended\n",
++				 ret);
++			goto out_unlock;
++		}
++		battmgr->input_suspend = false;
++		changed = true;
++		ret = qcom_battmgr_oplus_set(battmgr, OPLUS_USB_INPUT_CURR_LIMIT, OPLUS_USB_ICL_BOOT_UA);
++		/* the stock limits of the charger in, through the poll's attach setup */
++		battmgr->charger_configured = false;
++		dev_info(battmgr->dev, "charger input allowed again by the host%s\n",
++			 ret ? ", the request failed" : "");
++	}
++out_unlock:
++	mutex_unlock(&battmgr->lock);
++
++	if (ret)
++		return ret;
++	if (changed)
++		power_supply_changed(battmgr->usb_psy);
++
++	return 0;
++}
++
+ /*
+  * The firmware starts every charger attach at 5 V and 2 A and leaves it to
+  * the host to ask for more.
+@@ -2455,6 +2585,28 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+ 								 qcom_battmgr_oplus_fcc_ua(battmgr,
+ 											   battmgr->chg_fcc_ua)),
+ 				   "charge current limit");
++	/*
++	 * An input suspend the firmware kept from an earlier boot (the host's state is new): stock ends it at its
++	 * hardware init, before its first input current (oplus_chg_8350_hardware_init()). The same once per service
++	 * up, right before the first step of the ladder.
++	 */
++	if (!battmgr->icl_unsuspended && !battmgr->input_suspend) {
++		ret = qcom_battmgr_oplus_set(battmgr, OPLUS_USB_INPUT_CURR_LIMIT, OPLUS_USB_ICL_UNSUSPEND);
++		qcom_battmgr_iceland_check(battmgr, ret, "input unsuspend");
++		/* refused: sent again at the next setup */
++		battmgr->icl_unsuspended = !ret;
++	}
++	/* the host suspended the input: 0 in place of the ladder, and no 9 V request */
++	if (battmgr->input_suspend) {
++		qcom_battmgr_iceland_check(battmgr,
++					   qcom_battmgr_oplus_set(battmgr, OPLUS_USB_INPUT_CURR_LIMIT,
++								  OPLUS_USB_ICL_SUSPEND),
++					   "input suspend");
++		mutex_unlock(&battmgr->lock);
++		dev_info(battmgr->dev, "charger: type %u, input suspended by the host, charge limit %u uA\n",
++			 type, qcom_battmgr_oplus_fcc_ua(battmgr, battmgr->chg_fcc_ua));
++		return;
++	}
+ 	/* the input current in stock's steps: up to the type's limit, or the last step the source holds */
+ 	icl_ask_ua = qcom_battmgr_iceland_icl_ua(type, power_mw, 5000);
+ 	icl_5v_ua = qcom_battmgr_iceland_aicl(battmgr, type, icl_ask_ua, &aicl_mv);
+@@ -2514,11 +2666,16 @@ static void qcom_battmgr_oplus_setup_charger(struct qcom_battmgr *battmgr)
+ 
+ 	mutex_lock(&battmgr->lock);
+ 	battmgr->chg_fcc_ua = OPLUS_CHARGER_FCC_UA;
+-	qcom_battmgr_oplus_set(battmgr, OPLUS_USB_INPUT_CURR_LIMIT, OPLUS_CHARGER_ICL_UA);
++	qcom_battmgr_oplus_set(battmgr, OPLUS_USB_INPUT_CURR_LIMIT,
++			       battmgr->input_suspend ? OPLUS_USB_ICL_SUSPEND : OPLUS_CHARGER_ICL_UA);
+ 	qcom_battmgr_request_property(battmgr, BATTMGR_BAT_PROPERTY_SET, BATT_CHG_CTRL_LIM,
+ 				      qcom_battmgr_oplus_fcc_ua(battmgr, battmgr->chg_fcc_ua));
+ 	mutex_unlock(&battmgr->lock);
+ 
++	/* the host suspended the input: no voltage request */
++	if (battmgr->input_suspend)
++		return;
++
+ 	for (i = 0; i < ARRAY_SIZE(pdo_mv); i++) {
+ 		mutex_lock(&battmgr->lock);
+ 		qcom_battmgr_oplus_set(battmgr, OPLUS_SET_PDO, pdo_mv[i]);
+@@ -2569,7 +2726,11 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+ 
+ 	status_changed = qcom_battmgr_oplus_sample(battmgr);
+ 
+-	if (!attached || battmgr->usb.online) {
++	/*
++	 * A charger is in, or nothing. With the host's input suspend in force the firmware may report the
++	 * charger offline: that counts as a charger too (no source attach retries while a cable is in).
++	 */
++	if (!attached || battmgr->usb.online || battmgr->input_suspend) {
+ 		if (battmgr->otg_boost_on) {
+ 			qcom_battmgr_oplus_set(battmgr, OPLUS_USB_OTG_VBUS_ENABLE, 0);
+ 			battmgr->otg_boost_on = false;
+@@ -2592,6 +2753,9 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+ 			   !qcom_battmgr_oplus_set(battmgr, OPLUS_CHG_EN, 1)) {
+ 			battmgr->chg_en_retry = false;
+ 		}
++		/* and the host's input suspend, while a cable is in */
++		if (battmgr->input_suspend && attached)
++			qcom_battmgr_oplus_set(battmgr, OPLUS_USB_INPUT_CURR_LIMIT, OPLUS_USB_ICL_SUSPEND);
+ 
+ 		setup_charger = battmgr->usb.online && !battmgr->charger_configured;
+ 		battmgr->charger_configured = battmgr->usb.online;
+@@ -2653,6 +2817,8 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+ static void qcom_battmgr_oplus_enable(struct qcom_battmgr *battmgr)
+ {
+ 	mutex_lock(&battmgr->lock);
++	/* the firmware (re)started: an input suspend it kept is ended at the next attach setup */
++	battmgr->icl_unsuspended = false;
+ 	qcom_battmgr_oplus_set(battmgr, OPLUS_CHG_EN, !qcom_battmgr_oplus_inhibited(battmgr));
+ 	qcom_battmgr_oplus_set(battmgr, OPLUS_USB_OTG_AP_ENABLE, 1);
+ 	mutex_unlock(&battmgr->lock);
+@@ -2804,7 +2970,10 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
+ 					     "failed to register battery power supply\n");
+ 		qcom_battmgr_dt_battery_info(battmgr);
+ 
+-		battmgr->usb_psy = devm_power_supply_register(dev, &sm8350_usb_psy_desc, &psy_cfg_supply);
++		battmgr->usb_psy = devm_power_supply_register(dev,
++							      battmgr->variant == QCOM_BATTMGR_OPLUS ?
++							      &oplus_usb_psy_desc : &sm8350_usb_psy_desc,
++							      &psy_cfg_supply);
+ 		if (IS_ERR(battmgr->usb_psy))
+ 			return dev_err_probe(dev, PTR_ERR(battmgr->usb_psy),
+ 					     "failed to register USB power supply\n");
+-- 
+2.43.0
+

@@ -1,0 +1,39 @@
+From 5738c6a06f23d26e09d4011417212070a46c6eec Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 3 Oct 2026 08:53:18 +0300
+Subject: [PATCH 183/185] arm64: dts: qcom: kaanapali: give the aggregator TNOC
+ its peripheral ID
+
+The AMBA bus reads a primecell's peripheral and component IDs from the
+end of its register window. For the aggregator Trace NOC at 0x111b8000
+that read does not return a CoreSight component ID, so amba_match()
+defers the device on every AMBA driver registration and the boot log
+ends with "amba 111b8000.tn: deferred probe pending: (reason unknown)".
+
+The vendor device tree of the OnePlus Pad 4 does not read the ID from
+the hardware either: it sets arm,primecell-periphid = <0xf0c00>, the
+first ID of the TNOC driver's table. Do the same, so the bus matches
+the device without touching the hardware.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali.dtsi | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
+index 987157ba0..a371d037d 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
++++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
+@@ -6753,6 +6753,8 @@ tpdm_pcie_rscc_out: endpoint {
+ 		tn@111b8000 {
+ 			compatible = "qcom,coresight-tnoc", "arm,primecell";
+ 			reg = <0x0 0x111b8000 0x0 0x4200>;
++			/* the ID registers cannot be read at the end of this window */
++			arm,primecell-periphid = <0x000f0c00>;
+ 
+ 			clocks = <&aoss_qmp>;
+ 			clock-names = "apb_pclk";
+-- 
+2.43.0
+
