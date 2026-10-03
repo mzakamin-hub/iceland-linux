@@ -1,0 +1,82 @@
+From 207746cfc5fa37eeeae3cc4d90c9f185c17b14f5 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 3 Oct 2026 20:16:51 +0300
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: skin trips at
+ stock's 60/61 C
+
+The skin thermistor (stock sys-therm-2, pmh0101_skin_therm) sits next to
+the SoC and rises about 3 C per second under an all-core load. Its zone
+ran the step-wise loop from 48 C and applied the deepest gear at 51 C.
+Those two values are the battery-temperature steps of the vendor
+framework's high-temperature protection, not limits for this sensor: on
+the vendor kernel the zone has six passive trips (48, 49, 50, 60, 61 and
+90 C, hysteresis 2 C) and no cooling map at all, and the throttling is
+done in userspace on a shell temperature fitted from five sensors, in
+which this thermistor weighs 0.18 to 0.43. That userspace policy (the
+stock gear table: CPU, GPU, brightness and charging caps per gear) runs
+on this tablet as iceland-thermal.
+
+Move the kernel loop to the vendor's own trips 3 and 4 on the sensor:
+the step-wise loop from 60 C and the deepest gear (cpufreq-cpu0 state
+22 = 998400 kHz, cpufreq-cpu6 state 27 = 883200 kHz, GPU state 13 =
+342 MHz) at 61 C. The hysteresis, the cooling maps and the 70 C
+critical trip (the vendor's device shutdown temperature; its last
+marker on this sensor is 90 C) are unchanged. The loop is now the
+backstop under the userspace policy, as the vendor kernel's zones are.
+
+Tested on the OnePlus Pad 4 (area-combo-39, the same trips on kernel
+q53 with the policy daemon): the emulation walk acted at 60 / 61 C and
+released, the policy followed the vendor table in 20 of 20 steps, and a
+60 s all-core load did 40 % more work than with the 48 / 51 C loop
+(area-combo-38: 281872 vs 202032 work chunks, 4446 vs 3131 chunks per
+second in the last 30 s) with the skin thermistor peaking at 56.0 C.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../boot/dts/qcom/kaanapali-oneplus-iceland.dts | 17 +++++++++--------
+ 1 file changed, 9 insertions(+), 8 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index de61a1a76..1355c4cfe 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -2493,12 +2493,13 @@ chg-cp-thermal {
+ 	};
+ 
+ 	/*
+-	 * Skin. Stock marks this sensor (sys-therm-2) at 48, 49, 50, 60, 61 and 90 C and leaves the throttling to
+-	 * its userspace thermal service; that service's high-temperature protection steps in at 48 C (out at 46),
+-	 * protects at 51 C (out at 49) with the deepest gear of its table (CPU level 13 = 998400 / 883200 kHz,
+-	 * GPU level 6 = 342 MHz) and shuts down at 70.0 C (odm sys_high_temp_protect, sys_thermal_control_config).
+-	 * The same steps are done here in the kernel: from 48 C the step-wise governor throttles as far as needed,
+-	 * down to that deepest gear at most; at 51 C the deepest gear applies at once; 70 C shuts down.
++	 * Skin thermistor, a fast hot spot next to the SoC. Stock marks this sensor (sys-therm-2) at 48, 49, 50,
++	 * 60, 61 and 90 C (hysteresis 2 C) without any cooling map: its throttling is done in userspace on a shell
++	 * temperature fitted from this sensor, the board, WLAN and charge-pump thermistors and the battery (here:
++	 * iceland-thermal). The kernel loop is the backstop under that policy, on stock's own trip temperatures:
++	 * from 60 C the step-wise governor throttles as far as needed, down to the deepest gear of stock's table at
++	 * most (CPU level 13 = 998400 / 883200 kHz, GPU level 6 = 342 MHz); at 61 C that gear applies at once;
++	 * 70 C (stock's shutdown temperature for the device) shuts down.
+ 	 * Cooling states: cpufreq-cpu0 22 = 998400 kHz, cpufreq-cpu6 27 = 883200 kHz, GPU 13 = 342 MHz.
+ 	 */
+ 	skin-thermal {
+@@ -2508,13 +2509,13 @@ skin-thermal {
+ 
+ 		trips {
+ 			skin_alert0: skin-alert0 {
+-				temperature = <48000>;
++				temperature = <60000>;
+ 				hysteresis = <2000>;
+ 				type = "passive";
+ 			};
+ 
+ 			skin_alert1: skin-alert1 {
+-				temperature = <51000>;
++				temperature = <61000>;
+ 				hysteresis = <2000>;
+ 				type = "passive";
+ 			};
+-- 
+2.43.0
+
