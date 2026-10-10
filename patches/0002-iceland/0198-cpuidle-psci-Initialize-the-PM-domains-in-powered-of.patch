@@ -1,6 +1,6 @@
 From 51365f0cbe968de63b794d5345e08384e7b0ab29 Mon Sep 17 00:00:00 2001
-From: mzak <mzak.amin@gmail.com>
-Date: Sat, 10 Oct 2026 04:19:14 +0300
+From: Ulf Hansson <ulf.hansson@oss.qualcomm.com>
+Date: Mon, 14 Sep 2026 17:01:40 +0200
 Subject: [PATCH] cpuidle: psci: Initialize the PM domains in powered off state
  for OSI
 

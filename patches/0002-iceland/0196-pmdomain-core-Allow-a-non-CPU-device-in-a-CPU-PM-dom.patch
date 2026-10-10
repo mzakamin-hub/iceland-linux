@@ -1,6 +1,6 @@
 From 5af07c5426754d82987a19cce8a0c148f91da068 Mon Sep 17 00:00:00 2001
-From: mzak <mzak.amin@gmail.com>
-Date: Sat, 10 Oct 2026 04:19:13 +0300
+From: Ulf Hansson <ulf.hansson@oss.qualcomm.com>
+Date: Mon, 14 Sep 2026 17:01:38 +0200
 Subject: [PATCH] pmdomain: core: Allow a non-CPU device in a CPU PM domain to
  do power on
 

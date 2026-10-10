@@ -1,6 +1,6 @@
 From 6279f1992e56a1bd71f2f911d71c1ab70df3f7a9 Mon Sep 17 00:00:00 2001
-From: mzak <mzak.amin@gmail.com>
-Date: Sat, 10 Oct 2026 04:19:13 +0300
+From: Ulf Hansson <ulf.hansson@oss.qualcomm.com>
+Date: Mon, 14 Sep 2026 17:01:39 +0200
 Subject: [PATCH] pmdomain: core: Add a genpd config to support unknown initial
  status
 
