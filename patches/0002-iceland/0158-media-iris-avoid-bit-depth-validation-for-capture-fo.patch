@@ -1,8 +1,7 @@
-From 5f52a328d91fc95e425f20d39f54031155e5b45a Mon Sep 17 00:00:00 2001
+From d58e376b0ee1c108fb8508819312ecc11a710391 Mon Sep 17 00:00:00 2001
 From: Vishnu Reddy <busanna.reddy@oss.qualcomm.com>
 Date: Fri, 10 Jul 2026 08:24:03 +0530
-Subject: [PATCH 158/162] media: iris: avoid bit depth validation for capture
- formats
+Subject: [PATCH] media: iris: avoid bit depth validation for capture formats
 
 When validating a capture format, check_format() compares the requested
 pixel format against inst->fw_caps[BIT_DEPTH]. However, the bit depth
@@ -35,7 +34,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 10 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_vdec.c b/drivers/media/platform/qcom/iris/iris_vdec.c
-index 9e228b704..7f89e745a 100644
+index 9e228b7042..7f89e745a4 100644
 --- a/drivers/media/platform/qcom/iris/iris_vdec.c
 +++ b/drivers/media/platform/qcom/iris/iris_vdec.c
 @@ -95,16 +95,6 @@ static bool check_format(struct iris_inst *inst, u32 pixfmt, u32 type)

@@ -1,7 +1,7 @@
-From b64d18a17356191a463b48708dee1f2fc07f0e07 Mon Sep 17 00:00:00 2001
+From 220deb07b71fd4d28d334d17a8ff324632f8ddc9 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 19:25:24 +0300
-Subject: [PATCH 165/166] arm64: dts: qcom: pmk8850: add the power telemetry
+Subject: [PATCH] arm64: dts: qcom: pmk8850: add the power telemetry
 
 Describe SDAMs 49, 50 and 51 (0xa000, 0xa100, 0xa200), which hold the
 power telemetry's configuration, fractions and data, and the telemetry
@@ -15,7 +15,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 41 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/pmk8850.dtsi b/arch/arm64/boot/dts/qcom/pmk8850.dtsi
-index 7fd14de84..e9c567fe7 100644
+index 7fd14de840..e9c567fe77 100644
 --- a/arch/arm64/boot/dts/qcom/pmk8850.dtsi
 +++ b/arch/arm64/boot/dts/qcom/pmk8850.dtsi
 @@ -101,5 +101,46 @@ reboot_reason: reboot-reason@48 {

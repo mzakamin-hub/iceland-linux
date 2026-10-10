@@ -1,7 +1,7 @@
-From ce2d138bc98e249570dc9fdcaa925fb8455a5069 Mon Sep 17 00:00:00 2001
+From 3eb2ca330171786baef70c716b78ee2e2969f311 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 29 Jul 2026 00:24:50 -0700
-Subject: [PATCH 087/138] phy: qcom: qmp-combo: Add Kaanapali USB3+DP PHY
+Subject: [PATCH] phy: qcom: qmp-combo: Add Kaanapali USB3+DP PHY
 
 Same as SM8750, except for the DP PLL which uses the 4 nm serdes table.
 
@@ -11,7 +11,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 49 insertions(+)
 
 diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
-index e99b0a410035..30da0ee55f0d 100644
+index e99b0a4100..30da0ee55f 100644
 --- a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
 +++ b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
 @@ -3304,6 +3304,51 @@ static const struct qmp_phy_cfg sm8650_usb3dpphy_cfg = {
@@ -77,3 +77,6 @@ index e99b0a410035..30da0ee55f0d 100644
  	{
  		.compatible = "qcom,sar2130p-qmp-usb3-dp-phy",
  		.data = &sar2130p_usb3dpphy_cfg,
+-- 
+2.43.0
+

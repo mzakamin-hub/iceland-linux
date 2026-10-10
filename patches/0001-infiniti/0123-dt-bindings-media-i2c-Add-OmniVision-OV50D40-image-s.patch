@@ -1,8 +1,7 @@
-From 2ba1e3e44578704784a341f7f7b37a52083196cf Mon Sep 17 00:00:00 2001
+From 70eff607efe25fabffaa0d6f2bba598d1667befb Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Thu, 24 Sep 2026 15:50:45 -0700
-Subject: [PATCH 123/138] dt-bindings: media: i2c: Add OmniVision OV50D40 image
- sensor
+Subject: [PATCH] dt-bindings: media: i2c: Add OmniVision OV50D40 image sensor
 
 Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
 ---
@@ -12,7 +11,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
 
 diff --git a/Documentation/devicetree/bindings/media/i2c/ovti,ov50d40.yaml b/Documentation/devicetree/bindings/media/i2c/ovti,ov50d40.yaml
 new file mode 100644
-index 000000000000..3df0f6be0cd8
+index 0000000000..3df0f6be0c
 --- /dev/null
 +++ b/Documentation/devicetree/bindings/media/i2c/ovti,ov50d40.yaml
 @@ -0,0 +1,100 @@
@@ -116,3 +115,6 @@ index 000000000000..3df0f6be0cd8
 +        };
 +    };
 +...
+-- 
+2.43.0
+

@@ -1,7 +1,7 @@
-From 83f327c708fcf8c308289b7e5b418222daf53bcf Mon Sep 17 00:00:00 2001
+From 33f856d65d637ee9772036c462db7907dc54c4ca Mon Sep 17 00:00:00 2001
 From: map220v <map220v300@gmail.com>
 Date: Fri, 19 Jun 2026 17:58:04 +0000
-Subject: [PATCH 12/20] SM8850: Add cache info
+Subject: [PATCH] SM8850: Add cache info
 
 (cherry picked from commit 98673dc8e6c5912e48c3f486183e494be7786849)
 ---
@@ -9,7 +9,7 @@ Subject: [PATCH 12/20] SM8850: Add cache info
  1 file changed, 54 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 1c27220c07bb..f682fa185776 100644
+index 1c27220c07..f682fa1857 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -46,6 +46,12 @@ cpu0: cpu@0 {
@@ -136,3 +136,6 @@ index 1c27220c07bb..f682fa185776 100644
  			next-level-cache = <&l2_1>;
  			power-domains = <&cpu_pd7>, <&scmi_perf 1>;
  			power-domain-names = "psci", "perf";
+-- 
+2.43.0
+

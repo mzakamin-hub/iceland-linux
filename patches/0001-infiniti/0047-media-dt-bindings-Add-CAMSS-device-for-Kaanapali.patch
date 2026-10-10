@@ -1,7 +1,7 @@
-From 9f2751a22832a086bbd639915bf242990fd90e73 Mon Sep 17 00:00:00 2001
+From 1d9de274fa31ad1858c568380e6f188a9c93d693 Mon Sep 17 00:00:00 2001
 From: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
 Date: Tue, 15 Sep 2026 03:09:57 -0700
-Subject: [PATCH 047/138] media: dt-bindings: Add CAMSS device for Kaanapali
+Subject: [PATCH] media: dt-bindings: Add CAMSS device for Kaanapali
 
 Add bindings for Camera Subsystem (CAMSS) on the Qualcomm Kaanapali
 platform.
@@ -22,7 +22,7 @@ Signed-off-by: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
 
 diff --git a/Documentation/devicetree/bindings/media/qcom,kaanapali-camss.yaml b/Documentation/devicetree/bindings/media/qcom,kaanapali-camss.yaml
 new file mode 100644
-index 000000000000..5bbcd35f053c
+index 0000000000..5bbcd35f05
 --- /dev/null
 +++ b/Documentation/devicetree/bindings/media/qcom,kaanapali-camss.yaml
 @@ -0,0 +1,375 @@
@@ -401,3 +401,6 @@ index 000000000000..5bbcd35f053c
 +            };
 +        };
 +    };
+-- 
+2.43.0
+

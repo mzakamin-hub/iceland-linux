@@ -1,8 +1,8 @@
-From 11e3665916edac71dc652a715df52175657492d9 Mon Sep 17 00:00:00 2001
+From e24b6cde798f961a6ec806c183467a9c91d6f9d4 Mon Sep 17 00:00:00 2001
 From: Nitin Rawat <nitin.rawat@oss.qualcomm.com>
 Date: Wed, 9 Sep 2026 11:09:44 +0530
-Subject: [PATCH 029/138] scsi: ufs: ufs-qcom: Enable only lane clocks in lane
- clock APIs
+Subject: [PATCH] scsi: ufs: ufs-qcom: Enable only lane clocks in lane clock
+ APIs
 
 ufs_qcom_enable_lane_clks() and ufs_qcom_disable_lane_clks() currently
 use clk_bulk_prepare_enable()/clk_bulk_disable_unprepare() on the
@@ -32,7 +32,7 @@ Reviewed-by: Manivannan Sadhasivam <manivannan.sadhasivam@oss.qualcomm.com>
  2 files changed, 42 insertions(+), 10 deletions(-)
 
 diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
-index 954be9343f42..a132b2f996fa 100644
+index 954be9343f..a132b2f996 100644
 --- a/drivers/ufs/host/ufs-qcom.c
 +++ b/drivers/ufs/host/ufs-qcom.c
 @@ -347,7 +347,9 @@ static void ufs_qcom_disable_lane_clks(struct ufs_qcom_host *host)
@@ -112,7 +112,7 @@ index 954be9343f42..a132b2f996fa 100644
  	return 0;
  }
 diff --git a/drivers/ufs/host/ufs-qcom.h b/drivers/ufs/host/ufs-qcom.h
-index a5ad5ce44a19..944b2e532a09 100644
+index a5ad5ce44a..944b2e532a 100644
 --- a/drivers/ufs/host/ufs-qcom.h
 +++ b/drivers/ufs/host/ufs-qcom.h
 @@ -330,8 +330,9 @@ struct ufs_qcom_host {
@@ -127,3 +127,6 @@ index a5ad5ce44a19..944b2e532a09 100644
  	bool is_lane_clks_enabled;
  
  	struct icc_path *icc_ddr;
+-- 
+2.43.0
+

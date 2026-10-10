@@ -1,7 +1,7 @@
-From 778a468f7637dc2759eadb62a780e0d5dc75381b Mon Sep 17 00:00:00 2001
+From 1ca3c265ab929bff2a74810e106db267a08d9c87 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Thu, 24 Sep 2026 15:50:45 -0700
-Subject: [PATCH 121/138] dt-bindings: media: i2c: Add Sony IMX709 image sensor
+Subject: [PATCH] dt-bindings: media: i2c: Add Sony IMX709 image sensor
 
 Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
 ---
@@ -11,7 +11,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
 
 diff --git a/Documentation/devicetree/bindings/media/i2c/sony,imx709.yaml b/Documentation/devicetree/bindings/media/i2c/sony,imx709.yaml
 new file mode 100644
-index 000000000000..86ee6b826c89
+index 0000000000..86ee6b826c
 --- /dev/null
 +++ b/Documentation/devicetree/bindings/media/i2c/sony,imx709.yaml
 @@ -0,0 +1,100 @@
@@ -115,3 +115,6 @@ index 000000000000..86ee6b826c89
 +        };
 +    };
 +...
+-- 
+2.43.0
+

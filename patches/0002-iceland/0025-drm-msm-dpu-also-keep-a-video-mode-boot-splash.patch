@@ -1,7 +1,7 @@
-From c1b9c4605f32268f4928fc429b3f935c617ed3db Mon Sep 17 00:00:00 2001
+From b243cba9d4590048468f4afc445416401125b822 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 28 Sep 2026 13:11:40 +0300
-Subject: [PATCH 25/27] drm/msm/dpu: also keep a video-mode boot splash
+Subject: [PATCH] drm/msm/dpu: also keep a video-mode boot splash
 
 dpu_boot_splash() treats a DSI INTF as running a bootloader splash only when command-mode autorefresh
 is on. The OnePlus Pad 4 panel (NT36536, dual DSI) runs in video mode: ABL leaves the INTF timing
@@ -19,7 +19,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  2 files changed, 8 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
-index acd170f8f..6aa58f252 100644
+index acd170f8f2..6aa58f2521 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
 @@ -591,6 +591,13 @@ bool dpu_hw_intf_boot_autorefresh(void __iomem *addr, bool stop)
@@ -37,7 +37,7 @@ index acd170f8f..6aa58f252 100644
  		return false;
  
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
-index 9be9dd1c2..1b64f7406 100644
+index 9be9dd1c2c..1b64f74061 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
 @@ -1520,7 +1520,7 @@ static const struct of_device_id dpu_dt_match[] = {

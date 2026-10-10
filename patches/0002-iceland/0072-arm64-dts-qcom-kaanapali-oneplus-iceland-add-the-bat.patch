@@ -1,7 +1,7 @@
-From e5b497c74df18bf43a117f596eb1c4f7dc61e510 Mon Sep 17 00:00:00 2001
+From 0159bb9b8ec440f6f62ba0367b5921550a5a03d7 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 00:42:13 +0300
-Subject: [PATCH 72/72] arm64: dts: qcom: kaanapali-oneplus-iceland: add the
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: add the
  battery's design voltages
 
 Without them UPower takes the momentary battery voltage as the design
@@ -16,7 +16,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 3 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index abe082adc..3b0def8eb 100644
+index abe082adca..3b0def8eb7 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -47,6 +47,9 @@ aliases {

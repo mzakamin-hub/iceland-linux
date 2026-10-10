@@ -1,7 +1,7 @@
-From 8b15472005913d8c7ed1f5abd423ec6c920957f3 Mon Sep 17 00:00:00 2001
+From 0c130a8093abb2e6c21429612336be4a5f8b0a51 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Sat, 26 Sep 2026 17:42:42 -0700
-Subject: [PATCH 136/138] arm64: dts: qcom: kaanapali: Add the missing firmware
+Subject: [PATCH] arm64: dts: qcom: kaanapali: Add the missing firmware
  carveouts
 
 ABL builds /memory from the RAM that no no-map region covers.
@@ -12,7 +12,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 115 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 6ae5837e49ef..5c3b6211630f 100644
+index 6ae5837e49..5c3b621163 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -343,17 +343,47 @@ reserved-memory {
@@ -176,3 +176,6 @@ index 6ae5837e49ef..5c3b6211630f 100644
  	};
  
  	smp2p-adsp {
+-- 
+2.43.0
+

@@ -1,7 +1,7 @@
-From f1c349a5bcf1247a55b7f35bada24876b40be052 Mon Sep 17 00:00:00 2001
+From e9ae62a61a1f011fd0f96aa7f71b728e99f82521 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 29 Jul 2026 00:24:52 -0700
-Subject: [PATCH 093/138] iommu/arm-smmu-qcom: Add the kaanapali MDSS client
+Subject: [PATCH] iommu/arm-smmu-qcom: Add the kaanapali MDSS client
 
 Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
 ---
@@ -9,7 +9,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/iommu/arm/arm-smmu/arm-smmu-qcom.c b/drivers/iommu/arm/arm-smmu/arm-smmu-qcom.c
-index 795e8ec7e8fa..0ee9a9cfdf8e 100644
+index 795e8ec7e8..0ee9a9cfdf 100644
 --- a/drivers/iommu/arm/arm-smmu/arm-smmu-qcom.c
 +++ b/drivers/iommu/arm/arm-smmu/arm-smmu-qcom.c
 @@ -407,6 +407,7 @@ static const struct of_device_id qcom_smmu_client_of_match[] __maybe_unused = {
@@ -20,3 +20,6 @@ index 795e8ec7e8fa..0ee9a9cfdf8e 100644
  	{ .compatible = "qcom,mdp4" },
  	{ .compatible = "qcom,mdss" },
  	{ .compatible = "qcom,qcm2290-mdss" },
+-- 
+2.43.0
+

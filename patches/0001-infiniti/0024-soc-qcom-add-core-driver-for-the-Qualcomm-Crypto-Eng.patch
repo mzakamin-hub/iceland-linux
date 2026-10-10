@@ -1,8 +1,7 @@
-From 1796b9c23017529402e53027dde8b6c9ea14389a Mon Sep 17 00:00:00 2001
+From e9c9c47abdf038efdf2924fb2ec3b5d8eb8186e6 Mon Sep 17 00:00:00 2001
 From: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
 Date: Tue, 22 Sep 2026 14:57:27 +0200
-Subject: [PATCH 024/138] soc: qcom: add core driver for the Qualcomm Crypto
- Engine
+Subject: [PATCH] soc: qcom: add core driver for the Qualcomm Crypto Engine
 
 Add the core driver for the Qualcomm crypto engine. Its task is to bind
 to the qce DT node, set up runtime PM for interconnect down-scaling and
@@ -17,7 +16,7 @@ Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
  create mode 100644 drivers/soc/qcom/qce-core.c
 
 diff --git a/drivers/soc/qcom/Kconfig b/drivers/soc/qcom/Kconfig
-index 2b524154d9fb..859835a3dd1d 100644
+index 2b524154d9..859835a3dd 100644
 --- a/drivers/soc/qcom/Kconfig
 +++ b/drivers/soc/qcom/Kconfig
 @@ -122,6 +122,17 @@ config QCOM_PMIC_GLINK
@@ -39,7 +38,7 @@ index 2b524154d9fb..859835a3dd1d 100644
  	tristate "Qualcomm Ramp Controller driver"
  	help
 diff --git a/drivers/soc/qcom/Makefile b/drivers/soc/qcom/Makefile
-index 798643be3590..33dfef07e7db 100644
+index 798643be35..33dfef07e7 100644
 --- a/drivers/soc/qcom/Makefile
 +++ b/drivers/soc/qcom/Makefile
 @@ -14,6 +14,7 @@ obj-$(CONFIG_QCOM_PMIC_GLINK)	+= pmic_glink.o
@@ -52,7 +51,7 @@ index 798643be3590..33dfef07e7db 100644
  obj-$(CONFIG_QCOM_RAMP_CTRL)	+= ramp_controller.o
 diff --git a/drivers/soc/qcom/qce-core.c b/drivers/soc/qcom/qce-core.c
 new file mode 100644
-index 000000000000..8a9d070935cc
+index 0000000000..8a9d070935
 --- /dev/null
 +++ b/drivers/soc/qcom/qce-core.c
 @@ -0,0 +1,92 @@
@@ -148,3 +147,6 @@ index 000000000000..8a9d070935cc
 +MODULE_DESCRIPTION("Qualcomm crypto engine core driver");
 +MODULE_ALIAS("platform:" KBUILD_MODNAME);
 +MODULE_AUTHOR("Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>");
+-- 
+2.43.0
+

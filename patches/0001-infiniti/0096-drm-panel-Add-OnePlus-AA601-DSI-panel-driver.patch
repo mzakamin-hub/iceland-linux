@@ -1,7 +1,7 @@
-From 6b80718e0cc94a59ea41113429655976a0daf760 Mon Sep 17 00:00:00 2001
+From fc4fd8c2a518fe2a23de9180d4a87ea427602ea1 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 29 Jul 2026 00:24:53 -0700
-Subject: [PATCH 096/138] drm/panel: Add OnePlus AA601 DSI panel driver
+Subject: [PATCH] drm/panel: Add OnePlus AA601 DSI panel driver
 
 1272x2772 DSC 1.2 command mode AMOLED panel of the OnePlus 15, handed
 over lit by the bootloader. Supports 60 to 165 Hz.
@@ -15,7 +15,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  create mode 100644 drivers/gpu/drm/panel/panel-oneplus-aa601.c
 
 diff --git a/drivers/gpu/drm/panel/Kconfig b/drivers/gpu/drm/panel/Kconfig
-index cbdf7b8f7f7a..971d455523aa 100644
+index cbdf7b8f7f..971d455523 100644
 --- a/drivers/gpu/drm/panel/Kconfig
 +++ b/drivers/gpu/drm/panel/Kconfig
 @@ -740,6 +740,17 @@ config DRM_PANEL_OLIMEX_LCD_OLINUXINO
@@ -37,7 +37,7 @@ index cbdf7b8f7f7a..971d455523aa 100644
          tristate "Orise Technology ota5601a RGB/SPI panel"
          depends on SPI
 diff --git a/drivers/gpu/drm/panel/Makefile b/drivers/gpu/drm/panel/Makefile
-index 3b523cf37833..3d33479cbb96 100644
+index 3b523cf378..3d33479cbb 100644
 --- a/drivers/gpu/drm/panel/Makefile
 +++ b/drivers/gpu/drm/panel/Makefile
 @@ -72,6 +72,7 @@ obj-$(CONFIG_DRM_PANEL_NOVATEK_NT37801) += panel-novatek-nt37801.o
@@ -50,7 +50,7 @@ index 3b523cf37833..3d33479cbb96 100644
  obj-$(CONFIG_DRM_PANEL_OSD_OSD101T2587_53TS) += panel-osd-osd101t2587-53ts.o
 diff --git a/drivers/gpu/drm/panel/panel-oneplus-aa601.c b/drivers/gpu/drm/panel/panel-oneplus-aa601.c
 new file mode 100644
-index 000000000000..3989bff0cd7a
+index 0000000000..3989bff0cd
 --- /dev/null
 +++ b/drivers/gpu/drm/panel/panel-oneplus-aa601.c
 @@ -0,0 +1,912 @@
@@ -966,3 +966,6 @@ index 000000000000..3989bff0cd7a
 +MODULE_AUTHOR("idusergod <artem.martyanov06@gmail.com>");
 +MODULE_DESCRIPTION("DRM driver for OnePlus AA601 P 7 A0020 DSC panel");
 +MODULE_LICENSE("GPL");
+-- 
+2.43.0
+

@@ -1,8 +1,7 @@
-From f81ce171ddde791d5258ac3aa1a11b470d6d4f94 Mon Sep 17 00:00:00 2001
+From 8c7cb3c35471defabd0beb600a60bb6b3d2f5adc Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 3 Oct 2026 08:53:17 +0300
-Subject: [PATCH 181/185] media: qcom: camss: tpg: set the media entity
- function
+Subject: [PATCH] media: qcom: camss: tpg: set the media entity function
 
 The test pattern generator sub-devices are registered without a media
 entity function, so the media core warns for each of them at probe:
@@ -23,7 +22,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/media/platform/qcom/camss/camss-tpg.c b/drivers/media/platform/qcom/camss/camss-tpg.c
-index c5b75132a..f838ea969 100644
+index c5b75132ad..f838ea969c 100644
 --- a/drivers/media/platform/qcom/camss/camss-tpg.c
 +++ b/drivers/media/platform/qcom/camss/camss-tpg.c
 @@ -489,6 +489,7 @@ int msm_tpg_register_entity(struct tpg_device *tpg,

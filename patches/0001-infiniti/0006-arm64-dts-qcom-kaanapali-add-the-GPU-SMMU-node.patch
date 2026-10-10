@@ -1,7 +1,7 @@
-From daf3a96e969af17c6b325508c6fad975648fc6d0 Mon Sep 17 00:00:00 2001
+From 87be0fd603e0c4b9275ee9a27b55089d30818d15 Mon Sep 17 00:00:00 2001
 From: Qingqing Zhou <quic_qqzhou@quicinc.com>
 Date: Tue, 7 Jul 2026 03:10:20 +0530
-Subject: [PATCH 006/138] arm64: dts: qcom: kaanapali: add the GPU SMMU node
+Subject: [PATCH] arm64: dts: qcom: kaanapali: add the GPU SMMU node
 
 Add the Adreno GPU SMMU node for kaanapali platform.
 
@@ -14,7 +14,7 @@ Signed-off-by: Akhil P Oommen <akhilpo@oss.qualcomm.com>
  1 file changed, 40 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 131fd2a16c54..654b5d292b71 100644
+index 131fd2a16c..654b5d292b 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -2702,6 +2702,46 @@ gpucc: clock-controller@3d90000 {
@@ -64,3 +64,6 @@ index 131fd2a16c54..654b5d292b71 100644
  		remoteproc_adsp: remoteproc@6800000 {
  			compatible = "qcom,kaanapali-adsp-pas", "qcom,sm8550-adsp-pas";
  			reg = <0x0 0x06800000 0x0 0x10000>;
+-- 
+2.43.0
+

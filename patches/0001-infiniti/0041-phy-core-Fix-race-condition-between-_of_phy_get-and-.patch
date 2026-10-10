@@ -1,8 +1,8 @@
-From 5b668a9c2da5b4adddfb2745eff154d66450d133 Mon Sep 17 00:00:00 2001
+From be2761a54c23fbf03fd090e3f7302405c2edf2d4 Mon Sep 17 00:00:00 2001
 From: Bryan O'Donoghue <bryan.odonoghue@linaro.org>
 Date: Thu, 17 Sep 2026 12:07:54 +0100
-Subject: [PATCH 041/138] phy: core: Fix race-condition between _of_phy_get()
- and try_module_get()
+Subject: [PATCH] phy: core: Fix race-condition between _of_phy_get() and
+ try_module_get()
 
 Sashiko asked during a patch review if the existing usage pattern had a
 race condition; specifically in of_phy_get() if it was possible between
@@ -34,7 +34,7 @@ Tested-by: Oleg Keri <okerixx@gmail.com> # Lenovo Yoga Slim 7x Gen 11 (Glymur)
  1 file changed, 30 insertions(+), 15 deletions(-)
 
 diff --git a/drivers/phy/phy-core.c b/drivers/phy/phy-core.c
-index 21aaf2f76e53..89addd732bff 100644
+index 21aaf2f76e..89addd732b 100644
 --- a/drivers/phy/phy-core.c
 +++ b/drivers/phy/phy-core.c
 @@ -124,13 +124,13 @@ static struct phy *phy_find(struct device *dev, const char *con_id)
@@ -178,3 +178,6 @@ index 21aaf2f76e53..89addd732bff 100644
  	return phy;
  }
  EXPORT_SYMBOL_GPL(devm_of_phy_get_by_index);
+-- 
+2.43.0
+

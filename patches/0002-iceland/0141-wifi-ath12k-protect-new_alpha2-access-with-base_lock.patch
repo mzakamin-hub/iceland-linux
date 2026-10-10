@@ -1,8 +1,7 @@
-From e489d7d2cfec7c1c843c6f458d7b5cffff38fa82 Mon Sep 17 00:00:00 2001
+From a3211fdc083bba8ef583453bae38899799e6eb2e Mon Sep 17 00:00:00 2001
 From: Baochen Qiang <baochen.qiang@oss.qualcomm.com>
 Date: Wed, 29 Jul 2026 15:18:13 +0800
-Subject: [PATCH 141/162] wifi: ath12k: protect new_alpha2 access with
- base_lock
+Subject: [PATCH] wifi: ath12k: protect new_alpha2 access with base_lock
 
 ab->new_alpha2 is written under ab->base_lock by the 11d new country
 code event handler ath12k_reg_11d_new_cc_event() and by the SMBIOS
@@ -27,7 +26,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 9 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/mac.c b/drivers/net/wireless/ath/ath12k/mac.c
-index 43705943a..eeae2a49c 100644
+index 43705943a3..eeae2a49ca 100644
 --- a/drivers/net/wireless/ath/ath12k/mac.c
 +++ b/drivers/net/wireless/ath/ath12k/mac.c
 @@ -15069,11 +15069,17 @@ static int ath12k_mac_hw_register(struct ath12k_hw *ah)

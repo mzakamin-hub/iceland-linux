@@ -1,7 +1,7 @@
-From 5a21186e7d2cef85c65a41bf9a79aff681cae432 Mon Sep 17 00:00:00 2001
+From a1bc3d7d864005a56931510603148a70e4542878 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 09:07:59 +0300
-Subject: [PATCH 88/89] media: i2c: dw9719: enable the optional I/O supply
+Subject: [PATCH] media: i2c: dw9719: enable the optional I/O supply
 
 Get the "vio" supply and keep it on while the motor is powered. It is
 enabled first, as it may feed the pull-ups of the I2C bus the motor sits
@@ -14,7 +14,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 21 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/media/i2c/dw9719.c b/drivers/media/i2c/dw9719.c
-index 3b7ba88fd..7ea976df9 100644
+index 3b7ba88fd6..7ea976df92 100644
 --- a/drivers/media/i2c/dw9719.c
 +++ b/drivers/media/i2c/dw9719.c
 @@ -86,6 +86,7 @@ struct dw9719_device {

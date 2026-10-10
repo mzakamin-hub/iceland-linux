@@ -1,8 +1,8 @@
-From 4f64cd9b930ab37753f79ebbef0f40b2dc33b77c Mon Sep 17 00:00:00 2001
+From b53965fb168551a85ca62361db546e6e80da77f5 Mon Sep 17 00:00:00 2001
 From: Vikash Garodia <vikash.garodia@oss.qualcomm.com>
 Date: Fri, 17 Oct 2025 19:46:22 +0530
-Subject: [PATCH 031/138] media: dt-bindings: qcom-kaanapali-iris: Add
- kaanapali video codec binding
+Subject: [PATCH] media: dt-bindings: qcom-kaanapali-iris: Add kaanapali video
+ codec binding
 
 Kaanapali SOC brings in the new generation of video IP i.e iris4. When
 compared to previous generation, iris3x, it has,
@@ -27,7 +27,7 @@ Signed-off-by: Vikash Garodia <vikash.garodia@oss.qualcomm.com>
 
 diff --git a/Documentation/devicetree/bindings/media/qcom,kaanapali-iris.yaml b/Documentation/devicetree/bindings/media/qcom,kaanapali-iris.yaml
 new file mode 100644
-index 000000000000..39e9ac9dad22
+index 0000000000..39e9ac9dad
 --- /dev/null
 +++ b/Documentation/devicetree/bindings/media/qcom,kaanapali-iris.yaml
 @@ -0,0 +1,231 @@
@@ -262,3 +262,6 @@ index 000000000000..39e9ac9dad22
 +            };
 +        };
 +    };
+-- 
+2.43.0
+

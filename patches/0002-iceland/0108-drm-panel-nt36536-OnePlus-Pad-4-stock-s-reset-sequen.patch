@@ -1,8 +1,7 @@
-From bfb2d373129ad427ea0f2511cf9a1cce644b4c7d Mon Sep 17 00:00:00 2001
+From 7f776bcf92be6790b3867f5cd0839ceb8cf89f59 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 11:21:28 +0300
-Subject: [PATCH 108/108] drm/panel: nt36536: OnePlus Pad 4: stock's reset
- sequence
+Subject: [PATCH] drm/panel: nt36536: OnePlus Pad 4: stock's reset sequence
 
 The driver pulses the reset line the same way for every panel: low 11 ms,
 high 1 ms, low 3 ms, high 10 ms. Stock's sequence for the Pad 4's panel
@@ -18,7 +17,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 16 insertions(+)
 
 diff --git a/drivers/gpu/drm/panel/panel-novatek-nt36536.c b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
-index 0d9b7ec4e..5fb58b1fb 100644
+index 0d9b7ec4e2..5fb58b1fbe 100644
 --- a/drivers/gpu/drm/panel/panel-novatek-nt36536.c
 +++ b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
 @@ -42,6 +42,8 @@ struct panel_desc {

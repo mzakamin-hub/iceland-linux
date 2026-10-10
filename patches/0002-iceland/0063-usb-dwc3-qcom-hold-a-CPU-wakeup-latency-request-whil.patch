@@ -1,4 +1,4 @@
-From 320c54661807615ff7f85a97d683b6cd66c235cc Mon Sep 17 00:00:00 2001
+From eeba9aab678c81047c74cc1b8d17a65d5fc3e094 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Wed, 30 Sep 2026 15:57:40 +0300
 Subject: [PATCH] usb: dwc3: qcom: hold a CPU wakeup latency request while
@@ -23,7 +23,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 17 insertions(+)
 
 diff --git a/drivers/usb/dwc3/dwc3-qcom.c b/drivers/usb/dwc3/dwc3-qcom.c
-index ac68b4218..0664fdb84 100644
+index ac68b4218b..0664fdb842 100644
 --- a/drivers/usb/dwc3/dwc3-qcom.c
 +++ b/drivers/usb/dwc3/dwc3-qcom.c
 @@ -15,6 +15,7 @@

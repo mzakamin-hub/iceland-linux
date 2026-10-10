@@ -1,7 +1,7 @@
-From 1307b5d08e954cfbd3c5535fe727d98e22fbeab4 Mon Sep 17 00:00:00 2001
+From 46536f99d9d50d6506a590d8fd9e6634c4f2bbd1 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 29 Jul 2026 00:24:56 -0700
-Subject: [PATCH 116/138] ASoC: codecs: Add TFA9866 driver
+Subject: [PATCH] ASoC: codecs: Add TFA9866 driver
 
 A DSP-less TFA2 speaker amplifier, set up for 48 kHz I2S.
 
@@ -14,7 +14,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  create mode 100644 sound/soc/codecs/tfa9866.c
 
 diff --git a/sound/soc/codecs/Kconfig b/sound/soc/codecs/Kconfig
-index d88593c2bac8..c3279a4b53c1 100644
+index 8e251e1d84..4570bc1380 100644
 --- a/sound/soc/codecs/Kconfig
 +++ b/sound/soc/codecs/Kconfig
 @@ -281,6 +281,7 @@ config SND_SOC_ALL_CODECS
@@ -25,7 +25,7 @@ index d88593c2bac8..c3279a4b53c1 100644
  	imply SND_SOC_TFA9879
  	imply SND_SOC_TFA989X
  	imply SND_SOC_TLV320ADC3XXX
-@@ -2295,6 +2296,13 @@ config SND_SOC_TDA7419
+@@ -2293,6 +2294,13 @@ config SND_SOC_TDA7419
  	depends on I2C
  	select REGMAP_I2C
  
@@ -40,7 +40,7 @@ index d88593c2bac8..c3279a4b53c1 100644
  	tristate "NXP Semiconductors TFA9879 amplifier"
  	depends on I2C
 diff --git a/sound/soc/codecs/Makefile b/sound/soc/codecs/Makefile
-index 3d122ace75ad..f59a2b29a72b 100644
+index 3d122ace75..f59a2b29a7 100644
 --- a/sound/soc/codecs/Makefile
 +++ b/sound/soc/codecs/Makefile
 @@ -331,6 +331,7 @@ snd-soc-tas2781-comlib-i2c-y := tas2781-comlib-i2c.o
@@ -61,7 +61,7 @@ index 3d122ace75ad..f59a2b29a72b 100644
  obj-$(CONFIG_SND_SOC_TLV320ADC3XXX)	+= snd-soc-tlv320adc3xxx.o
 diff --git a/sound/soc/codecs/tfa9866.c b/sound/soc/codecs/tfa9866.c
 new file mode 100644
-index 000000000000..8906bac3b490
+index 0000000000..8906bac3b4
 --- /dev/null
 +++ b/sound/soc/codecs/tfa9866.c
 @@ -0,0 +1,203 @@
@@ -268,3 +268,6 @@ index 000000000000..8906bac3b490
 +
 +MODULE_DESCRIPTION("ASoC NXP/Goodix TFA9866 driver");
 +MODULE_LICENSE("GPL");
+-- 
+2.43.0
+

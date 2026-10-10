@@ -1,8 +1,8 @@
-From bdbdc0d9aa77c0715bba4e9a6f3dc927402aeedc Mon Sep 17 00:00:00 2001
+From 1a5bf2975260b99ada4fc5cbc0f8b4ea05867178 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 28 Sep 2026 19:57:05 +0300
-Subject: [PATCH 33/34] arm64: dts: qcom: kaanapali-oneplus-iceland: apply
- stock's eUSB2 repeater tuning
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: apply stock's
+ eUSB2 repeater tuning
 
 Stock overrides one eUSB2 repeater register in device mode: 0x57 (TUNE_USB2_PREEM) = 3. Use the driver's
 property for it.
@@ -14,7 +14,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 3 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 9da2d9733..323006367 100644
+index 9da2d9733e..3230063676 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1332,6 +1332,9 @@ sde_disp0_rst_1p8_active: sde-disp0-rst-1p8-active-state {

@@ -1,8 +1,8 @@
-From 4ddc548f42e66f4942f728cadf1a862c6777b268 Mon Sep 17 00:00:00 2001
+From aace34e2f082dd9599ccd7c52dbcbf1ea44a7373 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 23 Sep 2026 08:43:09 -0700
-Subject: [PATCH 103/138] drm/msm/mdss: keep a bootloader splash screen until
- the KMS takes over
+Subject: [PATCH] drm/msm/mdss: keep a bootloader splash screen until the KMS
+ takes over
 
 Defer the MDSS reset while autorefresh runs on a DSI interface, so the
 panel keeps showing the firmware framebuffer until the KMS takes over.
@@ -18,7 +18,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  6 files changed, 153 insertions(+), 23 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
-index ac82b69aedf6..acd170f8f27d 100644
+index ac82b69aed..acd170f8f2 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
 @@ -587,6 +587,19 @@ static void dpu_hw_intf_disable_autorefresh(struct dpu_hw_intf *intf,
@@ -42,7 +42,7 @@ index ac82b69aedf6..acd170f8f27d 100644
  					     struct dpu_hw_intf_cmd_mode_cfg *cmd_mode_cfg)
  {
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.h
-index badd26305fc9..4d135ae80b55 100644
+index badd26305f..4d135ae80b 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.h
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.h
 @@ -132,4 +132,6 @@ struct dpu_hw_intf *dpu_hw_intf_init(struct drm_device *dev,
@@ -53,7 +53,7 @@ index badd26305fc9..4d135ae80b55 100644
 +
  #endif /*_DPU_HW_INTF_H */
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
-index da3556eb6ecc..9be9dd1c2cde 100644
+index da3556eb6e..9be9dd1c2c 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
 @@ -10,7 +10,9 @@
@@ -117,7 +117,7 @@ index da3556eb6ecc..9be9dd1c2cde 100644
  	.probe = dpu_dev_probe,
  	.remove = dpu_dev_remove,
 diff --git a/drivers/gpu/drm/msm/msm_drv.h b/drivers/gpu/drm/msm/msm_drv.h
-index eb4bbae8557b..2264bd65ebbb 100644
+index eb4bbae855..2264bd65eb 100644
 --- a/drivers/gpu/drm/msm/msm_drv.h
 +++ b/drivers/gpu/drm/msm/msm_drv.h
 @@ -410,17 +410,24 @@ static inline void msm_mdp_unregister(void) {}
@@ -146,7 +146,7 @@ index eb4bbae8557b..2264bd65ebbb 100644
  
  #ifdef CONFIG_DEBUG_FS
 diff --git a/drivers/gpu/drm/msm/msm_kms.c b/drivers/gpu/drm/msm/msm_kms.c
-index e5d0ea629448..54f42aa62ae3 100644
+index e5d0ea6294..54f42aa62a 100644
 --- a/drivers/gpu/drm/msm/msm_kms.c
 +++ b/drivers/gpu/drm/msm/msm_kms.c
 @@ -268,6 +268,9 @@ int msm_drm_kms_init(struct device *dev, const struct drm_driver *drv)
@@ -160,7 +160,7 @@ index e5d0ea629448..54f42aa62ae3 100644
  	ret = aperture_remove_all_conflicting_devices(drv->name);
  	if (ret)
 diff --git a/drivers/gpu/drm/msm/msm_mdss.c b/drivers/gpu/drm/msm/msm_mdss.c
-index 9087c4b290db..15d2893c4a34 100644
+index 9087c4b290..15d2893c4a 100644
 --- a/drivers/gpu/drm/msm/msm_mdss.c
 +++ b/drivers/gpu/drm/msm/msm_mdss.c
 @@ -44,6 +44,7 @@ struct msm_mdss {
@@ -337,3 +337,6 @@ index 9087c4b290db..15d2893c4a34 100644
  	irq = platform_get_irq(pdev, 0);
  	if (irq < 0)
  		return ERR_PTR(irq);
+-- 
+2.43.0
+

@@ -1,8 +1,8 @@
-From 8c9eadaed5872cfc7c645c96ab4f70e386751ca7 Mon Sep 17 00:00:00 2001
+From 6a7ca4bbaf258e52aa8f6398edc82ff5a79614e4 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 16:43:14 +0300
-Subject: [PATCH 131/138] arm64: dts: qcom: kaanapali-oneplus-iceland: describe
- the camera module EEPROMs
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: describe the
+ camera module EEPROMs
 
 Both camera modules carry an EEPROM with their calibration data on the
 camera I2C bus: the rear one at 0x58 on the module's 2.8 V AF rail, the
@@ -18,7 +18,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 22 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 3ff002f3c..a2416ee04 100644
+index 3ff002f3c5..a2416ee048 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1327,6 +1327,28 @@ cam_rear_out: endpoint {

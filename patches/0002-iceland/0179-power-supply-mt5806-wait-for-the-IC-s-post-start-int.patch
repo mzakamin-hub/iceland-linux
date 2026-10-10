@@ -1,8 +1,8 @@
-From b93d6d6dcadd56e0845457463f6762d8d84dd602 Mon Sep 17 00:00:00 2001
+From 247e7fd562a0d78730eceeae44773f4c2d0d2e09 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 3 Oct 2026 08:53:16 +0300
-Subject: [PATCH 179/185] power: supply: mt5806: wait for the IC's post-start
- interrupt in suspend
+Subject: [PATCH] power: supply: mt5806: wait for the IC's post-start interrupt
+ in suspend
 
 The first s2idle after the pen charger driver had loaded was aborted
 (area-combo-99, kernel q80, cycle bfpcie-base-1): the suspend began while
@@ -51,7 +51,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 32 insertions(+)
 
 diff --git a/drivers/power/supply/mt5806_pen_charger.c b/drivers/power/supply/mt5806_pen_charger.c
-index f450871bc..78523bc9a 100644
+index f450871bce..78523bc9a7 100644
 --- a/drivers/power/supply/mt5806_pen_charger.c
 +++ b/drivers/power/supply/mt5806_pen_charger.c
 @@ -135,6 +135,7 @@

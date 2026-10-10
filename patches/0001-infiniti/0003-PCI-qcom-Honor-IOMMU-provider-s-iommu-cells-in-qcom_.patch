@@ -1,7 +1,7 @@
-From f8abf645df12ee3fdeffb5dc884149d1865ff483 Mon Sep 17 00:00:00 2001
+From 5f9653b078167f65c3598f0f90b78d322b4f506c Mon Sep 17 00:00:00 2001
 From: Manivannan Sadhasivam <manivannan.sadhasivam@oss.qualcomm.com>
 Date: Mon, 7 Sep 2026 16:33:49 +0200
-Subject: [PATCH 003/138] PCI: qcom: Honor IOMMU provider's #iommu-cells in
+Subject: [PATCH] PCI: qcom: Honor IOMMU provider's #iommu-cells in
  qcom_pcie_config_sid_1_9_0()
 
 qcom_pcie_config_sid_1_9_0() reads the "iommu-map" property as an array
@@ -48,7 +48,7 @@ Link: https://patch.msgid.link/20260907143349.317495-1-mani@kernel.org
  1 file changed, 64 insertions(+), 26 deletions(-)
 
 diff --git a/drivers/pci/controller/dwc/pcie-qcom.c b/drivers/pci/controller/dwc/pcie-qcom.c
-index b58a607b713f..477ee581333b 100644
+index b58a607b71..477ee58133 100644
 --- a/drivers/pci/controller/dwc/pcie-qcom.c
 +++ b/drivers/pci/controller/dwc/pcie-qcom.c
 @@ -1143,50 +1143,90 @@ static void qcom_pcie_deinit_2_7_0(struct qcom_pcie *pcie)
@@ -179,3 +179,6 @@ index b58a607b713f..477ee581333b 100644
  	return 0;
  }
  
+-- 
+2.43.0
+

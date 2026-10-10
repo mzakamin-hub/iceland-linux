@@ -1,8 +1,8 @@
-From e8126f90d98ec55a12532ab4ffca6da4f3234739 Mon Sep 17 00:00:00 2001
+From eb420345a36126f97b9e28f5a90c5c3a8b22e132 Mon Sep 17 00:00:00 2001
 From: Abel Vesa <abel.vesa@linaro.org>
 Date: Wed, 19 Aug 2026 10:23:28 +0300
-Subject: [PATCH 152/162] soc: qcom: pmic_glink: Fix device access from worker
- during suspend
+Subject: [PATCH] soc: qcom: pmic_glink: Fix device access from worker during
+ suspend
 
 For historical reasons, the GLINK smem interrupt is registered with
 IRRQF_NO_SUSPEND flag set, which is the underlying problem here, since the
@@ -74,7 +74,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/soc/qcom/pmic_glink_altmode.c b/drivers/soc/qcom/pmic_glink_altmode.c
-index 13c434f8d..465e5d231 100644
+index 13c434f8d0..465e5d2316 100644
 --- a/drivers/soc/qcom/pmic_glink_altmode.c
 +++ b/drivers/soc/qcom/pmic_glink_altmode.c
 @@ -451,7 +451,7 @@ static void pmic_glink_altmode_sc8180xp_notify(struct pmic_glink_altmode *altmod

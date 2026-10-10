@@ -1,7 +1,7 @@
-From afecbcd078fe765dafa1fda52abad8fda51d56b6 Mon Sep 17 00:00:00 2001
+From fb3369f10be2e9c1734818e1c7a6469962c63cc4 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Sun, 27 Sep 2026 01:04:51 -0700
-Subject: [PATCH 137/138] arm64: dts: qcom: pmk8850: Add the reboot mode
+Subject: [PATCH] arm64: dts: qcom: pmk8850: Add the reboot mode
 
 The bootloader reads the reboot mode from the same SDAM cell as on PMK8550.
 
@@ -11,7 +11,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 10 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/pmk8850.dtsi b/arch/arm64/boot/dts/qcom/pmk8850.dtsi
-index 44d1d1957f8a..7fd14de84007 100644
+index 44d1d1957f..7fd14de840 100644
 --- a/arch/arm64/boot/dts/qcom/pmk8850.dtsi
 +++ b/arch/arm64/boot/dts/qcom/pmk8850.dtsi
 @@ -9,6 +9,16 @@
@@ -31,3 +31,6 @@ index 44d1d1957f8a..7fd14de84007 100644
  &spmi_bus0 {
  	pmic@0 {
  		compatible = "qcom,pmk8850", "qcom,spmi-pmic";
+-- 
+2.43.0
+

@@ -1,8 +1,8 @@
-From 9c0f83a7fbd816ab1e7ac7d053a990faf6ac3971 Mon Sep 17 00:00:00 2001
+From b7688036d49cc076de5a98dde41e2906e21051cb Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 00:42:13 +0300
-Subject: [PATCH 71/72] power: supply: qcom_battmgr: OPLUS: charge, averaged
- current and status for user space
+Subject: [PATCH] power: supply: qcom_battmgr: OPLUS: charge, averaged current
+ and status for user space
 
 UPower estimates the remaining time as charge / current and takes the
 state from the status and from the sign of the current. On the OnePlus
@@ -29,7 +29,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 151 insertions(+), 14 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 4546a9e86..38f521408 100644
+index 4546a9e86f..38f5214084 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -8,6 +8,8 @@

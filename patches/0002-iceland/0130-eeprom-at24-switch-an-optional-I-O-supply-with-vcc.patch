@@ -1,7 +1,7 @@
-From a6197401ff4f4b80d3efa86643ceb7b604d273bb Mon Sep 17 00:00:00 2001
+From 05b801030bf971947df74eb3a139b8fe85e873ce Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 16:43:14 +0300
-Subject: [PATCH 130/138] eeprom: at24: switch an optional I/O supply with vcc
+Subject: [PATCH] eeprom: at24: switch an optional I/O supply with vcc
 
 Get an optional "vio" regulator and switch it on before and off after
 "vcc" wherever the driver powers the chip: at probe, in runtime PM and
@@ -15,7 +15,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 42 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/nvmem/at24.c b/drivers/nvmem/at24.c
-index 772c4d9fa..24d3dd0ee 100644
+index 772c4d9fa6..24d3dd0eeb 100644
 --- a/drivers/nvmem/at24.c
 +++ b/drivers/nvmem/at24.c
 @@ -83,6 +83,7 @@ struct at24_data {

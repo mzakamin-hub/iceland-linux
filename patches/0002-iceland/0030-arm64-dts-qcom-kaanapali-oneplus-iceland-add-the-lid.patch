@@ -1,8 +1,8 @@
-From a02a8b4e8dd22ffb55929da1c44cff07d2e7f3ca Mon Sep 17 00:00:00 2001
+From dc45b09e788b02db0f69aff5245d91718159aea2 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 28 Sep 2026 18:57:52 +0300
-Subject: [PATCH 30/31] arm64: dts: qcom: kaanapali-oneplus-iceland: add the
- lid switch
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: add the lid
+ switch
 
 The Pad 4 has a BU52053NVX hall sensor on TLMM 98 for the keyboard/folio cover (stock requests an edge IRQ named
 "lid" on it; the line reads high with the cover open, no pull). Describe it as a gpio-keys SW_LID switch that can
@@ -15,7 +15,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 19 insertions(+), 1 deletion(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 96d01ebba..d12c3da1e 100644
+index 96d01ebbae..d12c3da1e4 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -6,6 +6,7 @@

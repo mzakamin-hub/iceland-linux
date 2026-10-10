@@ -1,4 +1,4 @@
-From 2cb130c0f25ad61f4ca525701a37d6e37e3fa432 Mon Sep 17 00:00:00 2001
+From cdab2116fa635426bc01b4fd48a5be2d6fc73ccd Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Tue, 29 Sep 2026 06:00:37 +0000
 Subject: [PATCH] power: supply: qcom_battmgr: stock Pad 4 charger limits and
@@ -48,7 +48,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 237 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 25cd1b932..2b3043640 100644
+index 25cd1b932c..2b30436404 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -398,6 +398,11 @@ struct qcom_battmgr {

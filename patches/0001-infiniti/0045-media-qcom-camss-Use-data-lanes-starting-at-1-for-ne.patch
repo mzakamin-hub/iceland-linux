@@ -1,8 +1,8 @@
-From 4c1dd19516caf82dbca21ae842b9465fc39c97bc Mon Sep 17 00:00:00 2001
+From 8a8024a7cc00bb865e3e6eeb2e4161f37b6c75f2 Mon Sep 17 00:00:00 2001
 From: Bryan O'Donoghue <bryan.odonoghue@linaro.org>
 Date: Thu, 17 Sep 2026 12:07:58 +0100
-Subject: [PATCH 045/138] media: qcom: camss: Use data-lanes starting at 1 for
- new CSIPHY mode
+Subject: [PATCH] media: qcom: camss: Use data-lanes starting at 1 for new
+ CSIPHY mode
 
 Introducing a dedicated CSIPHY driver community feedback was both to move
 to data-lanes starting at index 1 on the PHY side and also to match that
@@ -27,7 +27,7 @@ Tested-by: Oleg Keri <okerixx@gmail.com> # Lenovo Yoga Slim 7x Gen 11 (Glymur)
  2 files changed, 13 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/camss/camss-csiphy.h b/drivers/media/platform/qcom/camss/camss-csiphy.h
-index 7a357044b9fd..8c3319f2ca1c 100644
+index 7a357044b9..8c3319f2ca 100644
 --- a/drivers/media/platform/qcom/camss/camss-csiphy.h
 +++ b/drivers/media/platform/qcom/camss/camss-csiphy.h
 @@ -21,6 +21,7 @@
@@ -39,7 +39,7 @@ index 7a357044b9fd..8c3319f2ca1c 100644
  #define CSIPHY_GRP_ID 1
  
 diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
-index 84097d82d99c..6f58e729eace 100644
+index 84097d82d9..6f58e729ea 100644
 --- a/drivers/media/platform/qcom/camss/camss.c
 +++ b/drivers/media/platform/qcom/camss/camss.c
 @@ -4742,7 +4742,8 @@ static const struct parent_dev_ops vfe_parent_dev_ops = {
@@ -85,3 +85,6 @@ index 84097d82d99c..6f58e729eace 100644
  		if (ret < 0)
  			goto err_cleanup;
  	}
+-- 
+2.43.0
+

@@ -1,7 +1,7 @@
-From 65c8c92973c73684eef6d5735c222927297c9405 Mon Sep 17 00:00:00 2001
+From 4879d73e3ce760ae0f5c9c81c0d13d1c9e6f7c0f Mon Sep 17 00:00:00 2001
 From: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
 Date: Tue, 15 Sep 2026 03:10:03 -0700
-Subject: [PATCH 053/138] media: qcom: camss: tpg: Add support for v2.4.0 TPG
+Subject: [PATCH] media: qcom: camss: tpg: Add support for v2.4.0 TPG
 
 Add support for the TPG found on Kaanapali. This TPG uses hardware
 version 2.4.0, which drives test-enable and reset through a separate
@@ -16,7 +16,7 @@ Signed-off-by: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
  3 files changed, 36 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/camss/camss-csid-gen4.c b/drivers/media/platform/qcom/camss/camss-csid-gen4.c
-index 4ff2f41f70f7..bc52e4a1135c 100644
+index 4ff2f41f70..bc52e4a113 100644
 --- a/drivers/media/platform/qcom/camss/camss-csid-gen4.c
 +++ b/drivers/media/platform/qcom/camss/camss-csid-gen4.c
 @@ -63,6 +63,8 @@
@@ -53,7 +53,7 @@ index 4ff2f41f70f7..bc52e4a1135c 100644
  
  	val = CSI2_RX_CFG1_ECC_CORRECTION_EN;
 diff --git a/drivers/media/platform/qcom/camss/camss-tpg-gen1.c b/drivers/media/platform/qcom/camss/camss-tpg-gen1.c
-index d29de5f93c18..770a9e5d5ba5 100644
+index d29de5f93c..770a9e5d5b 100644
 --- a/drivers/media/platform/qcom/camss/camss-tpg-gen1.c
 +++ b/drivers/media/platform/qcom/camss/camss-tpg-gen1.c
 @@ -22,6 +22,7 @@
@@ -112,7 +112,7 @@ index d29de5f93c18..770a9e5d5ba5 100644
  	return 0;
  }
 diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
-index c6b610c0cd08..b862f067936c 100644
+index c6b610c0cd..b862f06793 100644
 --- a/drivers/media/platform/qcom/camss/camss.c
 +++ b/drivers/media/platform/qcom/camss/camss.c
 @@ -5889,11 +5889,13 @@ static const struct camss_resources kaanapali_resources = {
@@ -129,3 +129,6 @@ index c6b610c0cd08..b862f067936c 100644
  	.csid_num = ARRAY_SIZE(csid_res_kaanapali),
  	.vfe_num = ARRAY_SIZE(vfe_res_kaanapali),
  };
+-- 
+2.43.0
+

@@ -1,7 +1,7 @@
-From aeef0fb178259583fd1b878f79f88b9a89de778d Mon Sep 17 00:00:00 2001
+From 800d4207e696443428416c60d267dad8671afee2 Mon Sep 17 00:00:00 2001
 From: Bryan O'Donoghue <bryan.odonoghue@linaro.org>
 Date: Thu, 17 Sep 2026 00:58:38 +0100
-Subject: [PATCH 039/138] dt-bindings: phy: qcom: Add CSI2 C-PHY/DPHY schema
+Subject: [PATCH] dt-bindings: phy: qcom: Add CSI2 C-PHY/DPHY schema
 
 Add a base schema for the MIPI CSI2 PHYs on Qualcomm SoCs. This PHY
 supports both DPHY and CPHY operation. A special mode of DPHY operation -
@@ -20,7 +20,7 @@ Reviewed-by: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>
 
 diff --git a/Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml b/Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml
 new file mode 100644
-index 000000000000..dc64af97da6c
+index 0000000000..dc64af97da
 --- /dev/null
 +++ b/Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml
 @@ -0,0 +1,209 @@
@@ -233,3 +233,6 @@ index 000000000000..dc64af97da6c
 +            };
 +        };
 +    };
+-- 
+2.43.0
+

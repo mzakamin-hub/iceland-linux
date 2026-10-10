@@ -1,4 +1,4 @@
-From 66113519fa7f0780dd1024b00112299bf1e1127f Mon Sep 17 00:00:00 2001
+From c12845b791b6ccfa8b731580353b857792727ac9 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 28 Sep 2026 02:56:23 +0000
 Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: Describe ABL's
@@ -29,7 +29,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 53 insertions(+), 1 deletion(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 3ea11107c35b..081fff201964 100644
+index 3ea11107c3..081fff2019 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -42,7 +42,54 @@ aliases {

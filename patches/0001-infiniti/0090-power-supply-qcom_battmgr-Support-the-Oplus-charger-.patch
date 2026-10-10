@@ -1,8 +1,8 @@
-From e934d0b4fe1d7e87a5a3c008b13a72fdc6cb58bb Mon Sep 17 00:00:00 2001
+From 3eae6978fb182f9374a772fb765fd6a9b4fadbf5 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 29 Jul 2026 00:24:51 -0700
-Subject: [PATCH 090/138] power: supply: qcom_battmgr: Support the Oplus
- charger firmware
+Subject: [PATCH] power: supply: qcom_battmgr: Support the Oplus charger
+ firmware
 
 The OnePlus 15 runs Oplus' charger firmware, which has its own property
 space and leaves charging and OTG policy to the host.
@@ -13,7 +13,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 370 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 7716eb9e1aff..4cc263457d8a 100644
+index 7716eb9e1a..4cc263457d 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -5,7 +5,9 @@
@@ -550,3 +550,6 @@ index 7716eb9e1aff..4cc263457d8a 100644
  	battmgr->client = devm_pmic_glink_client_alloc(dev, PMIC_GLINK_OWNER_BATTMGR,
  						       qcom_battmgr_callback,
  						       qcom_battmgr_pdr_notify,
+-- 
+2.43.0
+

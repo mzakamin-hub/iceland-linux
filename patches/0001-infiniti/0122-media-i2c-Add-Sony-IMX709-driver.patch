@@ -1,7 +1,7 @@
-From 651dd9c1fa8b454b68b6e6af03ecf53ee5a59a01 Mon Sep 17 00:00:00 2001
+From e51dec3555bc0a8967462be89828a047b54b3e9e Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Thu, 24 Sep 2026 11:06:11 -0700
-Subject: [PATCH 122/138] media: i2c: Add Sony IMX709 driver
+Subject: [PATCH] media: i2c: Add Sony IMX709 driver
 
 32 MP sensor used as the OnePlus 15 front camera, with one 3280x2464
 binned mode on four D-PHY lanes.
@@ -15,7 +15,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  create mode 100644 drivers/media/i2c/imx709.c
 
 diff --git a/drivers/media/i2c/Kconfig b/drivers/media/i2c/Kconfig
-index be20324cc2be..690c148a8601 100644
+index be20324cc2..690c148a86 100644
 --- a/drivers/media/i2c/Kconfig
 +++ b/drivers/media/i2c/Kconfig
 @@ -299,6 +299,17 @@ config VIDEO_IMX471
@@ -37,7 +37,7 @@ index be20324cc2be..690c148a8601 100644
  	tristate "Sony IMX678 sensor support"
  	depends on GPIOLIB
 diff --git a/drivers/media/i2c/Makefile b/drivers/media/i2c/Makefile
-index 45019ce20a6c..38f4153e082f 100644
+index 45019ce20a..38f4153e08 100644
 --- a/drivers/media/i2c/Makefile
 +++ b/drivers/media/i2c/Makefile
 @@ -63,6 +63,7 @@ obj-$(CONFIG_VIDEO_IMX412) += imx412.o
@@ -50,7 +50,7 @@ index 45019ce20a6c..38f4153e082f 100644
  obj-$(CONFIG_VIDEO_KS0127) += ks0127.o
 diff --git a/drivers/media/i2c/imx709.c b/drivers/media/i2c/imx709.c
 new file mode 100644
-index 000000000000..d0ccc468bd1e
+index 0000000000..d0ccc468bd
 --- /dev/null
 +++ b/drivers/media/i2c/imx709.c
 @@ -0,0 +1,1330 @@
@@ -1384,3 +1384,6 @@ index 000000000000..d0ccc468bd1e
 +
 +MODULE_DESCRIPTION("Sony IMX709 camera sensor driver");
 +MODULE_LICENSE("GPL");
+-- 
+2.43.0
+

@@ -1,8 +1,8 @@
-From 3027e4ceb22e7f5008aaff642ad06d7707f502d7 Mon Sep 17 00:00:00 2001
+From ec46574357895f52b1597c09d35e85773f142df8 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 3 Oct 2026 08:53:15 +0300
-Subject: [PATCH 175/185] media: i2c: add a SmartSens SC1320CS / SC820CS camera
- sensor driver
+Subject: [PATCH] media: i2c: add a SmartSens SC1320CS / SC820CS camera sensor
+ driver
 
 The OnePlus Pad 4 (iceland) carries a SmartSens SC1320CS 13 MP rear camera and an SC820CS 8 MP front camera
 on the CAMSS / CCI buses described in its device tree. Add a V4L2 sub-device driver for both raw Bayer sensors:
@@ -33,7 +33,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  create mode 100644 drivers/media/i2c/sc820cs-regs.h
 
 diff --git a/drivers/media/i2c/Kconfig b/drivers/media/i2c/Kconfig
-index 3383f1936..9d04826c0 100644
+index 3383f19363..9d04826c00 100644
 --- a/drivers/media/i2c/Kconfig
 +++ b/drivers/media/i2c/Kconfig
 @@ -870,6 +870,16 @@ config VIDEO_S5KJN5
@@ -54,7 +54,7 @@ index 3383f1936..9d04826c0 100644
  	tristate "Toshiba T4KA3 sensor support"
  	depends on ACPI || COMPILE_TEST
 diff --git a/drivers/media/i2c/Makefile b/drivers/media/i2c/Makefile
-index 05da409a9..93651a599 100644
+index 05da409a99..93651a599a 100644
 --- a/drivers/media/i2c/Makefile
 +++ b/drivers/media/i2c/Makefile
 @@ -134,6 +134,7 @@ obj-$(CONFIG_VIDEO_RJ54N1) += rj54n1cb0c.o
@@ -67,7 +67,7 @@ index 05da409a9..93651a599 100644
  obj-$(CONFIG_VIDEO_S5KJN5) += s5kjn5.o
 diff --git a/drivers/media/i2c/sc-modes-regs.h b/drivers/media/i2c/sc-modes-regs.h
 new file mode 100644
-index 000000000..06a2d5bb8
+index 0000000000..06a2d5bb81
 --- /dev/null
 +++ b/drivers/media/i2c/sc-modes-regs.h
 @@ -0,0 +1,191 @@
@@ -264,7 +264,7 @@ index 000000000..06a2d5bb8
 +};
 diff --git a/drivers/media/i2c/sc1320cs-regs.h b/drivers/media/i2c/sc1320cs-regs.h
 new file mode 100644
-index 000000000..b01cd6832
+index 0000000000..b01cd68323
 --- /dev/null
 +++ b/drivers/media/i2c/sc1320cs-regs.h
 @@ -0,0 +1,192 @@
@@ -462,7 +462,7 @@ index 000000000..b01cd6832
 +
 diff --git a/drivers/media/i2c/sc1320cs.c b/drivers/media/i2c/sc1320cs.c
 new file mode 100644
-index 000000000..086031d63
+index 0000000000..086031d637
 --- /dev/null
 +++ b/drivers/media/i2c/sc1320cs.c
 @@ -0,0 +1,637 @@
@@ -1105,7 +1105,7 @@ index 000000000..086031d63
 +MODULE_LICENSE("GPL");
 diff --git a/drivers/media/i2c/sc820cs-regs.h b/drivers/media/i2c/sc820cs-regs.h
 new file mode 100644
-index 000000000..f6b1e961a
+index 0000000000..f6b1e961ad
 --- /dev/null
 +++ b/drivers/media/i2c/sc820cs-regs.h
 @@ -0,0 +1,363 @@

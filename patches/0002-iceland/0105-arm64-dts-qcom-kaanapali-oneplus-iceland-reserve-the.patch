@@ -1,8 +1,8 @@
-From 669cae5b67a6ffb3ae6e7f6ccb46e2ad69abc880 Mon Sep 17 00:00:00 2001
+From 0d766c9a4f8e781464818829016034b9ac6418c6 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 11:21:28 +0300
-Subject: [PATCH 105/108] arm64: dts: qcom: kaanapali-oneplus-iceland: reserve
- the pins stock reserves
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: reserve the pins
+ stock reserves
 
 Stock reserves GPIO 36-43, 74, 119, 120 and 144-147 (qcom,gpios-reserved);
 the board file reserved only 36-39. Nothing here uses the other eleven
@@ -16,7 +16,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index f2c3acb8b..df2ac127b 100644
+index f2c3acb8be..df2ac127ba 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1939,7 +1939,8 @@ wcd_tx: codec@0,3 {

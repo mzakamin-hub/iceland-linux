@@ -1,7 +1,7 @@
-From 4a9978a3682aa56094412f39045895d3c9e5ea67 Mon Sep 17 00:00:00 2001
+From 8281d29bc6ba2e015ae72a37a940b303c19f9245 Mon Sep 17 00:00:00 2001
 From: Bryan O'Donoghue <bryan.odonoghue@linaro.org>
 Date: Thu, 17 Sep 2026 00:58:39 +0100
-Subject: [PATCH 040/138] phy: qcom-mipi-csi2: Add a CSI2 MIPI DPHY driver
+Subject: [PATCH] phy: qcom-mipi-csi2: Add a CSI2 MIPI DPHY driver
 
 Add a new MIPI CSI2 driver in DPHY mode initially. The entire set of
 existing CAMSS CSI PHY init sequences are imported in order to save time
@@ -47,10 +47,10 @@ Reviewed-by: Manivannan Sadhasivam <manivannan.sadhasivam@oss.qualcomm.com>
  create mode 100644 drivers/phy/qualcomm/phy-qcom-mipi-csi2.h
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index cc3cae2e378b..e701f31bd807 100644
+index 65e8a4b5c9..45ee7f6849 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -22538,6 +22538,16 @@ S:	Maintained
+@@ -22555,6 +22555,16 @@ S:	Maintained
  F:	Documentation/devicetree/bindings/media/qcom,*-iris.yaml
  F:	drivers/media/platform/qcom/iris/
  
@@ -68,7 +68,7 @@ index cc3cae2e378b..e701f31bd807 100644
  M:	Manivannan Sadhasivam <mani@kernel.org>
  L:	linux-mtd@lists.infradead.org
 diff --git a/drivers/phy/qualcomm/Kconfig b/drivers/phy/qualcomm/Kconfig
-index d910a5d1a1ac..d802e63ad74a 100644
+index d910a5d1a1..d802e63ad7 100644
 --- a/drivers/phy/qualcomm/Kconfig
 +++ b/drivers/phy/qualcomm/Kconfig
 @@ -28,6 +28,21 @@ config PHY_QCOM_EDP
@@ -94,7 +94,7 @@ index d910a5d1a1ac..d802e63ad74a 100644
  	tristate "Qualcomm IPQ4019 USB PHY driver"
  	depends on OF && (ARCH_QCOM || COMPILE_TEST)
 diff --git a/drivers/phy/qualcomm/Makefile b/drivers/phy/qualcomm/Makefile
-index 8bf887d58ee4..4b5e6640a6fa 100644
+index 8bf887d58e..4b5e6640a6 100644
 --- a/drivers/phy/qualcomm/Makefile
 +++ b/drivers/phy/qualcomm/Makefile
 @@ -6,6 +6,11 @@ obj-$(CONFIG_PHY_QCOM_IPQ4019_USB)	+= phy-qcom-ipq4019-usb.o
@@ -111,7 +111,7 @@ index 8bf887d58ee4..4b5e6640a6fa 100644
  obj-$(CONFIG_PHY_QCOM_QMP_COMBO)	+= phy-qcom-qmp-combo.o phy-qcom-qmp-usbc.o
 diff --git a/drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c b/drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c
 new file mode 100644
-index 000000000000..966d79c98f9b
+index 0000000000..966d79c98f
 --- /dev/null
 +++ b/drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c
 @@ -0,0 +1,385 @@
@@ -502,7 +502,7 @@ index 000000000000..966d79c98f9b
 +};
 diff --git a/drivers/phy/qualcomm/phy-qcom-mipi-csi2-core.c b/drivers/phy/qualcomm/phy-qcom-mipi-csi2-core.c
 new file mode 100644
-index 000000000000..c0a4fa20eaf0
+index 0000000000..c0a4fa20ea
 --- /dev/null
 +++ b/drivers/phy/qualcomm/phy-qcom-mipi-csi2-core.c
 @@ -0,0 +1,463 @@
@@ -971,7 +971,7 @@ index 000000000000..c0a4fa20eaf0
 +MODULE_LICENSE("GPL");
 diff --git a/drivers/phy/qualcomm/phy-qcom-mipi-csi2.h b/drivers/phy/qualcomm/phy-qcom-mipi-csi2.h
 new file mode 100644
-index 000000000000..7e55ae007370
+index 0000000000..7e55ae0073
 --- /dev/null
 +++ b/drivers/phy/qualcomm/phy-qcom-mipi-csi2.h
 @@ -0,0 +1,97 @@
@@ -1072,3 +1072,6 @@ index 000000000000..7e55ae007370
 +extern const struct mipi_csi2phy_soc_cfg mipi_csi2_dphy_4nm_x1e;
 +
 +#endif /* __PHY_QCOM_MIPI_CSI2_H__ */
+-- 
+2.43.0
+

@@ -1,8 +1,7 @@
-From 54201f021f32cf642917a7fad7862b1bdcf415f2 Mon Sep 17 00:00:00 2001
+From 01db00256b12d4511d38395337da55f9a9656da0 Mon Sep 17 00:00:00 2001
 From: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
 Date: Tue, 22 Sep 2026 14:57:20 +0200
-Subject: [PATCH 017/138] crypto: qce - Use fallback for fragmented skcipher
- payloads
+Subject: [PATCH] crypto: qce - Use fallback for fragmented skcipher payloads
 
 The crypto engine reliably processes AES requests only when the payload
 is a single contiguous buffer. A payload split across multiple
@@ -24,7 +23,7 @@ Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
  1 file changed, 5 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/crypto/qce/skcipher.c b/drivers/crypto/qce/skcipher.c
-index 2f4ecfcd16c7..690b0eb57445 100644
+index 2f4ecfcd16..690b0eb574 100644
 --- a/drivers/crypto/qce/skcipher.c
 +++ b/drivers/crypto/qce/skcipher.c
 @@ -261,13 +261,17 @@ static int qce_skcipher_crypt(struct skcipher_request *req, int encrypt)
@@ -46,3 +45,6 @@ index 2f4ecfcd16c7..690b0eb57445 100644
  		skcipher_request_set_tfm(&rctx->fallback_req, ctx->fallback);
  		skcipher_request_set_callback(&rctx->fallback_req,
  					      req->base.flags,
+-- 
+2.43.0
+

@@ -1,8 +1,8 @@
-From 3b98ef0cc4771e3bbe1a89f53c1a4d4f4cdc1cab Mon Sep 17 00:00:00 2001
+From 3d273a9ddb88acb5e2a68d854defbec6262a332b Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 11:21:28 +0300
-Subject: [PATCH 107/108] arm64: dts: qcom: kaanapali-oneplus-iceland: the
- USB-C switch has no reset line
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: the USB-C switch
+ has no reset line
 
 The WCD9395 USB-SS switch was given GPIO 162 as its reset line. Stock's
 node for the chip has no reset line, no stock node uses GPIO 162, and the
@@ -17,7 +17,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 13 insertions(+), 1 deletion(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index a478016d4..b77376fd0 100644
+index a478016d4a..b77376fd00 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1223,7 +1223,10 @@ wcd_usbss: typec-mux@e {

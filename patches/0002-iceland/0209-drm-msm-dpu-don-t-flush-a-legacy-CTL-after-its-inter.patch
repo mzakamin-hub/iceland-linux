@@ -1,0 +1,74 @@
+From ccf1d1bc1c8d78fe64e17424999a75d5e7f4a138 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 10 Oct 2026 04:19:15 +0300
+Subject: [PATCH] drm/msm/dpu: don't flush a legacy CTL after its interface has
+ stopped
+
+On DPU < 5.0 the CTL latches a flush at the next vsync of the interface
+it drives.  dpu_encoder_helper_phys_cleanup() runs after the video
+encoder has switched the timing engine off, and still flushes the mixers
+it has just reset, so the flush is never taken: the bits stay pending in
+CTL_FLUSH, where a CTL soft reset doesn't clear them either.
+
+The next display on that CTL then waits for a flush which can't
+complete.  On SDA660, going back to fbcon from a two-mixer mode leaves
+the LM_1 bit pending, and every following frame of the single-mixer
+mode times out:
+
+  [dpu error]vblank timeout: 80
+  [dpu error]wait for commit done returned -110
+
+Only trigger the flush from the teardown on DPU >= 5.0.  The legacy CTL
+gets its registers flushed by its next user, as downstream does, which
+rewrites CTL_TOP without a flush when it stops a CTL.
+
+Fixes: 22cb02bc96ff ("drm/msm/disp/dpu: reset the datapath after timing engine disable")
+Assisted-by: LLM
+Signed-off-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+
+[ from patchwork.kernel.org series 1178674, patch 1; not applied upstream yet ]
+[ up3: rebased onto our queue's CTL_START change in dpu_encoder_helper_phys_cleanup() (the DPU 13.x writeback-only CTL_START stays inside the new core_major_ver >= 5 branch; on kaanapali the behaviour is unchanged). ]
+[ upstream author: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>; picked for the iceland kernel q89 ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c | 23 ++++++++++++---------
+ 1 file changed, 13 insertions(+), 10 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+index d2d754e3f5..8df7f41811 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+@@ -2341,16 +2341,19 @@ void dpu_encoder_helper_phys_cleanup(struct dpu_encoder_phys *phys_enc)
+ 	if (ctl->ops.reset_intf_cfg)
+ 		ctl->ops.reset_intf_cfg(ctl, &intf_cfg);
+ 
+-	ctl->ops.trigger_flush(ctl);
+-	/*
+-	 * CTL_START kicks writeback here (command mode does not come here).
+-	 * The video encoder never uses it: the timing engine latches the
+-	 * flush. On DPU 13.x a CTL_START written once the timing engine is
+-	 * off keeps the flush of an enable in the same commit (a modeset)
+-	 * from latching, and the panel stays black.
+-	 */
+-	if (phys_enc->hw_wb)
+-		ctl->ops.trigger_start(ctl);
++	/* a legacy CTL latches its flush at the vsync of a stopped interface */
++	if (phys_enc->dpu_kms->catalog->mdss_ver->core_major_ver >= 5) {
++		ctl->ops.trigger_flush(ctl);
++		/*
++		 * CTL_START kicks writeback here (command mode does not come
++		 * here). The video encoder never uses it: the timing engine
++		 * latches the flush. On DPU 13.x a CTL_START written once the
++		 * timing engine is off keeps the flush of an enable in the same
++		 * commit (a modeset) from latching, and the panel stays black.
++		 */
++		if (phys_enc->hw_wb)
++			ctl->ops.trigger_start(ctl);
++	}
+ 	ctl->ops.clear_pending_flush(ctl);
+ }
+ 
+-- 
+2.43.0
+

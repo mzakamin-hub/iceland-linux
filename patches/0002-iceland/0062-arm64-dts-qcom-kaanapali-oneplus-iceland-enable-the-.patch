@@ -1,4 +1,4 @@
-From 7e9db2fc8863e11a66cc11ff00d517c501f47b41 Mon Sep 17 00:00:00 2001
+From b1b622fd46fba0abd85c44ce2a8c1d85d7e9829f Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Wed, 30 Sep 2026 14:45:06 +0300
 Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: enable the video
@@ -15,7 +15,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 6 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index a03027e4d..26a1eb8cd 100644
+index a03027e4db..26a1eb8cd4 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1139,6 +1139,12 @@ &mdss {

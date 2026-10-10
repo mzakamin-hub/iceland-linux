@@ -1,8 +1,7 @@
-From 8f7ab0bed35f0318113e5567a2514213264a5639 Mon Sep 17 00:00:00 2001
+From b42a237521812159deec3e854fb05185176bef2d Mon Sep 17 00:00:00 2001
 From: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
 Date: Tue, 22 Sep 2026 14:57:16 +0200
-Subject: [PATCH 013/138] crypto: qce - Fix HMAC self-test failures for empty
- messages
+Subject: [PATCH] crypto: qce - Fix HMAC self-test failures for empty messages
 
 BAM DMA cannot process zero-length transfers, so the driver always holds
 back at least one byte to submit to the engine and only ever finalizes
@@ -38,7 +37,7 @@ Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
  2 files changed, 43 insertions(+), 16 deletions(-)
 
 diff --git a/drivers/crypto/qce/common.h b/drivers/crypto/qce/common.h
-index 9cd2e6ed8bbb..587d349da91d 100644
+index 9cd2e6ed8b..587d349da9 100644
 --- a/drivers/crypto/qce/common.h
 +++ b/drivers/crypto/qce/common.h
 @@ -82,7 +82,6 @@ struct qce_alg_template {
@@ -50,7 +49,7 @@ index 9cd2e6ed8bbb..587d349da91d 100644
  };
  
 diff --git a/drivers/crypto/qce/sha.c b/drivers/crypto/qce/sha.c
-index eb8a5b0c4173..586efed68d36 100644
+index eb8a5b0c41..586efed68d 100644
 --- a/drivers/crypto/qce/sha.c
 +++ b/drivers/crypto/qce/sha.c
 @@ -249,18 +249,53 @@ static int qce_ahash_update(struct ahash_request *req)
@@ -138,3 +137,6 @@ index eb8a5b0c4173..586efed68d36 100644
  	base = &alg->halg.base;
  	base->cra_blocksize = def->blocksize;
  	base->cra_priority = 175;
+-- 
+2.43.0
+

@@ -1,8 +1,8 @@
-From faf9da929472d38671c69ae6fe6ba40e7cc58a0b Mon Sep 17 00:00:00 2001
+From a82094ee98362c30684d07277281602c080dc25a Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 28 Sep 2026 13:11:40 +0300
-Subject: [PATCH 24/27] backlight: ktz8869_iceland: program the bootloader's
- per-IC values
+Subject: [PATCH] backlight: ktz8869_iceland: program the bootloader's per-IC
+ values
 
 ABL (11.A.38) leaves both KTZ8869s configured and the LCD bias on. The driver wrote one table to both
 ICs, which is not what ABL programs. Read back on the tablet (PC kit pc-005):
@@ -20,7 +20,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 58 insertions(+), 15 deletions(-)
 
 diff --git a/drivers/video/backlight/ktz8869_iceland.c b/drivers/video/backlight/ktz8869_iceland.c
-index 52532a303..16279b9ab 100644
+index 52532a3034..16279b9ab4 100644
 --- a/drivers/video/backlight/ktz8869_iceland.c
 +++ b/drivers/video/backlight/ktz8869_iceland.c
 @@ -95,23 +95,66 @@ static const struct backlight_ops ktz8869_backlight_ops = {

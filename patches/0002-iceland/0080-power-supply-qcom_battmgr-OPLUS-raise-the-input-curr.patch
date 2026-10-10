@@ -1,8 +1,8 @@
-From 13a4dcfe0397df29cfa65543a769bf3cd0274fd2 Mon Sep 17 00:00:00 2001
+From 2faa024d22ad56f338de37841eaef26ff1c603b5 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 08:17:52 +0300
-Subject: [PATCH 80/83] power: supply: qcom_battmgr: OPLUS: raise the input
- current in the vendor's steps
+Subject: [PATCH] power: supply: qcom_battmgr: OPLUS: raise the input current
+ in the vendor's steps
 
 The type's input current limit was written in one go (2 A for a DCP or a
 PD charger at 5 V) and nothing looked at VBUS afterwards; a weak charger,
@@ -35,7 +35,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 101 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index e36679bc9..e8ade86f4 100644
+index e36679bc9a..e8ade86f43 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -2272,9 +2272,102 @@ static void qcom_battmgr_iceland_check(struct qcom_battmgr *battmgr, int ret, co

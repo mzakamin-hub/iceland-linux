@@ -1,8 +1,8 @@
-From a3a88c70a1eecd3da4f5e836306cd5595be02896 Mon Sep 17 00:00:00 2001
+From 2b595c6db24308f0cd1694bd62971735ea2264e7 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 23 Sep 2026 11:31:21 -0700
-Subject: [PATCH 077/138] PCI: qcom: Keep the lowest OPP while the link stays
- up in suspend
+Subject: [PATCH] PCI: qcom: Keep the lowest OPP while the link stays up in
+ suspend
 
 Dropping the OPP vote with the link up resets Kaanapali on suspend. The
 non-OPP path already keeps a minimal vote.
@@ -13,7 +13,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 22 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/pci/controller/dwc/pcie-qcom.c b/drivers/pci/controller/dwc/pcie-qcom.c
-index 477ee581333b..9d755a3a780f 100644
+index 477ee58133..9d755a3a78 100644
 --- a/drivers/pci/controller/dwc/pcie-qcom.c
 +++ b/drivers/pci/controller/dwc/pcie-qcom.c
 @@ -1798,6 +1798,22 @@ static int qcom_pcie_set_max_opp(struct device *dev)
@@ -62,3 +62,6 @@ index 477ee581333b..9d755a3a780f 100644
  		}
  	}
  	return ret;
+-- 
+2.43.0
+

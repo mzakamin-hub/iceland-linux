@@ -1,7 +1,7 @@
-From 64faf5b4f23ca0b9ef94284b147247e1f4371fab Mon Sep 17 00:00:00 2001
+From 0ac6dea57b73192f4175c1fb8e58f8a16130450c Mon Sep 17 00:00:00 2001
 From: Konrad Dybcio <konradybcio@kernel.org>
 Date: Fri, 2 Oct 2026 21:07:15 +0300
-Subject: [PATCH 172/174] soc: qcom: smem: support Glymur DRAM info
+Subject: [PATCH] soc: qcom: smem: support Glymur DRAM info
 
 Glymur firmware provides a version 7 DDR-info SMEM entry whose 872-byte
 layout is different from the one the driver supports today. The data
@@ -25,7 +25,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 62 insertions(+)
 
 diff --git a/drivers/soc/qcom/smem_dramc.c b/drivers/soc/qcom/smem_dramc.c
-index 63ebe7f6d..e513ae56b 100644
+index 63ebe7f6db..e513ae56b4 100644
 --- a/drivers/soc/qcom/smem_dramc.c
 +++ b/drivers/soc/qcom/smem_dramc.c
 @@ -27,6 +27,11 @@

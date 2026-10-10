@@ -1,7 +1,7 @@
-From 37bef7a056d9edd66813693569f0f2fe10deb6cf Mon Sep 17 00:00:00 2001
+From ce07a4ea32d174b864e847e6f6ab3fa13126b490 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 08:17:52 +0300
-Subject: [PATCH 82/83] arm64: dts: qcom: kaanapali-oneplus-iceland: WLAN and
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: WLAN and
  charge-pump thermistors
 
 The vendor's shell temperature estimate reads five temperatures: the
@@ -27,7 +27,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 53 insertions(+), 1 deletion(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index a20feecde..64a38d2ff 100644
+index a20feecded..64a38d2ff3 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1584,7 +1584,7 @@ cam_front_mclk_default: cam-front-mclk-default-state {

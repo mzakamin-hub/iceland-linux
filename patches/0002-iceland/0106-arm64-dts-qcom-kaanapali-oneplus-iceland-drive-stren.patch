@@ -1,8 +1,8 @@
-From 64f07a9dd2fc8458787577d704c9c49c8a3cf377 Mon Sep 17 00:00:00 2001
+From 255cee7ef989963971eaaa8327bf9d66d7dc40b5 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 11:21:28 +0300
-Subject: [PATCH 106/108] arm64: dts: qcom: kaanapali-oneplus-iceland: drive
- strengths and one pull as stock
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: drive strengths
+ and one pull as stock
 
 Four pin settings differed from the pin states stock uses on the Pad 4:
 
@@ -22,7 +22,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 12 insertions(+), 6 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index df2ac127b..a478016d4 100644
+index df2ac127ba..a478016d4a 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1318,6 +1318,11 @@ cam_rear_out: endpoint {

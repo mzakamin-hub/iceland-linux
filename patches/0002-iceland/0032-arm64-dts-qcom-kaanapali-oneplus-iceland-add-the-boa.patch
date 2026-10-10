@@ -1,8 +1,8 @@
-From 535e9b4bf51e433ee1e5df246cf31f9745a686b5 Mon Sep 17 00:00:00 2001
+From 73be8d9a7fd67f1fd9af15651f85dc3b1c920960 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 28 Sep 2026 19:57:04 +0300
-Subject: [PATCH 32/34] arm64: dts: qcom: kaanapali-oneplus-iceland: add the
- board and flash thermistors
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: add the board
+ and flash thermistors
 
 Stock reads two 100k thermistors through the PMK8850 ADC: the board one on PMH0101's AMUX5 THM input and the
 flash one on its AMUX1 GPIO1 input, each with a 125 C passive trip and thermal monitoring. Describe them the same
@@ -15,7 +15,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 51 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 4b75e424f..9da2d9733 100644
+index 4b75e424f7..9da2d9733e 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -17,6 +17,7 @@

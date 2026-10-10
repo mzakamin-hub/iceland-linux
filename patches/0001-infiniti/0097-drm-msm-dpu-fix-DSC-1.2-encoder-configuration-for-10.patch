@@ -1,8 +1,8 @@
-From d5b3f23b3e409dadce2259755d3d9d9a7e77d54f Mon Sep 17 00:00:00 2001
+From 963ade24e828c0a8529f79c3e5e739efbe70aa59 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 29 Jul 2026 01:07:17 -0700
-Subject: [PATCH 097/138] drm/msm/dpu: fix DSC 1.2 encoder configuration for 10
- bpc command mode
+Subject: [PATCH] drm/msm/dpu: fix DSC 1.2 encoder configuration for 10 bpc
+ command mode
 
 Set full ICH precision above 8 bpc and don't set DSC_CFG bit 17 for
 command mode, as the vendor driver does.
@@ -13,7 +13,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_dsc_1_2.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_dsc_1_2.c
-index b3395e9c34a1..7228ed31c8e1 100644
+index b3395e9c34..7228ed31c8 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_dsc_1_2.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_dsc_1_2.c
 @@ -124,6 +124,10 @@ static void dpu_hw_dsc_config_1_2(struct dpu_hw_dsc *hw_dsc,
@@ -36,3 +36,6 @@ index b3395e9c34a1..7228ed31c8e1 100644
  
  	DPU_REG_WRITE(hw, sblk->ctl.base + DSC_CFG, data);
  }
+-- 
+2.43.0
+

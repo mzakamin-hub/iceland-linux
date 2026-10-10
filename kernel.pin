@@ -1,13 +1,15 @@
 # Upstream base the patch queue applies to (sourced by scripts/prepare.sh).
 UPSTREAM_URL=https://github.com/torvalds/linux
-UPSTREAM_TAG=v7.3-rc4
-UPSTREAM_COMMIT=93f51579e7df248780214094418f205253383cc5
-UPSTREAM_TREE=1dc395d6d136932cfcd4ece435ef4f1bb22ad539
+UPSTREAM_TAG=v7.3-rc6
+UPSTREAM_COMMIT=a90ee4305c4a5df72c11b31dacfdc76e00fcf78a
+UPSTREAM_TREE=18cdff87967594810218424b52c69529757a6a78
 
 # Tree hash expected after each series (proves the queue reproduces the source exactly).
-# 0001-infiniti = infiniti-mainline/linux master (OnePlus 15, same SoC) at this commit:
+# 0001-infiniti = infiniti-mainline/linux master (OnePlus 15, same SoC) at this commit, rebased onto v7.3-rc6
+# (135 of 138: 0004 / 0005 / 0030 are upstream in rc6):
 INFINITI_URL=https://github.com/infiniti-mainline/linux
 INFINITI_COMMIT=10650ae7bef447d04eb820bfc0c2d5a98d83e4e2
-TREE_AFTER_0001_infiniti=6e2c971263e6c89db6baef3e54c0a3429307a253
-# 0002-iceland = OnePlus Pad 4 series (map220v/sm8850-mainline iceland-7.2 ported + our fixes):
-TREE_AFTER_0002_iceland=6bdb5f01ded36f0fb567477dec1dab09df8844e5
+TREE_AFTER_0001_infiniti=371742e5e8fcc417e7dac2f96e74df944d011a3b
+# 0002-iceland = OnePlus Pad 4 series (map220v/sm8850-mainline iceland-7.2 ported + our fixes + upstream picks),
+# kernel q89b = 7.3.0-rc6-iceland-00377-g8e90101870e4 (see docs/Q89B-QUEUE.md):
+TREE_AFTER_0002_iceland=f1c7fa5d8607c12f025307aec26b3f4cba27bd83

@@ -1,7 +1,7 @@
-From 5de76d2da3afc5c299f8c36f285b79c6a779d14c Mon Sep 17 00:00:00 2001
+From 045d4b21b1f8ba361428b00cfc002cc8058613a5 Mon Sep 17 00:00:00 2001
 From: Wentao Liang <vulab@iscas.ac.cn>
 Date: Wed, 16 Sep 2026 17:55:48 +0000
-Subject: [PATCH 150/162] drm/msm: Fix vm_bo use-after-free in with_vm_locks()
+Subject: [PATCH] drm/msm: Fix vm_bo use-after-free in with_vm_locks()
 
 The unwind loop drops the vm_bo reference taken while locking before
 advancing to the next entry.  drm_gpuvm_bo_put() may drop the last
@@ -24,7 +24,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/gpu/drm/msm/msm_gem_shrinker.c b/drivers/gpu/drm/msm/msm_gem_shrinker.c
-index 9d2788f79..a626fbb86 100644
+index 9d2788f79a..a626fbb869 100644
 --- a/drivers/gpu/drm/msm/msm_gem_shrinker.c
 +++ b/drivers/gpu/drm/msm/msm_gem_shrinker.c
 @@ -51,6 +51,7 @@ with_vm_locks(void (*fn)(struct drm_gem_object *obj),

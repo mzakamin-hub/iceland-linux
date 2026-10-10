@@ -1,8 +1,8 @@
-From 96b98f60af12adc64f2fd2f6e1583697dc998746 Mon Sep 17 00:00:00 2001
+From 3e39ce73aa94a536027feae6735c0826c4b22062 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 07:18:00 +0300
-Subject: [PATCH 76/76] arm64: dts: qcom: kaanapali-oneplus-iceland:
- low-battery limiting (BCL)
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: low-battery
+ limiting (BCL)
 
 Describe the BCL blocks of PMH0101 (system rail) and PMIH0108 (battery
 side) with the vendor's alarm tables per battery temperature and current
@@ -24,7 +24,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 201 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 0fd098499..a20feecde 100644
+index 0fd0984996..a20feecded 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1950,6 +1950,47 @@ &usb_dp_qmpphy {

@@ -1,8 +1,8 @@
-From 46ca7275b96458c92c2c3b4e6137f779ebcda886 Mon Sep 17 00:00:00 2001
+From 2f2ad016fcef643cfe7d3f37c9753e65ac8e7067 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 16:19:51 +0300
-Subject: [PATCH 122/124] remoteproc: qcom_q6v5_pas: add the Kaanapali CDSP
- with its TMDs
+Subject: [PATCH] remoteproc: qcom_q6v5_pas: add the Kaanapali CDSP with its
+ TMDs
 
 The Kaanapali CDSP is described as "qcom,kaanapali-cdsp-pas" with the
 SM8550 CDSP as fallback and so far used the SM8550 platform data. Give it
@@ -23,10 +23,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 32 insertions(+)
 
 diff --git a/drivers/remoteproc/qcom_q6v5_pas.c b/drivers/remoteproc/qcom_q6v5_pas.c
-index 2e6df201b..12c22189c 100644
+index 0ead7860d7..caa3d459a9 100644
 --- a/drivers/remoteproc/qcom_q6v5_pas.c
 +++ b/drivers/remoteproc/qcom_q6v5_pas.c
-@@ -1072,6 +1072,13 @@ static const struct tmd_name modem_tmd_name[] = {
+@@ -1076,6 +1076,13 @@ static const struct tmd_name modem_tmd_name[] = {
  	{ .name = "modem", .id = QCOM_TMD_MODEM },
  };
  
@@ -40,7 +40,7 @@ index 2e6df201b..12c22189c 100644
  static const struct qcom_pas_data adsp_resource_init = {
  	.crash_reason_smem = 423,
  	.firmware_name = "adsp.mdt",
-@@ -1874,6 +1881,30 @@ static const struct qcom_pas_data sm8750_mpss_resource = {
+@@ -1878,6 +1885,30 @@ static const struct qcom_pas_data sm8750_mpss_resource = {
  	.region_assign_vmid = QCOM_SCM_VMID_MSS_MSA,
  };
  
@@ -71,7 +71,7 @@ index 2e6df201b..12c22189c 100644
  static const struct qcom_pas_data kaanapali_soccp_resource = {
  	.crash_reason_smem = 656,
  	.firmware_name = "soccp.mbn",
-@@ -1938,6 +1969,7 @@ static const struct of_device_id qcom_pas_of_match[] = {
+@@ -1942,6 +1973,7 @@ static const struct of_device_id qcom_pas_of_match[] = {
  	{ .compatible = "qcom,eliza-adsp-pas", .data = &sm8550_adsp_resource },
  	{ .compatible = "qcom,eliza-cdsp-pas", .data = &eliza_cdsp_resource },
  	{ .compatible = "qcom,glymur-soccp-pas", .data = &glymur_soccp_resource },

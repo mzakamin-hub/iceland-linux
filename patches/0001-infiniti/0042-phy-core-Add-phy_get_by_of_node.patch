@@ -1,7 +1,7 @@
-From b821509c235cd1f047f3b89a2ce1403e6c5b0e79 Mon Sep 17 00:00:00 2001
+From 0d8fdd6ab8c0368198988a99cb76cea5ac439ad6 Mon Sep 17 00:00:00 2001
 From: Bryan O'Donoghue <bryan.odonoghue@linaro.org>
 Date: Thu, 17 Sep 2026 12:07:55 +0100
-Subject: [PATCH 042/138] phy: core: Add phy_get_by_of_node()
+Subject: [PATCH] phy: core: Add phy_get_by_of_node()
 
 Add new function phy_get_by_of_node() allowing lookup of a phy by
 device_node. Separates existing logic in _of_phy_get() into an internal
@@ -15,7 +15,7 @@ Reviewed-by: Neil Armstrong <neil.armstrong@linaro.org>
  2 files changed, 78 insertions(+), 23 deletions(-)
 
 diff --git a/drivers/phy/phy-core.c b/drivers/phy/phy-core.c
-index 89addd732bff..490a7cde6d40 100644
+index 89addd732b..490a7cde6d 100644
 --- a/drivers/phy/phy-core.c
 +++ b/drivers/phy/phy-core.c
 @@ -606,22 +606,51 @@ int phy_validate(struct phy *phy, enum phy_mode mode, int submode,
@@ -144,7 +144,7 @@ index 89addd732bff..490a7cde6d40 100644
   * phy_create() - create a new phy
   * @dev: device that is creating the new phy
 diff --git a/include/linux/phy/phy.h b/include/linux/phy/phy.h
-index ea47975e288a..71c2e1639713 100644
+index ea47975e28..71c2e16397 100644
 --- a/include/linux/phy/phy.h
 +++ b/include/linux/phy/phy.h
 @@ -284,6 +284,7 @@ struct phy *devm_of_phy_optional_get(struct device *dev, struct device_node *np,
@@ -167,3 +167,6 @@ index ea47975e288a..71c2e1639713 100644
  static inline void of_phy_put(struct phy *phy)
  {
  }
+-- 
+2.43.0
+

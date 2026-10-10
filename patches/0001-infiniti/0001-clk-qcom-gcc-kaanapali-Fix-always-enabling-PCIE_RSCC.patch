@@ -1,8 +1,8 @@
-From 3cb7bbacd972ceab4f98cd61e395588a36134c22 Mon Sep 17 00:00:00 2001
+From 5c610396a719af112a0d35921f6dffe27392639e Mon Sep 17 00:00:00 2001
 From: Luca Weiss <luca.weiss@fairphone.com>
 Date: Fri, 7 Aug 2026 09:46:06 +0200
-Subject: [PATCH 001/138] clk: qcom: gcc-kaanapali: Fix always-enabling
- PCIE_RSCC clocks
+Subject: [PATCH] clk: qcom: gcc-kaanapali: Fix always-enabling PCIE_RSCC
+ clocks
 
 The critical_cbrcrs array will get qcom_branch_set_clk_en() called on
 each entry which will set BIT(0) to enable the clock. This is however
@@ -18,7 +18,7 @@ Signed-off-by: Bjorn Andersson <andersson@kernel.org>
  1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/clk/qcom/gcc-kaanapali.c b/drivers/clk/qcom/gcc-kaanapali.c
-index 842c1a70c691..5bcbcd178657 100644
+index 842c1a70c6..5bcbcd1786 100644
 --- a/drivers/clk/qcom/gcc-kaanapali.c
 +++ b/drivers/clk/qcom/gcc-kaanapali.c
 @@ -3464,8 +3464,6 @@ static const u32 gcc_kaanapali_critical_cbcrs[] = {
@@ -41,3 +41,6 @@ index 842c1a70c691..5bcbcd178657 100644
  	/* FORCE_MEM_CORE_ON for ufs phy ice core clocks */
  	qcom_branch_set_force_mem_core(regmap, gcc_ufs_phy_ice_core_clk, true);
  }
+-- 
+2.43.0
+

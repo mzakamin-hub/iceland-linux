@@ -1,7 +1,7 @@
-From d986fb887df1b5ae0dd56bfd361eadb8e711e843 Mon Sep 17 00:00:00 2001
+From 0451fe91b1f4864a9964d744a18c26d71d2cf695 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 29 Jul 2026 01:14:49 -0700
-Subject: [PATCH 082/138] dt-bindings: net: wireless: ath12k: Add WCN7860
+Subject: [PATCH] dt-bindings: net: wireless: ath12k: Add WCN7860
 
 Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
 ---
@@ -9,7 +9,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1 insertion(+)
 
 diff --git a/Documentation/devicetree/bindings/net/wireless/qcom,ath12k.yaml b/Documentation/devicetree/bindings/net/wireless/qcom,ath12k.yaml
-index dc68dd59988f..27947f1d64bc 100644
+index dc68dd5998..27947f1d64 100644
 --- a/Documentation/devicetree/bindings/net/wireless/qcom,ath12k.yaml
 +++ b/Documentation/devicetree/bindings/net/wireless/qcom,ath12k.yaml
 @@ -17,6 +17,7 @@ properties:
@@ -20,3 +20,6 @@ index dc68dd59988f..27947f1d64bc 100644
  
    reg:
      maxItems: 1
+-- 
+2.43.0
+

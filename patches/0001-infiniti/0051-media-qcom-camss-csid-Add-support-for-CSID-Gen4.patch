@@ -1,7 +1,7 @@
-From 8ba8f8a895bfcea7d20fb93a0cef6c8befc7626a Mon Sep 17 00:00:00 2001
+From 78ee7f8a8894a0d7cc776e792beb03759a792ddf Mon Sep 17 00:00:00 2001
 From: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
 Date: Tue, 15 Sep 2026 03:10:01 -0700
-Subject: [PATCH 051/138] media: qcom: camss: csid: Add support for CSID Gen4
+Subject: [PATCH] media: qcom: camss: csid: Add support for CSID Gen4
 
 Add support for the CSID Gen4 hardware found on Kaanapali SoC.
 
@@ -25,7 +25,7 @@ Signed-off-by: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
  create mode 100644 drivers/media/platform/qcom/camss/camss-csid-gen4.c
 
 diff --git a/drivers/media/platform/qcom/camss/Makefile b/drivers/media/platform/qcom/camss/Makefile
-index 27898b3cc7d3..cebfd947f28e 100644
+index 27898b3cc7..cebfd947f2 100644
 --- a/drivers/media/platform/qcom/camss/Makefile
 +++ b/drivers/media/platform/qcom/camss/Makefile
 @@ -10,6 +10,7 @@ qcom-camss-objs += \
@@ -38,7 +38,7 @@ index 27898b3cc7d3..cebfd947f28e 100644
  		camss-csiphy-3ph-1-0.o \
 diff --git a/drivers/media/platform/qcom/camss/camss-csid-gen4.c b/drivers/media/platform/qcom/camss/camss-csid-gen4.c
 new file mode 100644
-index 000000000000..4ff2f41f70f7
+index 0000000000..4ff2f41f70
 --- /dev/null
 +++ b/drivers/media/platform/qcom/camss/camss-csid-gen4.c
 @@ -0,0 +1,380 @@
@@ -423,7 +423,7 @@ index 000000000000..4ff2f41f70f7
 +	.reg_update = csid_subdev_reg_update,
 +};
 diff --git a/drivers/media/platform/qcom/camss/camss-csid.h b/drivers/media/platform/qcom/camss/camss-csid.h
-index 5296b10f6bac..4f31ad303c4e 100644
+index 5296b10f6b..4f31ad303c 100644
 --- a/drivers/media/platform/qcom/camss/camss-csid.h
 +++ b/drivers/media/platform/qcom/camss/camss-csid.h
 @@ -154,7 +154,13 @@ struct csid_device {
@@ -450,7 +450,7 @@ index 5296b10f6bac..4f31ad303c4e 100644
  /*
   * csid_is_lite - Check if CSID is CSID lite.
 diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
-index d2faa390872e..cd085a7cfd18 100644
+index d2faa39087..cd085a7cfd 100644
 --- a/drivers/media/platform/qcom/camss/camss.c
 +++ b/drivers/media/platform/qcom/camss/camss.c
 @@ -85,6 +85,79 @@ static const struct camss_subdev_resources csiphy_res_kaanapali[] = {
@@ -545,3 +545,6 @@ index d2faa390872e..cd085a7cfd18 100644
  };
  
  static const struct camss_resources msm8916_resources = {
+-- 
+2.43.0
+

@@ -1,8 +1,8 @@
-From 2a9099a9df0af43a4d5aed52112bf6038aafef16 Mon Sep 17 00:00:00 2001
+From d1b3452a5e1219075664648f5486ddbda1904bfa Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Thu, 1 Oct 2026 23:57:37 +0300
-Subject: [PATCH 70/70] arm64: cpuinfo: print a model name for the Qualcomm
- Oryon cores
+Subject: [PATCH] arm64: cpuinfo: print a model name for the Qualcomm Oryon
+ cores
 
 Desktop software reads the processor name from the "model name" line of
 /proc/cpuinfo (GNOME Settings through libgtop); arm64 prints that line only
@@ -19,7 +19,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 17 insertions(+)
 
 diff --git a/arch/arm64/kernel/cpuinfo.c b/arch/arm64/kernel/cpuinfo.c
-index 45c63f3d7..34c7f72ba 100644
+index 45c63f3d75..34c7f72bab 100644
 --- a/arch/arm64/kernel/cpuinfo.c
 +++ b/arch/arm64/kernel/cpuinfo.c
 @@ -219,6 +219,21 @@ static const char *const compat_hwcap2_str[] = {

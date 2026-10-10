@@ -1,8 +1,7 @@
-From 7cbb847d725dfaddde031818e9654ba7e313ad11 Mon Sep 17 00:00:00 2001
+From ec5a596f3b98d89a3f33a440152d180b28bfbc60 Mon Sep 17 00:00:00 2001
 From: Baochen Qiang <baochen.qiang@oss.qualcomm.com>
 Date: Wed, 29 Jul 2026 15:18:12 +0800
-Subject: [PATCH 140/162] wifi: ath12k: use per-radio ab in
- ath12k_mac_hw_register()
+Subject: [PATCH] wifi: ath12k: use per-radio ab in ath12k_mac_hw_register()
 
 In ath12k_mac_hw_register() the local 'ab' is fetched once from the first
 radio, i.e. ath12k_ah_to_ar(ah, 0)->ab. When an ath12k_hw spans more than
@@ -35,7 +34,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 7 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/mac.c b/drivers/net/wireless/ath/ath12k/mac.c
-index a3b986099..43705943a 100644
+index a3b9860991..43705943a3 100644
 --- a/drivers/net/wireless/ath/ath12k/mac.c
 +++ b/drivers/net/wireless/ath/ath12k/mac.c
 @@ -15060,24 +15060,26 @@ static int ath12k_mac_hw_register(struct ath12k_hw *ah)

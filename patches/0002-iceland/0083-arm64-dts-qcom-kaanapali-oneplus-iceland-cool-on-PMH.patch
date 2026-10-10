@@ -1,8 +1,8 @@
-From 9eff694cdfa2fe84beea4d440993204e7ab78843 Mon Sep 17 00:00:00 2001
+From 27d3e8a8b478f7dc679b10534bc5c079884c500b Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 08:17:52 +0300
-Subject: [PATCH 83/83] arm64: dts: qcom: kaanapali-oneplus-iceland: cool on
- PMH0110 F / G / I heat
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: cool on PMH0110
+ F / G / I heat
 
 The vendor binds cooling to the 95 C stage of three PMH0110 temperature
 alarms:
@@ -24,7 +24,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 32 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 64a38d2ff..4b4803218 100644
+index 64a38d2ff3..4b48032187 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -2379,6 +2379,38 @@ usb-temp-r-hot {

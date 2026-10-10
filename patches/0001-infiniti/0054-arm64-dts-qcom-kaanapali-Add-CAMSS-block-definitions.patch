@@ -1,8 +1,7 @@
-From 24e8b7aac5c7259f414ee1b5b6a11bf71c05e55e Mon Sep 17 00:00:00 2001
+From 083b9df08021a13ad3f6e69159bb309733bb95d2 Mon Sep 17 00:00:00 2001
 From: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
 Date: Tue, 15 Sep 2026 03:10:04 -0700
-Subject: [PATCH 054/138] arm64: dts: qcom: kaanapali: Add CAMSS block
- definitions
+Subject: [PATCH] arm64: dts: qcom: kaanapali: Add CAMSS block definitions
 
 Describe the CAMSS and CSI PHY blocks on Kaanapali so that camera pipelines
 can be enabled by board device trees.
@@ -21,7 +20,7 @@ Signed-off-by: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
  1 file changed, 372 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 205b1711bb94..7b85cb42881d 100644
+index 205b1711bb..7b85cb4288 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -20,6 +20,7 @@
@@ -417,3 +416,6 @@ index 205b1711bb94..7b85cb42881d 100644
  	thermal-zones {
  		cpullc-0-0-thermal {
  			thermal-sensors = <&tsens0 0>;
+-- 
+2.43.0
+

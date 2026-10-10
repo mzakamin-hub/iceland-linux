@@ -1,8 +1,7 @@
-From 41f1f15ad13c499b40f99e6bb21e955665a97181 Mon Sep 17 00:00:00 2001
+From 9cf6cc9d27b8d25488e3dc87c972578eb45f7a92 Mon Sep 17 00:00:00 2001
 From: Teguh Sobirin <teguh@sobir.in>
 Date: Wed, 25 Mar 2026 23:53:30 +0800
-Subject: [PATCH 064/138] wifi: ath12k: add initial hardware definition for
- WCN7860
+Subject: [PATCH] wifi: ath12k: add initial hardware definition for WCN7860
 
 Uses QCC2072 as a base as they seem to be from the same family.
 
@@ -17,7 +16,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  4 files changed, 118 insertions(+)
 
 diff --git a/drivers/net/wireless/ath/ath12k/core.h b/drivers/net/wireless/ath/ath12k/core.h
-index a98fc6e0699d..e9ac435a38d6 100644
+index a98fc6e069..e9ac435a38 100644
 --- a/drivers/net/wireless/ath/ath12k/core.h
 +++ b/drivers/net/wireless/ath/ath12k/core.h
 @@ -157,6 +157,7 @@ enum ath12k_hw_rev {
@@ -29,7 +28,7 @@ index a98fc6e0699d..e9ac435a38d6 100644
  	ATH12K_HW_IPQ5424_HW10,
  };
 diff --git a/drivers/net/wireless/ath/ath12k/wifi7/hal.c b/drivers/net/wireless/ath/ath12k/wifi7/hal.c
-index a0a1902fb491..744ac7b06b62 100644
+index a0a1902fb4..744ac7b06b 100644
 --- a/drivers/net/wireless/ath/ath12k/wifi7/hal.c
 +++ b/drivers/net/wireless/ath/ath12k/wifi7/hal.c
 @@ -43,6 +43,13 @@ static const struct ath12k_hw_version_map ath12k_wifi7_hw_ver_map[] = {
@@ -47,7 +46,7 @@ index a0a1902fb491..744ac7b06b62 100644
  		.hal_ops = &hal_qcc2072_ops,
  		.hal_desc_sz = sizeof(struct hal_rx_desc_qcc2072),
 diff --git a/drivers/net/wireless/ath/ath12k/wifi7/hw.c b/drivers/net/wireless/ath/ath12k/wifi7/hw.c
-index 7b86f324b2e6..d4155335f130 100644
+index 7b86f324b2..d4155335f1 100644
 --- a/drivers/net/wireless/ath/ath12k/wifi7/hw.c
 +++ b/drivers/net/wireless/ath/ath12k/wifi7/hw.c
 @@ -713,6 +713,94 @@ static const struct ath12k_hw_params ath12k_wifi7_hw_params[] = {
@@ -146,7 +145,7 @@ index 7b86f324b2e6..d4155335f130 100644
  		.name = "qcc2072 hw1.0",
  		.hw_rev = ATH12K_HW_QCC2072_HW10,
 diff --git a/drivers/net/wireless/ath/ath12k/wifi7/pci.c b/drivers/net/wireless/ath/ath12k/wifi7/pci.c
-index 6c96b52dec13..893474de488d 100644
+index 6c96b52dec..893474de48 100644
 --- a/drivers/net/wireless/ath/ath12k/wifi7/pci.c
 +++ b/drivers/net/wireless/ath/ath12k/wifi7/pci.c
 @@ -19,6 +19,7 @@
@@ -192,3 +191,6 @@ index 6c96b52dec13..893474de488d 100644
  	case QCC2072_DEVICE_ID:
  		ab->id.bdf_search = ATH12K_BDF_SEARCH_BUS_AND_BOARD;
  		ab_pci->msi_config = &ath12k_wifi7_msi_config[0];
+-- 
+2.43.0
+

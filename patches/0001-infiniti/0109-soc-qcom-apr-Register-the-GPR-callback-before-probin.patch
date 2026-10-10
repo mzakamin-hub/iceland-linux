@@ -1,8 +1,7 @@
-From 79edb0aaf7d1cf604d61ff493594c6a0fb14575e Mon Sep 17 00:00:00 2001
+From a0e3d10cb144fdd4406e0143db46f904426f6001 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 23 Sep 2026 09:08:29 -0700
-Subject: [PATCH 109/138] soc: qcom: apr: Register the GPR callback before
- probing
+Subject: [PATCH] soc: qcom: apr: Register the GPR callback before probing
 
 q6apm sends a synchronous command in probe, and its response was
 dropped, delaying every boot by the 5 s timeout.
@@ -15,7 +14,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/soc/qcom/apr.c b/drivers/soc/qcom/apr.c
-index ea7f83916d8d..39c3a6e6d1f0 100644
+index ea7f83916d..39c3a6e6d1 100644
 --- a/drivers/soc/qcom/apr.c
 +++ b/drivers/soc/qcom/apr.c
 @@ -367,9 +367,11 @@ static int apr_device_probe(struct device *dev)
@@ -32,3 +31,6 @@ index ea7f83916d8d..39c3a6e6d1f0 100644
  
  	return ret;
  }
+-- 
+2.43.0
+

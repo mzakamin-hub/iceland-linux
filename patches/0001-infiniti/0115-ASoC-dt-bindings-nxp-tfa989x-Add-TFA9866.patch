@@ -1,7 +1,7 @@
-From ea23030f7502c0b5cbc398a9700c245178a10afe Mon Sep 17 00:00:00 2001
+From be1030ed3388b604df0652651d8d9651f8dc4bb9 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Thu, 24 Sep 2026 18:53:52 -0700
-Subject: [PATCH 115/138] ASoC: dt-bindings: nxp,tfa989x: Add TFA9866
+Subject: [PATCH] ASoC: dt-bindings: nxp,tfa989x: Add TFA9866
 
 A TFA2 amplifier without DSP, with a reset line.
 
@@ -11,7 +11,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 4 insertions(+)
 
 diff --git a/Documentation/devicetree/bindings/sound/nxp,tfa989x.yaml b/Documentation/devicetree/bindings/sound/nxp,tfa989x.yaml
-index fd2415e231eb..008eaea9b889 100644
+index fd2415e231..008eaea9b8 100644
 --- a/Documentation/devicetree/bindings/sound/nxp,tfa989x.yaml
 +++ b/Documentation/devicetree/bindings/sound/nxp,tfa989x.yaml
 @@ -15,6 +15,7 @@ allOf:
@@ -32,3 +32,6 @@ index fd2415e231eb..008eaea9b889 100644
    rcv-gpios:
      description: optional GPIO to be asserted when receiver mode is enabled.
  
+-- 
+2.43.0
+

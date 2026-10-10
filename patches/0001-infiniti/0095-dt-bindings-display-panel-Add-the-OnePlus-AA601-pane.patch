@@ -1,8 +1,7 @@
-From 1e1e37d9d7003a78a04e3abd120e5a9a9fa9bb6a Mon Sep 17 00:00:00 2001
+From 3a1b8eacd52bfd39cf17603db649fd51ab9fc61f Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Thu, 24 Sep 2026 19:32:05 -0700
-Subject: [PATCH 095/138] dt-bindings: display: panel: Add the OnePlus AA601
- panel
+Subject: [PATCH] dt-bindings: display: panel: Add the OnePlus AA601 panel
 
 Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
 ---
@@ -12,7 +11,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
 
 diff --git a/Documentation/devicetree/bindings/display/panel/oneplus,aa601-p-7-a0020.yaml b/Documentation/devicetree/bindings/display/panel/oneplus,aa601-p-7-a0020.yaml
 new file mode 100644
-index 000000000000..e814d57706f2
+index 0000000000..e814d57706
 --- /dev/null
 +++ b/Documentation/devicetree/bindings/display/panel/oneplus,aa601-p-7-a0020.yaml
 @@ -0,0 +1,70 @@
@@ -86,3 +85,6 @@ index 000000000000..e814d57706f2
 +            };
 +        };
 +    };
+-- 
+2.43.0
+

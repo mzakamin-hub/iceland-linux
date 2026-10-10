@@ -1,8 +1,7 @@
-From ada6cdcdef2c6f77c926a51b8e43ad2fd5d034a7 Mon Sep 17 00:00:00 2001
+From d7782dfaed2a9fbd0620a72fcd4cd1b15c883fac Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 23 Sep 2026 11:31:20 -0700
-Subject: [PATCH 074/138] clk: qcom: gcc-kaanapali: Keep the PCIe PHY GDSC in
- retention
+Subject: [PATCH] clk: qcom: gcc-kaanapali: Keep the PCIe PHY GDSC in retention
 
 The PCIe link can stay up across suspend-to-idle, so don't power off the
 PHY under it, as on SM8550 and SM8650.
@@ -15,7 +14,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/clk/qcom/gcc-kaanapali.c b/drivers/clk/qcom/gcc-kaanapali.c
-index 7cda196a2bd0..1087967a1f28 100644
+index 7cda196a2b..1087967a1f 100644
 --- a/drivers/clk/qcom/gcc-kaanapali.c
 +++ b/drivers/clk/qcom/gcc-kaanapali.c
 @@ -3153,7 +3153,7 @@ static struct gdsc gcc_pcie_0_phy_gdsc = {
@@ -27,3 +26,6 @@ index 7cda196a2bd0..1087967a1f28 100644
  	.flags = POLL_CFG_GDSCR | RETAIN_FF_ENABLE | VOTABLE,
  };
  
+-- 
+2.43.0
+

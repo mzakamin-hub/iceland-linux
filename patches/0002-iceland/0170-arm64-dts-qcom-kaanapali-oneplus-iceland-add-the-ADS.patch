@@ -1,8 +1,8 @@
-From 26752e27eac91f679b0abcb2bf29adcb49f182d8 Mon Sep 17 00:00:00 2001
+From 59c0463b6c23f25ac304cdb368d04db4f8222e86 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 21:07:15 +0300
-Subject: [PATCH 170/174] arm64: dts: qcom: kaanapali-oneplus-iceland: add the
- ADSP FastRPC remote heap
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: add the ADSP
+ FastRPC remote heap
 
 The FastRPC channel of the ADSP has no reserved memory, so the driver
 reports "no reserved DMA memory for FASTRPC" and the remote heap of the
@@ -20,7 +20,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 17 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index c503109a9..ba601b94e 100644
+index c503109a92..ba601b94e1 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -318,6 +318,15 @@ llcc_lpi_mem: llcc-lpi@ff800000 {

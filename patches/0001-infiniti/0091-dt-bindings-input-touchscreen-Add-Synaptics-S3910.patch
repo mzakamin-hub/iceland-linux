@@ -1,7 +1,7 @@
-From 1c21be1828dea9313375f4ce9c2b1ed6662f8bd3 Mon Sep 17 00:00:00 2001
+From c907098bda76b62afc95860a376524ef35e15ae4 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Thu, 24 Sep 2026 19:30:56 -0700
-Subject: [PATCH 091/138] dt-bindings: input: touchscreen: Add Synaptics S3910
+Subject: [PATCH] dt-bindings: input: touchscreen: Add Synaptics S3910
 
 Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
 ---
@@ -11,7 +11,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
 
 diff --git a/Documentation/devicetree/bindings/input/touchscreen/synaptics,s3910.yaml b/Documentation/devicetree/bindings/input/touchscreen/synaptics,s3910.yaml
 new file mode 100644
-index 000000000000..10860afbf3b2
+index 0000000000..10860afbf3
 --- /dev/null
 +++ b/Documentation/devicetree/bindings/input/touchscreen/synaptics,s3910.yaml
 @@ -0,0 +1,65 @@
@@ -80,3 +80,6 @@ index 000000000000..10860afbf3b2
 +            touchscreen-size-y = <27800>;
 +        };
 +    };
+-- 
+2.43.0
+

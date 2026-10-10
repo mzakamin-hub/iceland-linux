@@ -1,7 +1,7 @@
-From 4dd33b5765743a84e79ee8d75896fd289b89a45a Mon Sep 17 00:00:00 2001
+From a9e8fe1a18e84a7904a92e9a8d4f1091a185e4e8 Mon Sep 17 00:00:00 2001
 From: map220v <map220v300@gmail.com>
 Date: Mon, 8 Jun 2026 10:05:44 +0000
-Subject: [PATCH 08/20] ICELAND: Add panel node
+Subject: [PATCH] ICELAND: Add panel node
 
 (cherry picked from commit d54572bd309f180e03484b2a41ea545460079e11)
 ---
@@ -9,7 +9,7 @@ Subject: [PATCH 08/20] ICELAND: Add panel node
  1 file changed, 98 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index c8d9673808fb..ede368bc7ed1 100644
+index c8d9673808..ede368bc7e 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -865,6 +865,104 @@ backlight@11 {
@@ -117,3 +117,6 @@ index c8d9673808fb..ede368bc7ed1 100644
  &pcie0 {
  	pinctrl-0 = <&pcie0_default_state>;
  	pinctrl-names = "default";
+-- 
+2.43.0
+

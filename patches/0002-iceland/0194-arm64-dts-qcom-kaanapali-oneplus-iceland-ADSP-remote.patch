@@ -1,0 +1,60 @@
+From 41bae696ca77772ffe906505f0c04eb98bc7c9bd Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 10 Oct 2026 04:19:13 +0300
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: ADSP remote heap
+ no-map
+
+The FastRPC change "misc: fastrpc: Allocate entire reserved memory for
+Audio PD in probe" (9981fbe599e8 in linux-next) looks up the ADSP
+channel's memory-region at rpmsg probe and assigns the whole range to
+the LPASS and ADSP heap VMs with qcom_scm_assign_mem(), without
+allocating it from the pool first.
+
+Our region is a reusable shared-dma-pool, i.e. a CMA area: the page
+allocator keeps placing movable Linux pages in it. Once the range has
+been handed to the DSP VMs, the next access by Linux to such a page
+faults at stage 2. The probe-time assignment is only safe for a region
+Linux never maps or allocates from.
+
+Make the region no-map (still dynamically placed below 4 GiB with the
+same size and alignment), as hamoa.dtsi does with its static
+adsp-rpc-remote-heap. Without 9981fbe599e8 the driver keeps working as
+before: the region becomes a per-device coherent pool of the rpmsg
+device, from which the Audio PD's heap is allocated and then assigned.
+
+Cost: 12 MiB that Linux can no longer lend to movable allocations.
+
+Fixes: 26752e27eac9 ("arm64: dts: qcom: kaanapali-oneplus-iceland: add the ADSP FastRPC remote heap")
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index c6a36259d0..9b7dc78dfd 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -324,13 +324,17 @@ llcc_lpi_mem: llcc-lpi@ff800000 {
+ 			no-map;
+ 		};
+ 
+-		/* the ADSP FastRPC remote heap, as the vendor tree's adsp_heap_region */
++		/*
++		 * The ADSP FastRPC remote heap (the vendor tree's adsp_heap_region).
++		 * Not reusable: FastRPC hands the whole region to the LPASS and ADSP
++		 * heap VMs, so Linux must never place its own pages in it.
++		 */
+ 		adsp_rpc_remote_heap_mem: adsp-rpc-remote-heap {
+ 			compatible = "shared-dma-pool";
+ 			alloc-ranges = <0x0 0x00000000 0x0 0xffffffff>;
+-			reusable;
+ 			alignment = <0x0 0x400000>;
+ 			size = <0x0 0xc00000>;
++			no-map;
+ 		};
+ 	};
+ 
+-- 
+2.43.0
+

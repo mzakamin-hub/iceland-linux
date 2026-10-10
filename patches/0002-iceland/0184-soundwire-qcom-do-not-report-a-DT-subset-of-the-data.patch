@@ -1,8 +1,8 @@
-From b92903838a158b5dd4cf6d0c657d15fe0e35cb54 Mon Sep 17 00:00:00 2001
+From cd000581915649ae8da2c34dc62caf2a242848e1 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 3 Oct 2026 08:53:18 +0300
-Subject: [PATCH 184/185] soundwire: qcom: do not report a DT subset of the
- data ports as an error
+Subject: [PATCH] soundwire: qcom: do not report a DT subset of the data ports
+ as an error
 
 The controller reports its number of data-in and data-out ports in
 SWRM_COMP_PARAMS, and the qcom,din-ports / qcom,dout-ports properties
@@ -24,7 +24,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 13 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/soundwire/qcom.c b/drivers/soundwire/qcom.c
-index 55678a30c..0034a0889 100644
+index 55678a30cd..0034a08894 100644
 --- a/drivers/soundwire/qcom.c
 +++ b/drivers/soundwire/qcom.c
 @@ -1441,22 +1441,31 @@ static int qcom_swrm_get_port_config(struct qcom_swrm_ctrl *ctrl)

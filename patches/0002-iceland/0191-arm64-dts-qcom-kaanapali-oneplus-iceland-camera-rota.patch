@@ -1,0 +1,55 @@
+From b6c048b954d356bb63ff6f96a568789de86a8bb6 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 10 Oct 2026 04:19:12 +0300
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: camera rotation
+ for landscape
+
+The camera rotation values (rear 90, front 270) were copied from stock
+Android's SENSOR_ORIENTATION. Android measures that angle against the
+device's natural orientation, which on this tablet is portrait (`wm size`
+2400x3392, ro.surface_flinger.primary_display_orientation =
+ORIENTATION_270). Linux drives the 3392x2400 panel in its native landscape
+orientation, and the DT rotation is relative to that. Re-expressed for the
+landscape panel, both are 0: Android turns a front camera's angle the
+opposite way from a rear camera's when the display rotates, so the
+display offset that takes the front from 270 to 0 also takes the rear
+from 90 to 0. A front frame captured with no rotation applied on the
+tablet in landscape is upright, and the owner saw both viewfinders turned
+the same way with 90 / 270.
+
+With 90 / 270 the applications rotate the landscape frames by 90 degrees
+and show a portrait viewfinder with the scene on its side.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 1355c4cfe9..c6a36259d0 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1309,7 +1309,8 @@ camera@10 {
+ 		avdd-supply = <&vreg_l14b_2p8>;
+ 
+ 		orientation = <0>;
+-		rotation = <270>;
++		/* stock's SENSOR_ORIENTATION is relative to Android's portrait display; the landscape panel needs 0 */
++		rotation = <0>;
+ 
+ 		port {
+ 			cam_front_out: endpoint {
+@@ -1349,7 +1350,8 @@ camera@36 {
+ 		avdd-supply = <&vreg_l14b_2p8>;
+ 
+ 		orientation = <1>;
+-		rotation = <90>;
++		/* stock's SENSOR_ORIENTATION is relative to Android's portrait display; the landscape panel needs 0 */
++		rotation = <0>;
+ 
+ 		lens-focus = <&vcm>;
+ 
+-- 
+2.43.0
+

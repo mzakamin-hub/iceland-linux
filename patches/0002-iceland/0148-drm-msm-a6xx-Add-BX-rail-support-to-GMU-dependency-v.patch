@@ -1,8 +1,7 @@
-From dc6939fcc34afc0ec1ee126e4d0c6c44d8f1e9d9 Mon Sep 17 00:00:00 2001
+From f53b434923eb4b9bf9b96e011d4a90b3e6c71e42 Mon Sep 17 00:00:00 2001
 From: Akhil P Oommen <akhilpo@oss.qualcomm.com>
 Date: Wed, 23 Sep 2026 15:55:45 +0530
-Subject: [PATCH 148/162] drm/msm/a6xx: Add BX rail support to GMU dependency
- votes
+Subject: [PATCH] drm/msm/a6xx: Add BX rail support to GMU dependency votes
 
 Some A8x targets have a third memory rail (BX) in addition to GX and MX.
 On these targets the GMU dependency vote carries a per-corner BX vote in
@@ -21,7 +20,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 35 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
-index 0ed01ce1c..2b66d6c7f 100644
+index 0ed01ce1c5..2b66d6c7fd 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 @@ -1799,16 +1799,34 @@ static int a6xx_gmu_rpmh_arc_votes_init(struct device *dev, u32 *votes,

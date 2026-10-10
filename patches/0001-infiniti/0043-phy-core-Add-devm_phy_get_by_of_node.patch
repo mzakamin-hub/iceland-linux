@@ -1,7 +1,7 @@
-From 2edabbc83dbc2b36dfc9125d12e6cd810fce933d Mon Sep 17 00:00:00 2001
+From ad0179aa0e370571ba74e5685fbf9a123fc0f69f Mon Sep 17 00:00:00 2001
 From: Bryan O'Donoghue <bryan.odonoghue@linaro.org>
 Date: Thu, 17 Sep 2026 12:07:56 +0100
-Subject: [PATCH 043/138] phy: core: Add devm_phy_get_by_of_node()
+Subject: [PATCH] phy: core: Add devm_phy_get_by_of_node()
 
 Add a devm variant of phy_get_by_of_node() to allow for the familiar
 pattern of having devres automatically release resources on the driver's
@@ -14,7 +14,7 @@ Signed-off-by: Bryan O'Donoghue <bryan.odonoghue@linaro.org>
  2 files changed, 42 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/phy/phy-core.c b/drivers/phy/phy-core.c
-index 490a7cde6d40..10e932356680 100644
+index 490a7cde6d..10e9323566 100644
 --- a/drivers/phy/phy-core.c
 +++ b/drivers/phy/phy-core.c
 @@ -833,7 +833,7 @@ struct phy *phy_get(struct device *dev, const char *string)
@@ -68,7 +68,7 @@ index 490a7cde6d40..10e932356680 100644
   * phy_create() - create a new phy
   * @dev: device that is creating the new phy
 diff --git a/include/linux/phy/phy.h b/include/linux/phy/phy.h
-index 71c2e1639713..14b924a88411 100644
+index 71c2e16397..14b924a884 100644
 --- a/include/linux/phy/phy.h
 +++ b/include/linux/phy/phy.h
 @@ -285,6 +285,7 @@ struct phy *devm_of_phy_optional_get(struct device *dev, struct device_node *np,
@@ -92,3 +92,6 @@ index 71c2e1639713..14b924a88411 100644
  static inline void of_phy_put(struct phy *phy)
  {
  }
+-- 
+2.43.0
+

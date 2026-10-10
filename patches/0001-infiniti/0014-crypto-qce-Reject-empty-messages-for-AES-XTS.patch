@@ -1,7 +1,7 @@
-From c6413e0d136f8afe710e3f0ce5b8adfdcb702f5e Mon Sep 17 00:00:00 2001
+From 1ca7e72029e76d5d4052f5a4823483cc126d5eea Mon Sep 17 00:00:00 2001
 From: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
 Date: Tue, 22 Sep 2026 14:57:17 +0200
-Subject: [PATCH 014/138] crypto: qce - Reject empty messages for AES-XTS
+Subject: [PATCH] crypto: qce - Reject empty messages for AES-XTS
 
 XTS is not defined for an empty plaintext: it requires at least one full
 block of data. The driver treated a zero-length request as a successful
@@ -21,7 +21,7 @@ Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
  1 file changed, 5 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/crypto/qce/skcipher.c b/drivers/crypto/qce/skcipher.c
-index 4931b064f10e..32b438e1eea1 100644
+index 4931b064f1..32b438e1ee 100644
 --- a/drivers/crypto/qce/skcipher.c
 +++ b/drivers/crypto/qce/skcipher.c
 @@ -222,8 +222,12 @@ static int qce_skcipher_crypt(struct skcipher_request *req, int encrypt)
@@ -38,3 +38,6 @@ index 4931b064f10e..32b438e1eea1 100644
  
  	/*
  	 * ECB and CBC algorithms require message lengths to be
+-- 
+2.43.0
+

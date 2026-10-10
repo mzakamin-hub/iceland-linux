@@ -1,8 +1,8 @@
-From 02699cd184cfcc9a04c1b69ff288931c777e8497 Mon Sep 17 00:00:00 2001
+From e6816535c309b50284dc4591e04bf1ae9cf66c7f Mon Sep 17 00:00:00 2001
 From: Jishnu Prakash <jishnu.prakash@oss.qualcomm.com>
 Date: Fri, 31 Jul 2026 23:36:17 +0530
-Subject: [PATCH 062/138] arm64: dts: qcom: Add header file for ADC5 Gen4
- channel macros
+Subject: [PATCH] arm64: dts: qcom: Add header file for ADC5 Gen4 channel
+ macros
 
 Add macro definitions for virtual channels (combination of ADC channel
 number, PMIC SID number and PMIC bus ID number), to be used in devicetree
@@ -16,7 +16,7 @@ Signed-off-by: Jishnu Prakash <jishnu.prakash@oss.qualcomm.com>
 
 diff --git a/arch/arm64/boot/dts/qcom/qcom-adc5-gen4.h b/arch/arm64/boot/dts/qcom/qcom-adc5-gen4.h
 new file mode 100644
-index 000000000000..cf94e3185e21
+index 0000000000..cf94e3185e
 --- /dev/null
 +++ b/arch/arm64/boot/dts/qcom/qcom-adc5-gen4.h
 @@ -0,0 +1,96 @@
@@ -116,3 +116,6 @@ index 000000000000..cf94e3185e21
 +#define ADC5_GEN4_ICHG_FB(bus_id, sid)		ADC5_GEN4_VIRT_CHAN(bus_id, sid, 0xa1)
 +
 +#endif /* __DTS_ARM64_QCOM_ADC5_GEN4_H__ */
+-- 
+2.43.0
+

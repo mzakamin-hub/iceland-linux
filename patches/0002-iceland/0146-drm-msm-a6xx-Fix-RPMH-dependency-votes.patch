@@ -1,7 +1,7 @@
-From e0b5bc8070203c3423238f427abad5f5facb26b9 Mon Sep 17 00:00:00 2001
+From 02f08e398922909253ed3ce35918caaf924cf2a4 Mon Sep 17 00:00:00 2001
 From: Akhil P Oommen <akhilpo@oss.qualcomm.com>
 Date: Wed, 23 Sep 2026 15:55:43 +0530
-Subject: [PATCH 146/162] drm/msm/a6xx: Fix RPMH dependency votes
+Subject: [PATCH] drm/msm/a6xx: Fix RPMH dependency votes
 
 a6xx_gmu_rpmh_dep_votes_init() iterates the GPU frequency list
 (gmu->gpu_freqs) but was passed gmu->dev to resolve each frequency to an
@@ -25,7 +25,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
-index d07264609..161b360bf 100644
+index d072646093..161b360bf3 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 @@ -1868,13 +1868,13 @@ static int a6xx_gmu_rpmh_votes_init(struct a6xx_gmu *gmu)

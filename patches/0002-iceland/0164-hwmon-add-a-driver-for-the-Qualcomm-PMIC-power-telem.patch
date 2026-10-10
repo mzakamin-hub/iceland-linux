@@ -1,8 +1,7 @@
-From d32ea56dbcaa3e6b09953007b7cee26fdb9c2c54 Mon Sep 17 00:00:00 2001
+From 3f5a51d1f53400bc13c51f16f7d76e2082571909 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 19:25:24 +0300
-Subject: [PATCH 164/166] hwmon: add a driver for the Qualcomm PMIC power
- telemetry
+Subject: [PATCH] hwmon: add a driver for the Qualcomm PMIC power telemetry
 
 The PMK8850 accumulates the output power of the switching regulators
 that supply the CPU clusters, the GPU, the NSP and the SoC's CX / MX
@@ -66,7 +65,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  create mode 100644 drivers/hwmon/qcom-qpt-hwmon.c
 
 diff --git a/Documentation/hwmon/index.rst b/Documentation/hwmon/index.rst
-index 9955a5254..bba26dfd9 100644
+index 9955a52543..bba26dfd98 100644
 --- a/Documentation/hwmon/index.rst
 +++ b/Documentation/hwmon/index.rst
 @@ -233,6 +233,7 @@ Hardware Monitoring Kernel Drivers
@@ -79,7 +78,7 @@ index 9955a5254..bba26dfd9 100644
     sbrmi
 diff --git a/Documentation/hwmon/qcom-qpt-hwmon.rst b/Documentation/hwmon/qcom-qpt-hwmon.rst
 new file mode 100644
-index 000000000..9e445c5f8
+index 0000000000..9e445c5f88
 --- /dev/null
 +++ b/Documentation/hwmon/qcom-qpt-hwmon.rst
 @@ -0,0 +1,58 @@
@@ -142,7 +141,7 @@ index 000000000..9e445c5f8
 +the control and time stamp bytes, the raw accumulators and the driver's
 +counters (overflows, re-reads, rejected reads).
 diff --git a/drivers/hwmon/Kconfig b/drivers/hwmon/Kconfig
-index fecff8610..fbbf9f5a1 100644
+index fecff8610e..fbbf9f5a1e 100644
 --- a/drivers/hwmon/Kconfig
 +++ b/drivers/hwmon/Kconfig
 @@ -1960,6 +1960,21 @@ config SENSORS_PWM_FAN
@@ -168,7 +167,7 @@ index fecff8610..fbbf9f5a1 100644
  	tristate "QNAP MCU hardware monitoring"
  	depends on MFD_QNAP_MCU
 diff --git a/drivers/hwmon/Makefile b/drivers/hwmon/Makefile
-index 1229b6b39..c277b905f 100644
+index 1229b6b399..c277b905fc 100644
 --- a/drivers/hwmon/Makefile
 +++ b/drivers/hwmon/Makefile
 @@ -205,6 +205,7 @@ obj-$(CONFIG_SENSORS_POWR1220)  += powr1220.o
@@ -181,7 +180,7 @@ index 1229b6b39..c277b905f 100644
  obj-$(CONFIG_SENSORS_SBTSI)	+= sbtsi_temp.o
 diff --git a/drivers/hwmon/qcom-qpt-hwmon.c b/drivers/hwmon/qcom-qpt-hwmon.c
 new file mode 100644
-index 000000000..c8ae7cac8
+index 0000000000..c8ae7cac87
 --- /dev/null
 +++ b/drivers/hwmon/qcom-qpt-hwmon.c
 @@ -0,0 +1,813 @@

@@ -1,8 +1,8 @@
-From c2ebdc1f8784e158c58cd9f03d1e16ad25415d50 Mon Sep 17 00:00:00 2001
+From 58f9d282940c2048d33394e572dc0896028c3582 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 28 Sep 2026 18:59:09 +0300
-Subject: [PATCH 31/31] arm64: dts: qcom: kaanapali-oneplus-iceland: enable the
- rear flash LED
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: enable the rear
+ flash LED
 
 The rear flash has two dies on the PMH0101 flash LED controller: a warm (yellow) one on channels 1 and 4 and a white
 one on channels 2 and 3. Stock limits each die to 500 mA torch, 2 A flash and a 1.28 s flash timeout.
@@ -14,7 +14,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 25 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index d12c3da1e..4b75e424f 100644
+index d12c3da1e4..4b75e424f7 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1229,6 +1229,31 @@ wifi@0 {

@@ -1,4 +1,4 @@
-From 83ad675b9e5c85aeb5a6caebb1ba363a98eb5253 Mon Sep 17 00:00:00 2001
+From 13e546070868a2da4f2bfa4efc45131fa12cdc9b Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 28 Sep 2026 11:22:31 +0300
 Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: CPU thermal
@@ -24,7 +24,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 928 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 541be2ed0..6495b96af 100644
+index 541be2ed09..6495b96afe 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1553,3 +1553,931 @@ &usb_dp_qmpphy {

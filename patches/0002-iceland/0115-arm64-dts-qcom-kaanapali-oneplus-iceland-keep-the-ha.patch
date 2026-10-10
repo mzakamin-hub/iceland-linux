@@ -1,8 +1,8 @@
-From 49a8856b301250b4fce2a0637ee5c13f52106fbb Mon Sep 17 00:00:00 2001
+From dafa06d81f60e0241b072ecc3e91101ac2d8be4d Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 12:59:47 +0300
-Subject: [PATCH 115/116] arm64: dts: qcom: kaanapali-oneplus-iceland: keep the
- hall sensor's supply on
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: keep the hall
+ sensor's supply on
 
 The cover's hall sensor on TLMM 98 is powered from L1B. Linux never
 voted the rail on: it has no consumer, and another master's vote kept it
@@ -24,7 +24,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 7 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 816ca3b82..40492d32e 100644
+index 816ca3b822..40492d32ed 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -538,6 +538,12 @@ vreg_bob2: bob2 {

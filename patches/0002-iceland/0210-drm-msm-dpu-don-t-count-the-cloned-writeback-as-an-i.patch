@@ -1,0 +1,93 @@
+From c454cd4d45d49adb64e98bac0e1db2bdb83cacd7 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 10 Oct 2026 04:19:15 +0300
+Subject: [PATCH] drm/msm/dpu: don't count the cloned writeback as an interface
+
+In the clone mode dpu_encoder_update_topology() is called both for the
+real-time and for the writeback encoder, so topology.num_intf also
+counts the writeback. However the cloned writeback has no datapath of
+its own, it taps the mixers of the real-time encoder. Each user of
+num_intf has to compensate for that, and not all of them get it right:
+
+- dpu_crtc_get_topology() skips the "two interfaces use two mixers"
+  rule if CWB is enabled, so a dual-DSI display in the clone mode gets
+  a single mixer for its two interfaces if the mode is narrow enough;
+
+- _dpu_rm_reserve_dsc() compares num_dsc to num_intf to detect the DSC
+  merge, so it doesn't allocate a DSC pair for a single DSI interface
+  using two DSC blocks while being cloned.
+
+Count only the real-time interfaces if the CRTC is in the clone mode.
+The standalone writeback is still counted as an interface.
+
+Assisted-by: LLM
+Signed-off-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+
+[ from patchwork.kernel.org series 1178674, patch 2; not applied upstream yet ]
+[ upstream author: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>; picked for the iceland kernel q89 ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c    | 13 +++----------
+ drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c |  8 +++-----
+ 2 files changed, 6 insertions(+), 15 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
+index 42d0a529b4..828187f46e 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
+@@ -1385,12 +1385,12 @@ static struct msm_display_topology dpu_crtc_get_topology(
+ 	struct msm_display_topology topology = {0};
+ 	struct drm_encoder *drm_enc;
+ 
++	topology.cwb_enabled = drm_crtc_in_clone_mode(crtc_state);
++
+ 	drm_for_each_encoder_mask(drm_enc, crtc->dev, crtc_state->encoder_mask)
+ 		dpu_encoder_update_topology(drm_enc, &topology, crtc_state->state,
+ 					    &crtc_state->adjusted_mode);
+ 
+-	topology.cwb_enabled = drm_crtc_in_clone_mode(crtc_state);
+-
+ 	/*
+ 	 * Datapath topology selection
+ 	 *
+@@ -1404,16 +1404,9 @@ static struct msm_display_topology dpu_crtc_get_topology(
+ 	 * If DSC is enabled, use 2 LMs for 2:2:1 topology
+ 	 *
+ 	 * Add dspps to the reservation requirements if ctm or gamma_lut are requested
+-	 *
+-	 * Only hardcode num_lm to 2 for cases where num_intf == 2 and CWB is not
+-	 * enabled. This is because in cases where CWB is enabled, num_intf will
+-	 * count both the WB and real-time phys encoders.
+-	 *
+-	 * For non-DSC CWB usecases, have the num_lm be decided by the
+-	 * (mode->hdisplay > MAX_HDISPLAY_SPLIT) check.
+ 	 */
+ 
+-	if (topology.num_intf == 2 && !topology.cwb_enabled)
++	if (topology.num_intf == 2)
+ 		topology.num_lm = 2;
+ 	else if (topology.num_dsc == 2)
+ 		topology.num_lm = 2;
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+index 8df7f41811..ff417e2576 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+@@ -667,11 +667,9 @@ void dpu_encoder_update_topology(struct drm_encoder *drm_enc,
+ 	struct drm_framebuffer *fb;
+ 	struct drm_dsc_config *dsc;
+ 
+-	int i;
+-
+-	for (i = 0; i < MAX_PHYS_ENCODERS_PER_VIRTUAL; i++)
+-		if (dpu_enc->phys_encs[i])
+-			topology->num_intf++;
++	/* a cloned writeback taps the datapath of the real-time encoder */
++	if (!topology->cwb_enabled || disp_info->intf_type != INTF_WB)
++		topology->num_intf += dpu_enc->num_phys_encs;
+ 
+ 	dsc = dpu_encoder_get_dsc_config(drm_enc);
+ 
+-- 
+2.43.0
+

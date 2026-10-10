@@ -1,8 +1,8 @@
-From ec0730d48a4e4f0a0cbf7b5315cc9a63cd9d5de3 Mon Sep 17 00:00:00 2001
+From c4aa676134f22842bf4e14fb1faf324483be490c Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 16:43:16 +0300
-Subject: [PATCH 136/138] arm64: dts: qcom: kaanapali-oneplus-iceland: one bias
- setting for the thermistor pins
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: one bias setting
+ for the thermistor pins
 
 The three PMIH0108 pins that feed USB-C and charge-pump thermistors to
 the ADC carry both bias-high-impedance and bias-disable, as in the
@@ -17,7 +17,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 5 insertions(+), 4 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index ac59bcc8a..d935ba33c 100644
+index ac59bcc8ab..d935ba33c5 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1874,19 +1874,21 @@ channel@275e {

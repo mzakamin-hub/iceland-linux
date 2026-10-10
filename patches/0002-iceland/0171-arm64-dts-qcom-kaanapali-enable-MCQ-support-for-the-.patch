@@ -1,8 +1,8 @@
-From f4ca2f13e0daf7d2423418dee2407cb7b25e023d Mon Sep 17 00:00:00 2001
+From 297b3cef00086b1a10e6179e08dc500cb7484906 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 21:07:15 +0300
-Subject: [PATCH 171/174] arm64: dts: qcom: kaanapali: enable MCQ support for
- the UFS controller
+Subject: [PATCH] arm64: dts: qcom: kaanapali: enable MCQ support for the UFS
+ controller
 
 The UFS host controller of Kaanapali supports multi-circular queues,
 but its node lacks the MCQ register block, so the driver reports "MCQ
@@ -19,7 +19,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 6 insertions(+), 1 deletion(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 106eda604..987157ba0 100644
+index 106eda6048..987157ba01 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -2771,7 +2771,10 @@ ufs_mem_hc: ufs@1d84000 {

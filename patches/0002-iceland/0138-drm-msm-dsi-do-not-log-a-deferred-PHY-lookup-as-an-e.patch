@@ -1,8 +1,7 @@
-From 84a6e086f1da4298aaf4b01d3d406ed22b8972f4 Mon Sep 17 00:00:00 2001
+From cd7156cc965d85d7b6535c6e0c34ef82baf983b7 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 16:43:16 +0300
-Subject: [PATCH 138/138] drm/msm/dsi: do not log a deferred PHY lookup as an
- error
+Subject: [PATCH] drm/msm/dsi: do not log a deferred PHY lookup as an error
 
 dsi_get_phy() returns -EPROBE_DEFER while the DSI PHY driver has not
 bound yet and prints "phy driver is not ready" with DRM_DEV_ERROR. With
@@ -20,7 +19,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 5 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/dsi/dsi.c b/drivers/gpu/drm/msm/dsi/dsi.c
-index 3c9f01ed6..f0538ae21 100644
+index 3c9f01ed62..f0538ae210 100644
 --- a/drivers/gpu/drm/msm/dsi/dsi.c
 +++ b/drivers/gpu/drm/msm/dsi/dsi.c
 @@ -42,14 +42,13 @@ static int dsi_get_phy(struct msm_dsi *msm_dsi)

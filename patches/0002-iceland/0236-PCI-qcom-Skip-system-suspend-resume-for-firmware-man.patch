@@ -1,0 +1,58 @@
+From 640ca5379c0566c4f9277dc3d7c394707d752c70 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 10 Oct 2026 04:19:19 +0300
+Subject: [PATCH] PCI: qcom: Skip system suspend/resume for firmware-managed
+ PCIe
+
+For firmware-managed PCIe controllers, all resources, including clocks,
+regulators, resets, PHYs and link state, are owned and managed by
+firmware. The host driver must not attempt to manage these resources
+during system suspend or resume. Firmware will properly transition the
+devices/controller into relevant low power modes.
+
+Skip the suspend and resume operations for firmware-managed controllers.
+The associated power domain transitions are handled independently by the
+genpd framework through its own system suspend/resume callbacks, so no
+explicit action is required by the PCIe controller driver.
+
+Signed-off-by: Mrinmay Sarkar <mrinmay.sarkar@oss.qualcomm.com>
+Signed-off-by: Manivannan Sadhasivam <manivannan.sadhasivam@oss.qualcomm.com>
+Link: https://patch.msgid.link/20260831-skip_suspend-v1-1-ba2d877e22b1@oss.qualcomm.com
+
+(cherry picked from commit 89d17a6331087a76aea1a3a6c03dc45a19d306f2)
+[ upstream author: Mrinmay Sarkar <mrinmay.sarkar@oss.qualcomm.com>; picked for the iceland kernel q89 ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/pci/controller/dwc/pcie-qcom.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drivers/pci/controller/dwc/pcie-qcom.c b/drivers/pci/controller/dwc/pcie-qcom.c
+index 5a98b49aea..f47a9137c8 100644
+--- a/drivers/pci/controller/dwc/pcie-qcom.c
++++ b/drivers/pci/controller/dwc/pcie-qcom.c
+@@ -2471,6 +2471,10 @@ static int qcom_pcie_suspend_noirq(struct device *dev)
+ {
+ 	struct qcom_pcie *pcie;
+ 	int ret = 0;
++	const struct qcom_pcie_cfg *pcie_cfg = of_device_get_match_data(dev);
++
++	if (pcie_cfg && pcie_cfg->firmware_managed)
++		return 0;
+ 
+ 	pcie = dev_get_drvdata(dev);
+ 	if (!pcie)
+@@ -2532,6 +2536,10 @@ static int qcom_pcie_resume_noirq(struct device *dev)
+ {
+ 	struct qcom_pcie *pcie;
+ 	int ret;
++	const struct qcom_pcie_cfg *pcie_cfg = of_device_get_match_data(dev);
++
++	if (pcie_cfg && pcie_cfg->firmware_managed)
++		return 0;
+ 
+ 	pcie = dev_get_drvdata(dev);
+ 	if (!pcie)
+-- 
+2.43.0
+

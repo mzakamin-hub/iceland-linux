@@ -1,8 +1,8 @@
-From cf43a67c7bb0e1356150c6a13c14aae98050e9fa Mon Sep 17 00:00:00 2001
+From 54c19efdb17c4a8bb4925f427b1ec3d20a5d7e6c Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 11:21:25 +0300
-Subject: [PATCH 096/108] arm64: dts: qcom: kaanapali: add the UART of QUP
- wrapper 3 engine 4
+Subject: [PATCH] arm64: dts: qcom: kaanapali: add the UART of QUP wrapper 3
+ engine 4
 
 Serial engine 4 of QUP wrapper 3 (0x1990000) is only described as I2C
 and SPI. The OnePlus Pad 4 uses it as a two-wire UART on GPIO 22 (TX)
@@ -15,7 +15,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 30 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index d3d30e442..b1cccec41 100644
+index d3d30e4426..b1cccec413 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -2221,6 +2221,28 @@ &clk_virt SLAVE_QUP_CORE_3 QCOM_ICC_TAG_ALWAYS>,

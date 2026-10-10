@@ -1,0 +1,55 @@
+From 4f32b3cd33dd0631cc254e52776c37ee547108b1 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 10 Oct 2026 04:19:15 +0300
+Subject: [PATCH] drm/msm/dpu: enable 3D merge when there are more mixers than
+ interfaces
+
+dpu_encoder_helper_get_3d_blend_mode() enables the 3D merge only for a
+solo physical encoder driven by two mixers. This covers all the current
+topologies, but not four mixers driving two interfaces without DSC:
+each interface is then fed by a pair of mixers, which has to be merged
+too, while the physical encoders have the master and slave roles. The
+3D mux would stay disabled and each interface would output the data of
+a single mixer.
+
+Enable the 3D merge whenever there are more mixers than interfaces,
+unless the DSC merge is used. Nothing changes for the existing
+topologies.
+
+Assisted-by: LLM
+Signed-off-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+
+[ from patchwork.kernel.org series 1178674, patch 4; not applied upstream yet ]
+[ upstream author: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>; picked for the iceland kernel q89 ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h
+index 61b22d9494..d24e39597f 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h
+@@ -294,15 +294,16 @@ static inline enum dpu_3d_blend_mode dpu_encoder_helper_get_3d_blend_mode(
+ 		struct dpu_encoder_phys *phys_enc)
+ {
+ 	struct dpu_crtc_state *dpu_cstate;
++	unsigned int num_intf;
+ 
+ 	if (!phys_enc || phys_enc->enable_state == DPU_ENC_DISABLING)
+ 		return BLEND_3D_NONE;
+ 
+ 	dpu_cstate = to_dpu_crtc_state(phys_enc->parent->crtc->state);
++	num_intf = phys_enc->split_role == ENC_ROLE_SOLO ? 1 : 2;
+ 
+ 	/* Use merge_3d unless DSC MERGE topology is used */
+-	if (phys_enc->split_role == ENC_ROLE_SOLO &&
+-	    dpu_cstate->num_mixers == CRTC_DUAL_MIXERS &&
++	if (dpu_cstate->num_mixers > num_intf &&
+ 	    !dpu_encoder_use_dsc_merge(phys_enc->parent))
+ 		return BLEND_3D_H_ROW_INT;
+ 
+-- 
+2.43.0
+

@@ -1,8 +1,7 @@
-From be707c582810ea6528f71f1f0d0653a5dcb305b4 Mon Sep 17 00:00:00 2001
+From 035110837d94d68cac3e3f6925f8e284d26586a1 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Tue, 29 Sep 2026 12:34:40 +0000
-Subject: [PATCH 47/50] ASoC: codecs: tfa9865: set MANSCONF after every
- power-up
+Subject: [PATCH] ASoC: codecs: tfa9865: set MANSCONF after every power-up
 
 The amplifier's manager waits in state 1 ("wait for source settings")
 until MANSCONF (SYS_CONTROL1 bit 2, "I2C configured") is set. The board
@@ -21,7 +20,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 25 insertions(+), 1 deletion(-)
 
 diff --git a/sound/soc/codecs/tfa9865.c b/sound/soc/codecs/tfa9865.c
-index 76a31369f..906dfc2d4 100644
+index 76a31369f4..906dfc2d40 100644
 --- a/sound/soc/codecs/tfa9865.c
 +++ b/sound/soc/codecs/tfa9865.c
 @@ -38,6 +38,9 @@

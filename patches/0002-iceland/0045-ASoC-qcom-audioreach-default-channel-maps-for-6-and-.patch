@@ -1,8 +1,8 @@
-From b4aaf55d2f20034c3a5d3a99f33e010914ce83c0 Mon Sep 17 00:00:00 2001
+From 46e0e5fe9523ac21abc3cc02e4024f0f8e7560bc Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Tue, 29 Sep 2026 07:52:58 +0300
-Subject: [PATCH 45/45] ASoC: qcom: audioreach: default channel maps for 6 and
- 8 channels
+Subject: [PATCH] ASoC: qcom: audioreach: default channel maps for 6 and 8
+ channels
 
 audioreach_set_default_channel_mapping() knew mono, stereo and four channels; a back end with six or eight
 channels (a TDM port with one channel per slot) sent an all-zero channel map in its endpoint media format
@@ -15,7 +15,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 16 insertions(+)
 
 diff --git a/sound/soc/qcom/qdsp6/audioreach.c b/sound/soc/qcom/qdsp6/audioreach.c
-index f4deb977d..75b344b51 100644
+index f4deb977dc..75b344b518 100644
 --- a/sound/soc/qcom/qdsp6/audioreach.c
 +++ b/sound/soc/qcom/qdsp6/audioreach.c
 @@ -325,6 +325,22 @@ void audioreach_set_default_channel_mapping(u8 *ch_map, int num_channels)

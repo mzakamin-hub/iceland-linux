@@ -1,7 +1,7 @@
-From 62903522ac977b061b9e04c1fce7bc732f7c40bc Mon Sep 17 00:00:00 2001
+From 5c3c297cd74c1e470e5f592fa3cf90744c3007fd Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 16:43:14 +0300
-Subject: [PATCH 129/138] dt-bindings: eeprom: at24: add an optional I/O supply
+Subject: [PATCH] dt-bindings: eeprom: at24: add an optional I/O supply
 
 Some boards need a second rail switched on before the EEPROM can be
 reached, for example the rail that feeds the I2C pull-ups of a camera
@@ -15,7 +15,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 7 insertions(+)
 
 diff --git a/Documentation/devicetree/bindings/eeprom/at24.yaml b/Documentation/devicetree/bindings/eeprom/at24.yaml
-index ef88f4692..b5d2cd9c6 100644
+index ef88f46928..b5d2cd9c6f 100644
 --- a/Documentation/devicetree/bindings/eeprom/at24.yaml
 +++ b/Documentation/devicetree/bindings/eeprom/at24.yaml
 @@ -213,6 +213,13 @@ properties:

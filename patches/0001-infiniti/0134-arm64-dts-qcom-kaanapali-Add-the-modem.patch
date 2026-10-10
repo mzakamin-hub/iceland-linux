@@ -1,7 +1,7 @@
-From edb39d1c968e68ac6d72ef29e9000b8b437cc291 Mon Sep 17 00:00:00 2001
+From 07906d7fa93b75ccf4508c4d3e37477828bfc52b Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Fri, 25 Sep 2026 02:45:01 -0700
-Subject: [PATCH 134/138] arm64: dts: qcom: kaanapali: Add the modem
+Subject: [PATCH] arm64: dts: qcom: kaanapali: Add the modem
 
 Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
 ---
@@ -9,7 +9,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 90 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 835e95ec2caa..f94f5d5ffdc5 100644
+index 835e95ec2c..f94f5d5ffd 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -513,6 +513,43 @@ smp2p_cdsp_in: slave-kernel {
@@ -116,3 +116,6 @@ index 835e95ec2caa..f94f5d5ffdc5 100644
  		remoteproc_adsp: remoteproc@6800000 {
  			compatible = "qcom,kaanapali-adsp-pas", "qcom,sm8550-adsp-pas";
  			reg = <0x0 0x06800000 0x0 0x10000>;
+-- 
+2.43.0
+

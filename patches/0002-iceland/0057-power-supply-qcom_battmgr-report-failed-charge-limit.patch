@@ -1,7 +1,7 @@
-From c7cc720d12b3b49ea90495cefc2c98b1ea21f644 Mon Sep 17 00:00:00 2001
+From 231ddc612ada417328596a4c84ec3a8ae39a99d8 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Wed, 30 Sep 2026 01:03:34 +0300
-Subject: [PATCH 57/57] power: supply: qcom_battmgr: report failed charge limit
+Subject: [PATCH] power: supply: qcom_battmgr: report failed charge limit
  requests
 
 Both charge control setters kept the cached thresholds unchanged when
@@ -16,7 +16,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 2b3043640..4546a9e86 100644
+index 2b30436404..4546a9e86f 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -862,7 +862,7 @@ static int qcom_battmgr_set_charge_start_threshold(struct qcom_battmgr *battmgr,

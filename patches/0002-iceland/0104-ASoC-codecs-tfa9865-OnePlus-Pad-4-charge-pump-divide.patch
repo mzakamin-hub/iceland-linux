@@ -1,8 +1,8 @@
-From 3d8d2386c2077502be4642690850ae851626c4c4 Mon Sep 17 00:00:00 2001
+From 1c829e2dddd2009e1c3979b14fd81422ea33252e Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 11:21:27 +0300
-Subject: [PATCH 104/108] ASoC: codecs: tfa9865: OnePlus Pad 4: charge-pump
- divider and sense mapping from stock
+Subject: [PATCH] ASoC: codecs: tfa9865: OnePlus Pad 4: charge-pump divider and
+ sense mapping from stock
 
 Two registers of the Pad 4's six amplifiers differed from the stock
 container: the charge-pump clock divider in follower mode (0x62 bits 3:0:
@@ -20,7 +20,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 8 insertions(+), 4 deletions(-)
 
 diff --git a/sound/soc/codecs/tfa9865.c b/sound/soc/codecs/tfa9865.c
-index 906dfc2d4..e77e69704 100644
+index 906dfc2d40..e77e697048 100644
 --- a/sound/soc/codecs/tfa9865.c
 +++ b/sound/soc/codecs/tfa9865.c
 @@ -114,7 +114,8 @@ static const struct tfa9865_reg_data tfa9865_iceland_regs_0__34_36[] = {

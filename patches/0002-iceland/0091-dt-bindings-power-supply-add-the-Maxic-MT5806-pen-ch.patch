@@ -1,8 +1,7 @@
-From db4dbe43676bde0e74153f32d97bed376feb35cb Mon Sep 17 00:00:00 2001
+From 8f6c8a8b2c80004e38fc5f7eea376f8046c177d0 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 10:38:15 +0300
-Subject: [PATCH 91/93] dt-bindings: power: supply: add the Maxic MT5806 pen
- charger
+Subject: [PATCH] dt-bindings: power: supply: add the Maxic MT5806 pen charger
 
 The MT5806 is a wireless power transmitter of Maxic Technology. The
 OnePlus Pad 4 uses it to charge the pen on the magnet side of the
@@ -23,7 +22,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 
 diff --git a/Documentation/devicetree/bindings/power/supply/maxic,mt5806.yaml b/Documentation/devicetree/bindings/power/supply/maxic,mt5806.yaml
 new file mode 100644
-index 000000000..98e8fcd54
+index 0000000000..98e8fcd540
 --- /dev/null
 +++ b/Documentation/devicetree/bindings/power/supply/maxic,mt5806.yaml
 @@ -0,0 +1,91 @@
@@ -119,7 +118,7 @@ index 000000000..98e8fcd54
 +        };
 +    };
 diff --git a/Documentation/devicetree/bindings/vendor-prefixes.yaml b/Documentation/devicetree/bindings/vendor-prefixes.yaml
-index ba2002969..ab7759100 100644
+index ba20029693..ab7759100f 100644
 --- a/Documentation/devicetree/bindings/vendor-prefixes.yaml
 +++ b/Documentation/devicetree/bindings/vendor-prefixes.yaml
 @@ -1033,6 +1033,8 @@ patternProperties:

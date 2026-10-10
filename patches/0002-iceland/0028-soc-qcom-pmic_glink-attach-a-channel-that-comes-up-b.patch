@@ -1,4 +1,4 @@
-From faf4a2f5ea1c0661bc3dfa11644af47a144e187e Mon Sep 17 00:00:00 2001
+From 1cd7adf98c0a28542dbf4c0028514263ee78cc80 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 28 Sep 2026 16:43:27 +0300
 Subject: [PATCH] soc: qcom: pmic_glink: attach a channel that comes up before
@@ -29,7 +29,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 33 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/soc/qcom/pmic_glink.c b/drivers/soc/qcom/pmic_glink.c
-index 304226157..cf6a8ffbc 100644
+index 3042261578..cf6a8ffbc2 100644
 --- a/drivers/soc/qcom/pmic_glink.c
 +++ b/drivers/soc/qcom/pmic_glink.c
 @@ -53,6 +53,8 @@ struct pmic_glink {

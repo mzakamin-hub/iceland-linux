@@ -1,8 +1,8 @@
-From 0446d5d4723b582a38f0a63471bf1be5fe1dec22 Mon Sep 17 00:00:00 2001
+From af557c767aa5ecbd1b00a888d88e1c237adb9a59 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Thu, 24 Sep 2026 19:04:22 -0700
-Subject: [PATCH 088/138] phy: qcom: qmp-combo: Keep the DP lanes of a
- USB-capable DP sink
+Subject: [PATCH] phy: qcom: qmp-combo: Keep the DP lanes of a USB-capable DP
+ sink
 
 UCSI reports TYPEC_STATE_USB after DP alt mode is set up for such sinks.
 Ignore it until the port leaves DP alt mode.
@@ -13,7 +13,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 8 insertions(+)
 
 diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
-index 30da0ee55f0d..7381d748377e 100644
+index 30da0ee55f..7381d74837 100644
 --- a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
 +++ b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
 @@ -2597,6 +2597,7 @@ struct qmp_combo {
@@ -46,3 +46,6 @@ index 30da0ee55f0d..7381d748377e 100644
  		/* No DP SVID => don't care, assume it's just USB3 */
  		new_mode = QMPPHY_MODE_USB3_ONLY;
  	}
+-- 
+2.43.0
+

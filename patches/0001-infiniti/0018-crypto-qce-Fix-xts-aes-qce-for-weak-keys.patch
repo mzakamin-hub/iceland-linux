@@ -1,7 +1,7 @@
-From a8534e0288b982a4ff1b2c41696262ea260d6348 Mon Sep 17 00:00:00 2001
+From cebf4c7689e18dc5ebee039070e41c33fa13389d Mon Sep 17 00:00:00 2001
 From: Kuldeep Singh <kuldeep.singh@oss.qualcomm.com>
 Date: Tue, 22 Sep 2026 14:57:21 +0200
-Subject: [PATCH 018/138] crypto: qce - Fix xts-aes-qce for weak keys
+Subject: [PATCH] crypto: qce - Fix xts-aes-qce for weak keys
 
 The QCE hardware does not support AES XTS mode when key1 and key2 are
 equal. The driver was handling this by unconditionally rejecting the
@@ -39,7 +39,7 @@ Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
  2 files changed, 13 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/crypto/qce/cipher.h b/drivers/crypto/qce/cipher.h
-index 850f257d00f3..daea07551118 100644
+index 850f257d00..daea075511 100644
 --- a/drivers/crypto/qce/cipher.h
 +++ b/drivers/crypto/qce/cipher.h
 @@ -14,6 +14,7 @@
@@ -51,7 +51,7 @@ index 850f257d00f3..daea07551118 100644
  };
  
 diff --git a/drivers/crypto/qce/skcipher.c b/drivers/crypto/qce/skcipher.c
-index 690b0eb57445..b80e579df621 100644
+index 690b0eb574..b80e579df6 100644
 --- a/drivers/crypto/qce/skcipher.c
 +++ b/drivers/crypto/qce/skcipher.c
 @@ -12,6 +12,7 @@
@@ -102,3 +102,6 @@ index 690b0eb57445..b80e579df621 100644
  	    sg_nents_for_len(req->src, req->cryptlen) > 1 ||
  	    sg_nents_for_len(req->dst, req->cryptlen) > 1)) {
  		skcipher_request_set_tfm(&rctx->fallback_req, ctx->fallback);
+-- 
+2.43.0
+

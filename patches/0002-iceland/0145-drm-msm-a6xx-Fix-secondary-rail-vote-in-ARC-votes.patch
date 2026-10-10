@@ -1,7 +1,7 @@
-From f01fbfe1a3a9432d7c5585d116f5cb2a1f1e7b8c Mon Sep 17 00:00:00 2001
+From 6449153aeae1052732b62ee683e91cd4099e33e3 Mon Sep 17 00:00:00 2001
 From: Akhil P Oommen <akhilpo@oss.qualcomm.com>
 Date: Wed, 23 Sep 2026 15:55:42 +0530
-Subject: [PATCH 145/162] drm/msm/a6xx: Fix secondary rail vote in ARC votes
+Subject: [PATCH] drm/msm/a6xx: Fix secondary rail vote in ARC votes
 
 Using the requested level can pick a secondary corner lower than the one
 required to support the chosen primary corner, under-voting the
@@ -22,7 +22,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 5 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
-index baf77a620..d07264609 100644
+index baf77a6205..d072646093 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 @@ -1765,10 +1765,14 @@ static int a6xx_gmu_rpmh_arc_votes_init(struct device *dev, u32 *votes,

@@ -1,7 +1,7 @@
-From 3a94a692accc00059e3e9b19b41d744686137b7a Mon Sep 17 00:00:00 2001
+From 82f7c31179833e778ac05ac30d861152e0d40d62 Mon Sep 17 00:00:00 2001
 From: Akhil P Oommen <akhilpo@oss.qualcomm.com>
 Date: Wed, 23 Sep 2026 15:55:46 +0530
-Subject: [PATCH 149/162] drm/msm/a6xx: Clamp MX dependency vote
+Subject: [PATCH] drm/msm/a6xx: Clamp MX dependency vote
 
 In some chipsets like Hawi, the GPU arc level can exceed the highest
 available MX corner. In that case, use the highest non-zero MX vote instead
@@ -20,7 +20,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
-index 2b66d6c7f..14d422d7a 100644
+index 2b66d6c7fd..14d422d7ab 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 @@ -1833,7 +1833,7 @@ static int a6xx_gmu_rpmh_dep_votes_init(struct device *dev, u32 *votes,

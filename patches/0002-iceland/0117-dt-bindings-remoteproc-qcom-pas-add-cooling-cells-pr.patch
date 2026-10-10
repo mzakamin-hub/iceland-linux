@@ -1,7 +1,7 @@
-From 0c4a48d4f65b52a367f51d32b5d06d023e66f0bb Mon Sep 17 00:00:00 2001
+From 52ac8f1a6e0a26cc3aa4c4aa5984408dfb25d8d8 Mon Sep 17 00:00:00 2001
 From: Gaurav Kohli <gaurav.kohli@oss.qualcomm.com>
 Date: Fri, 2 Oct 2026 16:19:50 +0300
-Subject: [PATCH 117/124] dt-bindings: remoteproc: qcom,pas: add #cooling-cells
+Subject: [PATCH] dt-bindings: remoteproc: qcom,pas: add #cooling-cells
  property
 
 Document the optional #cooling-cells property for Qualcomm PAS
@@ -45,7 +45,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  create mode 100644 include/dt-bindings/thermal/qcom,pas.h
 
 diff --git a/Documentation/devicetree/bindings/remoteproc/qcom,pas-common.yaml b/Documentation/devicetree/bindings/remoteproc/qcom,pas-common.yaml
-index 11faf655f..f75cab6b4 100644
+index 11faf655f5..f75cab6b4e 100644
 --- a/Documentation/devicetree/bindings/remoteproc/qcom,pas-common.yaml
 +++ b/Documentation/devicetree/bindings/remoteproc/qcom,pas-common.yaml
 @@ -77,6 +77,15 @@ properties:
@@ -65,7 +65,7 @@ index 11faf655f..f75cab6b4 100644
      $ref: /schemas/remoteproc/qcom,glink-edge.yaml#
      description:
 diff --git a/MAINTAINERS b/MAINTAINERS
-index e5b1b2a67..ef8c635e8 100644
+index 438f7e659e..dd1f6d9f6d 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
 @@ -3454,6 +3454,7 @@ F:	drivers/watchdog/gunyah_wdt.c
@@ -78,7 +78,7 @@ index e5b1b2a67..ef8c635e8 100644
  F:	include/soc/qcom/
 diff --git a/include/dt-bindings/thermal/qcom,pas.h b/include/dt-bindings/thermal/qcom,pas.h
 new file mode 100644
-index 000000000..f603bddef
+index 0000000000..f603bddef9
 --- /dev/null
 +++ b/include/dt-bindings/thermal/qcom,pas.h
 @@ -0,0 +1,20 @@

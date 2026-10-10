@@ -1,8 +1,8 @@
-From b0aa7cbcca28c62f938a6460f11cd036996eebd2 Mon Sep 17 00:00:00 2001
+From 013d00d5454994f6839939bb225b4924d2fbeaee Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 09:07:58 +0300
-Subject: [PATCH 84/89] dt-bindings: regulator: qcom,rpmh-regulator: add the
- PMH0101 level shifters
+Subject: [PATCH] dt-bindings: regulator: qcom,rpmh-regulator: add the PMH0101
+ level shifters
 
 The PMH0101 has four bidirectional level shifters between pairs of its
 GPIO pads (11/12, 13/14, 15/16, 17/18). Their enable is an RPMh XOB
@@ -16,7 +16,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml b/Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
-index eed2ce7fa..7bca7f176 100644
+index eed2ce7fa8..7bca7f176e 100644
 --- a/Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
 +++ b/Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
 @@ -53,7 +53,7 @@ description: |

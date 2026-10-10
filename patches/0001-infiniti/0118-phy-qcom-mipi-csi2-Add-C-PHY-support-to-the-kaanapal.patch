@@ -1,8 +1,8 @@
-From d736c2a30e650c311543f4e260a2561c48fc14e4 Mon Sep 17 00:00:00 2001
+From ceee91bb0c626e8921b331b83413d54a07329472 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Thu, 24 Sep 2026 13:06:06 -0700
-Subject: [PATCH 118/138] phy: qcom-mipi-csi2: Add C-PHY support to the
- kaanapali CSIPHY
+Subject: [PATCH] phy: qcom-mipi-csi2: Add C-PHY support to the kaanapali
+ CSIPHY
 
 The PHY type comes from the bus-type of the PHY's input endpoint.
 
@@ -14,7 +14,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  3 files changed, 209 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c b/drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c
-index 658a39463104..1e00dae17ef1 100644
+index 658a394631..1e00dae17e 100644
 --- a/drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c
 +++ b/drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c
 @@ -9,7 +9,9 @@
@@ -232,7 +232,7 @@ index 658a39463104..1e00dae17ef1 100644
  		.common_status_offset = 0x138,
  	},
 diff --git a/drivers/phy/qualcomm/phy-qcom-mipi-csi2-core.c b/drivers/phy/qualcomm/phy-qcom-mipi-csi2-core.c
-index aff9e66f0352..2baaafb0fff0 100644
+index aff9e66f03..2baaafb0ff 100644
 --- a/drivers/phy/qualcomm/phy-qcom-mipi-csi2-core.c
 +++ b/drivers/phy/qualcomm/phy-qcom-mipi-csi2-core.c
 @@ -124,6 +124,10 @@ static int phy_qcom_mipi_csi2_set_mode(struct phy *phy,
@@ -312,7 +312,7 @@ index aff9e66f0352..2baaafb0fff0 100644
  		csi2phy->stream_cfg.lane_cfg.data[i].pol = lane_polarities[i + 1];
  	}
 diff --git a/drivers/phy/qualcomm/phy-qcom-mipi-csi2.h b/drivers/phy/qualcomm/phy-qcom-mipi-csi2.h
-index 2355a1db9b94..a1d83ef906f2 100644
+index 2355a1db9b..a1d83ef906 100644
 --- a/drivers/phy/qualcomm/phy-qcom-mipi-csi2.h
 +++ b/drivers/phy/qualcomm/phy-qcom-mipi-csi2.h
 @@ -11,6 +11,7 @@
@@ -358,3 +358,6 @@ index 2355a1db9b94..a1d83ef906f2 100644
  	const u32 common_regs_offset;
  	const u32 common_status_offset;
  };
+-- 
+2.43.0
+

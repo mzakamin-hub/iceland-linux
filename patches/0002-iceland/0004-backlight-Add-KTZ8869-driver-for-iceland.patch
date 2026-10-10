@@ -1,7 +1,7 @@
-From 67fa216a7d1cb88f8f596fa547f80d971d8fb17d Mon Sep 17 00:00:00 2001
+From cf676c8a697463b6a7d1167b9c7ee1268f1e4710 Mon Sep 17 00:00:00 2001
 From: map220v <map220v300@gmail.com>
 Date: Mon, 8 Jun 2026 10:01:35 +0000
-Subject: [PATCH 04/20] backlight: Add KTZ8869 driver for iceland
+Subject: [PATCH] backlight: Add KTZ8869 driver for iceland
 
 (cherry picked from commit a7bfa30a1b8ffbd986accd8601580102ba28c0b2)
 ---
@@ -12,7 +12,7 @@ Subject: [PATCH 04/20] backlight: Add KTZ8869 driver for iceland
  create mode 100644 drivers/video/backlight/ktz8869_iceland.c
 
 diff --git a/drivers/video/backlight/Kconfig b/drivers/video/backlight/Kconfig
-index dbf4ca23a9b6..8718a2a4590c 100644
+index dbf4ca23a9..8718a2a459 100644
 --- a/drivers/video/backlight/Kconfig
 +++ b/drivers/video/backlight/Kconfig
 @@ -207,6 +207,14 @@ config BACKLIGHT_KTZ8866
@@ -31,7 +31,7 @@ index dbf4ca23a9b6..8718a2a4590c 100644
  	tristate "Backlight Driver for Silergy SY7758"
  	depends on I2C
 diff --git a/drivers/video/backlight/Makefile b/drivers/video/backlight/Makefile
-index 34469711c6cd..b473c840f9c7 100644
+index 34469711c6..b473c840f9 100644
 --- a/drivers/video/backlight/Makefile
 +++ b/drivers/video/backlight/Makefile
 @@ -39,6 +39,7 @@ obj-$(CONFIG_BACKLIGHT_IPAQ_MICRO)	+= ipaq_micro_bl.o
@@ -44,7 +44,7 @@ index 34469711c6cd..b473c840f9c7 100644
  obj-$(CONFIG_BACKLIGHT_LM3630A)		+= lm3630a_bl.o
 diff --git a/drivers/video/backlight/ktz8869_iceland.c b/drivers/video/backlight/ktz8869_iceland.c
 new file mode 100644
-index 000000000000..52532a3034cc
+index 0000000000..52532a3034
 --- /dev/null
 +++ b/drivers/video/backlight/ktz8869_iceland.c
 @@ -0,0 +1,211 @@
@@ -259,3 +259,6 @@ index 000000000000..52532a3034cc
 +MODULE_DESCRIPTION("Kinetic KTZ8869 Backlight Driver");
 +MODULE_AUTHOR("map220v <map220v300@gmail.com>");
 +MODULE_LICENSE("GPL");
+-- 
+2.43.0
+

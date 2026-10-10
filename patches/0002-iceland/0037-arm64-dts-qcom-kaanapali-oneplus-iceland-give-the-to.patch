@@ -1,7 +1,7 @@
-From 22d0d9742085f67df04604709c3f87c475808c23 Mon Sep 17 00:00:00 2001
+From d766f0c25282aab55bba2ddf44cc0699b928420c Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 28 Sep 2026 22:28:27 +0300
-Subject: [PATCH 37/37] arm64: dts: qcom: kaanapali-oneplus-iceland: give the
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: give the
  touchscreen its physical size
 
 The panel's active area is 274 x 193 mm (the DSI connector reports it); with "touchscreen-x-mm" and
@@ -15,7 +15,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 4 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 792664acc..5055138d8 100644
+index 792664acc9..5055138d83 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1396,6 +1396,10 @@ touchscreen@0 {

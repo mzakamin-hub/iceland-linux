@@ -1,8 +1,8 @@
-From 042c5c249b3ea374da59804d358749fb6318b5ad Mon Sep 17 00:00:00 2001
+From 78c6d8b8d74848263ac1c54e7e713fa4daa8b611 Mon Sep 17 00:00:00 2001
 From: Baochen Qiang <baochen.qiang@oss.qualcomm.com>
 Date: Wed, 29 Jul 2026 15:18:11 +0800
-Subject: [PATCH 139/162] wifi: ath12k: signal regd update completion when reg
- event is dropped
+Subject: [PATCH] wifi: ath12k: signal regd update completion when reg event is
+ dropped
 
 During driver bring-up, ath12k_mac_hw_register() reinitializes
 ar->regd_update_completed and sends a set current country command to
@@ -42,7 +42,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 9 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/wmi.c b/drivers/net/wireless/ath/ath12k/wmi.c
-index b8768e7e8..c8691621d 100644
+index b8768e7e8b..c8691621d5 100644
 --- a/drivers/net/wireless/ath/ath12k/wmi.c
 +++ b/drivers/net/wireless/ath/ath12k/wmi.c
 @@ -7011,6 +7011,14 @@ static int ath12k_reg_chan_list_event(struct ath12k_base *ab, struct sk_buff *sk

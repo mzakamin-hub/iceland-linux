@@ -1,8 +1,7 @@
-From fbbd0dd898f271b09c06695d781bc914f8290530 Mon Sep 17 00:00:00 2001
+From 2b673769863763078197f8bd14ff3848b1c369a7 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Thu, 24 Sep 2026 02:49:05 -0700
-Subject: [PATCH 073/138] regulator: qcom-rpmh: Terminate the PM8010 regulator
- table
+Subject: [PATCH] regulator: qcom-rpmh: Terminate the PM8010 regulator table
 
 rpmh_regulator_init_vreg() walks the table until a NULL name.
 
@@ -12,7 +11,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/regulator/qcom-rpmh-regulator.c b/drivers/regulator/qcom-rpmh-regulator.c
-index 25c14de3cd8b..67a3fe5e2e46 100644
+index 25c14de3cd..67a3fe5e2e 100644
 --- a/drivers/regulator/qcom-rpmh-regulator.c
 +++ b/drivers/regulator/qcom-rpmh-regulator.c
 @@ -1534,6 +1534,7 @@ static const struct rpmh_vreg_init_data pm8010_vreg_data[] = {
@@ -23,3 +22,6 @@ index 25c14de3cd8b..67a3fe5e2e46 100644
  };
  
  static const struct rpmh_vreg_init_data pm6150_vreg_data[] = {
+-- 
+2.43.0
+

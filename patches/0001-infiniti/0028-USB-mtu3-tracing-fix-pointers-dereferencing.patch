@@ -1,7 +1,7 @@
-From 20169f14a6e39856102bec39e22160ac35de016e Mon Sep 17 00:00:00 2001
+From 8caf93519331ba3aa8b92560391084de77af4e20 Mon Sep 17 00:00:00 2001
 From: Marek Szyprowski <m.szyprowski@samsung.com>
 Date: Tue, 15 Sep 2026 16:35:05 +0200
-Subject: [PATCH 028/138] USB: mtu3: tracing: fix pointers dereferencing
+Subject: [PATCH] USB: mtu3: tracing: fix pointers dereferencing
 
 Commit b5cc230af5e5 ("tracing: Warn when an event dereferences a pointer
 in TP_printk()") added a warning when printing an event dereferences
@@ -21,7 +21,7 @@ Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/usb/mtu3/mtu3_trace.h b/drivers/usb/mtu3/mtu3_trace.h
-index 89870175d635..b24c6411a8cf 100644
+index 89870175d6..b24c6411a8 100644
 --- a/drivers/usb/mtu3/mtu3_trace.h
 +++ b/drivers/usb/mtu3/mtu3_trace.h
 @@ -224,6 +224,7 @@ DECLARE_EVENT_CLASS(mtu3_log_ep,
@@ -47,3 +47,6 @@ index 89870175d635..b24c6411a8cf 100644
  		__entry->flags & MTU3_EP_ENABLED ? 'E' : 'e',
  		__entry->flags & MTU3_EP_STALL ? 'S' : 's',
  		__entry->flags & MTU3_EP_WEDGE ? 'W' : 'w',
+-- 
+2.43.0
+

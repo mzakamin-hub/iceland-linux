@@ -1,7 +1,7 @@
-From 5f3b9f1ebb8131f7b8a76325cd9c87616091f2eb Mon Sep 17 00:00:00 2001
+From 9afe9582f3d9206a4b7d2f7fc143e243e6c0a5ce Mon Sep 17 00:00:00 2001
 From: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
 Date: Tue, 15 Sep 2026 03:09:58 -0700
-Subject: [PATCH 048/138] media: qcom: camss: Add Kaanapali compatible
+Subject: [PATCH] media: qcom: camss: Add Kaanapali compatible
 
 Add CAMSS_KAANAPALI enum, Kaanapali compatible and Kaanapali CAMSS driver
 private data, the private data just include some basic information
@@ -17,7 +17,7 @@ Reviewed-by: Loic Poulain <loic.poulain@oss.qualcomm.com>
  2 files changed, 23 insertions(+)
 
 diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
-index 6f58e729eace..7e53097a0f68 100644
+index 6f58e729ea..7e53097a0f 100644
 --- a/drivers/media/platform/qcom/camss/camss.c
 +++ b/drivers/media/platform/qcom/camss/camss.c
 @@ -34,6 +34,20 @@
@@ -64,7 +64,7 @@ index 6f58e729eace..7e53097a0f68 100644
  	{ .compatible = "qcom,msm8939-camss", .data = &msm8939_resources },
  	{ .compatible = "qcom,msm8953-camss", .data = &msm8953_resources },
 diff --git a/drivers/media/platform/qcom/camss/camss.h b/drivers/media/platform/qcom/camss/camss.h
-index ba3d51d9c0bf..fadba57c5efa 100644
+index ba3d51d9c0..fadba57c5e 100644
 --- a/drivers/media/platform/qcom/camss/camss.h
 +++ b/drivers/media/platform/qcom/camss/camss.h
 @@ -96,6 +96,7 @@ enum camss_version {
@@ -75,3 +75,6 @@ index ba3d51d9c0bf..fadba57c5efa 100644
  	CAMSS_X1E80100,
  };
  
+-- 
+2.43.0
+

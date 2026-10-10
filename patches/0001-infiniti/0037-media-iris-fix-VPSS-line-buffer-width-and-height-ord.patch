@@ -1,8 +1,7 @@
-From 4e7cad6046fe72826baefcd6d8a30d09ac2898a2 Mon Sep 17 00:00:00 2001
+From dd0e1546f2616a449240e80bf9fcb25489618dbd Mon Sep 17 00:00:00 2001
 From: Wangao Wang <wangao.wang@oss.qualcomm.com>
 Date: Tue, 22 Sep 2026 11:24:48 +0800
-Subject: [PATCH 037/138] media: iris: fix VPSS line buffer width and height
- order
+Subject: [PATCH] media: iris: fix VPSS line buffer width and height order
 
 size_vpss_line_buf_vpu33() expects (num_pipes, height, width) but was
 called with width and height swapped, miscalculating VPSS line buffer
@@ -19,7 +18,7 @@ Reviewed-by: Bryan O'Donoghue <bryan.odonoghue@linaro.org>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
-index 368e157f2ef7..2d821f988c5f 100644
+index 368e157f2e..2d821f988c 100644
 --- a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
 +++ b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
 @@ -2107,8 +2107,8 @@ static u32 hfi_vpu4x_buffer_line_enc(u32 frame_width, u32 frame_height,
@@ -33,3 +32,6 @@ index 368e157f2ef7..2d821f988c5f 100644
  
  	return se_lb_size + te_lb_size + fe_lb_size + md_lb_size + dma_opb_lb_size +
  		dse_lb_size + size_vpss_lb_enc;
+-- 
+2.43.0
+

@@ -1,8 +1,8 @@
-From cc3ade96f06d3dc63b149496d20979e2e86b63cf Mon Sep 17 00:00:00 2001
+From 242d7fde967b4c08bb57b70bfa8299cfb15c3c22 Mon Sep 17 00:00:00 2001
 From: Qiang Yu <qiang.yu@oss.qualcomm.com>
 Date: Tue, 14 Jul 2026 23:23:13 -0700
-Subject: [PATCH 026/138] clk: qcom: gcc: Set
- FORCE_MEM_CORE_ON/FORCE_PERIPH_CORE_ON for PCIe pipe clocks
+Subject: [PATCH] clk: qcom: gcc: Set FORCE_MEM_CORE_ON/FORCE_PERIPH_CORE_ON
+ for PCIe pipe clocks
 
 Setting FORCE_MEM_CORE_ON and FORCE_PERIPH_CORE_ON for the PCIe PIPE
 clocks so that the inbound data path works correctly.
@@ -26,7 +26,7 @@ Link: https://lore.kernel.org/r/20260714-mem_on-v1-1-f5bfb6def0a1@oss.qualcomm.c
  4 files changed, 30 insertions(+)
 
 diff --git a/drivers/clk/qcom/gcc-glymur.c b/drivers/clk/qcom/gcc-glymur.c
-index 2ee4820b6fdf..66ba6b811d4c 100644
+index 2ee4820b6f..66ba6b811d 100644
 --- a/drivers/clk/qcom/gcc-glymur.c
 +++ b/drivers/clk/qcom/gcc-glymur.c
 @@ -8530,6 +8530,17 @@ static void clk_glymur_regs_configure(struct device *dev, struct regmap *regmap)
@@ -48,7 +48,7 @@ index 2ee4820b6fdf..66ba6b811d4c 100644
  
  static const struct qcom_cc_driver_data gcc_glymur_driver_data = {
 diff --git a/drivers/clk/qcom/gcc-kaanapali.c b/drivers/clk/qcom/gcc-kaanapali.c
-index 5bcbcd178657..0fbf54e7777f 100644
+index 5bcbcd1786..0fbf54e777 100644
 --- a/drivers/clk/qcom/gcc-kaanapali.c
 +++ b/drivers/clk/qcom/gcc-kaanapali.c
 @@ -3484,6 +3484,9 @@ static void clk_kaanapali_regs_configure(struct device *dev, struct regmap *regm
@@ -62,7 +62,7 @@ index 5bcbcd178657..0fbf54e7777f 100644
  
  static const struct qcom_cc_driver_data gcc_kaanapali_driver_data = {
 diff --git a/drivers/clk/qcom/gcc-nord.c b/drivers/clk/qcom/gcc-nord.c
-index 5c9d25f53a6d..0066f9b1586f 100644
+index 5c9d25f53a..0066f9b158 100644
 --- a/drivers/clk/qcom/gcc-nord.c
 +++ b/drivers/clk/qcom/gcc-nord.c
 @@ -1824,11 +1824,24 @@ static const u32 gcc_nord_critical_cbcrs[] = {
@@ -91,7 +91,7 @@ index 5c9d25f53a6d..0066f9b1586f 100644
  
  static const struct qcom_cc_desc gcc_nord_desc = {
 diff --git a/drivers/clk/qcom/gcc-qdu1000.c b/drivers/clk/qcom/gcc-qdu1000.c
-index 915bb9b4ff81..18ed351f2a16 100644
+index 915bb9b4ff..18ed351f2a 100644
 --- a/drivers/clk/qcom/gcc-qdu1000.c
 +++ b/drivers/clk/qcom/gcc-qdu1000.c
 @@ -2669,6 +2669,9 @@ static int gcc_qdu1000_probe(struct platform_device *pdev)
@@ -104,3 +104,6 @@ index 915bb9b4ff81..18ed351f2a16 100644
  	ret = qcom_cc_register_rcg_dfs(regmap, gcc_dfs_clocks,
  				       ARRAY_SIZE(gcc_dfs_clocks));
  	if (ret)
+-- 
+2.43.0
+

@@ -1,7 +1,7 @@
-From 74493db3fb8ba21e12875a9bfc17886f2bb15fb3 Mon Sep 17 00:00:00 2001
+From 189b544387ca8982b6025772cf6e81d70dc0bff1 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Thu, 24 Sep 2026 13:06:07 -0700
-Subject: [PATCH 120/138] media: i2c: s5kjn5: Support three C-PHY trios
+Subject: [PATCH] media: i2c: s5kjn5: Support three C-PHY trios
 
 As used by the OnePlus 15, with a 4096x2304 60 fps mode.
 
@@ -11,7 +11,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1720 insertions(+), 220 deletions(-)
 
 diff --git a/drivers/media/i2c/s5kjn5.c b/drivers/media/i2c/s5kjn5.c
-index edf824228bb6..7a82013e0d63 100644
+index edf824228b..7a82013e0d 100644
 --- a/drivers/media/i2c/s5kjn5.c
 +++ b/drivers/media/i2c/s5kjn5.c
 @@ -52,24 +52,12 @@
@@ -2068,3 +2068,6 @@ index edf824228bb6..7a82013e0d63 100644
  	if (ret)
  		return ret;
  
+-- 
+2.43.0
+

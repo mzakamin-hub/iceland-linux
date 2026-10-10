@@ -1,7 +1,7 @@
-From 1dd3792262ead2ec607103768d1595025e999cc2 Mon Sep 17 00:00:00 2001
+From 32e424bdd1760123b854afe34a13e7a678869158 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 16:43:13 +0300
-Subject: [PATCH 127/138] arm64: dts: qcom: pmih0108-kaanapali: add the second
+Subject: [PATCH] arm64: dts: qcom: pmih0108-kaanapali: add the second
  temperature alarm
 
 The PMIH0108 has a second, "lite" temperature alarm at 0xc00 next to
@@ -17,7 +17,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 32 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/pmih0108-kaanapali.dtsi b/arch/arm64/boot/dts/qcom/pmih0108-kaanapali.dtsi
-index b73b0e82c..c0958e8d6 100644
+index b73b0e82c3..c0958e8d61 100644
 --- a/arch/arm64/boot/dts/qcom/pmih0108-kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/pmih0108-kaanapali.dtsi
 @@ -32,6 +32,31 @@ trip2 {

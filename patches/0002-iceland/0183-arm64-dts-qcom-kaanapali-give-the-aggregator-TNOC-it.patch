@@ -1,8 +1,8 @@
-From 5738c6a06f23d26e09d4011417212070a46c6eec Mon Sep 17 00:00:00 2001
+From 673bb2e76c3e8ad23c7cae73f29a3be537e052f4 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 3 Oct 2026 08:53:18 +0300
-Subject: [PATCH 183/185] arm64: dts: qcom: kaanapali: give the aggregator TNOC
- its peripheral ID
+Subject: [PATCH] arm64: dts: qcom: kaanapali: give the aggregator TNOC its
+ peripheral ID
 
 The AMBA bus reads a primecell's peripheral and component IDs from the
 end of its register window. For the aggregator Trace NOC at 0x111b8000
@@ -22,7 +22,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 987157ba0..a371d037d 100644
+index 987157ba01..a371d037d7 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -6753,6 +6753,8 @@ tpdm_pcie_rscc_out: endpoint {

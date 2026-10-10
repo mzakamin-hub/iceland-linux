@@ -1,7 +1,7 @@
-From 4ea9a4f3c2eb49002b0d6a9310f5e7748fadd906 Mon Sep 17 00:00:00 2001
+From 38add13444f8dceeaae4c693e421e1ab0cd7ea65 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Thu, 24 Sep 2026 16:43:54 -0700
-Subject: [PATCH 125/138] dt-bindings: media: i2c: Add Sony IMX906 image sensor
+Subject: [PATCH] dt-bindings: media: i2c: Add Sony IMX906 image sensor
 
 Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
 ---
@@ -11,7 +11,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
 
 diff --git a/Documentation/devicetree/bindings/media/i2c/sony,imx906.yaml b/Documentation/devicetree/bindings/media/i2c/sony,imx906.yaml
 new file mode 100644
-index 000000000000..7aece8a24b3b
+index 0000000000..7aece8a24b
 --- /dev/null
 +++ b/Documentation/devicetree/bindings/media/i2c/sony,imx906.yaml
 @@ -0,0 +1,110 @@
@@ -125,3 +125,6 @@ index 000000000000..7aece8a24b3b
 +        };
 +    };
 +...
+-- 
+2.43.0
+

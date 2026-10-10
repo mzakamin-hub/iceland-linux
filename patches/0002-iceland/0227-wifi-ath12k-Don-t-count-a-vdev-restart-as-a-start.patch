@@ -1,0 +1,36 @@
+From 0743adab35013dfa619409cb4d66395bcb166f34 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 10 Oct 2026 04:19:18 +0300
+Subject: [PATCH] wifi: ath12k: Don't count a vdev restart as a start
+
+A channel switch restarts the vdev without stopping it, so the started
+vdev count went up by one and every later VDEV_STAT request waited the
+full 3 s for a second vdev's stats that the firmware never sends.
+
+Suggested-by: Baochen Qiang <baochen.qiang@oss.qualcomm.com>
+
+[ from infiniti-mainline/linux master, commit fd4ee6f55976 ]
+[ upstream author: Victor Fuentes <victor@vlinkz.dev>; picked for the iceland kernel q89 ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/net/wireless/ath/ath12k/mac.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/ath/ath12k/mac.c b/drivers/net/wireless/ath/ath12k/mac.c
+index 994a42f6cf..f764462168 100644
+--- a/drivers/net/wireless/ath/ath12k/mac.c
++++ b/drivers/net/wireless/ath/ath12k/mac.c
+@@ -11491,7 +11491,8 @@ ath12k_mac_vdev_start_restart(struct ath12k_link_vif *arvif,
+ 						   &arvif->reg_tpc_info);
+ 	}
+ 
+-	ar->num_started_vdevs++;
++	if (!restart)
++		ar->num_started_vdevs++;
+ 	ath12k_dbg(ab, ATH12K_DBG_MAC,  "vdev %pM started, vdev_id %d\n",
+ 		   ahvif->vif->addr, arvif->vdev_id);
+ 
+-- 
+2.43.0
+

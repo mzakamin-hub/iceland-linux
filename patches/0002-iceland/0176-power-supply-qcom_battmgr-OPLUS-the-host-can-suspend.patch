@@ -1,8 +1,8 @@
-From a044cfda0d135853b452f8d579d0b985d58adccd Mon Sep 17 00:00:00 2001
+From 6a382c262ef3955dd46ddfbbfbff12d1c9789bc3 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 3 Oct 2026 08:53:15 +0300
-Subject: [PATCH 176/185] power: supply: qcom_battmgr: OPLUS: the host can
- suspend the charger input
+Subject: [PATCH] power: supply: qcom_battmgr: OPLUS: the host can suspend the
+ charger input
 
 When the USB-C connector gets too hot, the vendor's charging stack does
 not only stop charging the battery: its connector protection opens CC,
@@ -49,7 +49,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 173 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 8b910a0d9..ceaecc764 100644
+index 8b910a0d91..ceaecc7644 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -122,6 +122,15 @@ enum qcom_battmgr_variant {

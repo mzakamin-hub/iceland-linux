@@ -1,8 +1,8 @@
-From 189aa8950909828da899037185bf22c7725c7b7c Mon Sep 17 00:00:00 2001
+From 4b1b53828a24294f6ec202c9d77484682946b310 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 28 Sep 2026 00:35:32 +0000
-Subject: [PATCH 20/20] arm64: dts: qcom: kaanapali-oneplus-iceland: Drop the
- modem remoteproc
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: Drop the modem
+ remoteproc
 
 SM8850P has no modem DSP and the board already deletes its carveouts.
 kaanapali.dtsi now describes the modem (remoteproc_mpss and its smp2p
@@ -15,7 +15,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 5 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 9dbdda18889f..3ea11107c35b 100644
+index 9dbdda1888..3ea11107c3 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -26,6 +26,11 @@
@@ -30,3 +30,6 @@ index 9dbdda18889f..3ea11107c35b 100644
  
  / {
  	model = "OnePlus Pad 4";
+-- 
+2.43.0
+

@@ -1,4 +1,4 @@
-From c271001f84b737418e9a55602045378c236e45ec Mon Sep 17 00:00:00 2001
+From eef07fadf934931afbd90bad94070aec53cb2274 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Thu, 1 Oct 2026 23:03:06 +0300
 Subject: [PATCH] Revert "usb: dwc3: qcom: request the CPU wakeup latency only
@@ -20,7 +20,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 7 insertions(+), 55 deletions(-)
 
 diff --git a/drivers/usb/dwc3/dwc3-qcom.c b/drivers/usb/dwc3/dwc3-qcom.c
-index ab98c2d7f..0664fdb84 100644
+index ab98c2d7f0..0664fdb842 100644
 --- a/drivers/usb/dwc3/dwc3-qcom.c
 +++ b/drivers/usb/dwc3/dwc3-qcom.c
 @@ -18,7 +18,6 @@

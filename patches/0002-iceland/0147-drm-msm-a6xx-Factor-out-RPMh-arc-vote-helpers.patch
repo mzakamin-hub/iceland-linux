@@ -1,7 +1,7 @@
-From e5ea65fef381c71fa46006d34ab4e0314d770cd6 Mon Sep 17 00:00:00 2001
+From 96274df52175ef837ef92af0276361288ce7768e Mon Sep 17 00:00:00 2001
 From: Akhil P Oommen <akhilpo@oss.qualcomm.com>
 Date: Wed, 23 Sep 2026 15:55:44 +0530
-Subject: [PATCH 147/162] drm/msm/a6xx: Factor out RPMh arc-vote helpers
+Subject: [PATCH] drm/msm/a6xx: Factor out RPMh arc-vote helpers
 
 The GMU RPMh vote construction repeats two patterns across
 a6xx_gmu_rpmh_arc_votes_init() and a6xx_gmu_rpmh_dep_votes_init():
@@ -25,7 +25,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 63 insertions(+), 75 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
-index 161b360bf..0ed01ce1c 100644
+index 161b360bf3..0ed01ce1c5 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 @@ -1711,74 +1711,85 @@ static unsigned int a6xx_gmu_get_arc_level(struct device *dev,

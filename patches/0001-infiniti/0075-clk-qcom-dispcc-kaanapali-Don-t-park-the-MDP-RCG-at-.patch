@@ -1,8 +1,8 @@
-From 94a75eb6b40bce965c6c566ccbca093db0a31462 Mon Sep 17 00:00:00 2001
+From 28c06ee68e99aab773e7f7dec8eb44fd1a41834f Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 29 Jul 2026 00:24:52 -0700
-Subject: [PATCH 075/138] clk: qcom: dispcc-kaanapali: Don't park the MDP RCG
- at registration
+Subject: [PATCH] clk: qcom: dispcc-kaanapali: Don't park the MDP RCG at
+ registration
 
 Parking it breaks the bootloader's running display, so use
 clk_rcg2_shared_no_init_park_ops like x1e80100 and sc8280xp.
@@ -13,7 +13,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/clk/qcom/dispcc-kaanapali.c b/drivers/clk/qcom/dispcc-kaanapali.c
-index f8832482bd7a..d4301edde7d3 100644
+index f8832482bd..d4301edde7 100644
 --- a/drivers/clk/qcom/dispcc-kaanapali.c
 +++ b/drivers/clk/qcom/dispcc-kaanapali.c
 @@ -688,7 +688,7 @@ static struct clk_rcg2 disp_cc_mdss_mdp_clk_src = {
@@ -25,3 +25,6 @@ index f8832482bd7a..d4301edde7d3 100644
  	},
  };
  
+-- 
+2.43.0
+

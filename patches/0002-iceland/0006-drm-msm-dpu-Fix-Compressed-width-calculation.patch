@@ -1,7 +1,7 @@
-From 47df97ef12afeceaa5efbb91231c82b5f016289c Mon Sep 17 00:00:00 2001
+From 678ddbc956059f885c2cb94c838b5f594d76c41d Mon Sep 17 00:00:00 2001
 From: map220v <map220v300@gmail.com>
 Date: Mon, 8 Jun 2026 10:03:41 +0000
-Subject: [PATCH 06/20] drm/msm/dpu: Fix Compressed width calculation
+Subject: [PATCH] drm/msm/dpu: Fix Compressed width calculation
 
 (cherry picked from commit 2c25cb07d4d7df93e4933701987c8829973f6851)
 ---
@@ -9,7 +9,7 @@ Subject: [PATCH 06/20] drm/msm/dpu: Fix Compressed width calculation
  1 file changed, 8 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
-index 90fc4565f07a..76e9e2a26406 100644
+index 90fc4565f0..76e9e2a264 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
 @@ -14,6 +14,7 @@
@@ -40,3 +40,6 @@ index 90fc4565f07a..76e9e2a26406 100644
  		timing->xres = timing->width;
  		timing->dce_bytes_per_line = msm_dsc_get_bytes_per_line(dsc);
  	}
+-- 
+2.43.0
+

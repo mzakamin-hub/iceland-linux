@@ -1,8 +1,8 @@
-From 7fd72fdbdc82f6ce8168e63856551043d0beaf0c Mon Sep 17 00:00:00 2001
+From 68771c1500a2e811c950c4e814a48e8e90666bcb Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 11:21:26 +0300
-Subject: [PATCH 100/108] arm64: dts: qcom: kaanapali-oneplus-iceland: panel
- I/O supply at stock's 1.9 V
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: panel I/O supply
+ at stock's 1.9 V
 
 The panel driver enables vddio (L12B) without asking for a voltage, so the
 rail ran at the lower bound of its range, 1.8 V. Stock's power list for
@@ -19,7 +19,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 5 insertions(+), 2 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 7f1b07c82..073eaee1f 100644
+index 7f1b07c82a..073eaee1fd 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -634,10 +634,13 @@ vreg_l11b_1p0: ldo11 {
