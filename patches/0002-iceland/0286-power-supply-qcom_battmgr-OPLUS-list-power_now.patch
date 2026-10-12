@@ -1,0 +1,37 @@
+From 9f9b14376d1ac8c7f5c540d46c0b88684c37d04e Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 10 Oct 2026 20:59:36 +0300
+Subject: [PATCH] power: supply: qcom_battmgr: OPLUS: list power_now
+
+The OPLUS battery supply has its own property list (oplus_bat_props)
+and POWER_SUPPLY_PROP_POWER_NOW is not in it, so the power_now value
+computed from voltage and current for this variant ("compute power_now
+on kaanapali") never reaches sysfs: rehearsal r2z found no power_now
+file in /sys/class/power_supply/qcom-battmgr-bat.
+
+Add the property to the OPLUS list. The generic update still asks the
+firmware for BATT_POWER_NOW first (its value is only kept for the
+dev_dbg comparison line); SuperTurtleDev saw the firmware answer that
+request on the same SoC.
+
+Fixes: b9ef24cf2be8 ("power: supply: qcom_battmgr: compute power_now on kaanapali")
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/power/supply/qcom_battmgr.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
+index 3fb8302226..63aa980d57 100644
+--- a/drivers/power/supply/qcom_battmgr.c
++++ b/drivers/power/supply/qcom_battmgr.c
+@@ -1425,6 +1425,7 @@ static const enum power_supply_property oplus_bat_props[] = {
+ 	POWER_SUPPLY_PROP_CAPACITY,
+ 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
+ 	POWER_SUPPLY_PROP_CURRENT_NOW,
++	POWER_SUPPLY_PROP_POWER_NOW,
+ 	POWER_SUPPLY_PROP_TEMP,
+ 	POWER_SUPPLY_PROP_CHARGE_FULL,
+ 	POWER_SUPPLY_PROP_CHARGE_NOW,
+-- 
+2.43.0
+
