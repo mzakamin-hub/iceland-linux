@@ -1,13 +1,14 @@
 # iceland-linux
 
 Mainline Linux for the OnePlus Pad 4 (`iceland`, Qualcomm SM8850P "kaanapali"), kept as a patch queue on an
-upstream tag — Linux 7.3-rc6 (branch iceland-7.3-rc6-q89d8, kernel q89d8 = q89c-tb + 0266-0290, the INSTALL CANDIDATE kernel of golden B143; earlier branches: iceland-7.3-rc6-q89c-tb (test candidate), iceland-7.3-rc6-q89b; main keeps the 7.3-rc4 queue) — (same approach as pmOS kernel packages and other tablet ports) so every commit keeps its original author.
+upstream tag — Linux 7.3-rc6 (branch iceland-7.3-rc6-q89d9, kernel q89d9 = q89c-tb + 0266-0291, the FINAL INSTALL kernel of golden B145; earlier branches: iceland-7.3-rc6-q89d8 (install candidate of golden B143), iceland-7.3-rc6-q89c-tb (test candidate), iceland-7.3-rc6-q89b; main keeps the 7.3-rc4 queue) — (same approach as pmOS kernel packages and other tablet ports) so every commit keeps its original author.
 
 | Path | Content |
 |---|---|
 | `kernel.pin` | upstream tag/commit + expected tree hashes |
 | `patches/0001-infiniti/` | infiniti-mainline/linux master (OnePlus 15, same SoC; 135 of its 138 commits, 3 are upstream in rc6) |
-| `patches/0002-iceland/` | OnePlus Pad 4: map220v/sm8850-mainline `iceland-7.2` ported to 7.3 (authors kept) + our fixes + upstream picks (0191-0252, numbers with gaps) + 0255-0265 from tb323fu-linux (q89c-tb) + 0266-0290 (q89d2 / q89d3 / q89d5 / q89d8) |
+| `patches/0002-iceland/` | OnePlus Pad 4: map220v/sm8850-mainline `iceland-7.2` ported to 7.3 (authors kept) + our fixes + upstream picks (0191-0252, numbers with gaps) + 0255-0265 from tb323fu-linux (q89c-tb) + 0266-0290 (q89d2 / q89d3 / q89d5 / q89d8) + 0291 (q89d9) |
+| `docs/Q89D9-QUEUE.md` | q89d9: 0291 (Bluetooth hci_qca: the WCN7860 baudrate-change RX burst, the -84 line), test results |
 | `docs/Q89D8-QUEUE.md` | q89d8: 0266-0290 in four stages (q89d2, q89d3, q89d5, q89d8), sources, sign-off status and test results |
 | `docs/Q89C-TB-QUEUE.md` | q89c-tb: the 11 tb323fu-linux patches (0255-0265), their sources, sign-off status and test results |
 | `docs/Q89B-QUEUE.md` | the rc6 rebase: what was dropped, what was added (with sources), what was taken out after testing |
