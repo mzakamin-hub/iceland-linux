@@ -1,4 +1,4 @@
-From 25f3516486b2362201ed928aa9909d585afe3bf9 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: map220v <map220v300@gmail.com>
 Date: Mon, 8 Jun 2026 10:06:45 +0000
 Subject: [PATCH] ICELAND: Add touchscreen node
@@ -9,7 +9,7 @@ Subject: [PATCH] ICELAND: Add touchscreen node
  1 file changed, 18 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index ede368bc7e..1ae707d301 100644
+index ede368bc7ed1..1ae707d30164 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1103,6 +1103,24 @@ &remoteproc_soccp {

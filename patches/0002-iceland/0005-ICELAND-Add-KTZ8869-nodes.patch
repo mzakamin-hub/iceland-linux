@@ -1,4 +1,4 @@
-From 2f995e74aab2cb8eb2ddd1d44c9b3394587781f0 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: map220v <map220v300@gmail.com>
 Date: Mon, 8 Jun 2026 10:02:32 +0000
 Subject: [PATCH] ICELAND: Add KTZ8869 nodes
@@ -9,7 +9,7 @@ Subject: [PATCH] ICELAND: Add KTZ8869 nodes
  1 file changed, 49 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index f9a56dad62..c8d9673808 100644
+index f9a56dad62e0..c8d9673808fb 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -39,6 +39,32 @@ aliases {

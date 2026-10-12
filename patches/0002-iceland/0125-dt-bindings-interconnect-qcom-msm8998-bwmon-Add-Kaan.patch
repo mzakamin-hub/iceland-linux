@@ -1,4 +1,4 @@
-From 1118366eb6e358ae922662a65a061ef9452f00cc Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 16:43:12 +0300
 Subject: [PATCH] dt-bindings: interconnect: qcom,msm8998-bwmon: Add Kaanapali
@@ -14,7 +14,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/Documentation/devicetree/bindings/interconnect/qcom,msm8998-bwmon.yaml b/Documentation/devicetree/bindings/interconnect/qcom,msm8998-bwmon.yaml
-index 21b4e04727..455ec9f976 100644
+index 21b4e04727de..455ec9f97614 100644
 --- a/Documentation/devicetree/bindings/interconnect/qcom,msm8998-bwmon.yaml
 +++ b/Documentation/devicetree/bindings/interconnect/qcom,msm8998-bwmon.yaml
 @@ -50,6 +50,7 @@ properties:

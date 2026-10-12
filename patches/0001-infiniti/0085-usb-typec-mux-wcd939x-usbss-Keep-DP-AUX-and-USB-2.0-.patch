@@ -1,4 +1,4 @@
-From dae2534d63d47bba0daf6628cbf4b35a65c62ebb Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 29 Jul 2026 00:24:50 -0700
 Subject: [PATCH] usb: typec: mux: wcd939x-usbss: Keep DP AUX and USB 2.0 up in
@@ -13,7 +13,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 12 insertions(+)
 
 diff --git a/drivers/usb/typec/mux/wcd939x-usbss.c b/drivers/usb/typec/mux/wcd939x-usbss.c
-index 73db3aa3ce..53bcd9eddb 100644
+index 73db3aa3cec4..53bcd9eddb81 100644
 --- a/drivers/usb/typec/mux/wcd939x-usbss.c
 +++ b/drivers/usb/typec/mux/wcd939x-usbss.c
 @@ -197,6 +197,7 @@ struct wcd939x_usbss {

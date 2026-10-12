@@ -1,4 +1,4 @@
-From a30ff93e3e4acd142b71ac476618f51c37f66f5d Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Kuldeep Singh <kuldeep.singh@oss.qualcomm.com>
 Date: Tue, 22 Sep 2026 14:57:18 +0200
 Subject: [PATCH] crypto: qce - Fix CTR-AES for partial block requests
@@ -47,7 +47,7 @@ Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
  1 file changed, 16 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/crypto/qce/skcipher.c b/drivers/crypto/qce/skcipher.c
-index 32b438e1ee..ef59e4e04e 100644
+index 32b438e1eea1..ef59e4e04e73 100644
 --- a/drivers/crypto/qce/skcipher.c
 +++ b/drivers/crypto/qce/skcipher.c
 @@ -33,6 +33,7 @@ static void qce_skcipher_done(void *data)

@@ -1,4 +1,4 @@
-From 6dff9964b2f7a563b61fa6c9d5ddcc85359cb36f Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Sibi Sankar <sibi.sankar@oss.qualcomm.com>
 Date: Fri, 24 Jul 2026 12:48:10 +0530
 Subject: [PATCH] PM / devfreq: Add new track_remote flag for governors
@@ -27,7 +27,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  2 files changed, 26 insertions(+)
 
 diff --git a/drivers/devfreq/devfreq.c b/drivers/devfreq/devfreq.c
-index 398cbf2a6f..216c126004 100644
+index 398cbf2a6fb3..216c126004d2 100644
 --- a/drivers/devfreq/devfreq.c
 +++ b/drivers/devfreq/devfreq.c
 @@ -348,6 +348,26 @@ static int devfreq_set_target(struct devfreq *devfreq, unsigned long new_freq,
@@ -66,7 +66,7 @@ index 398cbf2a6f..216c126004 100644
  		dev_warn(&devfreq->dev,
  			 "Couldn't update frequency transition information.\n");
 diff --git a/include/linux/devfreq-governor.h b/include/linux/devfreq-governor.h
-index 2853f571df..e4f7b6cb07 100644
+index 2853f571dfdf..e4f7b6cb07bc 100644
 --- a/include/linux/devfreq-governor.h
 +++ b/include/linux/devfreq-governor.h
 @@ -33,9 +33,14 @@

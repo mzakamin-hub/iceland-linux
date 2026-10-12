@@ -1,4 +1,4 @@
-From d1b3452a5e1219075664648f5486ddbda1904bfa Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Thu, 1 Oct 2026 23:57:37 +0300
 Subject: [PATCH] arm64: cpuinfo: print a model name for the Qualcomm Oryon
@@ -19,7 +19,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 17 insertions(+)
 
 diff --git a/arch/arm64/kernel/cpuinfo.c b/arch/arm64/kernel/cpuinfo.c
-index 45c63f3d75..34c7f72bab 100644
+index 45c63f3d75c5..34c7f72babd3 100644
 --- a/arch/arm64/kernel/cpuinfo.c
 +++ b/arch/arm64/kernel/cpuinfo.c
 @@ -219,6 +219,21 @@ static const char *const compat_hwcap2_str[] = {

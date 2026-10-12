@@ -1,4 +1,4 @@
-From 2ae7c407022f7bb8bd53aee92c4fd2642aa6c72b Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 21:07:16 +0300
 Subject: [PATCH] Input: nt36536: do not log the panel wait deferral as an
@@ -16,7 +16,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/input/touchscreen/nt36536/nt36xxx.c b/drivers/input/touchscreen/nt36536/nt36xxx.c
-index e1850fc15f..d557d0e2e5 100644
+index e1850fc15fe8..d557d0e2e5a6 100644
 --- a/drivers/input/touchscreen/nt36536/nt36xxx.c
 +++ b/drivers/input/touchscreen/nt36536/nt36xxx.c
 @@ -1304,8 +1304,8 @@ static int32_t nvt_ts_probe(struct spi_device *client)

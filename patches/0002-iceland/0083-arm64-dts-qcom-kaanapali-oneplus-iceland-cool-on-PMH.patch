@@ -1,4 +1,4 @@
-From 27d3e8a8b478f7dc679b10534bc5c079884c500b Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 08:17:52 +0300
 Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: cool on PMH0110
@@ -24,7 +24,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 32 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 64a38d2ff3..4b48032187 100644
+index 64a38d2ff3c6..4b48032187c9 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -2379,6 +2379,38 @@ usb-temp-r-hot {

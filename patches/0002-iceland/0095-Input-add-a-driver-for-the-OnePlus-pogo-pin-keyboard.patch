@@ -1,4 +1,4 @@
-From 31532f7d98a0d9b64144f4f97d5ecca9d6b49061 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 11:21:24 +0300
 Subject: [PATCH] Input: add a driver for the OnePlus pogo-pin keyboard dock
@@ -54,7 +54,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  create mode 100644 drivers/input/keyboard/oneplus-pogo-keyboard.c
 
 diff --git a/drivers/input/keyboard/Kconfig b/drivers/input/keyboard/Kconfig
-index d8c64f3334..31dbe2446f 100644
+index d8c64f333462..31dbe2446fcd 100644
 --- a/drivers/input/keyboard/Kconfig
 +++ b/drivers/input/keyboard/Kconfig
 @@ -476,6 +476,21 @@ config KEYBOARD_TEGRA
@@ -80,7 +80,7 @@ index d8c64f3334..31dbe2446f 100644
  	tristate "OpenCores Keyboard Controller"
  	depends on HAS_IOMEM
 diff --git a/drivers/input/keyboard/Makefile b/drivers/input/keyboard/Makefile
-index 60bb7baf80..c976a670ad 100644
+index 60bb7baf802f..c976a670ad81 100644
 --- a/drivers/input/keyboard/Makefile
 +++ b/drivers/input/keyboard/Makefile
 @@ -50,6 +50,7 @@ obj-$(CONFIG_KEYBOARD_NEWTON)		+= newtonkbd.o
@@ -93,7 +93,7 @@ index 60bb7baf80..c976a670ad 100644
  obj-$(CONFIG_KEYBOARD_PMIC8XXX)		+= pmic8xxx-keypad.o
 diff --git a/drivers/input/keyboard/oneplus-pogo-keyboard.c b/drivers/input/keyboard/oneplus-pogo-keyboard.c
 new file mode 100644
-index 0000000000..b5fdbebf96
+index 000000000000..b5fdbebf9636
 --- /dev/null
 +++ b/drivers/input/keyboard/oneplus-pogo-keyboard.c
 @@ -0,0 +1,2023 @@

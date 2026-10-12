@@ -1,4 +1,4 @@
-From 7c802841a3bab92ec6a9f4a387806dc8aea3fb41 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:14 +0300
 Subject: [PATCH] drm/msm/dpu: disable the slave encoder before the master
@@ -46,7 +46,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 4 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
-index 74246be6a4..d2d754e3f5 100644
+index 74246be6a428..d2d754e3f571 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 @@ -1390,7 +1390,6 @@ static void dpu_encoder_virt_atomic_disable(struct drm_encoder *drm_enc,

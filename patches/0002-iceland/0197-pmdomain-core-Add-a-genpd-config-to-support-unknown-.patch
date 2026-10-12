@@ -1,6 +1,6 @@
-From 6279f1992e56a1bd71f2f911d71c1ab70df3f7a9 Mon Sep 17 00:00:00 2001
-From: Ulf Hansson <ulf.hansson@oss.qualcomm.com>
-Date: Mon, 14 Sep 2026 17:01:39 +0200
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 10 Oct 2026 04:19:13 +0300
 Subject: [PATCH] pmdomain: core: Add a genpd config to support unknown initial
  status
 
@@ -38,7 +38,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  2 files changed, 14 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/pmdomain/core.c b/drivers/pmdomain/core.c
-index c593a3479a..e8473f5339 100644
+index c593a3479ad0..e8473f5339e5 100644
 --- a/drivers/pmdomain/core.c
 +++ b/drivers/pmdomain/core.c
 @@ -189,6 +189,7 @@ static const struct genpd_lock_ops genpd_raw_spin_ops = {
@@ -62,7 +62,7 @@ index c593a3479a..e8473f5339 100644
  #else
  static void genpd_set_stay_on(struct generic_pm_domain *genpd, bool is_off)
 diff --git a/include/linux/pm_domain.h b/include/linux/pm_domain.h
-index f925614aeb..14e0e346c6 100644
+index f925614aebdb..14e0e346c610 100644
 --- a/include/linux/pm_domain.h
 +++ b/include/linux/pm_domain.h
 @@ -121,6 +121,14 @@ struct dev_pm_domain_list {

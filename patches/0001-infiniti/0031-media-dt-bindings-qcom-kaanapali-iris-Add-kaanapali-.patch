@@ -1,4 +1,4 @@
-From b53965fb168551a85ca62361db546e6e80da77f5 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Vikash Garodia <vikash.garodia@oss.qualcomm.com>
 Date: Fri, 17 Oct 2025 19:46:22 +0530
 Subject: [PATCH] media: dt-bindings: qcom-kaanapali-iris: Add kaanapali video
@@ -27,7 +27,7 @@ Signed-off-by: Vikash Garodia <vikash.garodia@oss.qualcomm.com>
 
 diff --git a/Documentation/devicetree/bindings/media/qcom,kaanapali-iris.yaml b/Documentation/devicetree/bindings/media/qcom,kaanapali-iris.yaml
 new file mode 100644
-index 0000000000..39e9ac9dad
+index 000000000000..39e9ac9dad22
 --- /dev/null
 +++ b/Documentation/devicetree/bindings/media/qcom,kaanapali-iris.yaml
 @@ -0,0 +1,231 @@

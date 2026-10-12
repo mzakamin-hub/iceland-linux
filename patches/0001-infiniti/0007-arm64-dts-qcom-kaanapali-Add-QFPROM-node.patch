@@ -1,4 +1,4 @@
-From b1fba658c77f4a4bf91cb3c0570aa567a782dd67 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jingyi Wang <jingyi.wang@oss.qualcomm.com>
 Date: Tue, 7 Jul 2026 03:10:21 +0530
 Subject: [PATCH] arm64: dts: qcom: kaanapali: Add QFPROM node
@@ -14,7 +14,7 @@ Signed-off-by: Akhil P Oommen <akhilpo@oss.qualcomm.com>
  1 file changed, 12 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 654b5d292b..27189404c2 100644
+index 654b5d292b71..27189404c214 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -6010,6 +6010,18 @@ rpmhpd_opp_super_turbo_no_cpr: opp-480 {

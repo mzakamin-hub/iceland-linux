@@ -1,4 +1,4 @@
-From 87d6c44ace436815fb4125d034a39195fa48ceeb Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
 Date: Tue, 15 Sep 2026 03:10:00 -0700
 Subject: [PATCH] media: qcom: camss: csiphy: Add support for v2.4.0 two-phase
@@ -20,7 +20,7 @@ Signed-off-by: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
  4 files changed, 71 insertions(+)
 
 diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
-index 7e53097a0f..d2faa39087 100644
+index 7e53097a0f68..d2faa390872e 100644
 --- a/drivers/media/platform/qcom/camss/camss.c
 +++ b/drivers/media/platform/qcom/camss/camss.c
 @@ -34,6 +34,57 @@
@@ -93,7 +93,7 @@ index 7e53097a0f..d2faa39087 100644
  
  static const struct camss_resources msm8916_resources = {
 diff --git a/drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c b/drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c
-index 8cd331cfb4..658a394631 100644
+index 8cd331cfb4b3..658a39463104 100644
 --- a/drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c
 +++ b/drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c
 @@ -389,3 +389,19 @@ const struct mipi_csi2phy_soc_cfg mipi_csi2_dphy_4nm_x1e = {
@@ -117,7 +117,7 @@ index 8cd331cfb4..658a394631 100644
 +	.num_genpds = ARRAY_SIZE(x1e_genpds),
 +};
 diff --git a/drivers/phy/qualcomm/phy-qcom-mipi-csi2-core.c b/drivers/phy/qualcomm/phy-qcom-mipi-csi2-core.c
-index c0a4fa20ea..aff9e66f03 100644
+index c0a4fa20eaf0..aff9e66f0352 100644
 --- a/drivers/phy/qualcomm/phy-qcom-mipi-csi2-core.c
 +++ b/drivers/phy/qualcomm/phy-qcom-mipi-csi2-core.c
 @@ -444,6 +444,7 @@ static int phy_qcom_mipi_csi2_probe(struct platform_device *pdev)
@@ -129,7 +129,7 @@ index c0a4fa20ea..aff9e66f03 100644
  };
  MODULE_DEVICE_TABLE(of, phy_qcom_mipi_csi2_of_match_table);
 diff --git a/drivers/phy/qualcomm/phy-qcom-mipi-csi2.h b/drivers/phy/qualcomm/phy-qcom-mipi-csi2.h
-index d6366f809e..2355a1db9b 100644
+index d6366f809e51..2355a1db9b94 100644
 --- a/drivers/phy/qualcomm/phy-qcom-mipi-csi2.h
 +++ b/drivers/phy/qualcomm/phy-qcom-mipi-csi2.h
 @@ -94,5 +94,6 @@ struct mipi_csi2phy_device {

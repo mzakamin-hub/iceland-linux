@@ -1,4 +1,4 @@
-From 586d3c0d8532602e7579ff9e981d14a25894815c Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 3 Oct 2026 08:53:17 +0300
 Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: drop the CPUCP
@@ -20,7 +20,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 5 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index ba601b94e1..de61a1a76f 100644
+index ba601b94e181..de61a1a76ffa 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -22,6 +22,11 @@

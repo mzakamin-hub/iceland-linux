@@ -1,4 +1,4 @@
-From 2b9e3595e4c0fb44548f039bfe575b4898af89cf Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Tue, 29 Sep 2026 02:05:51 +0300
 Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: the PCIe0 WAKE#
@@ -16,7 +16,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 16066d23d8..bd4fc183fb 100644
+index 16066d23d8f3..bd4fc183fbc6 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1225,7 +1225,7 @@ &pcie0_phy {

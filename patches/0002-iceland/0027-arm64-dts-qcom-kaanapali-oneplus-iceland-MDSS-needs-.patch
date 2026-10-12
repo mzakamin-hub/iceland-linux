@@ -1,4 +1,4 @@
-From f98272fa498efa704946144a1c0ce51be600c881 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 28 Sep 2026 13:46:03 +0300
 Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: MDSS needs the
@@ -15,7 +15,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 7 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 6495b96afe..96d01ebbae 100644
+index 6495b96afe22..96d01ebbae32 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1080,6 +1080,13 @@ backlight@11 {

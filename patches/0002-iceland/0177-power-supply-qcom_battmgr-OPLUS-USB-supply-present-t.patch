@@ -1,4 +1,4 @@
-From 16468d9233ee0f084b18094b4a458460f0a1ebc2 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 3 Oct 2026 08:53:16 +0300
 Subject: [PATCH] power: supply: qcom_battmgr: OPLUS: USB supply present = the
@@ -20,7 +20,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 28 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index ceaecc7644..db153bd110 100644
+index ceaecc76440a..db153bd11024 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -1497,6 +1497,20 @@ static int qcom_battmgr_usb_get_property(struct power_supply *psy,

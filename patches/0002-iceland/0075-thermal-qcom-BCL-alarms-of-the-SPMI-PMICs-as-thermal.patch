@@ -1,4 +1,4 @@
-From fa0b84858e916b03c8cae9eb96f89ab3cb398559 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 07:18:00 +0300
 Subject: [PATCH] thermal: qcom: BCL alarms of the SPMI PMICs as thermal
@@ -36,7 +36,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  create mode 100644 drivers/thermal/qcom/qcom-spmi-bcl.c
 
 diff --git a/drivers/thermal/qcom/Kconfig b/drivers/thermal/qcom/Kconfig
-index a8cf7e2582..0ccbcf1428 100644
+index a8cf7e258201..0ccbcf142831 100644
 --- a/drivers/thermal/qcom/Kconfig
 +++ b/drivers/thermal/qcom/Kconfig
 @@ -55,6 +55,18 @@ config QCOM_SPMI_TEMP_ALARM
@@ -59,7 +59,7 @@ index a8cf7e2582..0ccbcf1428 100644
  	tristate "Qualcomm Limits Management Hardware"
  	depends on ARCH_QCOM || COMPILE_TEST
 diff --git a/drivers/thermal/qcom/Makefile b/drivers/thermal/qcom/Makefile
-index 937ba0fe28..bfc28ea1d5 100644
+index 937ba0fe2801..bfc28ea1d565 100644
 --- a/drivers/thermal/qcom/Makefile
 +++ b/drivers/thermal/qcom/Makefile
 @@ -7,4 +7,5 @@ obj-$(CONFIG_QCOM_SPMI_ADC_TM5)	+= qcom-spmi-adc-tm5.o
@@ -70,7 +70,7 @@ index 937ba0fe28..bfc28ea1d5 100644
  obj-$(CONFIG_QCOM_LMH)		+= lmh.o
 diff --git a/drivers/thermal/qcom/qcom-spmi-bcl.c b/drivers/thermal/qcom/qcom-spmi-bcl.c
 new file mode 100644
-index 0000000000..fe67111bcf
+index 000000000000..fe67111bcf18
 --- /dev/null
 +++ b/drivers/thermal/qcom/qcom-spmi-bcl.c
 @@ -0,0 +1,472 @@

@@ -1,4 +1,4 @@
-From 36a85acf4ae63cc57f9dcc2816fbddeb2f54c6ba Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 18:23:42 +0300
 Subject: [PATCH] firmware: arm_scmi: put the P2A CHANNEL_FREE quirk code in a
@@ -17,7 +17,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/firmware/arm_scmi/driver.c b/drivers/firmware/arm_scmi/driver.c
-index b155571edc..434a997c8c 100644
+index b155571edc9d..434a997c8c67 100644
 --- a/drivers/firmware/arm_scmi/driver.c
 +++ b/drivers/firmware/arm_scmi/driver.c
 @@ -1064,6 +1064,9 @@ static inline void scmi_xfer_command_release(struct scmi_info *info,

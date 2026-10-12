@@ -1,4 +1,4 @@
-From e76e655c048a26e138269e0636f9da75dc2c01eb Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Thu, 1 Oct 2026 23:25:43 +0300
 Subject: [PATCH] dt-bindings: net: wireless: qcom,ath12k: add qcom,no-sbs
@@ -15,7 +15,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 7 insertions(+)
 
 diff --git a/Documentation/devicetree/bindings/net/wireless/qcom,ath12k.yaml b/Documentation/devicetree/bindings/net/wireless/qcom,ath12k.yaml
-index 27947f1d64..37c431772c 100644
+index 27947f1d64bc..37c431772c9c 100644
 --- a/Documentation/devicetree/bindings/net/wireless/qcom,ath12k.yaml
 +++ b/Documentation/devicetree/bindings/net/wireless/qcom,ath12k.yaml
 @@ -28,6 +28,13 @@ properties:

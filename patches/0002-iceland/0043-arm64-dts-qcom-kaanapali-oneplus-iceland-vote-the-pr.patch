@@ -1,4 +1,4 @@
-From c5bd30bb4aa2ab76ae7d35a9757ce5ce3bfa2da8 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Tue, 29 Sep 2026 07:35:51 +0300
 Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: vote the primary
@@ -16,7 +16,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 12 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index bd4fc183fb..b191f5b39f 100644
+index bd4fc183fbc6..b191f5b39f35 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1376,6 +1376,18 @@ &pon_resin {

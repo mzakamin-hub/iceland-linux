@@ -1,4 +1,4 @@
-From 5aef1184431868792ee78e411ff215c906d80e20 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 16:43:15 +0300
 Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: enable
@@ -17,7 +17,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 14 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index a2416ee048..7455dda42e 100644
+index a2416ee0482d..7455dda42ece 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1434,6 +1434,20 @@ &iris {

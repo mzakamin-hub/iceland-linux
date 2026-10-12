@@ -1,4 +1,4 @@
-From 8b7057d750efa70e56ccda2350c5d870c10eb98a Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jia Yang <jia.yang@oss.qualcomm.com>
 Date: Fri, 24 Jul 2026 12:48:15 +0530
 Subject: [PATCH] arm64: dts: qcom: kaanapali: Enable LLCC/DDR/DDR_QOS DVFS
@@ -19,7 +19,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 41 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 01bf524845..eae970cb53 100644
+index 01bf52484565..eae970cb537f 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -313,6 +313,20 @@ scmi_perf: protocol@13 {

@@ -1,4 +1,4 @@
-From 69f18a0c46b58c1004bec0f71f5c4c5daa6a5f01 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:13 +0300
 Subject: [PATCH] ASoC: codecs: wcd939x: hold the TX device while measuring
@@ -23,7 +23,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 65 insertions(+), 11 deletions(-)
 
 diff --git a/sound/soc/codecs/wcd939x.c b/sound/soc/codecs/wcd939x.c
-index 29fda5a783..b8bdd8c413 100644
+index 29fda5a7838b..b8bdd8c413d0 100644
 --- a/sound/soc/codecs/wcd939x.c
 +++ b/sound/soc/codecs/wcd939x.c
 @@ -2029,26 +2029,49 @@ static const struct zdet_param wcd939x_mbhc_zdet_param = {

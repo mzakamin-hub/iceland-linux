@@ -1,4 +1,4 @@
-From d2d26296e748a25dc98057a076caea73aeb6cae0 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Tue, 29 Sep 2026 12:51:39 +0000
 Subject: [PATCH] ASoC: qcom: q6apm-lpass-dais: accept a channel map on the TDM
@@ -16,7 +16,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 15 insertions(+)
 
 diff --git a/sound/soc/qcom/qdsp6/q6apm-lpass-dais.c b/sound/soc/qcom/qdsp6/q6apm-lpass-dais.c
-index e204fd59e5..3298a7b2b5 100644
+index e204fd59e512..3298a7b2b51c 100644
 --- a/sound/soc/qcom/qdsp6/q6apm-lpass-dais.c
 +++ b/sound/soc/qcom/qdsp6/q6apm-lpass-dais.c
 @@ -126,6 +126,20 @@ static int q6dma_set_channel_map(struct snd_soc_dai *dai,

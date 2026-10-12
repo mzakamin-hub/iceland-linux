@@ -1,4 +1,4 @@
-From 2e59e5ed1e91719082963cf51956fe14d95911a2 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:20 +0300
 Subject: [PATCH] serial: qcom-geni: Fix port_ida handling for console and
@@ -39,7 +39,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 9 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/tty/serial/qcom_geni_serial.c b/drivers/tty/serial/qcom_geni_serial.c
-index a851b8f0ef..9042f26e92 100644
+index a851b8f0ef04..9042f26e921d 100644
 --- a/drivers/tty/serial/qcom_geni_serial.c
 +++ b/drivers/tty/serial/qcom_geni_serial.c
 @@ -288,6 +288,10 @@ static struct qcom_geni_serial_port *get_port_from_line(int line, bool console,

@@ -1,4 +1,4 @@
-From 1eed005032cf6ad36f7c296431ecb422e6fb6ba4 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 10:38:16 +0300
 Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: add the pen
@@ -25,7 +25,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 97 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 57b9a314cf..9b71548cb0 100644
+index 57b9a314cfc1..9b71548cb0e4 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -710,6 +710,21 @@ vreg_ls2b: ls2 {

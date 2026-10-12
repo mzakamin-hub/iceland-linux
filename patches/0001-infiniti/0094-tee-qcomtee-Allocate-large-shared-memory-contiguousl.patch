@@ -1,4 +1,4 @@
-From 46d064e28dc8b551a9696156cade397cd1d842d8 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Fri, 25 Sep 2026 02:23:20 -0700
 Subject: [PATCH] tee: qcomtee: Allocate large shared memory contiguously
@@ -12,7 +12,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 53 insertions(+)
 
 diff --git a/drivers/tee/qcomtee/shm.c b/drivers/tee/qcomtee/shm.c
-index b67909ef3f..a89ecc8529 100644
+index b67909ef3f46..a89ecc85295c 100644
 --- a/drivers/tee/qcomtee/shm.c
 +++ b/drivers/tee/qcomtee/shm.c
 @@ -6,6 +6,7 @@

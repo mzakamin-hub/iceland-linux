@@ -1,4 +1,4 @@
-From eccf6bbd6d1a26c4f9841e9400273661facb831c Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 28 Sep 2026 00:32:56 +0000
 Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: Match the
@@ -14,7 +14,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 0848c8addd..9dbdda1888 100644
+index 0848c8adddf0..9dbdda18889f 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1031,7 +1031,7 @@ &mdss_dsi0 {

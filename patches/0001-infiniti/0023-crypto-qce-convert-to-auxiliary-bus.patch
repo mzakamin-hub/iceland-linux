@@ -1,4 +1,4 @@
-From 0d8956e674504bd7f47cf72b47ac6cf98c137eed Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
 Date: Tue, 22 Sep 2026 14:57:26 +0200
 Subject: [PATCH] crypto: qce - convert to auxiliary bus
@@ -25,7 +25,7 @@ Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
  6 files changed, 66 insertions(+), 70 deletions(-)
 
 diff --git a/drivers/crypto/Kconfig b/drivers/crypto/Kconfig
-index adcbe15851..b3fa1f6135 100644
+index adcbe1585189..b3fa1f6135bc 100644
 --- a/drivers/crypto/Kconfig
 +++ b/drivers/crypto/Kconfig
 @@ -530,6 +530,8 @@ config CRYPTO_DEV_QCE
@@ -38,7 +38,7 @@ index adcbe15851..b3fa1f6135 100644
  	  This driver supports Qualcomm crypto engine offloader hardware. To
  	  compile this driver as a module, choose M here. The module will be
 diff --git a/drivers/crypto/qce/aead.c b/drivers/crypto/qce/aead.c
-index 46ae10cf00..ac20737559 100644
+index 46ae10cf005d..ac207375595e 100644
 --- a/drivers/crypto/qce/aead.c
 +++ b/drivers/crypto/qce/aead.c
 @@ -44,9 +44,9 @@ static void qce_aead_done(void *data)
@@ -83,7 +83,7 @@ index 46ae10cf00..ac20737559 100644
  	if (IS_CCM(rctx->flags) && rctx->assoclen) {
  		sg_free_table(&rctx->src_tbl);
 diff --git a/drivers/crypto/qce/core.c b/drivers/crypto/qce/core.c
-index 5b1bf7a50f..31f1ad8938 100644
+index 5b1bf7a50f88..31f1ad8938ab 100644
 --- a/drivers/crypto/qce/core.c
 +++ b/drivers/crypto/qce/core.c
 @@ -3,15 +3,16 @@
@@ -308,7 +308,7 @@ index 5b1bf7a50f..31f1ad8938 100644
 -MODULE_ALIAS("platform:" KBUILD_MODNAME);
  MODULE_AUTHOR("The Linux Foundation");
 diff --git a/drivers/crypto/qce/core.h b/drivers/crypto/qce/core.h
-index eb6fa7a8b6..6eda6e617b 100644
+index eb6fa7a8b64a..6eda6e617b81 100644
 --- a/drivers/crypto/qce/core.h
 +++ b/drivers/crypto/qce/core.h
 @@ -20,6 +20,9 @@
@@ -332,7 +332,7 @@ index eb6fa7a8b6..6eda6e617b 100644
  	int burst_size;
  	unsigned int pipe_pair_id;
 diff --git a/drivers/crypto/qce/sha.c b/drivers/crypto/qce/sha.c
-index 586efed68d..f62f7296a0 100644
+index 586efed68d36..f62f7296a04a 100644
 --- a/drivers/crypto/qce/sha.c
 +++ b/drivers/crypto/qce/sha.c
 @@ -47,8 +47,8 @@ static void qce_ahash_done(void *data)
@@ -375,7 +375,7 @@ index 586efed68d..f62f7296a0 100644
  }
  
 diff --git a/drivers/crypto/qce/skcipher.c b/drivers/crypto/qce/skcipher.c
-index b80e579df6..fcbc5cb879 100644
+index b80e579df621..fcbc5cb87966 100644
 --- a/drivers/crypto/qce/skcipher.c
 +++ b/drivers/crypto/qce/skcipher.c
 @@ -49,8 +49,8 @@ static void qce_skcipher_done(void *data)

@@ -1,4 +1,4 @@
-From cb0406771a3e5411e522fb0236a54d19fffda043 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Priyansh Jain <priyansh.jain@oss.qualcomm.com>
 Date: Fri, 8 May 2026 15:37:00 +0530
 Subject: [PATCH] thermal/drivers/qcom/tsens: Widen temperature limits to match
@@ -37,7 +37,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/thermal/qcom/tsens-v2.c b/drivers/thermal/qcom/tsens-v2.c
-index 2ee117aa91..843dd29fad 100644
+index 2ee117aa91ba..843dd29fad2e 100644
 --- a/drivers/thermal/qcom/tsens-v2.c
 +++ b/drivers/thermal/qcom/tsens-v2.c
 @@ -54,8 +54,8 @@ static struct tsens_features tsens_v2_feat = {

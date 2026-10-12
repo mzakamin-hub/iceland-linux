@@ -1,4 +1,4 @@
-From e69f6f280d70ecb491091d3ea0e0eb42c2289524 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sun, 11 Oct 2026 00:01:46 +0300
 Subject: [PATCH] usb: dwc3: qcom: drop the CPU latency request while no VBUS
@@ -33,7 +33,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 84 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/usb/dwc3/dwc3-qcom.c b/drivers/usb/dwc3/dwc3-qcom.c
-index b0df29d2aa..2fe9c66961 100644
+index b0df29d2aa8e..2fe9c6696116 100644
 --- a/drivers/usb/dwc3/dwc3-qcom.c
 +++ b/drivers/usb/dwc3/dwc3-qcom.c
 @@ -16,10 +16,12 @@

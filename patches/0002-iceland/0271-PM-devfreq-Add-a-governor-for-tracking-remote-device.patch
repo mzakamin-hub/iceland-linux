@@ -1,4 +1,4 @@
-From bdde7358672c73d865bd99d7755894c8f2d38ed5 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Sibi Sankar <sibi.sankar@oss.qualcomm.com>
 Date: Fri, 24 Jul 2026 12:48:11 +0530
 Subject: [PATCH] PM / devfreq: Add a governor for tracking remote device
@@ -27,7 +27,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  create mode 100644 drivers/devfreq/governor_remote.c
 
 diff --git a/drivers/devfreq/Kconfig b/drivers/devfreq/Kconfig
-index c999c4a1e5..2caa875549 100644
+index c999c4a1e567..2caa87554914 100644
 --- a/drivers/devfreq/Kconfig
 +++ b/drivers/devfreq/Kconfig
 @@ -56,6 +56,14 @@ config DEVFREQ_GOV_POWERSAVE
@@ -46,7 +46,7 @@ index c999c4a1e5..2caa875549 100644
  	tristate "Userspace"
  	help
 diff --git a/drivers/devfreq/Makefile b/drivers/devfreq/Makefile
-index 404179d79a..cde57c8cda 100644
+index 404179d79a9d..cde57c8cda76 100644
 --- a/drivers/devfreq/Makefile
 +++ b/drivers/devfreq/Makefile
 @@ -4,6 +4,7 @@ obj-$(CONFIG_PM_DEVFREQ_EVENT)	+= devfreq-event.o
@@ -59,7 +59,7 @@ index 404179d79a..cde57c8cda 100644
  
 diff --git a/drivers/devfreq/governor_remote.c b/drivers/devfreq/governor_remote.c
 new file mode 100644
-index 0000000000..df3819757e
+index 000000000000..df3819757e56
 --- /dev/null
 +++ b/drivers/devfreq/governor_remote.c
 @@ -0,0 +1,73 @@
@@ -137,7 +137,7 @@ index 0000000000..df3819757e
 +MODULE_DESCRIPTION("DEVFREQ Remote Tracking governor");
 +MODULE_LICENSE("GPL");
 diff --git a/include/linux/devfreq.h b/include/linux/devfreq.h
-index dc1075dc34..4d50cf2309 100644
+index dc1075dc3446..4d50cf230950 100644
 --- a/include/linux/devfreq.h
 +++ b/include/linux/devfreq.h
 @@ -21,6 +21,7 @@

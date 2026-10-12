@@ -1,4 +1,4 @@
-From 8b43408fd75bc48cd8d4351122ac1d09020c89e8 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 29 Jul 2026 00:24:46 -0700
 Subject: [PATCH] PCI/pwrctrl: pwrseq: Add WCN7860
@@ -11,7 +11,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 5 insertions(+)
 
 diff --git a/drivers/pci/pwrctrl/pci-pwrctrl-pwrseq.c b/drivers/pci/pwrctrl/pci-pwrctrl-pwrseq.c
-index c5ced87944..17fbf29eff 100644
+index c5ced87944b6..17fbf29effff 100644
 --- a/drivers/pci/pwrctrl/pci-pwrctrl-pwrseq.c
 +++ b/drivers/pci/pwrctrl/pci-pwrctrl-pwrseq.c
 @@ -122,6 +122,11 @@ static const struct of_device_id pwrseq_pwrctrl_of_match[] = {

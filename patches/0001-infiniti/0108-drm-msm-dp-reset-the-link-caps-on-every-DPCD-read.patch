@@ -1,4 +1,4 @@
-From b4dd6c7cf23508dbc7ddc47e8782fa4a55943eeb Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Thu, 24 Sep 2026 01:03:01 -0700
 Subject: [PATCH] drm/msm/dp: reset the link caps on every DPCD read
@@ -14,7 +14,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/gpu/drm/msm/dp/dp_panel.c b/drivers/gpu/drm/msm/dp/dp_panel.c
-index e76dad0f66..55bb9d364f 100644
+index e76dad0f6663..55bb9d364fa0 100644
 --- a/drivers/gpu/drm/msm/dp/dp_panel.c
 +++ b/drivers/gpu/drm/msm/dp/dp_panel.c
 @@ -101,6 +101,7 @@ static int msm_dp_panel_read_dpcd(struct msm_dp_panel *msm_dp_panel)

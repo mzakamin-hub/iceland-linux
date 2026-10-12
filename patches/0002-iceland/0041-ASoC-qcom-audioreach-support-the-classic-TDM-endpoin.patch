@@ -1,4 +1,4 @@
-From 4e5cd303ca0d3e5fbda59b3ad5afbfb7bf02b87c Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Tue, 29 Sep 2026 07:22:23 +0300
 Subject: [PATCH] ASoC: qcom: audioreach: support the classic TDM endpoint
@@ -27,7 +27,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  4 files changed, 136 insertions(+), 1 deletion(-)
 
 diff --git a/sound/soc/qcom/qdsp6/audioreach.c b/sound/soc/qcom/qdsp6/audioreach.c
-index cce0ad31ff..f4deb977dc 100644
+index cce0ad31ff0c..f4deb977dc8b 100644
 --- a/sound/soc/qcom/qdsp6/audioreach.c
 +++ b/sound/soc/qcom/qdsp6/audioreach.c
 @@ -152,6 +152,13 @@ struct apm_i2s_module_intf_cfg {
@@ -142,7 +142,7 @@ index cce0ad31ff..f4deb977dc 100644
  	case MODULE_ID_AUDIO_IF_SINK:
  		rc = audioreach_audio_if_set_media_format(graph, module, cfg);
 diff --git a/sound/soc/qcom/qdsp6/audioreach.h b/sound/soc/qcom/qdsp6/audioreach.h
-index 35541b2d8c..dde6140fca 100644
+index 35541b2d8c99..dde6140fca38 100644
 --- a/sound/soc/qcom/qdsp6/audioreach.h
 +++ b/sound/soc/qcom/qdsp6/audioreach.h
 @@ -22,6 +22,8 @@ struct q6apm_graph;
@@ -199,7 +199,7 @@ index 35541b2d8c..dde6140fca 100644
  
  /*
 diff --git a/sound/soc/qcom/qdsp6/q6apm.c b/sound/soc/qcom/qdsp6/q6apm.c
-index 6adf602127..b503599cec 100644
+index 6adf6021274e..b503599cec29 100644
 --- a/sound/soc/qcom/qdsp6/q6apm.c
 +++ b/sound/soc/qcom/qdsp6/q6apm.c
 @@ -89,7 +89,8 @@ static struct audioreach_graph *q6apm_get_audioreach_graph(struct q6apm *apm, ui
@@ -213,7 +213,7 @@ index 6adf602127..b503599cec 100644
  	return graph;
  }
 diff --git a/sound/soc/qcom/qdsp6/topology.c b/sound/soc/qcom/qdsp6/topology.c
-index faafbc5c0a..874404ae13 100644
+index faafbc5c0ad0..874404ae13bb 100644
 --- a/sound/soc/qcom/qdsp6/topology.c
 +++ b/sound/soc/qcom/qdsp6/topology.c
 @@ -771,6 +771,9 @@ static int audioreach_widget_audio_if_module_load(struct audioreach_module *mod,

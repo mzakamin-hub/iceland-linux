@@ -1,4 +1,4 @@
-From e0b32b4414159987e9ce9a2b9d80417635f6d62e Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Fri, 25 Sep 2026 02:03:11 -0700
 Subject: [PATCH] media: iris: Don't report the picture state on decoder input
@@ -13,7 +13,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 2 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c b/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
-index 8c2644c7f6..69f45d0b46 100644
+index 8c2644c7f6e8..69f45d0b46f9 100644
 --- a/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
 +++ b/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
 @@ -340,8 +340,6 @@ static int iris_hfi_gen2_handle_input_buffer(struct iris_inst *inst,

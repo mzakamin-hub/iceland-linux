@@ -1,4 +1,4 @@
-From 87be0fd603e0c4b9275ee9a27b55089d30818d15 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Qingqing Zhou <quic_qqzhou@quicinc.com>
 Date: Tue, 7 Jul 2026 03:10:20 +0530
 Subject: [PATCH] arm64: dts: qcom: kaanapali: add the GPU SMMU node
@@ -14,7 +14,7 @@ Signed-off-by: Akhil P Oommen <akhilpo@oss.qualcomm.com>
  1 file changed, 40 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 131fd2a16c..654b5d292b 100644
+index 131fd2a16c54..654b5d292b71 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -2702,6 +2702,46 @@ gpucc: clock-controller@3d90000 {

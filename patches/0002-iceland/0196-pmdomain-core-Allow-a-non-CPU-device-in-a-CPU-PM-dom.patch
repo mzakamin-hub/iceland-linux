@@ -1,6 +1,6 @@
-From 5af07c5426754d82987a19cce8a0c148f91da068 Mon Sep 17 00:00:00 2001
-From: Ulf Hansson <ulf.hansson@oss.qualcomm.com>
-Date: Mon, 14 Sep 2026 17:01:38 +0200
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 10 Oct 2026 04:19:13 +0300
 Subject: [PATCH] pmdomain: core: Allow a non-CPU device in a CPU PM domain to
  do power on
 
@@ -37,7 +37,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 75 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/pmdomain/core.c b/drivers/pmdomain/core.c
-index 6abe8b1989..c593a3479a 100644
+index 6abe8b198949..c593a3479ad0 100644
 --- a/drivers/pmdomain/core.c
 +++ b/drivers/pmdomain/core.c
 @@ -10,6 +10,7 @@

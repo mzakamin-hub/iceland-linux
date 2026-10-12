@@ -1,4 +1,4 @@
-From dc2a7d73d5d2612d70159b93f3c60811817e0d6c Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 29 Jul 2026 17:57:14 -0700
 Subject: [PATCH] arm64: dts: qcom: kaanapali: Add the DisplayPort controller
@@ -9,7 +9,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 85 insertions(+), 2 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index f94f5d5ffd..6ae5837e49 100644
+index f94f5d5ffdc5..6ae5837e49ef 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -3825,6 +3825,7 @@ port@2 {

@@ -1,4 +1,4 @@
-From 7ef6f6ce51db0835564d38dbad42f008b4ae6518 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Thu, 24 Sep 2026 11:31:19 -0700
 Subject: [PATCH] media: i2c: Add OmniVision OV50D40 driver
@@ -15,7 +15,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  create mode 100644 drivers/media/i2c/ov50d40.c
 
 diff --git a/drivers/media/i2c/Kconfig b/drivers/media/i2c/Kconfig
-index 690c148a86..1bdd8eb6f1 100644
+index 690c148a8601..1bdd8eb6f1cf 100644
 --- a/drivers/media/i2c/Kconfig
 +++ b/drivers/media/i2c/Kconfig
 @@ -569,6 +569,17 @@ config VIDEO_OV4689
@@ -37,7 +37,7 @@ index 690c148a86..1bdd8eb6f1 100644
  	tristate "OmniVision OV5640 sensor support"
  	depends on OF
 diff --git a/drivers/media/i2c/Makefile b/drivers/media/i2c/Makefile
-index 38f4153e08..cec1cea401 100644
+index 38f4153e082f..cec1cea4014c 100644
 --- a/drivers/media/i2c/Makefile
 +++ b/drivers/media/i2c/Makefile
 @@ -104,6 +104,7 @@ obj-$(CONFIG_VIDEO_OV2732) += ov2732.o
@@ -50,7 +50,7 @@ index 38f4153e08..cec1cea401 100644
  obj-$(CONFIG_VIDEO_OV5647) += ov5647.o
 diff --git a/drivers/media/i2c/ov50d40.c b/drivers/media/i2c/ov50d40.c
 new file mode 100644
-index 0000000000..bf491f7201
+index 000000000000..bf491f7201b8
 --- /dev/null
 +++ b/drivers/media/i2c/ov50d40.c
 @@ -0,0 +1,2465 @@

@@ -1,4 +1,4 @@
-From 8823ca9eace4c6cc24c924c81b2836b7478b6f09 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Tue, 29 Sep 2026 12:08:39 +0000
 Subject: [PATCH] ASoC: codecs: tfa9865: stock TDM setup for the OnePlus Pad 4
@@ -21,7 +21,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 44 insertions(+), 24 deletions(-)
 
 diff --git a/sound/soc/codecs/tfa9865.c b/sound/soc/codecs/tfa9865.c
-index 97d1db2e7a..76a31369f4 100644
+index 97d1db2e7a44..76a31369f420 100644
 --- a/sound/soc/codecs/tfa9865.c
 +++ b/sound/soc/codecs/tfa9865.c
 @@ -93,6 +93,9 @@ struct tfa9865_reg_data {

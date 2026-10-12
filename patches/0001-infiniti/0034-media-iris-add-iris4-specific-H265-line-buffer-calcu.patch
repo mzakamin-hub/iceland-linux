@@ -1,4 +1,4 @@
-From 1ad095cf8c1132b29b0ffe6f0896855eebebc360 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Vikash Garodia <vikash.garodia@oss.qualcomm.com>
 Date: Fri, 13 Mar 2026 18:49:40 +0530
 Subject: [PATCH] media: iris: add iris4 specific H265 line buffer calculation
@@ -20,7 +20,7 @@ Signed-off-by: Vikash Garodia <vikash.garodia@oss.qualcomm.com>
  1 file changed, 50 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
-index bb8135bd23..368e157f2e 100644
+index bb8135bd238b..368e157f2ef7 100644
 --- a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
 +++ b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
 @@ -1814,6 +1814,55 @@ static u32 hfi_vpu4x_buffer_line_vp9d(u32 frame_width, u32 frame_height, u32 _yu

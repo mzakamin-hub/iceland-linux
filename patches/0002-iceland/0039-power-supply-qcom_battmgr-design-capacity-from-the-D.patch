@@ -1,4 +1,4 @@
-From 13747ee111b5af4bb74de21add7629a575679707 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Tue, 29 Sep 2026 01:51:44 +0300
 Subject: [PATCH] power: supply: qcom_battmgr: design capacity from the DT
@@ -17,7 +17,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  2 files changed, 35 insertions(+), 2 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index e6dab93ef3..16066d23d8 100644
+index e6dab93ef31a..16066d23d8f3 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -44,6 +44,11 @@ aliases {
@@ -43,7 +43,7 @@ index e6dab93ef3..16066d23d8 100644
  		#size-cells = <0>;
  		orientation-gpios = <&tlmm 60 GPIO_ACTIVE_HIGH>;
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index ec2b607895..25cd1b932c 100644
+index ec2b607895f1..25cd1b932c00 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -373,6 +373,9 @@ struct qcom_battmgr {

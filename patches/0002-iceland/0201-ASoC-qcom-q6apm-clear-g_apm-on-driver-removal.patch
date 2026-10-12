@@ -1,4 +1,4 @@
-From 051596dc1b946403a19d9d65b3b6f7183c88112d Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:14 +0300
 Subject: [PATCH] ASoC: qcom: q6apm: clear g_apm on driver removal
@@ -26,7 +26,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/sound/soc/qcom/qdsp6/q6apm.c b/sound/soc/qcom/qdsp6/q6apm.c
-index b503599cec..c8d80e4f9d 100644
+index b503599cec29..c8d80e4f9dc6 100644
 --- a/sound/soc/qcom/qdsp6/q6apm.c
 +++ b/sound/soc/qcom/qdsp6/q6apm.c
 @@ -903,6 +903,7 @@ static int apm_probe(gpr_device_t *gdev)

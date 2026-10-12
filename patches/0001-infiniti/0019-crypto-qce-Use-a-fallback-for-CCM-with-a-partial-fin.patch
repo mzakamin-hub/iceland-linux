@@ -1,4 +1,4 @@
-From cb0154cf7167c0a2cb01eaea7ea2711cc55a7548 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
 Date: Tue, 22 Sep 2026 14:57:22 +0200
 Subject: [PATCH] crypto: qce - Use a fallback for CCM with a partial final
@@ -22,7 +22,7 @@ Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
  1 file changed, 8 insertions(+)
 
 diff --git a/drivers/crypto/qce/aead.c b/drivers/crypto/qce/aead.c
-index a9642c67f4..289af0765e 100644
+index a9642c67f476..289af0765edd 100644
 --- a/drivers/crypto/qce/aead.c
 +++ b/drivers/crypto/qce/aead.c
 @@ -514,6 +514,14 @@ static int qce_aead_crypt(struct aead_request *req, int encrypt)

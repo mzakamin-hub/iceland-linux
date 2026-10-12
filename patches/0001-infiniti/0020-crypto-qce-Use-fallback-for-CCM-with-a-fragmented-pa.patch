@@ -1,4 +1,4 @@
-From c3372daee5000bf77be57b52df75f0d8d89de13e Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
 Date: Tue, 22 Sep 2026 14:57:23 +0200
 Subject: [PATCH] crypto: qce - Use fallback for CCM with a fragmented payload
@@ -24,7 +24,7 @@ Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
  1 file changed, 23 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/crypto/qce/aead.c b/drivers/crypto/qce/aead.c
-index 289af0765e..46ae10cf00 100644
+index 289af0765edd..46ae10cf005d 100644
 --- a/drivers/crypto/qce/aead.c
 +++ b/drivers/crypto/qce/aead.c
 @@ -498,7 +498,8 @@ static int qce_aead_crypt(struct aead_request *req, int encrypt)

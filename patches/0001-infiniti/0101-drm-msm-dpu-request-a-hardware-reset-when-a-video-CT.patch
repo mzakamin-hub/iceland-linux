@@ -1,4 +1,4 @@
-From 95f42534e83977bd9711e71963bf652e39c6f78a Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 29 Jul 2026 01:17:36 -0700
 Subject: [PATCH] drm/msm/dpu: request a hardware reset when a video CTL soft
@@ -12,7 +12,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
-index ba810f26ea..39aab52658 100644
+index ba810f26ea30..39aab52658ce 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
 @@ -571,6 +571,7 @@ static void dpu_encoder_phys_vid_prepare_for_kickoff(

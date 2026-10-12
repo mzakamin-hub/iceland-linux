@@ -1,4 +1,4 @@
-From 39351e60741c46222c3cb8b05d7619b8f849bcc8 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 3 Oct 2026 11:44:32 +0300
 Subject: [PATCH] ASoC: codecs: wcd939x: skip impedance when the codec is
@@ -21,7 +21,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 11 insertions(+)
 
 diff --git a/sound/soc/codecs/wcd939x.c b/sound/soc/codecs/wcd939x.c
-index ad6e0f45e1..29fda5a783 100644
+index ad6e0f45e171..29fda5a7838b 100644
 --- a/sound/soc/codecs/wcd939x.c
 +++ b/sound/soc/codecs/wcd939x.c
 @@ -2164,6 +2164,17 @@ static void wcd939x_wcd_mbhc_calc_impedance(struct snd_soc_component *component,

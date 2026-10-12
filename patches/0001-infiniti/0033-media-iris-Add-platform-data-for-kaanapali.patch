@@ -1,4 +1,4 @@
-From fccd12d3ccf643da81e338d5f3bca74937648135 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Vikash Garodia <vikash.garodia@oss.qualcomm.com>
 Date: Mon, 4 Aug 2025 15:52:21 +0530
 Subject: [PATCH] media: iris: Add platform data for kaanapali
@@ -21,7 +21,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  create mode 100644 drivers/media/platform/qcom/iris/iris_platform_kaanapali.h
 
 diff --git a/drivers/media/platform/qcom/iris/iris_platform_common.h b/drivers/media/platform/qcom/iris/iris_platform_common.h
-index 9748095091..58431d1cb2 100644
+index 974809509146..58431d1cb2d5 100644
 --- a/drivers/media/platform/qcom/iris/iris_platform_common.h
 +++ b/drivers/media/platform/qcom/iris/iris_platform_common.h
 @@ -61,6 +61,7 @@ extern const struct iris_platform_data sm8250_data;
@@ -34,7 +34,7 @@ index 9748095091..58431d1cb2 100644
  enum platform_clk_type {
 diff --git a/drivers/media/platform/qcom/iris/iris_platform_kaanapali.h b/drivers/media/platform/qcom/iris/iris_platform_kaanapali.h
 new file mode 100644
-index 0000000000..247fb9d7cb
+index 000000000000..247fb9d7cb63
 --- /dev/null
 +++ b/drivers/media/platform/qcom/iris/iris_platform_kaanapali.h
 @@ -0,0 +1,63 @@
@@ -102,7 +102,7 @@ index 0000000000..247fb9d7cb
 +
 +#endif /* __IRIS_PLATFORM_KAANAPALI_H__ */
 diff --git a/drivers/media/platform/qcom/iris/iris_platform_vpu3x.c b/drivers/media/platform/qcom/iris/iris_platform_vpu3x.c
-index 74626b35d9..fa39783943 100644
+index 74626b35d9cb..fa39783943c0 100644
 --- a/drivers/media/platform/qcom/iris/iris_platform_vpu3x.c
 +++ b/drivers/media/platform/qcom/iris/iris_platform_vpu3x.c
 @@ -16,6 +16,7 @@
@@ -163,7 +163,7 @@ index 74626b35d9..fa39783943 100644
   * Shares most of SM8550 data except:
   * - clk_tbl and opp_clk_tbl for x1p42100
 diff --git a/drivers/media/platform/qcom/iris/iris_probe.c b/drivers/media/platform/qcom/iris/iris_probe.c
-index e4acf4a74f..9e2b7279de 100644
+index e4acf4a74f94..9e2b7279de39 100644
 --- a/drivers/media/platform/qcom/iris/iris_probe.c
 +++ b/drivers/media/platform/qcom/iris/iris_probe.c
 @@ -384,6 +384,10 @@ static const struct of_device_id iris_dt_match[] = {

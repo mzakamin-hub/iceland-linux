@@ -1,4 +1,4 @@
-From d6fed497a95d3e7b802399967b04dbf4cb0e6b4b Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
 Date: Tue, 15 Sep 2026 03:10:05 -0700
 Subject: [PATCH] arm64: dts: qcom: kaanapali: Add CCI controller nodes
@@ -35,7 +35,7 @@ Signed-off-by: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
  1 file changed, 303 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 7b85cb4288..40d756126e 100644
+index 7b85cb42881d..40d756126eca 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -3933,6 +3933,117 @@ port@5 {

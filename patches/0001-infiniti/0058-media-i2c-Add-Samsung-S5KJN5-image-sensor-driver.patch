@@ -1,4 +1,4 @@
-From 986befbd94733ca31930707d5b3f1340fdbac48c Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Wenmeng Liu <wenmeng.liu@oss.qualcomm.com>
 Date: Mon, 14 Sep 2026 19:10:25 +0800
 Subject: [PATCH] media: i2c: Add Samsung S5KJN5 image sensor driver
@@ -18,7 +18,7 @@ Signed-off-by: Wenmeng Liu <wenmeng.liu@oss.qualcomm.com>
  create mode 100644 drivers/media/i2c/s5kjn5.c
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 84d85dc97f..438f7e659e 100644
+index dd6578f59ad0..3b38d9fb6ce7 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
 @@ -24425,6 +24425,7 @@ M:	Wenmeng Liu <wenmeng.liu@oss.qualcomm.com>
@@ -30,7 +30,7 @@ index 84d85dc97f..438f7e659e 100644
  SAMSUNG S5P Security SubSystem (SSS) DRIVER
  M:	Krzysztof Kozlowski <krzk@kernel.org>
 diff --git a/drivers/media/i2c/Kconfig b/drivers/media/i2c/Kconfig
-index 5c52007f9c..be20324cc2 100644
+index 5c52007f9cbe..be20324cc2be 100644
 --- a/drivers/media/i2c/Kconfig
 +++ b/drivers/media/i2c/Kconfig
 @@ -826,6 +826,17 @@ config VIDEO_S5KJN1
@@ -52,7 +52,7 @@ index 5c52007f9c..be20324cc2 100644
  	tristate "Toshiba T4KA3 sensor support"
  	depends on ACPI || COMPILE_TEST
 diff --git a/drivers/media/i2c/Makefile b/drivers/media/i2c/Makefile
-index d04bd57245..45019ce20a 100644
+index d04bd5724552..45019ce20a6c 100644
 --- a/drivers/media/i2c/Makefile
 +++ b/drivers/media/i2c/Makefile
 @@ -133,6 +133,7 @@ obj-$(CONFIG_VIDEO_S5K3M5) += s5k3m5.o
@@ -65,7 +65,7 @@ index d04bd57245..45019ce20a 100644
  obj-$(CONFIG_VIDEO_SAA7110) += saa7110.o
 diff --git a/drivers/media/i2c/s5kjn5.c b/drivers/media/i2c/s5kjn5.c
 new file mode 100644
-index 0000000000..edf824228b
+index 000000000000..edf824228bb6
 --- /dev/null
 +++ b/drivers/media/i2c/s5kjn5.c
 @@ -0,0 +1,2861 @@

@@ -1,4 +1,4 @@
-From 3eb2ca330171786baef70c716b78ee2e2969f311 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 29 Jul 2026 00:24:50 -0700
 Subject: [PATCH] phy: qcom: qmp-combo: Add Kaanapali USB3+DP PHY
@@ -11,7 +11,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 49 insertions(+)
 
 diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
-index e99b0a4100..30da0ee55f 100644
+index e99b0a410035..30da0ee55f0d 100644
 --- a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
 +++ b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
 @@ -3304,6 +3304,51 @@ static const struct qmp_phy_cfg sm8650_usb3dpphy_cfg = {

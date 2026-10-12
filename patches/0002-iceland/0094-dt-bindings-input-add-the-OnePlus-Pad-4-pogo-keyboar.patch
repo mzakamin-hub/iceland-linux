@@ -1,4 +1,4 @@
-From 2e08ebb7714aaf58f4ec5c0dc5df25c61cf4abbe Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 11:21:24 +0300
 Subject: [PATCH] dt-bindings: input: add the OnePlus Pad 4 pogo keyboard dock
@@ -20,7 +20,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 
 diff --git a/Documentation/devicetree/bindings/input/oneplus,iceland-pogo-keyboard.yaml b/Documentation/devicetree/bindings/input/oneplus,iceland-pogo-keyboard.yaml
 new file mode 100644
-index 0000000000..d00e1fa4e3
+index 000000000000..d00e1fa4e392
 --- /dev/null
 +++ b/Documentation/devicetree/bindings/input/oneplus,iceland-pogo-keyboard.yaml
 @@ -0,0 +1,63 @@

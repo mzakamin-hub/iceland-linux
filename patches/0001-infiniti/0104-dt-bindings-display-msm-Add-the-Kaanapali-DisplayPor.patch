@@ -1,4 +1,4 @@
-From f25bab74c32f234a4141b283112e268f602621bd Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 29 Jul 2026 01:07:31 -0700
 Subject: [PATCH] dt-bindings: display/msm: Add the Kaanapali DisplayPort
@@ -13,7 +13,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  2 files changed, 9 insertions(+)
 
 diff --git a/Documentation/devicetree/bindings/display/msm/dp-controller.yaml b/Documentation/devicetree/bindings/display/msm/dp-controller.yaml
-index 094a6383bb..76ab05bd22 100644
+index 094a6383bb77..76ab05bd225a 100644
 --- a/Documentation/devicetree/bindings/display/msm/dp-controller.yaml
 +++ b/Documentation/devicetree/bindings/display/msm/dp-controller.yaml
 @@ -68,6 +68,7 @@ properties:
@@ -25,7 +25,7 @@ index 094a6383bb..76ab05bd22 100644
            - const: qcom,sm8650-dp
  
 diff --git a/Documentation/devicetree/bindings/display/msm/qcom,kaanapali-mdss.yaml b/Documentation/devicetree/bindings/display/msm/qcom,kaanapali-mdss.yaml
-index 9f935defd6..ccaaee8bdc 100644
+index 9f935defd6b1..ccaaee8bdc74 100644
 --- a/Documentation/devicetree/bindings/display/msm/qcom,kaanapali-mdss.yaml
 +++ b/Documentation/devicetree/bindings/display/msm/qcom,kaanapali-mdss.yaml
 @@ -48,6 +48,14 @@ patternProperties:

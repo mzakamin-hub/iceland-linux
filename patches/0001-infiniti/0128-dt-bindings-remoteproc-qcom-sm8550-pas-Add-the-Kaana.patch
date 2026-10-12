@@ -1,4 +1,4 @@
-From f6f34b9f28de893344c3bf86de1902a7f25e45fe Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Fri, 25 Sep 2026 02:45:00 -0700
 Subject: [PATCH] dt-bindings: remoteproc: qcom,sm8550-pas: Add the Kaanapali
@@ -12,7 +12,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 12 insertions(+), 7 deletions(-)
 
 diff --git a/Documentation/devicetree/bindings/remoteproc/qcom,sm8550-pas.yaml b/Documentation/devicetree/bindings/remoteproc/qcom,sm8550-pas.yaml
-index c58e8a6c7f..87320d87ea 100644
+index c58e8a6c7fe1..87320d87eaf9 100644
 --- a/Documentation/devicetree/bindings/remoteproc/qcom,sm8550-pas.yaml
 +++ b/Documentation/devicetree/bindings/remoteproc/qcom,sm8550-pas.yaml
 @@ -47,6 +47,9 @@ properties:

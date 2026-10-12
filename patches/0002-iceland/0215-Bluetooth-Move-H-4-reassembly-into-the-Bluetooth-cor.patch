@@ -1,4 +1,4 @@
-From d55140c40146e12330761322ae9a330063d5e47e Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:16 +0300
 Subject: [PATCH] Bluetooth: Move H:4 reassembly into the Bluetooth core
@@ -34,7 +34,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  create mode 100644 net/bluetooth/hci_h4.c
 
 diff --git a/drivers/bluetooth/hci_h4.c b/drivers/bluetooth/hci_h4.c
-index 7673727074..cbdf51458e 100644
+index 767372707498..cbdf51458ec3 100644
 --- a/drivers/bluetooth/hci_h4.c
 +++ b/drivers/bluetooth/hci_h4.c
 @@ -29,6 +29,7 @@
@@ -181,7 +181,7 @@ index 7673727074..cbdf51458e 100644
  }
  EXPORT_SYMBOL_GPL(h4_recv_buf);
 diff --git a/drivers/bluetooth/hci_uart.h b/drivers/bluetooth/hci_uart.h
-index 48ac7ca933..7fbe8dffab 100644
+index 48ac7ca9334e..7fbe8dffab98 100644
 --- a/drivers/bluetooth/hci_uart.h
 +++ b/drivers/bluetooth/hci_uart.h
 @@ -8,6 +8,8 @@
@@ -239,7 +239,7 @@ index 48ac7ca933..7fbe8dffab 100644
  int h4_deinit(void);
 diff --git a/include/net/bluetooth/hci_h4.h b/include/net/bluetooth/hci_h4.h
 new file mode 100644
-index 0000000000..a37e7df8c9
+index 000000000000..a37e7df8c9ce
 --- /dev/null
 +++ b/include/net/bluetooth/hci_h4.h
 @@ -0,0 +1,60 @@
@@ -304,7 +304,7 @@ index 0000000000..a37e7df8c9
 +
 +#endif /* __HCI_H4_H */
 diff --git a/net/bluetooth/Makefile b/net/bluetooth/Makefile
-index ff466ea974..b78ad98864 100644
+index ff466ea97436..b78ad98864d4 100644
 --- a/net/bluetooth/Makefile
 +++ b/net/bluetooth/Makefile
 @@ -14,7 +14,7 @@ bluetooth_6lowpan-y := 6lowpan.o
@@ -318,7 +318,7 @@ index ff466ea974..b78ad98864 100644
  
 diff --git a/net/bluetooth/hci_h4.c b/net/bluetooth/hci_h4.c
 new file mode 100644
-index 0000000000..86f8090180
+index 000000000000..86f809018062
 --- /dev/null
 +++ b/net/bluetooth/hci_h4.c
 @@ -0,0 +1,160 @@

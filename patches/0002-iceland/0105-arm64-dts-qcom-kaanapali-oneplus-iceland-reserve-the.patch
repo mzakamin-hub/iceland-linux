@@ -1,4 +1,4 @@
-From 0d766c9a4f8e781464818829016034b9ac6418c6 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 11:21:28 +0300
 Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: reserve the pins
@@ -16,7 +16,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index f2c3acb8be..df2ac127ba 100644
+index f2c3acb8be5d..df2ac127ba99 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1939,7 +1939,8 @@ wcd_tx: codec@0,3 {

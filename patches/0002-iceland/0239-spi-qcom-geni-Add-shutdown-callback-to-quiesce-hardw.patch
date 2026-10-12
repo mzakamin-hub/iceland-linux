@@ -1,4 +1,4 @@
-From 19eadd529c057ae40259e2dea7feb27021f6350d Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:20 +0300
 Subject: [PATCH] spi: qcom-geni: Add shutdown callback to quiesce hardware on
@@ -27,7 +27,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 9 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/spi/spi-geni-qcom.c b/drivers/spi/spi-geni-qcom.c
-index 6c57f8309a..c65c178832 100644
+index 6c57f8309a3b..c65c1788325d 100644
 --- a/drivers/spi/spi-geni-qcom.c
 +++ b/drivers/spi/spi-geni-qcom.c
 @@ -1066,6 +1066,13 @@ static int spi_geni_target_abort(struct spi_controller *spi)

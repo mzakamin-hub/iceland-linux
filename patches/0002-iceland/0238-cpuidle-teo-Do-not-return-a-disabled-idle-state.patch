@@ -1,4 +1,4 @@
-From a630b33b574ca5e886ae7735091e56552c232c71 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:20 +0300
 Subject: [PATCH] cpuidle: teo: Do not return a disabled idle state
@@ -31,7 +31,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 11 insertions(+)
 
 diff --git a/drivers/cpuidle/governors/teo.c b/drivers/cpuidle/governors/teo.c
-index ac43b9b013..906f4f89e3 100644
+index ac43b9b013b3..906f4f89e365 100644
 --- a/drivers/cpuidle/governors/teo.c
 +++ b/drivers/cpuidle/governors/teo.c
 @@ -426,6 +426,17 @@ static int teo_select(struct cpuidle_driver *drv, struct cpuidle_device *dev,

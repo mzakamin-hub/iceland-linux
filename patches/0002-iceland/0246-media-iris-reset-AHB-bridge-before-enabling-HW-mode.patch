@@ -1,4 +1,4 @@
-From 58f204cabd43adfda4251fe788e2cf8936f891b1 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:21 +0300
 Subject: [PATCH] media: iris: reset AHB bridge before enabling HW mode
@@ -31,7 +31,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 5 insertions(+)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_vpu_common.c b/drivers/media/platform/qcom/iris/iris_vpu_common.c
-index 819db75695..a9820fc0c4 100644
+index 819db7569524..a9820fc0c4be 100644
 --- a/drivers/media/platform/qcom/iris/iris_vpu_common.c
 +++ b/drivers/media/platform/qcom/iris/iris_vpu_common.c
 @@ -311,6 +311,11 @@ int iris_vpu_power_on_hw(struct iris_core *core)

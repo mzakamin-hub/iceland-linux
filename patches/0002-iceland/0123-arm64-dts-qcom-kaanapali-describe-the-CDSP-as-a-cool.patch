@@ -1,4 +1,4 @@
-From 73c4dfcfa9e62cc37fb5f91e92efc9fb446fc628 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 16:19:51 +0300
 Subject: [PATCH] arm64: dts: qcom: kaanapali: describe the CDSP as a cooling
@@ -15,7 +15,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index b1cccec413..7ad84e4a54 100644
+index b1cccec413b3..7ad84e4a5442 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -7639,6 +7639,8 @@ remoteproc_cdsp: remoteproc@26300000 {

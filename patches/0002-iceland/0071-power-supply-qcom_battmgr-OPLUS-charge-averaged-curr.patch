@@ -1,4 +1,4 @@
-From b7688036d49cc076de5a98dde41e2906e21051cb Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 00:42:13 +0300
 Subject: [PATCH] power: supply: qcom_battmgr: OPLUS: charge, averaged current
@@ -29,7 +29,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 151 insertions(+), 14 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 4546a9e86f..38f5214084 100644
+index 4546a9e86fc4..38f521408437 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -8,6 +8,8 @@

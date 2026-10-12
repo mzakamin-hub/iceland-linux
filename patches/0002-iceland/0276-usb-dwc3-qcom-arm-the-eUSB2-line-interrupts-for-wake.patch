@@ -1,4 +1,4 @@
-From b0a54f62941994c533a58640735a3b0c3f47e431 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Joonhoe Kim <26rote@gmail.com>
 Date: Sat, 26 Sep 2026 09:54:56 +0000
 Subject: [PATCH] usb: dwc3: qcom: arm the eUSB2 line interrupts for wakeup
@@ -31,7 +31,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 43 insertions(+), 10 deletions(-)
 
 diff --git a/drivers/usb/dwc3/dwc3-qcom.c b/drivers/usb/dwc3/dwc3-qcom.c
-index 0664fdb842..3c8d3eef9a 100644
+index 0664fdb842a3..3c8d3eef9a14 100644
 --- a/drivers/usb/dwc3/dwc3-qcom.c
 +++ b/drivers/usb/dwc3/dwc3-qcom.c
 @@ -85,6 +85,7 @@ struct dwc3_qcom {

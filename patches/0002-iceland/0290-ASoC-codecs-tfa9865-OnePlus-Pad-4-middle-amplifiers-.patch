@@ -1,4 +1,4 @@
-From faa8eeee8c828e4990df2a3eda27db9961239601 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sun, 11 Oct 2026 17:07:43 +0300
 Subject: [PATCH] ASoC: codecs: tfa9865: OnePlus Pad 4: middle amplifiers' gain
@@ -20,7 +20,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/sound/soc/codecs/tfa9865.c b/sound/soc/codecs/tfa9865.c
-index e77e697048..a3dece37f8 100644
+index e77e69704852..a3dece37f89d 100644
 --- a/sound/soc/codecs/tfa9865.c
 +++ b/sound/soc/codecs/tfa9865.c
 @@ -141,8 +141,8 @@ static const struct tfa9865_reg_data tfa9865_iceland_regs_0__37[] = {

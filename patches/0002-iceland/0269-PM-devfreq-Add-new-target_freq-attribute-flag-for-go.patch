@@ -1,4 +1,4 @@
-From 60370a8ce77854fd7978e25925d93748afe1320d Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Sibi Sankar <sibi.sankar@oss.qualcomm.com>
 Date: Fri, 24 Jul 2026 12:48:09 +0530
 Subject: [PATCH] PM / devfreq: Add new target_freq attribute flag for
@@ -35,7 +35,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  10 files changed, 25 insertions(+), 1 deletion(-)
 
 diff --git a/Documentation/ABI/testing/sysfs-class-devfreq b/Documentation/ABI/testing/sysfs-class-devfreq
-index df8ba88b9f..5be9940a58 100644
+index df8ba88b9f6a..5be9940a5853 100644
 --- a/Documentation/ABI/testing/sysfs-class-devfreq
 +++ b/Documentation/ABI/testing/sysfs-class-devfreq
 @@ -37,6 +37,14 @@ Description:
@@ -54,7 +54,7 @@ index df8ba88b9f..5be9940a58 100644
  Date:		October 2012
  Contact:	MyungJoo Ham <myungjoo.ham@samsung.com>
 diff --git a/drivers/devfreq/devfreq.c b/drivers/devfreq/devfreq.c
-index 82dd9a43dc..398cbf2a6f 100644
+index 82dd9a43dc62..398cbf2a6fb3 100644
 --- a/drivers/devfreq/devfreq.c
 +++ b/drivers/devfreq/devfreq.c
 @@ -1562,6 +1562,12 @@ static ssize_t target_freq_show(struct device *dev,
@@ -71,7 +71,7 @@ index 82dd9a43dc..398cbf2a6f 100644
  }
  static DEVICE_ATTR_RO(target_freq);
 diff --git a/drivers/devfreq/governor_passive.c b/drivers/devfreq/governor_passive.c
-index d7feecd900..b75e4bbee4 100644
+index d7feecd900f1..b75e4bbee4b1 100644
 --- a/drivers/devfreq/governor_passive.c
 +++ b/drivers/devfreq/governor_passive.c
 @@ -448,6 +448,7 @@ static int devfreq_passive_event_handler(struct devfreq *devfreq,
@@ -83,7 +83,7 @@ index d7feecd900..b75e4bbee4 100644
  	.get_target_freq = devfreq_passive_get_target_freq,
  	.event_handler = devfreq_passive_event_handler,
 diff --git a/drivers/devfreq/governor_performance.c b/drivers/devfreq/governor_performance.c
-index fdb22bf512..b9ec587f58 100644
+index fdb22bf512cf..b9ec587f582c 100644
 --- a/drivers/devfreq/governor_performance.c
 +++ b/drivers/devfreq/governor_performance.c
 @@ -37,6 +37,7 @@ static int devfreq_performance_handler(struct devfreq *devfreq,
@@ -95,7 +95,7 @@ index fdb22bf512..b9ec587f58 100644
  	.event_handler = devfreq_performance_handler,
  };
 diff --git a/drivers/devfreq/governor_powersave.c b/drivers/devfreq/governor_powersave.c
-index ee2d6ec8a5..69eab1d0a7 100644
+index ee2d6ec8a512..69eab1d0a7fc 100644
 --- a/drivers/devfreq/governor_powersave.c
 +++ b/drivers/devfreq/governor_powersave.c
 @@ -37,6 +37,7 @@ static int devfreq_powersave_handler(struct devfreq *devfreq,
@@ -107,7 +107,7 @@ index ee2d6ec8a5..69eab1d0a7 100644
  	.event_handler = devfreq_powersave_handler,
  };
 diff --git a/drivers/devfreq/governor_simpleondemand.c b/drivers/devfreq/governor_simpleondemand.c
-index ac9c5e9e51..65ff9d912e 100644
+index ac9c5e9e51a4..65ff9d912ef9 100644
 --- a/drivers/devfreq/governor_simpleondemand.c
 +++ b/drivers/devfreq/governor_simpleondemand.c
 @@ -118,6 +118,7 @@ static int devfreq_simple_ondemand_handler(struct devfreq *devfreq,
@@ -119,7 +119,7 @@ index ac9c5e9e51..65ff9d912e 100644
  	.get_target_freq = devfreq_simple_ondemand_func,
  	.event_handler = devfreq_simple_ondemand_handler,
 diff --git a/drivers/devfreq/governor_userspace.c b/drivers/devfreq/governor_userspace.c
-index 3906ebedba..d1b765a7b8 100644
+index 3906ebedbae8..d1b765a7b8e5 100644
 --- a/drivers/devfreq/governor_userspace.c
 +++ b/drivers/devfreq/governor_userspace.c
 @@ -135,6 +135,7 @@ static int devfreq_userspace_handler(struct devfreq *devfreq,
@@ -131,7 +131,7 @@ index 3906ebedba..d1b765a7b8 100644
  	.event_handler = devfreq_userspace_handler,
  };
 diff --git a/drivers/devfreq/hisi_uncore_freq.c b/drivers/devfreq/hisi_uncore_freq.c
-index ac55641b02..1e67f7547e 100644
+index ac55641b0259..1e67f7547e04 100644
 --- a/drivers/devfreq/hisi_uncore_freq.c
 +++ b/drivers/devfreq/hisi_uncore_freq.c
 @@ -398,6 +398,7 @@ static struct devfreq_governor hisi_platform_governor = {
@@ -143,7 +143,7 @@ index ac55641b02..1e67f7547e 100644
  	.get_target_freq = hisi_platform_gov_func,
  	.event_handler = hisi_platform_gov_handler,
 diff --git a/drivers/devfreq/tegra30-devfreq.c b/drivers/devfreq/tegra30-devfreq.c
-index 401aac6a9f..fcb278c4a7 100644
+index 401aac6a9f07..fcb278c4a74c 100644
 --- a/drivers/devfreq/tegra30-devfreq.c
 +++ b/drivers/devfreq/tegra30-devfreq.c
 @@ -776,7 +776,8 @@ static int tegra_governor_event_handler(struct devfreq *devfreq,
@@ -157,7 +157,7 @@ index 401aac6a9f..fcb278c4a7 100644
  		| DEVFREQ_GOV_FLAG_IRQ_DRIVEN,
  	.get_target_freq = tegra_governor_get_target,
 diff --git a/include/linux/devfreq-governor.h b/include/linux/devfreq-governor.h
-index dfdd0160a2..2853f571df 100644
+index dfdd0160a29f..2853f571dfdf 100644
 --- a/include/linux/devfreq-governor.h
 +++ b/include/linux/devfreq-governor.h
 @@ -43,9 +43,12 @@

@@ -1,4 +1,4 @@
-From ea1a34d9221809901b3587148ab3c04d1ee6b01a Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:13 +0300
 Subject: [PATCH] misc: fastrpc: fix double-free in fastrpc_map_attach() error
@@ -47,7 +47,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/misc/fastrpc.c b/drivers/misc/fastrpc.c
-index d4fac2caca..b357512120 100644
+index d4fac2caca86..b35751212095 100644
 --- a/drivers/misc/fastrpc.c
 +++ b/drivers/misc/fastrpc.c
 @@ -927,7 +927,7 @@ static int fastrpc_map_attach(struct fastrpc_user *fl, int fd,

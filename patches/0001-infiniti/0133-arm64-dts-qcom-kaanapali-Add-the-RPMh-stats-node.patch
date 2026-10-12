@@ -1,4 +1,4 @@
-From a0938eb95fd34b2f1abcbcb8bd809e0c964efa2b Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Thu, 24 Sep 2026 03:21:55 -0700
 Subject: [PATCH] arm64: dts: qcom: kaanapali: Add the RPMh stats node
@@ -9,7 +9,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 6 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 994b5f6f4f..835e95ec2c 100644
+index 994b5f6f4f9f..835e95ec2caa 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -4702,6 +4702,12 @@ IPCC_MPROC_SIGNAL_GLINK_QMP

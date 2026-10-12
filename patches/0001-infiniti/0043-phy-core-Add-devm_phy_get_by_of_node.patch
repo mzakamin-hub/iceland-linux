@@ -1,4 +1,4 @@
-From ad0179aa0e370571ba74e5685fbf9a123fc0f69f Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Bryan O'Donoghue <bryan.odonoghue@linaro.org>
 Date: Thu, 17 Sep 2026 12:07:56 +0100
 Subject: [PATCH] phy: core: Add devm_phy_get_by_of_node()
@@ -14,7 +14,7 @@ Signed-off-by: Bryan O'Donoghue <bryan.odonoghue@linaro.org>
  2 files changed, 42 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/phy/phy-core.c b/drivers/phy/phy-core.c
-index 490a7cde6d..10e9323566 100644
+index 490a7cde6d40..10e932356680 100644
 --- a/drivers/phy/phy-core.c
 +++ b/drivers/phy/phy-core.c
 @@ -833,7 +833,7 @@ struct phy *phy_get(struct device *dev, const char *string)
@@ -68,7 +68,7 @@ index 490a7cde6d..10e9323566 100644
   * phy_create() - create a new phy
   * @dev: device that is creating the new phy
 diff --git a/include/linux/phy/phy.h b/include/linux/phy/phy.h
-index 71c2e16397..14b924a884 100644
+index 71c2e1639713..14b924a88411 100644
 --- a/include/linux/phy/phy.h
 +++ b/include/linux/phy/phy.h
 @@ -285,6 +285,7 @@ struct phy *devm_of_phy_optional_get(struct device *dev, struct device_node *np,

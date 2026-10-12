@@ -1,4 +1,4 @@
-From b58030dd04411c34710f7aeec6eaac353b32cbc3 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
 Date: Tue, 15 Sep 2026 03:09:59 -0700
 Subject: [PATCH] phy: qcom-mipi-csi2: Parametrise the common status register
@@ -20,7 +20,7 @@ Signed-off-by: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
  2 files changed, 12 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c b/drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c
-index 966d79c98f..8cd331cfb4 100644
+index 966d79c98f9b..8cd331cfb4b3 100644
 --- a/drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c
 +++ b/drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c
 @@ -19,7 +19,8 @@
@@ -70,7 +70,7 @@ index 966d79c98f..8cd331cfb4 100644
  	.supply_names = (const char **)x1e_supplies,
  	.num_supplies = ARRAY_SIZE(x1e_supplies),
 diff --git a/drivers/phy/qualcomm/phy-qcom-mipi-csi2.h b/drivers/phy/qualcomm/phy-qcom-mipi-csi2.h
-index 7e55ae0073..d6366f809e 100644
+index 7e55ae007370..d6366f809e51 100644
 --- a/drivers/phy/qualcomm/phy-qcom-mipi-csi2.h
 +++ b/drivers/phy/qualcomm/phy-qcom-mipi-csi2.h
 @@ -51,6 +51,7 @@ struct mipi_csi2phy_device_regs {

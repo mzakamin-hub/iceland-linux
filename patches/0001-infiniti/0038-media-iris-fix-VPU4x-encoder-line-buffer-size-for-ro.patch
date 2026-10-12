@@ -1,4 +1,4 @@
-From 819a855738589a44706ddde2ab334cb1326fb322 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Wangao Wang <wangao.wang@oss.qualcomm.com>
 Date: Tue, 22 Sep 2026 11:28:21 +0800
 Subject: [PATCH] media: iris: fix VPU4x encoder line buffer size for rotation
@@ -15,7 +15,7 @@ Reviewed-by: Vikash Garodia <vikash.garodia@oss.qualcomm.com>
  1 file changed, 2 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
-index 2d821f988c..0cf779cc9d 100644
+index 2d821f988c5f..0cf779cc9da7 100644
 --- a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
 +++ b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
 @@ -2118,9 +2118,8 @@ static u32 iris_vpu4x_enc_line_size(struct iris_inst *inst)

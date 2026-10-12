@@ -1,4 +1,4 @@
-From 673bb2e76c3e8ad23c7cae73f29a3be537e052f4 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 3 Oct 2026 08:53:18 +0300
 Subject: [PATCH] arm64: dts: qcom: kaanapali: give the aggregator TNOC its
@@ -22,7 +22,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 987157ba01..a371d037d7 100644
+index 987157ba0155..a371d037d7cc 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -6753,6 +6753,8 @@ tpdm_pcie_rscc_out: endpoint {

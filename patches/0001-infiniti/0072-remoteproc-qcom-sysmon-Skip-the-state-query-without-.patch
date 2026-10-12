@@ -1,4 +1,4 @@
-From 22c625a789034ea443a488f216c8b7f7df97d9a5 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 23 Sep 2026 08:36:37 -0700
 Subject: [PATCH] remoteproc: qcom: sysmon: Skip the state query without a
@@ -15,7 +15,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/remoteproc/qcom_sysmon.c b/drivers/remoteproc/qcom_sysmon.c
-index 61e1038328..54a6b25201 100644
+index 61e1038328e8..54a6b25201f0 100644
 --- a/drivers/remoteproc/qcom_sysmon.c
 +++ b/drivers/remoteproc/qcom_sysmon.c
 @@ -739,7 +739,7 @@ bool qcom_sysmon_shutdown_irq_state(struct qcom_sysmon *sysmon)

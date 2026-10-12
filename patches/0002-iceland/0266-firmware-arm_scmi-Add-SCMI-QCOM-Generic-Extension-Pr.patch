@@ -1,4 +1,4 @@
-From ff7a205aa8e0220d61daa48bf626f86fb5d9314d Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Pragnesh Papaniya <pragnesh.papaniya@oss.qualcomm.com>
 Date: Fri, 24 Jul 2026 12:48:06 +0530
 Subject: [PATCH] firmware: arm_scmi: Add SCMI QCOM Generic Extension Protocol
@@ -24,7 +24,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
 
 diff --git a/drivers/firmware/arm_scmi/vendors/qcom/qcom_generic.rst b/drivers/firmware/arm_scmi/vendors/qcom/qcom_generic.rst
 new file mode 100644
-index 0000000000..42e327d538
+index 000000000000..42e327d53841
 --- /dev/null
 +++ b/drivers/firmware/arm_scmi/vendors/qcom/qcom_generic.rst
 @@ -0,0 +1,954 @@

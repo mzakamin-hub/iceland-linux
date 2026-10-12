@@ -1,4 +1,4 @@
-From 2b46659bba733a900bee5ebf24af031d72da9bb0 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Krishna Chaitanya Chundru <krishna.chundru@oss.qualcomm.com>
 Date: Fri, 2 Jan 2026 15:13:07 +0530
 Subject: [PATCH] clk: qcom: gcc-kaanapali: Do not turn off PCIe GDSCs during
@@ -21,7 +21,7 @@ Signed-off-by: Krishna Chaitanya Chundru <krishna.chundru@oss.qualcomm.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/clk/qcom/gcc-kaanapali.c b/drivers/clk/qcom/gcc-kaanapali.c
-index 0fbf54e777..7cda196a2b 100644
+index 0fbf54e7777f..7cda196a2bd0 100644
 --- a/drivers/clk/qcom/gcc-kaanapali.c
 +++ b/drivers/clk/qcom/gcc-kaanapali.c
 @@ -3139,7 +3139,7 @@ static struct gdsc gcc_pcie_0_gdsc = {

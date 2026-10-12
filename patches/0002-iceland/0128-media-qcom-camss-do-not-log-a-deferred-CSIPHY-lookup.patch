@@ -1,4 +1,4 @@
-From 9c4e96f7627123d1d32bca2769b8a396114d83f5 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 16:43:13 +0300
 Subject: [PATCH] media: qcom: camss: do not log a deferred CSIPHY lookup as an
@@ -21,7 +21,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 3 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
-index 80d47b3028..22d8c95c34 100644
+index 80d47b302881..22d8c95c34af 100644
 --- a/drivers/media/platform/qcom/camss/camss.c
 +++ b/drivers/media/platform/qcom/camss/camss.c
 @@ -5215,11 +5215,9 @@ static int camss_init_subdevices(struct camss *camss)

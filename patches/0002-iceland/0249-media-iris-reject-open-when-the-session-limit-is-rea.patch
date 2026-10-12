@@ -1,4 +1,4 @@
-From 0a314d88a293c317513a343f200ef22c4414e650 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:21 +0300
 Subject: [PATCH] media: iris: reject open() when the session limit is reached
@@ -27,7 +27,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 13 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_vidc.c b/drivers/media/platform/qcom/iris/iris_vidc.c
-index d39ac71a25..9a73e79f76 100644
+index d39ac71a25aa..9a73e79f76dc 100644
 --- a/drivers/media/platform/qcom/iris/iris_vidc.c
 +++ b/drivers/media/platform/qcom/iris/iris_vidc.c
 @@ -40,21 +40,23 @@ static void iris_v4l2_fh_deinit(struct iris_inst *inst, struct file *filp)

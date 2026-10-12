@@ -1,4 +1,4 @@
-From 79ed687add084d9426292ec40df5f434c1c96c92 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 11:21:25 +0300
 Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: add the pogo
@@ -23,7 +23,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 85 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 9b71548cb0..086b7136f8 100644
+index 9b71548cb0e4..086b7136f82e 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -44,6 +44,7 @@ / {

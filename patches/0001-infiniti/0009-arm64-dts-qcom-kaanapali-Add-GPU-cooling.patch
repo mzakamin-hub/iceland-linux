@@ -1,4 +1,4 @@
-From 155cd476662608d0db62b2c1dcf44b60cee30d0e Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Gaurav Kohli <gaurav.kohli@oss.qualcomm.com>
 Date: Tue, 7 Jul 2026 03:10:23 +0530
 Subject: [PATCH] arm64: dts: qcom: kaanapali: Add GPU cooling
@@ -21,7 +21,7 @@ Signed-off-by: Akhil P Oommen <akhilpo@oss.qualcomm.com>
  1 file changed, 166 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 9a5581a0a6..f85cf94d45 100644
+index 9a5581a0a667..f85cf94d451e 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -26,6 +26,7 @@

@@ -1,4 +1,4 @@
-From b9403e9fc87e7f35a6765f01dfde492062d10ea5 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 23 Sep 2026 07:48:23 -0700
 Subject: [PATCH] Input: qcom-spmi-haptics - advertise the sine waveform
@@ -12,7 +12,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/input/misc/qcom-spmi-haptics.c b/drivers/input/misc/qcom-spmi-haptics.c
-index f589ac1374..2e2dd9d84e 100644
+index f589ac137403..2e2dd9d84e0d 100644
 --- a/drivers/input/misc/qcom-spmi-haptics.c
 +++ b/drivers/input/misc/qcom-spmi-haptics.c
 @@ -1159,6 +1159,7 @@ static int qcom_haptics_probe(struct platform_device *pdev)

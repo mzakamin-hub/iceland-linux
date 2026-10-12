@@ -1,4 +1,4 @@
-From aeed9765011bb592938ad26a7a669acb9d91f1a5 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 29 Jul 2026 01:17:35 -0700
 Subject: [PATCH] drm/msm/dpu: clear stale interface bindings when a CTL is
@@ -15,7 +15,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  3 files changed, 24 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
-index 1f20695f81..d919c6213f 100644
+index 1f20695f81e3..d919c6213ffc 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 @@ -1358,6 +1358,10 @@ static void dpu_encoder_virt_atomic_enable(struct drm_encoder *drm_enc,
@@ -30,7 +30,7 @@ index 1f20695f81..d919c6213f 100644
  	if (dpu_enc->cur_slave && dpu_enc->cur_slave->ops.enable)
  		dpu_enc->cur_slave->ops.enable(dpu_enc->cur_slave);
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_ctl.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_ctl.c
-index e8729fe1cf..4d9f9dcaa1 100644
+index e8729fe1cfef..4d9f9dcaa15a 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_ctl.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_ctl.c
 @@ -657,6 +657,19 @@ static void dpu_hw_ctl_intf_cfg(struct dpu_hw_ctl *ctx,
@@ -62,7 +62,7 @@ index e8729fe1cf..4d9f9dcaa1 100644
  			dpu_hw_ctl_update_pending_flush_intf_v1;
  
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_ctl.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_ctl.h
-index e535bf0138..09c80f3727 100644
+index e535bf013825..09c80f3727db 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_ctl.h
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_ctl.h
 @@ -240,6 +240,12 @@ struct dpu_hw_ctl_ops {

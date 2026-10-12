@@ -1,4 +1,4 @@
-From efeba825d111db228c1ab2f5750e10316f9bd37a Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Gianni Spadoni <me@gio.blue>
 Date: Wed, 11 Mar 2026 16:19:06 +0800
 Subject: [PATCH] wifi: ath12k: disable CNSS_QDSS_CFG_MISS_V01 for the WCN7860
@@ -13,7 +13,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1 insertion(+), 2 deletions(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/wifi7/hw.c b/drivers/net/wireless/ath/ath12k/wifi7/hw.c
-index d4155335f1..ad85dd85f5 100644
+index d4155335f130..ad85dd85f51d 100644
 --- a/drivers/net/wireless/ath/ath12k/wifi7/hw.c
 +++ b/drivers/net/wireless/ath/ath12k/wifi7/hw.c
 @@ -768,8 +768,7 @@ static const struct ath12k_hw_params ath12k_wifi7_hw_params[] = {

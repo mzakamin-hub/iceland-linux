@@ -1,4 +1,4 @@
-From 9ba7aa317dd5d3892572776938359753fb2f7c47 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 29 Jul 2026 01:15:30 -0700
 Subject: [PATCH] dt-bindings: arm: qcom: Add the OnePlus 15
@@ -9,7 +9,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1 insertion(+)
 
 diff --git a/Documentation/devicetree/bindings/arm/qcom.yaml b/Documentation/devicetree/bindings/arm/qcom.yaml
-index ff8a35df78..a3f5a3e8ea 100644
+index ff8a35df7862..a3f5a3e8eadb 100644
 --- a/Documentation/devicetree/bindings/arm/qcom.yaml
 +++ b/Documentation/devicetree/bindings/arm/qcom.yaml
 @@ -171,6 +171,7 @@ properties:

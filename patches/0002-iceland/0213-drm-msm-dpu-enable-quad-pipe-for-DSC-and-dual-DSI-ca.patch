@@ -1,4 +1,4 @@
-From 6e02d5361b0da6b402fe14789337262ed4b4a7d6 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:15 +0300
 Subject: [PATCH] drm/msm/dpu: enable quad-pipe for DSC and dual-DSI case
@@ -38,7 +38,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  7 files changed, 49 insertions(+), 44 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
-index 57f50a3cd9..0e4f2fd0a8 100644
+index 57f50a3cd9cf..0e4f2fd0a8f3 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 @@ -200,7 +200,7 @@ static int dpu_crtc_get_lm_crc(struct drm_crtc *crtc,
@@ -129,7 +129,7 @@ index 57f50a3cd9..0e4f2fd0a8 100644
  	if (crtc_state->ctm || crtc_state->gamma_lut)
  		topology.num_dspp = topology.num_lm;
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.h
-index 6eaba5696e..455073c702 100644
+index 6eaba5696e8e..455073c7025b 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.h
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.h
 @@ -210,7 +210,7 @@ struct dpu_crtc_state {
@@ -155,7 +155,7 @@ index 6eaba5696e..455073c702 100644
  	enum dpu_crtc_crc_source crc_source;
  	int crc_frame_skip_count;
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
-index ff417e2576..90b3eed181 100644
+index ff417e257607..90b3eed181e3 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 @@ -55,7 +55,7 @@
@@ -217,7 +217,7 @@ index ff417e2576..90b3eed181 100644
  
  	/* reset all mixers for this encoder */
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h
-index 4942097e76..7dfaa3ed4d 100644
+index 4942097e7613..7dfaa3ed4dff 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h
 @@ -82,6 +82,8 @@ int dpu_encoder_get_crc(const struct drm_encoder *drm_enc, u32 *crcs, int pos);
@@ -230,7 +230,7 @@ index 4942097e76..7dfaa3ed4d 100644
  				 struct msm_display_topology *topology,
  				 struct drm_atomic_commit *state,
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h
-index d24e39597f..0bfbce3175 100644
+index d24e39597f2f..0bfbce317575 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h
 @@ -314,8 +314,6 @@ unsigned int dpu_encoder_helper_get_cwb_mask(struct dpu_encoder_phys *phys_enc);
@@ -243,7 +243,7 @@ index d24e39597f..0bfbce3175 100644
  
  bool dpu_encoder_needs_periph_flush(struct dpu_encoder_phys *phys_enc);
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.h
-index f45faf8733..ba1554095a 100644
+index f45faf87333e..ba1554095a33 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.h
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.h
 @@ -24,7 +24,7 @@
@@ -256,7 +256,7 @@ index f45faf8733..ba1554095a 100644
  #define MAX_XIN_COUNT 16
  
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_mdss.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_mdss.h
-index 0e65bf5ddc..fd1f3e7982 100644
+index 0e65bf5ddc4a..fd1f3e798206 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_mdss.h
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_mdss.h
 @@ -34,7 +34,7 @@

@@ -1,4 +1,4 @@
-From af557c767aa5ecbd1b00a888d88e1c237adb9a59 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Thu, 24 Sep 2026 19:04:22 -0700
 Subject: [PATCH] phy: qcom: qmp-combo: Keep the DP lanes of a USB-capable DP
@@ -13,7 +13,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 8 insertions(+)
 
 diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
-index 30da0ee55f..7381d74837 100644
+index 30da0ee55f0d..7381d748377e 100644
 --- a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
 +++ b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
 @@ -2597,6 +2597,7 @@ struct qmp_combo {

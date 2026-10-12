@@ -1,4 +1,4 @@
-From 93dae08b89aac6d44a9e4b49e747bb5bb22fcede Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 29 Jul 2026 19:26:08 -0700
 Subject: [PATCH] drm/msm/dp: check the PHY power-on and DPCD link status
@@ -10,7 +10,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 9 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/dp/dp_ctrl.c b/drivers/gpu/drm/msm/dp/dp_ctrl.c
-index 59070f399e..940000958b 100644
+index 59070f399e2d..940000958b3f 100644
 --- a/drivers/gpu/drm/msm/dp/dp_ctrl.c
 +++ b/drivers/gpu/drm/msm/dp/dp_ctrl.c
 @@ -1836,7 +1836,11 @@ static int msm_dp_ctrl_enable_mainlink_clocks(struct msm_dp_ctrl_private *ctrl,

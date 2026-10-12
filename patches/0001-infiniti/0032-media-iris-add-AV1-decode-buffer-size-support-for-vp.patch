@@ -1,4 +1,4 @@
-From 3fe451dbf6360d6b1f647415b8dbbf352ea7d813 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Wangao Wang <wangao.wang@oss.qualcomm.com>
 Date: Wed, 23 Sep 2026 10:41:13 +0800
 Subject: [PATCH] media: iris: add AV1 decode buffer size support for vpu4x
@@ -18,7 +18,7 @@ Signed-off-by: Wangao Wang <wangao.wang@oss.qualcomm.com>
  2 files changed, 32 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
-index faebb54728..bb8135bd23 100644
+index faebb5472866..bb8135bd238b 100644
 --- a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
 +++ b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
 @@ -1833,6 +1833,8 @@ static u32 iris_vpu4x_dec_line_size(struct iris_inst *inst)
@@ -82,7 +82,7 @@ index faebb54728..bb8135bd23 100644
  
  	static const struct iris_vpu_buf_type_handle enc_internal_buf_type_handle[] = {
 diff --git a/drivers/media/platform/qcom/iris/iris_vpu_buffer.h b/drivers/media/platform/qcom/iris/iris_vpu_buffer.h
-index 8c0d6b7b5d..c7020931a6 100644
+index 8c0d6b7b5de8..c7020931a642 100644
 --- a/drivers/media/platform/qcom/iris/iris_vpu_buffer.h
 +++ b/drivers/media/platform/qcom/iris/iris_vpu_buffer.h
 @@ -116,6 +116,7 @@ struct iris_inst;

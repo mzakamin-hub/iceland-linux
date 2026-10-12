@@ -1,4 +1,4 @@
-From 9f9b14376d1ac8c7f5c540d46c0b88684c37d04e Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 20:59:36 +0300
 Subject: [PATCH] power: supply: qcom_battmgr: OPLUS: list power_now
@@ -21,7 +21,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 3fb8302226..63aa980d57 100644
+index 3fb8302226a4..63aa980d5724 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -1425,6 +1425,7 @@ static const enum power_supply_property oplus_bat_props[] = {

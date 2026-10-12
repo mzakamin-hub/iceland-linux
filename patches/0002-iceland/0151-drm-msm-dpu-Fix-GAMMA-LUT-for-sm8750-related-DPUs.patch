@@ -1,4 +1,4 @@
-From eed353a408663ee8a664d1018a4931eb3c2e8531 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Rob Clark <robin.clark@oss.qualcomm.com>
 Date: Wed, 30 Sep 2026 08:26:43 -0700
 Subject: [PATCH] drm/msm/dpu: Fix GAMMA LUT for sm8750 related DPUs
@@ -20,7 +20,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.c
-index 9a993cdfab..107150a855 100644
+index 9a993cdfab85..107150a8553f 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.c
 @@ -428,6 +428,8 @@ static const struct dpu_dspp_sub_blks sdm845_dspp_sblk = {

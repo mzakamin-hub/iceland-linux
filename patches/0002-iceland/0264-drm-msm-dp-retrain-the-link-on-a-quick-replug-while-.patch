@@ -1,4 +1,4 @@
-From 7d2d246809f86c083b7665366720a1782af7765e Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Joonhoe Kim <26rote@gmail.com>
 Date: Sat, 26 Sep 2026 05:06:31 +0000
 Subject: [PATCH] drm/msm/dp: retrain the link on a quick replug while
@@ -32,7 +32,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  3 files changed, 27 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/dp/dp_ctrl.c b/drivers/gpu/drm/msm/dp/dp_ctrl.c
-index 940000958b..155d387955 100644
+index 940000958b3f..155d38795588 100644
 --- a/drivers/gpu/drm/msm/dp/dp_ctrl.c
 +++ b/drivers/gpu/drm/msm/dp/dp_ctrl.c
 @@ -2059,6 +2059,15 @@ static int msm_dp_ctrl_link_maintenance(struct msm_dp_ctrl_private *ctrl,
@@ -52,7 +52,7 @@ index 940000958b..155d387955 100644
  
  static void msm_dp_ctrl_send_phy_pattern(struct msm_dp_ctrl_private *ctrl,
 diff --git a/drivers/gpu/drm/msm/dp/dp_ctrl.h b/drivers/gpu/drm/msm/dp/dp_ctrl.h
-index 5902cf7e74..9f5bf4c8f9 100644
+index 5902cf7e746a..9f5bf4c8f98e 100644
 --- a/drivers/gpu/drm/msm/dp/dp_ctrl.h
 +++ b/drivers/gpu/drm/msm/dp/dp_ctrl.h
 @@ -30,6 +30,8 @@ irqreturn_t msm_dp_ctrl_isr(struct msm_dp_ctrl *msm_dp_ctrl,
@@ -65,7 +65,7 @@ index 5902cf7e74..9f5bf4c8f9 100644
  				    struct msm_dp_link *link,
  				    struct drm_dp_aux *aux,
 diff --git a/drivers/gpu/drm/msm/dp/dp_display.c b/drivers/gpu/drm/msm/dp/dp_display.c
-index e7ae8d0520..dfff3ac022 100644
+index e7ae8d05208a..dfff3ac022bc 100644
 --- a/drivers/gpu/drm/msm/dp/dp_display.c
 +++ b/drivers/gpu/drm/msm/dp/dp_display.c
 @@ -55,6 +55,8 @@ struct msm_dp_display_private {

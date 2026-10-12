@@ -1,4 +1,4 @@
-From dbe785295de5071a5fa6e509dbc2340ade8feadf Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Akhil P Oommen <akhilpo@oss.qualcomm.com>
 Date: Wed, 23 Sep 2026 15:55:41 +0530
 Subject: [PATCH] drm/msm/a6xx: Honor perfmode_bw threshold on A8x
@@ -22,7 +22,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  2 files changed, 11 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
-index 6d49c51df1..baf77a6205 100644
+index 6d49c51df1a2..baf77a620572 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 @@ -1656,8 +1656,12 @@ static int a6xx_gmu_rpmh_bw_votes_init(struct adreno_gpu *adreno_gpu,
@@ -41,7 +41,7 @@ index 6d49c51df1..baf77a6205 100644
  					perfmode = bcm->perfmode;
  
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_gpu.h b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
-index 114a40f79e..bd5c440f17 100644
+index 114a40f79ef3..bd5c440f1753 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_gpu.h
 +++ b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
 @@ -580,6 +580,11 @@ static inline int adreno_is_a750_family(struct adreno_gpu *gpu)

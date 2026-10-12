@@ -1,4 +1,4 @@
-From 9093690257a033134f42c1bff3c4acba926517b1 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Joonhoe Kim <26rote@gmail.com>
 Date: Sun, 27 Sep 2026 11:59:56 +0000
 Subject: [PATCH] drm/msm/dp: hold one runtime PM reference per plugged state
@@ -40,7 +40,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 8 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/dp/dp_display.c b/drivers/gpu/drm/msm/dp/dp_display.c
-index dfff3ac022..9d0872ebf3 100644
+index dfff3ac022bc..9d0872ebf3e1 100644
 --- a/drivers/gpu/drm/msm/dp/dp_display.c
 +++ b/drivers/gpu/drm/msm/dp/dp_display.c
 @@ -925,6 +925,7 @@ enum drm_connector_status msm_dp_bridge_detect(struct drm_bridge *bridge,

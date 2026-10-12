@@ -1,4 +1,4 @@
-From 4670216b0356fdf55bf5ede8a312101649f2bb4b Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Krishna Kurapati <krishna.kurapati@oss.qualcomm.com>
 Date: Thu, 17 Sep 2026 15:10:09 +0530
 Subject: [PATCH] phy: qualcomm: phy-qcom-eusb2-repeater: Fix SMB Power leakage
@@ -20,7 +20,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 3 insertions(+)
 
 diff --git a/drivers/phy/qualcomm/phy-qcom-eusb2-repeater.c b/drivers/phy/qualcomm/phy-qcom-eusb2-repeater.c
-index 29a31816ed..15c9dbc9bd 100644
+index 29a31816edef..15c9dbc9bda9 100644
 --- a/drivers/phy/qualcomm/phy-qcom-eusb2-repeater.c
 +++ b/drivers/phy/qualcomm/phy-qcom-eusb2-repeater.c
 @@ -232,7 +232,10 @@ static int eusb2_repeater_set_mode(struct phy *phy,

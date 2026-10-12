@@ -1,4 +1,4 @@
-From 02773a01d172cd7d0a645b7024cb98493ee6d4e2 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Pragnesh Papaniya <pragnesh.papaniya@oss.qualcomm.com>
 Date: Fri, 24 Jul 2026 12:48:07 +0530
 Subject: [PATCH] dt-bindings: firmware: arm,scmi: Add Qualcomm Generic
@@ -18,7 +18,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  create mode 100644 Documentation/devicetree/bindings/firmware/qcom,generic-scmi.yaml
 
 diff --git a/Documentation/devicetree/bindings/firmware/arm,scmi.yaml b/Documentation/devicetree/bindings/firmware/arm,scmi.yaml
-index 6fc44105f1..85f06a6a74 100644
+index 6fc44105f1c3..85f06a6a7452 100644
 --- a/Documentation/devicetree/bindings/firmware/arm,scmi.yaml
 +++ b/Documentation/devicetree/bindings/firmware/arm,scmi.yaml
 @@ -24,6 +24,7 @@ description: |
@@ -31,7 +31,7 @@ index 6fc44105f1..85f06a6a74 100644
    $nodename:
 diff --git a/Documentation/devicetree/bindings/firmware/qcom,generic-scmi.yaml b/Documentation/devicetree/bindings/firmware/qcom,generic-scmi.yaml
 new file mode 100644
-index 0000000000..a50e5e8fdc
+index 000000000000..a50e5e8fdccc
 --- /dev/null
 +++ b/Documentation/devicetree/bindings/firmware/qcom,generic-scmi.yaml
 @@ -0,0 +1,27 @@

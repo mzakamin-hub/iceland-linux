@@ -1,4 +1,4 @@
-From 8c9f4045ac75c1e7ef04c1de3834ee0a0072f4d8 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 29 Jul 2026 00:00:27 -0700
 Subject: [PATCH] phy: qcom: qmp-combo: Drop the stale err_disable_pipe_clk
@@ -15,7 +15,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1 insertion(+), 6 deletions(-)
 
 diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
-index c39ced168d..e99b0a4100 100644
+index c39ced168d03..e99b0a410035 100644
 --- a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
 +++ b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
 @@ -4260,15 +4260,10 @@ static int qmp_combo_usb_power_on(struct phy *phy)

@@ -1,4 +1,4 @@
-From cd000581915649ae8da2c34dc62caf2a242848e1 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 3 Oct 2026 08:53:18 +0300
 Subject: [PATCH] soundwire: qcom: do not report a DT subset of the data ports
@@ -24,7 +24,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 13 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/soundwire/qcom.c b/drivers/soundwire/qcom.c
-index 55678a30cd..0034a08894 100644
+index 55678a30cd4a..0034a0889498 100644
 --- a/drivers/soundwire/qcom.c
 +++ b/drivers/soundwire/qcom.c
 @@ -1441,22 +1441,31 @@ static int qcom_swrm_get_port_config(struct qcom_swrm_ctrl *ctrl)

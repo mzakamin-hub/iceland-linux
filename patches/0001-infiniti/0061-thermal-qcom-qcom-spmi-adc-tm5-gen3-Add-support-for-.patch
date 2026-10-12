@@ -1,4 +1,4 @@
-From 2a7fc6c1c08cb43312fa119275ff7a1548b052f1 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jishnu Prakash <jishnu.prakash@oss.qualcomm.com>
 Date: Fri, 31 Jul 2026 23:36:16 +0530
 Subject: [PATCH] thermal: qcom: qcom-spmi-adc-tm5-gen3: Add support for QCOM
@@ -28,7 +28,7 @@ Signed-off-by: Jishnu Prakash <jishnu.prakash@oss.qualcomm.com>
  3 files changed, 27 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/iio/adc/qcom-vadc-common.c b/drivers/iio/adc/qcom-vadc-common.c
-index cb23d0d178..25bd4622c3 100644
+index cb23d0d178c7..25bd4622c389 100644
 --- a/drivers/iio/adc/qcom-vadc-common.c
 +++ b/drivers/iio/adc/qcom-vadc-common.c
 @@ -720,6 +720,17 @@ u16 qcom_adc_tm5_gen2_temp_res_scale(int temp)
@@ -50,7 +50,7 @@ index cb23d0d178..25bd4622c3 100644
  		    unsigned int prescale_ratio,
  		    const struct adc5_data *data,
 diff --git a/drivers/thermal/qcom/qcom-spmi-adc-tm5-gen3.c b/drivers/thermal/qcom/qcom-spmi-adc-tm5-gen3.c
-index 9cf552d368..80e820b6dc 100644
+index 9cf552d36868..80e820b6dc4b 100644
 --- a/drivers/thermal/qcom/qcom-spmi-adc-tm5-gen3.c
 +++ b/drivers/thermal/qcom/qcom-spmi-adc-tm5-gen3.c
 @@ -207,15 +207,23 @@ static int adc_tm5_gen3_disable_channel(struct adc_tm5_gen3_channel_props *prop)
@@ -117,7 +117,7 @@ index 9cf552d368..80e820b6dc 100644
  						    &adc_tm5->chan_props[i],
  						    &adc_tm_ops);
 diff --git a/include/linux/iio/adc/qcom-vadc-common.h b/include/linux/iio/adc/qcom-vadc-common.h
-index 4be6820838..55efad27ed 100644
+index 4be682083843..55efad27ed73 100644
 --- a/include/linux/iio/adc/qcom-vadc-common.h
 +++ b/include/linux/iio/adc/qcom-vadc-common.h
 @@ -159,6 +159,8 @@ u16 qcom_adc_tm5_temp_volt_scale(unsigned int prescale_ratio,

@@ -1,4 +1,4 @@
-From 0411ca0a566d5c4b0c1ae3622363162ef50168d2 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:20 +0300
 Subject: [PATCH] dmaengine: qcom: gpi: Fix resource leaks as part of channel
@@ -41,7 +41,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 7 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/dma/qcom/gpi.c b/drivers/dma/qcom/gpi.c
-index a5055a6273..c41bfac65d 100644
+index a5055a6273af..c41bfac65ddf 100644
 --- a/drivers/dma/qcom/gpi.c
 +++ b/drivers/dma/qcom/gpi.c
 @@ -1965,16 +1965,19 @@ static int gpi_ch_init(struct gchan *gchan)

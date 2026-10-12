@@ -1,4 +1,4 @@
-From 0dd0492f4cefb6551165e69a4598429e86612fec Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 16:43:14 +0300
 Subject: [PATCH] soc: qcom: pmic_pdcharger_ulog: add the SoCCP channel
@@ -16,7 +16,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/soc/qcom/pmic_pdcharger_ulog.c b/drivers/soc/qcom/pmic_pdcharger_ulog.c
-index 39f412bbf2..50f52ca757 100644
+index 39f412bbf2c1..50f52ca757de 100644
 --- a/drivers/soc/qcom/pmic_pdcharger_ulog.c
 +++ b/drivers/soc/qcom/pmic_pdcharger_ulog.c
 @@ -148,6 +148,7 @@ static void pmic_pdcharger_ulog_rpmsg_remove(struct rpmsg_device *rpdev)

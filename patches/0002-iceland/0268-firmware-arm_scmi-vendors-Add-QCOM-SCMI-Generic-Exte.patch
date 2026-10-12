@@ -1,4 +1,4 @@
-From afabd1b37001bc5180dd9a2d3fdf8769374ec6e4 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Sibi Sankar <sibi.sankar@oss.qualcomm.com>
 Date: Fri, 24 Jul 2026 12:48:08 +0530
 Subject: [PATCH] firmware: arm_scmi: vendors: Add QCOM SCMI Generic Extensions
@@ -31,7 +31,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  create mode 100644 include/linux/scmi_qcom_protocol.h
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 15f15311fd..15b08f3c22 100644
+index 74943ee71afc..0c2e39e5f35f 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
 @@ -26665,6 +26665,16 @@ S:	Maintained
@@ -52,7 +52,7 @@ index 15f15311fd..15b08f3c22 100644
  M:	Sebastian Reichel <sre@kernel.org>
  L:	linux-pm@vger.kernel.org
 diff --git a/drivers/firmware/arm_scmi/Kconfig b/drivers/firmware/arm_scmi/Kconfig
-index 783c24a20e..3918aa2e71 100644
+index 783c24a20e29..3918aa2e7140 100644
 --- a/drivers/firmware/arm_scmi/Kconfig
 +++ b/drivers/firmware/arm_scmi/Kconfig
 @@ -84,6 +84,7 @@ config ARM_SCMI_QUIRKS
@@ -64,7 +64,7 @@ index 783c24a20e..3918aa2e71 100644
  endif #ARM_SCMI_PROTOCOL
  
 diff --git a/drivers/firmware/arm_scmi/Makefile b/drivers/firmware/arm_scmi/Makefile
-index 780cd62b2f..5a0e003c24 100644
+index 780cd62b2f78..5a0e003c2477 100644
 --- a/drivers/firmware/arm_scmi/Makefile
 +++ b/drivers/firmware/arm_scmi/Makefile
 @@ -13,6 +13,7 @@ scmi-module-objs := $(scmi-driver-y) $(scmi-protocols-y) $(scmi-transport-y)
@@ -77,7 +77,7 @@ index 780cd62b2f..5a0e003c24 100644
  obj-$(CONFIG_ARM_SCMI_PROTOCOL) += scmi-module.o
 diff --git a/drivers/firmware/arm_scmi/vendors/qcom/Kconfig b/drivers/firmware/arm_scmi/vendors/qcom/Kconfig
 new file mode 100644
-index 0000000000..8aa0efd6a0
+index 000000000000..8aa0efd6a03d
 --- /dev/null
 +++ b/drivers/firmware/arm_scmi/vendors/qcom/Kconfig
 @@ -0,0 +1,15 @@
@@ -98,7 +98,7 @@ index 0000000000..8aa0efd6a0
 +endmenu
 diff --git a/drivers/firmware/arm_scmi/vendors/qcom/Makefile b/drivers/firmware/arm_scmi/vendors/qcom/Makefile
 new file mode 100644
-index 0000000000..6b98fabbeb
+index 000000000000..6b98fabbebb8
 --- /dev/null
 +++ b/drivers/firmware/arm_scmi/vendors/qcom/Makefile
 @@ -0,0 +1,2 @@
@@ -106,7 +106,7 @@ index 0000000000..6b98fabbeb
 +obj-$(CONFIG_QCOM_SCMI_GENERIC_EXT) += qcom-generic-ext.o
 diff --git a/drivers/firmware/arm_scmi/vendors/qcom/qcom-generic-ext.c b/drivers/firmware/arm_scmi/vendors/qcom/qcom-generic-ext.c
 new file mode 100644
-index 0000000000..7ca920c8da
+index 000000000000..7ca920c8da05
 --- /dev/null
 +++ b/drivers/firmware/arm_scmi/vendors/qcom/qcom-generic-ext.c
 @@ -0,0 +1,183 @@
@@ -295,7 +295,7 @@ index 0000000000..7ca920c8da
 +MODULE_LICENSE("GPL");
 diff --git a/include/linux/scmi_qcom_protocol.h b/include/linux/scmi_qcom_protocol.h
 new file mode 100644
-index 0000000000..41632ee7bb
+index 000000000000..41632ee7bbc7
 --- /dev/null
 +++ b/include/linux/scmi_qcom_protocol.h
 @@ -0,0 +1,37 @@

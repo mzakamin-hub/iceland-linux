@@ -1,4 +1,4 @@
-From b243cba9d4590048468f4afc445416401125b822 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 28 Sep 2026 13:11:40 +0300
 Subject: [PATCH] drm/msm/dpu: also keep a video-mode boot splash
@@ -19,7 +19,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  2 files changed, 8 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
-index acd170f8f2..6aa58f2521 100644
+index acd170f8f27d..6aa58f25217d 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
 @@ -591,6 +591,13 @@ bool dpu_hw_intf_boot_autorefresh(void __iomem *addr, bool stop)
@@ -37,7 +37,7 @@ index acd170f8f2..6aa58f2521 100644
  		return false;
  
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
-index 9be9dd1c2c..1b64f74061 100644
+index 9be9dd1c2cde..1b64f7406157 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
 @@ -1520,7 +1520,7 @@ static const struct of_device_id dpu_dt_match[] = {

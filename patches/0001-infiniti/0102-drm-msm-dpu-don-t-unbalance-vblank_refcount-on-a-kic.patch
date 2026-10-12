@@ -1,4 +1,4 @@
-From 552ee0606512c743a496711ea0ee84332e436e50 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Tue, 28 Jul 2026 23:59:13 -0700
 Subject: [PATCH] drm/msm/dpu: don't unbalance vblank_refcount on a kickoff
@@ -13,7 +13,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  2 files changed, 4 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_cmd.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_cmd.c
-index 45079ee59c..5b8010fc37 100644
+index 45079ee59cf6..5b8010fc370c 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_cmd.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_cmd.c
 @@ -200,8 +200,6 @@ static int _dpu_encoder_phys_cmd_handle_ppdone_timeout(
@@ -26,7 +26,7 @@ index 45079ee59c..5b8010fc37 100644
  
  	atomic_add_unless(&phys_enc->pending_kickoff_cnt, -1, 0);
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
-index 39aab52658..90fc4565f0 100644
+index 39aab52658ce..90fc4565f07a 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
 @@ -572,8 +572,6 @@ static void dpu_encoder_phys_vid_prepare_for_kickoff(

@@ -1,4 +1,4 @@
-From 566b6e0a0da610c104541e1410e94567532907f7 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 21:07:14 +0300
 Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: fix the WCN7860
@@ -22,7 +22,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 6 insertions(+), 2 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 23d085e876..ccae84bf95 100644
+index 23d085e8762b..ccae84bf9513 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -466,12 +466,16 @@ wcn7860-pmu {

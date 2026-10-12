@@ -1,4 +1,4 @@
-From bd3cc9117a266c6d59de0d6219c5b4133d347712 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:19 +0300
 Subject: [PATCH] usb: typec: ucsi: retry init when the PPM answers early
@@ -44,7 +44,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 26 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/usb/typec/ucsi/ucsi.c b/drivers/usb/typec/ucsi/ucsi.c
-index c1450639c7..35e70211f9 100644
+index c1450639c795..35e70211f9aa 100644
 --- a/drivers/usb/typec/ucsi/ucsi.c
 +++ b/drivers/usb/typec/ucsi/ucsi.c
 @@ -2223,18 +2223,36 @@ static void ucsi_init_work(struct work_struct *work)

@@ -1,4 +1,4 @@
-From 823967fbfd1266134b86d1e57e7151b7199f10fa Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:19 +0300
 Subject: [PATCH] usb: typec: ucsi: allow retries of ucsi_resume_work
@@ -29,7 +29,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  2 files changed, 15 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/usb/typec/ucsi/ucsi.c b/drivers/usb/typec/ucsi/ucsi.c
-index 35e70211f9..a5479e4885 100644
+index 35e70211f9aa..a5479e488591 100644
 --- a/drivers/usb/typec/ucsi/ucsi.c
 +++ b/drivers/usb/typec/ucsi/ucsi.c
 @@ -2169,7 +2169,7 @@ static int ucsi_init(struct ucsi *ucsi)
@@ -93,7 +93,7 @@ index 35e70211f9..a5479e4885 100644
  	ucsi_debugfs_unregister(ucsi);
  
 diff --git a/drivers/usb/typec/ucsi/ucsi.h b/drivers/usb/typec/ucsi/ucsi.h
-index dc594388dc..1996f04ed5 100644
+index dc594388dcd0..1996f04ed5e6 100644
 --- a/drivers/usb/typec/ucsi/ucsi.h
 +++ b/drivers/usb/typec/ucsi/ucsi.h
 @@ -484,7 +484,8 @@ struct ucsi {

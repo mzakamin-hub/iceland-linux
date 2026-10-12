@@ -1,6 +1,6 @@
-From 51365f0cbe968de63b794d5345e08384e7b0ab29 Mon Sep 17 00:00:00 2001
-From: Ulf Hansson <ulf.hansson@oss.qualcomm.com>
-Date: Mon, 14 Sep 2026 17:01:40 +0200
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 10 Oct 2026 04:19:14 +0300
 Subject: [PATCH] cpuidle: psci: Initialize the PM domains in powered off state
  for OSI
 
@@ -40,7 +40,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 3 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/cpuidle/cpuidle-psci-domain.c b/drivers/cpuidle/cpuidle-psci-domain.c
-index b9e4ad7d43..5722365b94 100644
+index b9e4ad7d43a3..5722365b943e 100644
 --- a/drivers/cpuidle/cpuidle-psci-domain.c
 +++ b/drivers/cpuidle/cpuidle-psci-domain.c
 @@ -68,9 +68,8 @@ static int psci_pd_init(struct device_node *np, bool use_osi)

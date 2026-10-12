@@ -1,4 +1,4 @@
-From 0ac6dea57b73192f4175c1fb8e58f8a16130450c Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Konrad Dybcio <konradybcio@kernel.org>
 Date: Fri, 2 Oct 2026 21:07:15 +0300
 Subject: [PATCH] soc: qcom: smem: support Glymur DRAM info
@@ -25,7 +25,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 62 insertions(+)
 
 diff --git a/drivers/soc/qcom/smem_dramc.c b/drivers/soc/qcom/smem_dramc.c
-index 63ebe7f6db..e513ae56b4 100644
+index 63ebe7f6db59..e513ae56b424 100644
 --- a/drivers/soc/qcom/smem_dramc.c
 +++ b/drivers/soc/qcom/smem_dramc.c
 @@ -27,6 +27,11 @@

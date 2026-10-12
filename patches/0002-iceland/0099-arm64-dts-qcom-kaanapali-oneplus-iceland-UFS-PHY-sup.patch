@@ -1,4 +1,4 @@
-From ac78c9ea787e9f1e57a20c0f5016e3465eee24d6 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 11:21:26 +0300
 Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: UFS PHY supply
@@ -19,7 +19,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 3 insertions(+), 2 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 086b7136f8..7f1b07c82a 100644
+index 086b7136f82e..7f1b07c82af6 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -929,10 +929,11 @@ vreg_l3g_1p2: ldo3 {

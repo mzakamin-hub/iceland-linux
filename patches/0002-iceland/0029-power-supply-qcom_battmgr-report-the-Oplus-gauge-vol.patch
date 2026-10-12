@@ -1,4 +1,4 @@
-From a6c030cfd9dd847da4821edafd4dc379631bb047 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 28 Sep 2026 18:55:08 +0300
 Subject: [PATCH] power: supply: qcom_battmgr: report the Oplus gauge voltage
@@ -15,7 +15,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 3 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 6d717ef8fb..ec2b607895 100644
+index 6d717ef8fb68..ec2b607895f1 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -1784,8 +1784,9 @@ static void qcom_battmgr_oplus_gauge_callback(struct qcom_battmgr *battmgr,

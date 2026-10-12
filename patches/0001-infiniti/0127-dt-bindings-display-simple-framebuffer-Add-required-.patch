@@ -1,4 +1,4 @@
-From e005e66d280866334f66bd4df8ba427f53b72cc4 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 23 Sep 2026 12:27:58 -0700
 Subject: [PATCH] dt-bindings: display: simple-framebuffer: Add required-opps
@@ -12,7 +12,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 4 insertions(+)
 
 diff --git a/Documentation/devicetree/bindings/display/simple-framebuffer.yaml b/Documentation/devicetree/bindings/display/simple-framebuffer.yaml
-index 45ffdebc9d..a201c96d74 100644
+index 45ffdebc9d86..a201c96d740c 100644
 --- a/Documentation/devicetree/bindings/display/simple-framebuffer.yaml
 +++ b/Documentation/devicetree/bindings/display/simple-framebuffer.yaml
 @@ -79,6 +79,10 @@ properties:

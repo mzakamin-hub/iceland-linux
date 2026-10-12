@@ -1,4 +1,4 @@
-From 93280505939f5090367554ff379ad86a2ce2e707 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Thu, 1 Oct 2026 23:25:43 +0300
 Subject: [PATCH] wifi: ath12k: tell the firmware not to use SBS on boards that
@@ -26,7 +26,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  3 files changed, 67 insertions(+)
 
 diff --git a/drivers/net/wireless/ath/ath12k/mac.c b/drivers/net/wireless/ath/ath12k/mac.c
-index 99bf5cf79d..a3b9860991 100644
+index 99bf5cf79d10..a3b986099155 100644
 --- a/drivers/net/wireless/ath/ath12k/mac.c
 +++ b/drivers/net/wireless/ath/ath12k/mac.c
 @@ -7,6 +7,7 @@
@@ -61,7 +61,7 @@ index 99bf5cf79d..a3b9860991 100644
  
  	ret = ath12k_reg_update_chan_list(ar, false);
 diff --git a/drivers/net/wireless/ath/ath12k/wmi.c b/drivers/net/wireless/ath/ath12k/wmi.c
-index d5160af60e..b8768e7e8b 100644
+index d5160af60e00..b8768e7e8b72 100644
 --- a/drivers/net/wireless/ath/ath12k/wmi.c
 +++ b/drivers/net/wireless/ath/ath12k/wmi.c
 @@ -2827,6 +2827,38 @@ int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
@@ -115,7 +115,7 @@ index d5160af60e..b8768e7e8b 100644
  
  	case WMI_TAG_SOC_MAC_PHY_HW_MODE_CAPS:
 diff --git a/drivers/net/wireless/ath/ath12k/wmi.h b/drivers/net/wireless/ath/ath12k/wmi.h
-index b508aa759b..13d0636599 100644
+index b508aa759bd8..13d063659977 100644
 --- a/drivers/net/wireless/ath/ath12k/wmi.h
 +++ b/drivers/net/wireless/ath/ath12k/wmi.h
 @@ -2849,6 +2849,16 @@ struct wmi_service_ready_ext2_event {

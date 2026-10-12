@@ -1,4 +1,4 @@
-From 8f0f991ba4075aaf1fb705f86bc2912041826c37 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Thu, 24 Sep 2026 11:56:56 -0700
 Subject: [PATCH] media: qcom: camss: Accept C-PHY sensors behind a CSI2 PHY
@@ -19,7 +19,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  7 files changed, 52 insertions(+), 15 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/camss/camss-csid-gen4.c b/drivers/media/platform/qcom/camss/camss-csid-gen4.c
-index bc52e4a113..3b7a72154b 100644
+index bc52e4a1135c..3b7a72154bf1 100644
 --- a/drivers/media/platform/qcom/camss/camss-csid-gen4.c
 +++ b/drivers/media/platform/qcom/camss/camss-csid-gen4.c
 @@ -63,6 +63,7 @@
@@ -39,7 +39,7 @@ index bc52e4a113..3b7a72154b 100644
  	if (camss->tpg && csid->tpg_linked &&
  	    camss->tpg[phy->csiphy_id].testgen.mode != TPG_PAYLOAD_MODE_DISABLED) {
 diff --git a/drivers/media/platform/qcom/camss/camss-csid.c b/drivers/media/platform/qcom/camss/camss-csid.c
-index 48459b46a9..19c6cd94a1 100644
+index 48459b46a981..19c6cd94a136 100644
 --- a/drivers/media/platform/qcom/camss/camss-csid.c
 +++ b/drivers/media/platform/qcom/camss/camss-csid.c
 @@ -547,7 +547,8 @@ static int csid_set_clock_rates(struct csid_device *csid)
@@ -72,7 +72,7 @@ index 48459b46a9..19c6cd94a1 100644
  		}
  	}
 diff --git a/drivers/media/platform/qcom/camss/camss-csid.h b/drivers/media/platform/qcom/camss/camss-csid.h
-index 4f31ad303c..6d66c19303 100644
+index 4f31ad303c4e..6d66c193038a 100644
 --- a/drivers/media/platform/qcom/camss/camss-csid.h
 +++ b/drivers/media/platform/qcom/camss/camss-csid.h
 @@ -44,6 +44,11 @@ enum csid_testgen_mode {
@@ -96,7 +96,7 @@ index 4f31ad303c..6d66c19303 100644
  
  struct csid_device;
 diff --git a/drivers/media/platform/qcom/camss/camss-csiphy.c b/drivers/media/platform/qcom/camss/camss-csiphy.c
-index aaed7d0309..f1b9f27adb 100644
+index aaed7d0309dd..f1b9f27adb42 100644
 --- a/drivers/media/platform/qcom/camss/camss-csiphy.c
 +++ b/drivers/media/platform/qcom/camss/camss-csiphy.c
 @@ -147,7 +147,9 @@ static int csiphy_set_clock_rates_legacy(struct csiphy_device *csiphy)
@@ -133,7 +133,7 @@ index aaed7d0309..f1b9f27adb 100644
  	if (link_freq <= 0) {
  		dev_err(dev,
 diff --git a/drivers/media/platform/qcom/camss/camss-csiphy.h b/drivers/media/platform/qcom/camss/camss-csiphy.h
-index 8c3319f2ca..1e4f803f18 100644
+index 8c3319f2ca1c..1e4f803f1887 100644
 --- a/drivers/media/platform/qcom/camss/camss-csiphy.h
 +++ b/drivers/media/platform/qcom/camss/camss-csiphy.h
 @@ -32,11 +32,13 @@ struct csiphy_lane {
@@ -151,7 +151,7 @@ index 8c3319f2ca..1e4f803f18 100644
  	struct csiphy_lane *data;
  	struct csiphy_lane clk;
 diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
-index b862f06793..80d47b3028 100644
+index b862f067936c..80d47b302881 100644
 --- a/drivers/media/platform/qcom/camss/camss.c
 +++ b/drivers/media/platform/qcom/camss/camss.c
 @@ -4912,12 +4912,16 @@ struct media_pad *camss_find_sensor_pad(struct media_entity *entity)
@@ -224,7 +224,7 @@ index b862f06793..80d47b3028 100644
  				   lncfg->num_data, sizeof(*lncfg->data),
  				   GFP_KERNEL);
 diff --git a/drivers/media/platform/qcom/camss/camss.h b/drivers/media/platform/qcom/camss/camss.h
-index fadba57c5e..60c59ad4eb 100644
+index fadba57c5efa..60c59ad4eb61 100644
 --- a/drivers/media/platform/qcom/camss/camss.h
 +++ b/drivers/media/platform/qcom/camss/camss.h
 @@ -171,7 +171,7 @@ int camss_enable_clocks(int nclocks, struct camss_clock *clock,

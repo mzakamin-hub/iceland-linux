@@ -1,4 +1,4 @@
-From 5235a6e43f46be86db7f9017667845be3190b9d6 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jishnu Prakash <jishnu.prakash@oss.qualcomm.com>
 Date: Fri, 31 Jul 2026 23:36:18 +0530
 Subject: [PATCH] arm64: dts: qcom: pmk8850: Add ADC5 Gen4 peripheral
@@ -15,7 +15,7 @@ Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
  1 file changed, 25 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/pmk8850.dtsi b/arch/arm64/boot/dts/qcom/pmk8850.dtsi
-index c7ba72fd48..44d1d1957f 100644
+index c7ba72fd48bc..44d1d1957f8a 100644
 --- a/arch/arm64/boot/dts/qcom/pmk8850.dtsi
 +++ b/arch/arm64/boot/dts/qcom/pmk8850.dtsi
 @@ -7,6 +7,7 @@

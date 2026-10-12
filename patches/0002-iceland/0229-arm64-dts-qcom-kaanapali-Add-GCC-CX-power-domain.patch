@@ -1,4 +1,4 @@
-From 039261cc90749aad2fb3dea4f0770f12f4a93776 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:18 +0300
 Subject: [PATCH] arm64: dts: qcom: kaanapali: Add GCC CX power domain
@@ -25,7 +25,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index a371d037d7..01bf524845 100644
+index a371d037d7cc..01bf52484565 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -782,6 +782,8 @@ gcc: clock-controller@100000 {

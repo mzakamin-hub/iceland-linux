@@ -1,4 +1,4 @@
-From 41bae696ca77772ffe906505f0c04eb98bc7c9bd Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:13 +0300
 Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: ADSP remote heap
@@ -32,7 +32,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 6 insertions(+), 2 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index c6a36259d0..9b7dc78dfd 100644
+index c6a36259d083..9b7dc78dfd02 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -324,13 +324,17 @@ llcc_lpi_mem: llcc-lpi@ff800000 {

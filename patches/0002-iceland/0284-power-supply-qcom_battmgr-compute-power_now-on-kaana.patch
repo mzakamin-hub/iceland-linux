@@ -1,4 +1,4 @@
-From b9ef24cf2be85eb858e6b5a17d5611d0b37ee029 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Yibo Wang <2024312277@stu.hit.edu.cn>
 Date: Fri, 9 Oct 2026 05:37:11 -0500
 Subject: [PATCH] power: supply: qcom_battmgr: compute power_now on kaanapali
@@ -31,7 +31,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 29 insertions(+)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 6be2375134..3fb8302226 100644
+index 6be2375134df..3fb8302226a4 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -1006,6 +1006,35 @@ static int qcom_battmgr_bat_get_property(struct power_supply *psy,

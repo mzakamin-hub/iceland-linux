@@ -1,4 +1,4 @@
-From 5dd5f012edf7e6c7947055fc8f99789e9f843d79 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 09:07:58 +0300
 Subject: [PATCH] regulator: qcom-rpmh: add the PMH0101 level shifters
@@ -15,7 +15,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 13 insertions(+)
 
 diff --git a/drivers/regulator/qcom-rpmh-regulator.c b/drivers/regulator/qcom-rpmh-regulator.c
-index 67a3fe5e2e..a4d3b74d58 100644
+index 67a3fe5e2e46..a4d3b74d5803 100644
 --- a/drivers/regulator/qcom-rpmh-regulator.c
 +++ b/drivers/regulator/qcom-rpmh-regulator.c
 @@ -39,6 +39,7 @@ enum rpmh_regulator_type {

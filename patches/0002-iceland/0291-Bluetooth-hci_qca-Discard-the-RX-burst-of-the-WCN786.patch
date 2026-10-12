@@ -1,4 +1,4 @@
-From 9e7350a6ab8621a81b1fdf94347442659b54b486 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:33:09 +0300
 Subject: [PATCH] Bluetooth: hci_qca: Discard the RX burst of the WCN7860
@@ -27,7 +27,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 25 insertions(+)
 
 diff --git a/drivers/bluetooth/hci_qca.c b/drivers/bluetooth/hci_qca.c
-index 042f9df6ce..b36387322d 100644
+index 042f9df6ce4d..b36387322d28 100644
 --- a/drivers/bluetooth/hci_qca.c
 +++ b/drivers/bluetooth/hci_qca.c
 @@ -80,6 +80,7 @@ enum qca_flags {

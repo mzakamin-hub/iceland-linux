@@ -1,4 +1,4 @@
-From 4674fde6fbe8a68ae1717c0e867fa06a9e28f9c0 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Thu, 24 Sep 2026 16:43:55 -0700
 Subject: [PATCH] media: i2c: Add Sony IMX906 driver
@@ -15,7 +15,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  create mode 100644 drivers/media/i2c/imx906.c
 
 diff --git a/drivers/media/i2c/Kconfig b/drivers/media/i2c/Kconfig
-index 1bdd8eb6f1..3383f19363 100644
+index 1bdd8eb6f1cf..3383f1936336 100644
 --- a/drivers/media/i2c/Kconfig
 +++ b/drivers/media/i2c/Kconfig
 @@ -299,6 +299,17 @@ config VIDEO_IMX471
@@ -37,7 +37,7 @@ index 1bdd8eb6f1..3383f19363 100644
  	tristate "Sony IMX709 sensor support"
  	depends on GPIOLIB
 diff --git a/drivers/media/i2c/Makefile b/drivers/media/i2c/Makefile
-index cec1cea401..05da409a99 100644
+index cec1cea4014c..05da409a997c 100644
 --- a/drivers/media/i2c/Makefile
 +++ b/drivers/media/i2c/Makefile
 @@ -64,6 +64,7 @@ obj-$(CONFIG_VIDEO_IMX415) += imx415.o
@@ -50,7 +50,7 @@ index cec1cea401..05da409a99 100644
  obj-$(CONFIG_VIDEO_KS0127) += ks0127.o
 diff --git a/drivers/media/i2c/imx906.c b/drivers/media/i2c/imx906.c
 new file mode 100644
-index 0000000000..57d70215ae
+index 000000000000..57d70215ae0f
 --- /dev/null
 +++ b/drivers/media/i2c/imx906.c
 @@ -0,0 +1,1059 @@

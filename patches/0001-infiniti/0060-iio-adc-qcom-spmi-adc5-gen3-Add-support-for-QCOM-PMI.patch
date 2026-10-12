@@ -1,4 +1,4 @@
-From c2dbae93ae08431a959e29d354e5cf207866bb36 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jishnu Prakash <jishnu.prakash@oss.qualcomm.com>
 Date: Fri, 31 Jul 2026 23:36:15 +0530
 Subject: [PATCH] iio: adc: qcom-spmi-adc5-gen3: Add support for QCOM PMIC5
@@ -37,7 +37,7 @@ Signed-off-by: Jishnu Prakash <jishnu.prakash@oss.qualcomm.com>
  4 files changed, 195 insertions(+), 50 deletions(-)
 
 diff --git a/drivers/iio/adc/qcom-spmi-adc5-gen3.c b/drivers/iio/adc/qcom-spmi-adc5-gen3.c
-index c68c6c5f6a..810d25b665 100644
+index c68c6c5f6aca..810d25b665b1 100644
 --- a/drivers/iio/adc/qcom-spmi-adc5-gen3.c
 +++ b/drivers/iio/adc/qcom-spmi-adc5-gen3.c
 @@ -86,7 +86,9 @@ int adc5_gen3_write(struct adc5_device_data *adc, unsigned int sdam_index,
@@ -330,7 +330,7 @@ index c68c6c5f6a..810d25b665 100644
  EXPORT_SYMBOL_NS_GPL(adc5_gen3_therm_code_to_temp, "QCOM_SPMI_ADC5_GEN3");
  
 diff --git a/drivers/iio/adc/qcom-vadc-common.c b/drivers/iio/adc/qcom-vadc-common.c
-index b03cf584b1..cb23d0d178 100644
+index b03cf584b165..cb23d0d178c7 100644
 --- a/drivers/iio/adc/qcom-vadc-common.c
 +++ b/drivers/iio/adc/qcom-vadc-common.c
 @@ -301,6 +301,10 @@ static const struct u32_fract adc5_prescale_ratios[] = {
@@ -387,7 +387,7 @@ index b03cf584b1..cb23d0d178 100644
  				const struct u32_fract *prescale,
  				const struct adc5_data *data,
 diff --git a/include/linux/iio/adc/qcom-adc5-gen3-common.h b/include/linux/iio/adc/qcom-adc5-gen3-common.h
-index 39cbfcbdb1..5d8e383508 100644
+index 39cbfcbdb101..5d8e38350827 100644
 --- a/include/linux/iio/adc/qcom-adc5-gen3-common.h
 +++ b/include/linux/iio/adc/qcom-adc5-gen3-common.h
 @@ -40,7 +40,8 @@
@@ -477,7 +477,7 @@ index 39cbfcbdb1..5d8e383508 100644
  
  /**
 diff --git a/include/linux/iio/adc/qcom-vadc-common.h b/include/linux/iio/adc/qcom-vadc-common.h
-index 3bf4c49726..4be6820838 100644
+index 3bf4c49726a7..4be682083843 100644
 --- a/include/linux/iio/adc/qcom-vadc-common.h
 +++ b/include/linux/iio/adc/qcom-vadc-common.h
 @@ -54,6 +54,7 @@

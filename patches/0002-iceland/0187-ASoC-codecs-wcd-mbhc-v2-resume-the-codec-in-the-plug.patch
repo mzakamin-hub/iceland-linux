@@ -1,4 +1,4 @@
-From 6e39911129d420e62b0db92f8a9767012efb0858 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 3 Oct 2026 11:44:32 +0300
 Subject: [PATCH] ASoC: codecs: wcd-mbhc-v2: resume the codec in the plug
@@ -21,7 +21,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 12 insertions(+)
 
 diff --git a/sound/soc/codecs/wcd-mbhc-v2.c b/sound/soc/codecs/wcd-mbhc-v2.c
-index bb0c8478a8..1621e4c57c 100644
+index bb0c8478a8eb..1621e4c57c8d 100644
 --- a/sound/soc/codecs/wcd-mbhc-v2.c
 +++ b/sound/soc/codecs/wcd-mbhc-v2.c
 @@ -516,6 +516,17 @@ static void mbhc_plug_detect_fn(struct work_struct *work)

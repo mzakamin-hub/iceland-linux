@@ -1,4 +1,4 @@
-From a5cb69c831270189adb3046a7e6878b28534a1ce Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 23 Sep 2026 02:50:17 -0700
 Subject: [PATCH] ASoC: qcom: q6apm: Send commands from the APM's GPR service
@@ -13,7 +13,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  2 files changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/sound/soc/qcom/qdsp6/q6apm.c b/sound/soc/qcom/qdsp6/q6apm.c
-index f167b9dae3..6adf602127 100644
+index f167b9dae3fa..6adf6021274e 100644
 --- a/sound/soc/qcom/qdsp6/q6apm.c
 +++ b/sound/soc/qcom/qdsp6/q6apm.c
 @@ -29,11 +29,13 @@ struct apm_graph_mgmt_cmd {
@@ -32,7 +32,7 @@ index f167b9dae3..6adf602127 100644
  					NULL, &apm->wait, pkt, rsp_opcode);
  }
 diff --git a/sound/soc/qcom/qdsp6/q6apm.h b/sound/soc/qcom/qdsp6/q6apm.h
-index 5cb51ca491..9092359ccf 100644
+index 5cb51ca491dc..9092359ccf90 100644
 --- a/sound/soc/qcom/qdsp6/q6apm.h
 +++ b/sound/soc/qcom/qdsp6/q6apm.h
 @@ -147,7 +147,7 @@ int q6apm_alloc_fragments(struct q6apm_graph *graph,

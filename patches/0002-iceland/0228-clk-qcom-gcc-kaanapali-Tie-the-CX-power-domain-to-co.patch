@@ -1,4 +1,4 @@
-From fd578571fd4408e7a9b4ce4047ebc4eefe5ea38b Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:18 +0300
 Subject: [PATCH] clk: qcom: gcc-kaanapali: Tie the CX power domain to
@@ -22,7 +22,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/clk/qcom/gcc-kaanapali.c b/drivers/clk/qcom/gcc-kaanapali.c
-index 1087967a1f..1ea5bd2463 100644
+index 1087967a1f28..1ea5bd246326 100644
 --- a/drivers/clk/qcom/gcc-kaanapali.c
 +++ b/drivers/clk/qcom/gcc-kaanapali.c
 @@ -3505,6 +3505,7 @@ static const struct qcom_cc_desc gcc_kaanapali_desc = {

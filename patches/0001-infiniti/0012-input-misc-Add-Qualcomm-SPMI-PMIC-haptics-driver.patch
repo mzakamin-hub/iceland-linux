@@ -1,4 +1,4 @@
-From 28b016ce807194d41eeb62bc24d34add2627578b Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Fenglin Wu <fenglin.wu@oss.qualcomm.com>
 Date: Fri, 28 Aug 2026 02:49:20 -0700
 Subject: [PATCH] input: misc: Add Qualcomm SPMI PMIC haptics driver
@@ -21,7 +21,7 @@ Signed-off-by: Fenglin Wu <fenglin.wu@oss.qualcomm.com>
  create mode 100644 drivers/input/misc/qcom-spmi-haptics.c
 
 diff --git a/drivers/input/misc/Kconfig b/drivers/input/misc/Kconfig
-index 169768e3d5..33f85c526d 100644
+index 169768e3d5bb..33f85c526d19 100644
 --- a/drivers/input/misc/Kconfig
 +++ b/drivers/input/misc/Kconfig
 @@ -236,6 +236,17 @@ config INPUT_PMIC8XXX_PWRKEY
@@ -43,7 +43,7 @@ index 169768e3d5..33f85c526d 100644
  	tristate "SPARC Speaker support"
  	depends on PCI && SPARC64
 diff --git a/drivers/input/misc/Makefile b/drivers/input/misc/Makefile
-index 1339619f07..9bad2604e6 100644
+index 1339619f0769..9bad2604e6c2 100644
 --- a/drivers/input/misc/Makefile
 +++ b/drivers/input/misc/Makefile
 @@ -71,6 +71,7 @@ obj-$(CONFIG_INPUT_PMIC8XXX_PWRKEY)	+= pmic8xxx-pwrkey.o
@@ -56,7 +56,7 @@ index 1339619f07..9bad2604e6 100644
  obj-$(CONFIG_INPUT_RB532_BUTTON)	+= rb532_button.o
 diff --git a/drivers/input/misc/qcom-spmi-haptics.c b/drivers/input/misc/qcom-spmi-haptics.c
 new file mode 100644
-index 0000000000..f589ac1374
+index 000000000000..f589ac137403
 --- /dev/null
 +++ b/drivers/input/misc/qcom-spmi-haptics.c
 @@ -0,0 +1,1251 @@

@@ -1,4 +1,4 @@
-From 70c33aecd265d8220698d01aeba1aab03e016009 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Tue, 29 Sep 2026 23:33:27 +0300
 Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: the stock GPU
@@ -17,7 +17,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 23 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index a99d97ee07..28283c08ff 100644
+index a99d97ee07be..28283c08ff73 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -977,6 +977,29 @@ vreg_s4j_0p7: smps4 {

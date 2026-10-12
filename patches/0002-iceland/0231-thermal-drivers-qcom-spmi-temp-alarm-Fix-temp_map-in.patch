@@ -1,4 +1,4 @@
-From 6b7aa721098aeff087f12100fa7652511b3ef803 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:18 +0300
 Subject: [PATCH] thermal/drivers/qcom-spmi-temp-alarm: Fix temp_map indexing
@@ -46,7 +46,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/thermal/qcom/qcom-spmi-temp-alarm.c b/drivers/thermal/qcom/qcom-spmi-temp-alarm.c
-index 774999dc20..16b7c5ee4f 100644
+index 774999dc20e8..16b7c5ee4f56 100644
 --- a/drivers/thermal/qcom/qcom-spmi-temp-alarm.c
 +++ b/drivers/thermal/qcom/qcom-spmi-temp-alarm.c
 @@ -347,8 +347,8 @@ static int qpnp_tm_update_critical_trip_temp(struct qpnp_tm_chip *chip,

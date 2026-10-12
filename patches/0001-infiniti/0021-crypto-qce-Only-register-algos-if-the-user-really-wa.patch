@@ -1,4 +1,4 @@
-From b1ceb71b251a78ea3aba2d9bd7b36331fad43512 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
 Date: Tue, 22 Sep 2026 14:57:24 +0200
 Subject: [PATCH] crypto: qce - Only register algos if the user really wants it
@@ -22,7 +22,7 @@ Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
  1 file changed, 9 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/crypto/qce/core.c b/drivers/crypto/qce/core.c
-index bf3c1bc3ba..5b1bf7a50f 100644
+index bf3c1bc3ba7b..5b1bf7a50f88 100644
 --- a/drivers/crypto/qce/core.c
 +++ b/drivers/crypto/qce/core.c
 @@ -10,6 +10,7 @@

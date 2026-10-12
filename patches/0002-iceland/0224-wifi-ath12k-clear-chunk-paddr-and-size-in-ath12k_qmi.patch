@@ -1,4 +1,4 @@
-From e3f23c0fb07ec9a48850c9554fffba50523b1745 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:17 +0300
 Subject: [PATCH] wifi: ath12k: clear chunk paddr and size in
@@ -27,7 +27,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 16 insertions(+), 10 deletions(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/qmi.c b/drivers/net/wireless/ath/ath12k/qmi.c
-index 34e989f7e9..166d69c7a0 100644
+index 34e989f7e9cf..166d69c7a053 100644
 --- a/drivers/net/wireless/ath/ath12k/qmi.c
 +++ b/drivers/net/wireless/ath/ath12k/qmi.c
 @@ -2709,27 +2709,33 @@ static void ath12k_qmi_free_mlo_mem_chunk(struct ath12k_base *ab,

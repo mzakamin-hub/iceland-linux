@@ -1,4 +1,4 @@
-From 5c5fd7a0331ee522907410b6901a31750103a8b5 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Thu, 1 Oct 2026 23:57:37 +0300
 Subject: [PATCH] soc: qcom: socinfo: add SM8850P
@@ -15,7 +15,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  2 files changed, 2 insertions(+)
 
 diff --git a/drivers/soc/qcom/socinfo.c b/drivers/soc/qcom/socinfo.c
-index 1836e226a2..f44cd0acbf 100644
+index 1836e226a294..f44cd0acbfcd 100644
 --- a/drivers/soc/qcom/socinfo.c
 +++ b/drivers/soc/qcom/socinfo.c
 @@ -534,6 +534,7 @@ static const struct soc_id soc_id[] = {
@@ -27,7 +27,7 @@ index 1836e226a2..f44cd0acbf 100644
  	{ qcom_board_id(QCS9100) },
  	{ qcom_board_id(QCS8300) },
 diff --git a/include/dt-bindings/arm/qcom,ids.h b/include/dt-bindings/arm/qcom,ids.h
-index 2cf433f61d..6964c947c2 100644
+index 2cf433f61d5e..6964c947c265 100644
 --- a/include/dt-bindings/arm/qcom,ids.h
 +++ b/include/dt-bindings/arm/qcom,ids.h
 @@ -293,6 +293,7 @@

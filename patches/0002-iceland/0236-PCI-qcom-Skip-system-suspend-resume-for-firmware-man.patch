@@ -1,4 +1,4 @@
-From 640ca5379c0566c4f9277dc3d7c394707d752c70 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:19 +0300
 Subject: [PATCH] PCI: qcom: Skip system suspend/resume for firmware-managed
@@ -28,7 +28,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 8 insertions(+)
 
 diff --git a/drivers/pci/controller/dwc/pcie-qcom.c b/drivers/pci/controller/dwc/pcie-qcom.c
-index 5a98b49aea..f47a9137c8 100644
+index 5a98b49aea8f..f47a9137c86c 100644
 --- a/drivers/pci/controller/dwc/pcie-qcom.c
 +++ b/drivers/pci/controller/dwc/pcie-qcom.c
 @@ -2471,6 +2471,10 @@ static int qcom_pcie_suspend_noirq(struct device *dev)

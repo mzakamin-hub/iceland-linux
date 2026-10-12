@@ -1,4 +1,4 @@
-From 52e3a6f50289a26b9127e6958ec547db60443f73 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 17:42:36 +0300
 Subject: [PATCH] cpuidle: psci-domain: add allow_system_off to keep the system
@@ -29,7 +29,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 16 insertions(+)
 
 diff --git a/drivers/cpuidle/cpuidle-psci-domain.c b/drivers/cpuidle/cpuidle-psci-domain.c
-index da03693093..8830453a70 100644
+index da036930934c..8830453a70af 100644
 --- a/drivers/cpuidle/cpuidle-psci-domain.c
 +++ b/drivers/cpuidle/cpuidle-psci-domain.c
 @@ -45,6 +45,17 @@ static bool psci_pd_is_cluster(struct generic_pm_domain *pd)

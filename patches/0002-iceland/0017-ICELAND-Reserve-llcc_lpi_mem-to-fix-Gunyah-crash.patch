@@ -1,4 +1,4 @@
-From fa808ae0cc5cb2c1a51b07eaddc11b5faecd4793 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: map220v <map220v300@gmail.com>
 Date: Mon, 13 Jul 2026 19:15:23 +0000
 Subject: [PATCH] ICELAND: Reserve llcc_lpi_mem to fix Gunyah crash
@@ -16,7 +16,7 @@ Making SMC call TZ_SECURE_WDOG_TRIGGER_ID
  1 file changed, 5 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 1383901e3d..afd7a2fd91 100644
+index 1383901e3d26..afd7a2fd9145 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -215,6 +215,11 @@ tz_merged_mem: tz-merged@d8000000 {

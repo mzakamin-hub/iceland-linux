@@ -1,4 +1,4 @@
-From a0c3741c811a13286e71fd99aeaed994f3dc7229 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Yibo Wang <2024312277@stu.hit.edu.cn>
 Date: Wed, 7 Oct 2026 13:37:49 -0500
 Subject: [PATCH] rtc: pm8xxx: use s64 offset for full Unix timestamp range
@@ -19,7 +19,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 23 insertions(+), 18 deletions(-)
 
 diff --git a/drivers/rtc/rtc-pm8xxx.c b/drivers/rtc/rtc-pm8xxx.c
-index e624f848c2..c0cf545340 100644
+index e624f848c22b..c0cf54534014 100644
 --- a/drivers/rtc/rtc-pm8xxx.c
 +++ b/drivers/rtc/rtc-pm8xxx.c
 @@ -64,7 +64,8 @@ struct qcom_uefi_rtc_info {

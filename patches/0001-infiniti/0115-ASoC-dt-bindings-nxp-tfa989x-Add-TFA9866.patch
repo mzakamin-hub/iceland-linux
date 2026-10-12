@@ -1,4 +1,4 @@
-From be1030ed3388b604df0652651d8d9651f8dc4bb9 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Thu, 24 Sep 2026 18:53:52 -0700
 Subject: [PATCH] ASoC: dt-bindings: nxp,tfa989x: Add TFA9866
@@ -11,7 +11,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 4 insertions(+)
 
 diff --git a/Documentation/devicetree/bindings/sound/nxp,tfa989x.yaml b/Documentation/devicetree/bindings/sound/nxp,tfa989x.yaml
-index fd2415e231..008eaea9b8 100644
+index fd2415e231eb..008eaea9b889 100644
 --- a/Documentation/devicetree/bindings/sound/nxp,tfa989x.yaml
 +++ b/Documentation/devicetree/bindings/sound/nxp,tfa989x.yaml
 @@ -15,6 +15,7 @@ allOf:

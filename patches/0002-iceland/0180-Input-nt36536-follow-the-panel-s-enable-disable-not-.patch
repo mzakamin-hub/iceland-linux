@@ -1,4 +1,4 @@
-From d29749afc27467c09dd68d5f83205fd313f5e7b8 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 3 Oct 2026 08:53:17 +0300
 Subject: [PATCH] Input: nt36536: follow the panel's enable / disable, not its
@@ -31,7 +31,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 11 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/input/touchscreen/nt36536/nt36xxx.c b/drivers/input/touchscreen/nt36536/nt36xxx.c
-index d557d0e2e5..c5d5406019 100644
+index d557d0e2e5a6..c5d5406019dd 100644
 --- a/drivers/input/touchscreen/nt36536/nt36xxx.c
 +++ b/drivers/input/touchscreen/nt36536/nt36xxx.c
 @@ -1721,7 +1721,14 @@ static int32_t nvt_ts_resume(struct device *dev)

@@ -1,4 +1,4 @@
-From e6816535c309b50284dc4591e04bf1ae9cf66c7f Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jishnu Prakash <jishnu.prakash@oss.qualcomm.com>
 Date: Fri, 31 Jul 2026 23:36:17 +0530
 Subject: [PATCH] arm64: dts: qcom: Add header file for ADC5 Gen4 channel
@@ -16,7 +16,7 @@ Signed-off-by: Jishnu Prakash <jishnu.prakash@oss.qualcomm.com>
 
 diff --git a/arch/arm64/boot/dts/qcom/qcom-adc5-gen4.h b/arch/arm64/boot/dts/qcom/qcom-adc5-gen4.h
 new file mode 100644
-index 0000000000..cf94e3185e
+index 000000000000..cf94e3185e21
 --- /dev/null
 +++ b/arch/arm64/boot/dts/qcom/qcom-adc5-gen4.h
 @@ -0,0 +1,96 @@

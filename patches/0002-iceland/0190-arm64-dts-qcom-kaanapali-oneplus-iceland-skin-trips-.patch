@@ -1,4 +1,4 @@
-From fdb4c0c2addc6c5c32031d3177b501caf2a120cd Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 3 Oct 2026 20:16:51 +0300
 Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: skin trips at
@@ -38,7 +38,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 9 insertions(+), 8 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index de61a1a76f..1355c4cfe9 100644
+index de61a1a76ffa..1355c4cfe97f 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -2493,12 +2493,13 @@ chg-cp-thermal {

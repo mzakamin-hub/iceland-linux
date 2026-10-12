@@ -1,4 +1,4 @@
-From 1638a02d7c58da2686a2ec8b46df21c9858f2f64 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 09:07:59 +0300
 Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: enable the rear
@@ -26,7 +26,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 4 insertions(+), 3 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 301bc5310f..57b9a314cf 100644
+index 301bc5310f23..57b9a314cfc1 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1245,12 +1245,11 @@ vcm: actuator@c {

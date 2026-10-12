@@ -1,4 +1,4 @@
-From 17c1af5e7547a69749d5da72155c0bd5c708447c Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: map220v <map220v300@gmail.com>
 Date: Mon, 8 Jun 2026 10:05:57 +0000
 Subject: [PATCH] Input: Add NT36536 touch driver
@@ -22,7 +22,7 @@ Subject: [PATCH] Input: Add NT36536 touch driver
  create mode 100644 drivers/input/touchscreen/nt36536/nt36xxx_mem_map.h
 
 diff --git a/drivers/input/touchscreen/Kconfig b/drivers/input/touchscreen/Kconfig
-index cc6997d444..75c0236f21 100644
+index cc6997d444c4..75c0236f21bd 100644
 --- a/drivers/input/touchscreen/Kconfig
 +++ b/drivers/input/touchscreen/Kconfig
 @@ -12,6 +12,8 @@ menuconfig INPUT_TOUCHSCREEN
@@ -35,7 +35,7 @@ index cc6997d444..75c0236f21 100644
  	tristate "Marvell 88PM860x touchscreen"
  	depends on MFD_88PM860X
 diff --git a/drivers/input/touchscreen/Makefile b/drivers/input/touchscreen/Makefile
-index 5dc9c07a1f..ff8ef07d1c 100644
+index 5dc9c07a1f2e..ff8ef07d1c6b 100644
 --- a/drivers/input/touchscreen/Makefile
 +++ b/drivers/input/touchscreen/Makefile
 @@ -120,3 +120,4 @@ obj-$(CONFIG_TOUCHSCREEN_IQS7211)	+= iqs7211.o
@@ -45,7 +45,7 @@ index 5dc9c07a1f..ff8ef07d1c 100644
 +obj-$(CONFIG_TOUCHSCREEN_NT36536_SPI)	+= nt36536/
 diff --git a/drivers/input/touchscreen/nt36536/Kconfig b/drivers/input/touchscreen/nt36536/Kconfig
 new file mode 100644
-index 0000000000..d3d9dcc4f2
+index 000000000000..d3d9dcc4f2c8
 --- /dev/null
 +++ b/drivers/input/touchscreen/nt36536/Kconfig
 @@ -0,0 +1,11 @@
@@ -63,7 +63,7 @@ index 0000000000..d3d9dcc4f2
 \ No newline at end of file
 diff --git a/drivers/input/touchscreen/nt36536/Makefile b/drivers/input/touchscreen/nt36536/Makefile
 new file mode 100644
-index 0000000000..59d05c49e4
+index 000000000000..59d05c49e4a4
 --- /dev/null
 +++ b/drivers/input/touchscreen/nt36536/Makefile
 @@ -0,0 +1,8 @@
@@ -77,7 +77,7 @@ index 0000000000..59d05c49e4
 +nt36536_ts-y := nt36xxx.o nt36xxx_fw_update.o
 diff --git a/drivers/input/touchscreen/nt36536/nt36xxx.c b/drivers/input/touchscreen/nt36536/nt36xxx.c
 new file mode 100644
-index 0000000000..1ec7fd9e23
+index 000000000000..1ec7fd9e239d
 --- /dev/null
 +++ b/drivers/input/touchscreen/nt36536/nt36xxx.c
 @@ -0,0 +1,1790 @@
@@ -1873,7 +1873,7 @@ index 0000000000..1ec7fd9e23
 +MODULE_LICENSE("GPL");
 diff --git a/drivers/input/touchscreen/nt36536/nt36xxx.h b/drivers/input/touchscreen/nt36536/nt36xxx.h
 new file mode 100644
-index 0000000000..0d7b4375f8
+index 000000000000..0d7b4375f88d
 --- /dev/null
 +++ b/drivers/input/touchscreen/nt36536/nt36xxx.h
 @@ -0,0 +1,221 @@
@@ -2100,7 +2100,7 @@ index 0000000000..0d7b4375f8
 +#endif /* _LINUX_NVT_TOUCH_H */
 diff --git a/drivers/input/touchscreen/nt36536/nt36xxx_fw_update.c b/drivers/input/touchscreen/nt36536/nt36xxx_fw_update.c
 new file mode 100644
-index 0000000000..535ddba6c6
+index 000000000000..535ddba6c6b7
 --- /dev/null
 +++ b/drivers/input/touchscreen/nt36536/nt36xxx_fw_update.c
 @@ -0,0 +1,901 @@
@@ -3007,7 +3007,7 @@ index 0000000000..535ddba6c6
 +#endif /* BOOT_UPDATE_FIRMWARE */
 diff --git a/drivers/input/touchscreen/nt36536/nt36xxx_mem_map.h b/drivers/input/touchscreen/nt36536/nt36xxx_mem_map.h
 new file mode 100644
-index 0000000000..2e77b75ee0
+index 000000000000..2e77b75ee0d1
 --- /dev/null
 +++ b/drivers/input/touchscreen/nt36536/nt36xxx_mem_map.h
 @@ -0,0 +1,780 @@

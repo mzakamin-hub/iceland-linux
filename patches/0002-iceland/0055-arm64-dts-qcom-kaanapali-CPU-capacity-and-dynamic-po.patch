@@ -1,4 +1,4 @@
-From 289b1992d032e2dead499f3e16ff5ce2dc77158f Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Tue, 29 Sep 2026 23:49:34 +0300
 Subject: [PATCH] arm64: dts: qcom: kaanapali: CPU capacity and dynamic power
@@ -19,7 +19,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 16 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index f682fa1857..5d75118364 100644
+index f682fa185776..5d75118364ec 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -46,6 +46,8 @@ cpu0: cpu@0 {

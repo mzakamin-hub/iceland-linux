@@ -1,4 +1,4 @@
-From 2c3ddeb632ce5f3b3d67d87f1a450563cc81f0e7 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 23 Sep 2026 21:13:53 -0700
 Subject: [PATCH] media: iris: Release the MVP NoC low-power request on vpu4x
@@ -15,7 +15,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 4 insertions(+)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_vpu4x.c b/drivers/media/platform/qcom/iris/iris_vpu4x.c
-index 02e100a404..d040a5faa8 100644
+index 02e100a4045f..d040a5faa8c0 100644
 --- a/drivers/media/platform/qcom/iris/iris_vpu4x.c
 +++ b/drivers/media/platform/qcom/iris/iris_vpu4x.c
 @@ -119,6 +119,8 @@ static void iris_vpu4x_power_off_apv(struct iris_core *core)

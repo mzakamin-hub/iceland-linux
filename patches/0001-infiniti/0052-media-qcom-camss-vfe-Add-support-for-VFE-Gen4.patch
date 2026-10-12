@@ -1,4 +1,4 @@
-From 75aa782e8a88319d48803553a245b6d2dcbc02ca Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
 Date: Tue, 15 Sep 2026 03:10:02 -0700
 Subject: [PATCH] media: qcom: camss: vfe: Add support for VFE Gen4
@@ -34,7 +34,7 @@ Signed-off-by: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
  create mode 100644 drivers/media/platform/qcom/camss/camss-vfe-gen4.c
 
 diff --git a/drivers/media/platform/qcom/camss/Makefile b/drivers/media/platform/qcom/camss/Makefile
-index cebfd947f2..b114ca37e3 100644
+index cebfd947f28e..b114ca37e36e 100644
 --- a/drivers/media/platform/qcom/camss/Makefile
 +++ b/drivers/media/platform/qcom/camss/Makefile
 @@ -28,6 +28,7 @@ qcom-camss-objs += \
@@ -47,7 +47,7 @@ index cebfd947f2..b114ca37e3 100644
  
 diff --git a/drivers/media/platform/qcom/camss/camss-vfe-gen4.c b/drivers/media/platform/qcom/camss/camss-vfe-gen4.c
 new file mode 100644
-index 0000000000..d73d708987
+index 000000000000..d73d70898710
 --- /dev/null
 +++ b/drivers/media/platform/qcom/camss/camss-vfe-gen4.c
 @@ -0,0 +1,197 @@
@@ -249,7 +249,7 @@ index 0000000000..d73d708987
 +	.vfe_wm_update = vfe_wm_update,
 +};
 diff --git a/drivers/media/platform/qcom/camss/camss-vfe.c b/drivers/media/platform/qcom/camss/camss-vfe.c
-index 319d191589..826ab85a44 100644
+index 319d19158988..826ab85a44a1 100644
 --- a/drivers/media/platform/qcom/camss/camss-vfe.c
 +++ b/drivers/media/platform/qcom/camss/camss-vfe.c
 @@ -353,6 +353,7 @@ static u32 vfe_src_pad_code(struct vfe_line *line, u32 sink_code,
@@ -290,7 +290,7 @@ index 319d191589..826ab85a44 100644
  		ret = 16;
  		break;
 diff --git a/drivers/media/platform/qcom/camss/camss-vfe.h b/drivers/media/platform/qcom/camss/camss-vfe.h
-index ae9dad353a..c402ef170c 100644
+index ae9dad353a37..c402ef170c81 100644
 --- a/drivers/media/platform/qcom/camss/camss-vfe.h
 +++ b/drivers/media/platform/qcom/camss/camss-vfe.h
 @@ -133,6 +133,7 @@ struct vfe_isr_ops {
@@ -310,7 +310,7 @@ index ae9dad353a..c402ef170c 100644
  int vfe_get(struct vfe_device *vfe);
  void vfe_put(struct vfe_device *vfe);
 diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
-index cd085a7cfd..c6b610c0cd 100644
+index cd085a7cfd18..c6b610c0cd08 100644
 --- a/drivers/media/platform/qcom/camss/camss.c
 +++ b/drivers/media/platform/qcom/camss/camss.c
 @@ -158,6 +158,157 @@ static const struct camss_subdev_resources csid_res_kaanapali[] = {

@@ -1,4 +1,4 @@
-From 41f834549b839da14f8bda52c96b307cb60500c3 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:18 +0300
 Subject: [PATCH] clk: qcom: gcc-kaanapali: Enable FORCE_MEM_CORE_ON for UFS
@@ -27,7 +27,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/clk/qcom/gcc-kaanapali.c b/drivers/clk/qcom/gcc-kaanapali.c
-index 1ea5bd2463..4255ca1698 100644
+index 1ea5bd246326..4255ca169806 100644
 --- a/drivers/clk/qcom/gcc-kaanapali.c
 +++ b/drivers/clk/qcom/gcc-kaanapali.c
 @@ -3484,6 +3484,7 @@ static void clk_kaanapali_regs_configure(struct device *dev, struct regmap *regm

@@ -1,4 +1,4 @@
-From f2e250927f48b33677f731af191a4276506b1ca6 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Joonhoe Kim <26rote@gmail.com>
 Date: Sat, 10 Oct 2026 14:32:55 +0300
 Subject: [PATCH] net: qrtr: ns: retry announcements the new node is not ready
@@ -38,7 +38,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 9 insertions(+), 1 deletion(-)
 
 diff --git a/net/qrtr/ns.c b/net/qrtr/ns.c
-index bcb090ee79..e8208c771a 100644
+index bcb090ee79d4..e8208c771a8c 100644
 --- a/net/qrtr/ns.c
 +++ b/net/qrtr/ns.c
 @@ -5,6 +5,7 @@

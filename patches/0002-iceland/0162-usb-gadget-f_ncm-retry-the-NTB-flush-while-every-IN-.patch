@@ -1,4 +1,4 @@
-From 3351b94e2ec70318c957442a8b4c33c1a9c6b75c Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 18:48:11 +0300
 Subject: [PATCH] usb: gadget: f_ncm: retry the NTB flush while every IN
@@ -51,7 +51,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 18 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/usb/gadget/function/f_ncm.c b/drivers/usb/gadget/function/f_ncm.c
-index 500c9c19c7..75dae32a2b 100644
+index 500c9c19c78b..75dae32a2bde 100644
 --- a/drivers/usb/gadget/function/f_ncm.c
 +++ b/drivers/usb/gadget/function/f_ncm.c
 @@ -76,6 +76,7 @@ struct f_ncm {

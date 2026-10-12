@@ -1,4 +1,4 @@
-From c971ceee5c168ecdc17b2d47a2fc9de3b2b09661 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:20 +0300
 Subject: [PATCH] cpuidle: menu: Do not return a disabled idle state
@@ -27,7 +27,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/cpuidle/governors/menu.c b/drivers/cpuidle/governors/menu.c
-index 544a5d5930..eb529d73d4 100644
+index 544a5d593007..eb529d73d4b7 100644
 --- a/drivers/cpuidle/governors/menu.c
 +++ b/drivers/cpuidle/governors/menu.c
 @@ -284,10 +284,10 @@ static int menu_select(struct cpuidle_driver *drv, struct cpuidle_device *dev,

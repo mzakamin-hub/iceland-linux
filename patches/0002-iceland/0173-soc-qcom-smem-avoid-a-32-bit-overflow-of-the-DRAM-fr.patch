@@ -1,4 +1,4 @@
-From adcbcdda5153e6af819614e6a059a236940d97f7 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 21:07:16 +0300
 Subject: [PATCH] soc: qcom: smem: avoid a 32-bit overflow of the DRAM
@@ -17,7 +17,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 6 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/soc/qcom/smem_dramc.c b/drivers/soc/qcom/smem_dramc.c
-index e513ae56b4..e4d6deca51 100644
+index e513ae56b424..e4d6deca51ac 100644
 --- a/drivers/soc/qcom/smem_dramc.c
 +++ b/drivers/soc/qcom/smem_dramc.c
 @@ -257,7 +257,7 @@ static void smem_dram_parse_v3_data(struct smem_dram *dram, void *data)

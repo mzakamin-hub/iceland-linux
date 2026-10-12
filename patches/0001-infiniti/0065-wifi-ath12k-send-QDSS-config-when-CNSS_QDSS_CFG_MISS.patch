@@ -1,4 +1,4 @@
-From 4cb3f5f32cbbd28bc4e9a6f0919a2c92fc8720a1 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Gianni Spadoni <me@gio.blue>
 Date: Wed, 11 Mar 2026 16:08:41 +0800
 Subject: [PATCH] wifi: ath12k: send QDSS config when CNSS_QDSS_CFG_MISS_V01 is
@@ -24,7 +24,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  3 files changed, 225 insertions(+)
 
 diff --git a/drivers/net/wireless/ath/ath12k/hw.h b/drivers/net/wireless/ath/ath12k/hw.h
-index 011bb22e21..35a92415f3 100644
+index 011bb22e21c7..35a92415f3f4 100644
 --- a/drivers/net/wireless/ath/ath12k/hw.h
 +++ b/drivers/net/wireless/ath/ath12k/hw.h
 @@ -96,6 +96,7 @@ struct ieee80211_rx_status;
@@ -36,7 +36,7 @@ index 011bb22e21..35a92415f3 100644
  #define ATH12K_REGDB_FILE_NAME		"regdb.bin"
  
 diff --git a/drivers/net/wireless/ath/ath12k/qmi.c b/drivers/net/wireless/ath/ath12k/qmi.c
-index 280e50a1f3..8c7c1936f1 100644
+index 280e50a1f31d..8c7c1936f124 100644
 --- a/drivers/net/wireless/ath/ath12k/qmi.c
 +++ b/drivers/net/wireless/ath/ath12k/qmi.c
 @@ -1619,6 +1619,113 @@ static const struct qmi_elem_info qmi_wlanfw_bdf_download_resp_msg_v01_ei[] = {
@@ -264,7 +264,7 @@ index 280e50a1f3..8c7c1936f1 100644
  }
  
 diff --git a/drivers/net/wireless/ath/ath12k/qmi.h b/drivers/net/wireless/ath/ath12k/qmi.h
-index 6da10f3cb5..614e4fe153 100644
+index 6da10f3cb597..614e4fe153d0 100644
 --- a/drivers/net/wireless/ath/ath12k/qmi.h
 +++ b/drivers/net/wireless/ath/ath12k/qmi.h
 @@ -514,6 +514,27 @@ struct qmi_wlanfw_bdf_download_resp_msg_v01 {

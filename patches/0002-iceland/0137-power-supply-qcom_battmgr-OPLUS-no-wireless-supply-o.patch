@@ -1,4 +1,4 @@
-From d33d1592c349660a370aec60cd31a9e08e6c99da Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 16:43:16 +0300
 Subject: [PATCH] power: supply: qcom_battmgr: OPLUS: no wireless supply on the
@@ -22,7 +22,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 12 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 535d23fa17..8b910a0d91 100644
+index 535d23fa1768..8b910a0d9185 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -423,6 +423,8 @@ struct qcom_battmgr {

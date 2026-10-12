@@ -1,4 +1,4 @@
-From ebc2daf25afb0b02a36992a836df91c512b2d197 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Bryan O'Donoghue <bryan.odonoghue@linaro.org>
 Date: Thu, 17 Sep 2026 12:07:57 +0100
 Subject: [PATCH] media: qcom: camss: Add support for PHY API devices
@@ -21,7 +21,7 @@ Tested-by: Oleg Keri <okerixx@gmail.com> # Lenovo Yoga Slim 7x Gen 11 (Glymur)
  5 files changed, 285 insertions(+), 32 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/camss/Kconfig b/drivers/media/platform/qcom/camss/Kconfig
-index 4eda48cb1a..1edc5e5a18 100644
+index 4eda48cb1adf..1edc5e5a1829 100644
 --- a/drivers/media/platform/qcom/camss/Kconfig
 +++ b/drivers/media/platform/qcom/camss/Kconfig
 @@ -7,3 +7,4 @@ config VIDEO_QCOM_CAMSS
@@ -30,7 +30,7 @@ index 4eda48cb1a..1edc5e5a18 100644
  	select V4L2_FWNODE
 +	select PHY_QCOM_MIPI_CSI2
 diff --git a/drivers/media/platform/qcom/camss/camss-csiphy.c b/drivers/media/platform/qcom/camss/camss-csiphy.c
-index 539ac4888b..aaed7d0309 100644
+index 539ac4888b60..aaed7d0309dd 100644
 --- a/drivers/media/platform/qcom/camss/camss-csiphy.c
 +++ b/drivers/media/platform/qcom/camss/camss-csiphy.c
 @@ -13,6 +13,8 @@
@@ -349,7 +349,7 @@ index 539ac4888b..aaed7d0309 100644
  	media_entity_cleanup(&csiphy->subdev.entity);
  }
 diff --git a/drivers/media/platform/qcom/camss/camss-csiphy.h b/drivers/media/platform/qcom/camss/camss-csiphy.h
-index 9d9657b82f..7a357044b9 100644
+index 9d9657b82f74..7a357044b9fd 100644
 --- a/drivers/media/platform/qcom/camss/camss-csiphy.h
 +++ b/drivers/media/platform/qcom/camss/camss-csiphy.h
 @@ -12,6 +12,7 @@
@@ -392,7 +392,7 @@ index 9d9657b82f..7a357044b9 100644
  int msm_csiphy_register_entity(struct csiphy_device *csiphy,
  			       struct v4l2_device *v4l2_dev);
 diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
-index 2123f6388e..84097d82d9 100644
+index 2123f6388e3d..84097d82d99c 100644
 --- a/drivers/media/platform/qcom/camss/camss.c
 +++ b/drivers/media/platform/qcom/camss/camss.c
 @@ -4799,8 +4799,43 @@ static int camss_parse_ports(struct camss *camss)
@@ -558,7 +558,7 @@ index 2123f6388e..84097d82d9 100644
  	if (camss->tpg) {
  		for (i = 0; i < camss->res->tpg_num; i++)
 diff --git a/drivers/media/platform/qcom/camss/camss.h b/drivers/media/platform/qcom/camss/camss.h
-index 93d691c8ac..ba3d51d9c0 100644
+index 93d691c8ac63..ba3d51d9c0bf 100644
 --- a/drivers/media/platform/qcom/camss/camss.h
 +++ b/drivers/media/platform/qcom/camss/camss.h
 @@ -138,6 +138,7 @@ struct camss {

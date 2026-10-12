@@ -1,4 +1,4 @@
-From 846df9fc6fe809f7fd12b71d9cbe0d8fafb867d2 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:17 +0300
 Subject: [PATCH] wifi: ath12k: Free allocated external IRQs on request_irq()
@@ -35,7 +35,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 13 insertions(+), 13 deletions(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/pci.c b/drivers/net/wireless/ath/ath12k/pci.c
-index 1525e6866c..af0e882fd0 100644
+index 4270f5d6ce4e..12bbb75570f1 100644
 --- a/drivers/net/wireless/ath/ath12k/pci.c
 +++ b/drivers/net/wireless/ath/ath12k/pci.c
 @@ -326,11 +326,11 @@ static void ath12k_pci_free_ce_irq(struct ath12k_base *ab, int num_ce)

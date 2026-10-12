@@ -1,4 +1,4 @@
-From 8697a8505dd46a0cbc86226767a8b642c784cf04 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jingyi Wang <jingyi.wang@oss.qualcomm.com>
 Date: Tue, 23 Sep 2025 01:54:14 -0700
 Subject: [PATCH] arm64: dts: qcom: kaanapali: Add iris video node
@@ -17,7 +17,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 138 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index f85cf94d45..205b1711bb 100644
+index f85cf94d451e..205b1711bb94 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -2663,6 +2663,144 @@ tcsr: clock-controller@1fc0000 {

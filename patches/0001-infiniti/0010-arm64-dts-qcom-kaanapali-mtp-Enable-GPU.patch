@@ -1,4 +1,4 @@
-From 30fc18f9c55fa0f45052851da5858dc6ef4cc5ee Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Akhil P Oommen <akhilpo@oss.qualcomm.com>
 Date: Tue, 7 Jul 2026 03:10:24 +0530
 Subject: [PATCH] arm64: dts: qcom: kaanapali-mtp: Enable GPU
@@ -14,7 +14,7 @@ Signed-off-by: Akhil P Oommen <akhilpo@oss.qualcomm.com>
  1 file changed, 8 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-mtp.dts b/arch/arm64/boot/dts/qcom/kaanapali-mtp.dts
-index 6d817381bb..9b04066f83 100644
+index 6d817381bb37..9b04066f8358 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-mtp.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-mtp.dts
 @@ -908,6 +908,14 @@ vreg_l7n_3p3: ldo7 {

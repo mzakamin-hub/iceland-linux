@@ -1,4 +1,4 @@
-From 8dfc7eb6e74af7cbd9214ff9a0c1f7f7393d7726 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Casey Connolly <casey.connolly@linaro.org>
 Date: Fri, 2 Oct 2026 16:19:50 +0300
 Subject: [PATCH] soc: qcom: Add QMI TMD support for remote thermal mitigation
@@ -35,7 +35,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  create mode 100644 include/linux/soc/qcom/qmi_tmd.h
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index dd1f6d9f6d..15f15311fd 100644
+index ca918ad5d375..74943ee71afc 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
 @@ -22609,6 +22609,13 @@ F:	Documentation/devicetree/bindings/net/qcom,ipq9574-ppe.yaml
@@ -53,7 +53,7 @@ index dd1f6d9f6d..15f15311fd 100644
  M:	Maximilian Luz <luzmaximilian@gmail.com>
  L:	linux-arm-msm@vger.kernel.org
 diff --git a/drivers/soc/qcom/Kconfig b/drivers/soc/qcom/Kconfig
-index 859835a3dd..f307a0c963 100644
+index 859835a3dd1d..f307a0c96375 100644
 --- a/drivers/soc/qcom/Kconfig
 +++ b/drivers/soc/qcom/Kconfig
 @@ -330,6 +330,18 @@ config QCOM_QMI_HELPERS
@@ -76,7 +76,7 @@ index 859835a3dd..f307a0c963 100644
  	tristate
  	depends on QCOM_SMEM
 diff --git a/drivers/soc/qcom/Makefile b/drivers/soc/qcom/Makefile
-index 33dfef07e7..fafc3d2bba 100644
+index 33dfef07e7db..fafc3d2bba8e 100644
 --- a/drivers/soc/qcom/Makefile
 +++ b/drivers/soc/qcom/Makefile
 @@ -15,6 +15,7 @@ obj-$(CONFIG_QCOM_PMIC_GLINK)	+= pmic_glink_altmode.o
@@ -89,7 +89,7 @@ index 33dfef07e7..fafc3d2bba 100644
  obj-$(CONFIG_QCOM_RAMP_CTRL)	+= ramp_controller.o
 diff --git a/drivers/soc/qcom/qmi_tmd.c b/drivers/soc/qcom/qmi_tmd.c
 new file mode 100644
-index 0000000000..54e5ce8dc4
+index 000000000000..54e5ce8dc462
 --- /dev/null
 +++ b/drivers/soc/qcom/qmi_tmd.c
 @@ -0,0 +1,595 @@
@@ -689,7 +689,7 @@ index 0000000000..54e5ce8dc4
 +MODULE_LICENSE("GPL");
 +MODULE_DESCRIPTION("Qualcomm QMI Thermal Mitigation support");
 diff --git a/include/linux/soc/qcom/qmi.h b/include/linux/soc/qcom/qmi.h
-index b9dcb437a0..683d27cee4 100644
+index b9dcb437a0be..683d27cee413 100644
 --- a/include/linux/soc/qcom/qmi.h
 +++ b/include/linux/soc/qcom/qmi.h
 @@ -96,6 +96,7 @@ struct qmi_elem_info {
@@ -702,7 +702,7 @@ index b9dcb437a0..683d27cee4 100644
  #define QMI_SERVICE_ID_SERVREG_LOC	0x40	/*   64 */
 diff --git a/include/linux/soc/qcom/qmi_tmd.h b/include/linux/soc/qcom/qmi_tmd.h
 new file mode 100644
-index 0000000000..452f51f237
+index 000000000000..452f51f23731
 --- /dev/null
 +++ b/include/linux/soc/qcom/qmi_tmd.h
 @@ -0,0 +1,36 @@

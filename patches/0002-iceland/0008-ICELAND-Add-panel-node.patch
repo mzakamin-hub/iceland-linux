@@ -1,4 +1,4 @@
-From a9e8fe1a18e84a7904a92e9a8d4f1091a185e4e8 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: map220v <map220v300@gmail.com>
 Date: Mon, 8 Jun 2026 10:05:44 +0000
 Subject: [PATCH] ICELAND: Add panel node
@@ -9,7 +9,7 @@ Subject: [PATCH] ICELAND: Add panel node
  1 file changed, 98 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index c8d9673808..ede368bc7e 100644
+index c8d9673808fb..ede368bc7ed1 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -865,6 +865,104 @@ backlight@11 {

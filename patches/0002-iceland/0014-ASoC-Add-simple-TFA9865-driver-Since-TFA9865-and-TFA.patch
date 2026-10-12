@@ -1,4 +1,4 @@
-From 5e9e9d7428621bb13cf3be8446c1ce8843c04da8 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: map220v <map220v300@gmail.com>
 Date: Mon, 6 Jul 2026 18:35:44 +0000
 Subject: [PATCH] ASoC: Add simple TFA9865 driver Since TFA9865 and TFA9864 has
@@ -15,7 +15,7 @@ Subject: [PATCH] ASoC: Add simple TFA9865 driver Since TFA9865 and TFA9864 has
  create mode 100644 sound/soc/codecs/tfa9865.c
 
 diff --git a/arch/arm64/configs/sm8850.config b/arch/arm64/configs/sm8850.config
-index 87da8a0a6a..5a71d6eb40 100644
+index 87da8a0a6ac7..5a71d6eb40a3 100644
 --- a/arch/arm64/configs/sm8850.config
 +++ b/arch/arm64/configs/sm8850.config
 @@ -5,6 +5,7 @@ CONFIG_LOCALVERSION="-sm8850"
@@ -27,7 +27,7 @@ index 87da8a0a6a..5a71d6eb40 100644
  # SOC
  CONFIG_ARM64_PMEM=y
 diff --git a/sound/soc/codecs/Kconfig b/sound/soc/codecs/Kconfig
-index 4570bc1380..dc67ffff78 100644
+index 4570bc138035..dc67ffff7856 100644
 --- a/sound/soc/codecs/Kconfig
 +++ b/sound/soc/codecs/Kconfig
 @@ -2294,6 +2294,10 @@ config SND_SOC_TDA7419
@@ -42,7 +42,7 @@ index 4570bc1380..dc67ffff78 100644
  	tristate "NXP/Goodix TFA9866 amplifier"
  	depends on I2C
 diff --git a/sound/soc/codecs/Makefile b/sound/soc/codecs/Makefile
-index f59a2b29a7..66ef6b3eed 100644
+index f59a2b29a72b..66ef6b3eed1b 100644
 --- a/sound/soc/codecs/Makefile
 +++ b/sound/soc/codecs/Makefile
 @@ -331,6 +331,7 @@ snd-soc-tas2781-comlib-i2c-y := tas2781-comlib-i2c.o
@@ -63,7 +63,7 @@ index f59a2b29a7..66ef6b3eed 100644
  obj-$(CONFIG_SND_SOC_TFA989X)	+= snd-soc-tfa989x.o
 diff --git a/sound/soc/codecs/tfa9865.c b/sound/soc/codecs/tfa9865.c
 new file mode 100644
-index 0000000000..97d1db2e7a
+index 000000000000..97d1db2e7a44
 --- /dev/null
 +++ b/sound/soc/codecs/tfa9865.c
 @@ -0,0 +1,587 @@

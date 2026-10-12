@@ -1,4 +1,4 @@
-From 3eae6978fb182f9374a772fb765fd6a9b4fadbf5 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 29 Jul 2026 00:24:51 -0700
 Subject: [PATCH] power: supply: qcom_battmgr: Support the Oplus charger
@@ -13,7 +13,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 370 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 7716eb9e1a..4cc263457d 100644
+index 7716eb9e1aff..4cc263457d8a 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -5,7 +5,9 @@

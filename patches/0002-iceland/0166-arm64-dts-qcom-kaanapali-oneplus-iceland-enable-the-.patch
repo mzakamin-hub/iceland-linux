@@ -1,4 +1,4 @@
-From df5331630395c3056409523b772bebdec18ab928 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 19:25:24 +0300
 Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: enable the power
@@ -18,7 +18,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 80 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index d935ba33c5..23d085e876 100644
+index d935ba33c5e9..23d085e8762b 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1790,6 +1790,86 @@ cam_front_mclk_default: cam-front-mclk-default-state {

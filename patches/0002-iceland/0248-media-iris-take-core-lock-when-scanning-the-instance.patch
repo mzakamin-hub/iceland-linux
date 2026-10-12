@@ -1,4 +1,4 @@
-From fe42c3730f5b6bb5e08e63a0b6be1b5a907e4e16 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:21 +0300
 Subject: [PATCH] media: iris: take core lock when scanning the instance list
@@ -29,7 +29,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 5 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_vb2.c b/drivers/media/platform/qcom/iris/iris_vb2.c
-index a2ea2d67f6..8faf709c26 100644
+index a2ea2d67f60d..8faf709c26c1 100644
 --- a/drivers/media/platform/qcom/iris/iris_vb2.c
 +++ b/drivers/media/platform/qcom/iris/iris_vb2.c
 @@ -56,10 +56,14 @@ static int iris_check_session_supported(struct iris_inst *inst)

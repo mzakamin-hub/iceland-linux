@@ -1,4 +1,4 @@
-From ef1f7a81312222214833982394a2508d14913946 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 29 Jul 2026 01:14:26 -0700
 Subject: [PATCH] dt-bindings: regulator: qcom,qca6390-pmu: Add WCN7860
@@ -11,7 +11,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 21 insertions(+)
 
 diff --git a/Documentation/devicetree/bindings/regulator/qcom,qca6390-pmu.yaml b/Documentation/devicetree/bindings/regulator/qcom,qca6390-pmu.yaml
-index 105174df7d..7ccbb07c15 100644
+index 105174df7df2..7ccbb07c1580 100644
 --- a/Documentation/devicetree/bindings/regulator/qcom,qca6390-pmu.yaml
 +++ b/Documentation/devicetree/bindings/regulator/qcom,qca6390-pmu.yaml
 @@ -27,6 +27,7 @@ properties:

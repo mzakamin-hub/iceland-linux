@@ -1,4 +1,4 @@
-From 3551294e94a0297555075e04d457107bc606665a Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Joonhoe Kim <26rote@gmail.com>
 Date: Sat, 10 Oct 2026 14:32:54 +0300
 Subject: [PATCH] wifi: ath12k: keep the RX refill ring from running dry
@@ -68,7 +68,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  6 files changed, 181 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/debugfs.c b/drivers/net/wireless/ath/ath12k/debugfs.c
-index d54995b7ad..12603f05f6 100644
+index d54995b7adb2..12603f05f6cc 100644
 --- a/drivers/net/wireless/ath/ath12k/debugfs.c
 +++ b/drivers/net/wireless/ath/ath12k/debugfs.c
 @@ -1032,7 +1032,11 @@ static ssize_t ath12k_debugfs_dump_device_dp_stats(struct file *file,
@@ -117,7 +117,7 @@ index d54995b7ad..12603f05f6 100644
  
  	return ret;
 diff --git a/drivers/net/wireless/ath/ath12k/dp.c b/drivers/net/wireless/ath/ath12k/dp.c
-index f9b37d7595..afb31d941f 100644
+index f9b37d75956d..afb31d941f6e 100644
 --- a/drivers/net/wireless/ath/ath12k/dp.c
 +++ b/drivers/net/wireless/ath/ath12k/dp.c
 @@ -1121,6 +1121,9 @@ static void ath12k_dp_cleanup(struct ath12k_base *ab)
@@ -131,7 +131,7 @@ index f9b37d7595..afb31d941f 100644
  				    HAL_WBM_IDLE_LINK, &dp->wbm_idle_ring);
  
 diff --git a/drivers/net/wireless/ath/ath12k/dp.h b/drivers/net/wireless/ath/ath12k/dp.h
-index bef0f2ba05..dc80013453 100644
+index bef0f2ba0560..dc800134536f 100644
 --- a/drivers/net/wireless/ath/ath12k/dp.h
 +++ b/drivers/net/wireless/ath/ath12k/dp.h
 @@ -450,6 +450,15 @@ struct ath12k_device_dp_stats {
@@ -172,7 +172,7 @@ index bef0f2ba05..dc80013453 100644
  	struct dp_srng rxdma_err_dst_ring[MAX_RXDMA_PER_PDEV];
  	struct dp_rxdma_mon_ring rxdma_mon_buf_ring;
 diff --git a/drivers/net/wireless/ath/ath12k/dp_rx.c b/drivers/net/wireless/ath/ath12k/dp_rx.c
-index 8fa0e90b45..f220c950d6 100644
+index 8fa0e90b4531..f220c950d6a2 100644
 --- a/drivers/net/wireless/ath/ath12k/dp_rx.c
 +++ b/drivers/net/wireless/ath/ath12k/dp_rx.c
 @@ -7,6 +7,7 @@
@@ -359,7 +359,7 @@ index 8fa0e90b45..f220c950d6 100644
  }
  
 diff --git a/drivers/net/wireless/ath/ath12k/dp_rx.h b/drivers/net/wireless/ath/ath12k/dp_rx.h
-index 0660db070e..aac28d4c5d 100644
+index 0660db070e92..aac28d4c5db6 100644
 --- a/drivers/net/wireless/ath/ath12k/dp_rx.h
 +++ b/drivers/net/wireless/ath/ath12k/dp_rx.h
 @@ -225,6 +225,7 @@ void ath12k_dp_rx_pdev_reo_cleanup(struct ath12k_base *ab);
@@ -371,7 +371,7 @@ index 0660db070e..aac28d4c5d 100644
  void ath12k_dp_rx_pdev_free(struct ath12k_base *ab, int pdev_idx);
  void ath12k_dp_rx_reo_cmd_list_cleanup(struct ath12k_base *ab);
 diff --git a/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c b/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
-index 95d87dd678..9266353196 100644
+index 95d87dd67872..92663531963f 100644
 --- a/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
 +++ b/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
 @@ -789,9 +789,9 @@ int ath12k_wifi7_dp_rx_process(struct ath12k_dp *dp, int ring_id,

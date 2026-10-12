@@ -1,4 +1,4 @@
-From aebc3535252c23762d4ce3a28832bce6af1e4c77 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 23 Sep 2026 02:41:41 -0700
 Subject: [PATCH] dt-bindings: soc: qcom: pmic-glink: Add the OnePlus 15
@@ -11,7 +11,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 5 insertions(+)
 
 diff --git a/Documentation/devicetree/bindings/soc/qcom/qcom,pmic-glink.yaml b/Documentation/devicetree/bindings/soc/qcom/qcom,pmic-glink.yaml
-index 16ad4f5698..f905df3737 100644
+index 16ad4f5698fc..f905df373721 100644
 --- a/Documentation/devicetree/bindings/soc/qcom/qcom,pmic-glink.yaml
 +++ b/Documentation/devicetree/bindings/soc/qcom/qcom,pmic-glink.yaml
 @@ -38,6 +38,11 @@ properties:

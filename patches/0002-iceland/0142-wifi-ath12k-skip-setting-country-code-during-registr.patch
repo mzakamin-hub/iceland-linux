@@ -1,4 +1,4 @@
-From 58891fb48669d42b2f0552984f32a746551a29db Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Baochen Qiang <baochen.qiang@oss.qualcomm.com>
 Date: Wed, 29 Jul 2026 15:18:14 +0800
 Subject: [PATCH] wifi: ath12k: skip setting country code during registration
@@ -23,7 +23,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 12 insertions(+)
 
 diff --git a/drivers/net/wireless/ath/ath12k/mac.c b/drivers/net/wireless/ath/ath12k/mac.c
-index eeae2a49ca..92a4659702 100644
+index eeae2a49ca82..92a46597028e 100644
 --- a/drivers/net/wireless/ath/ath12k/mac.c
 +++ b/drivers/net/wireless/ath/ath12k/mac.c
 @@ -15071,6 +15071,8 @@ static int ath12k_mac_hw_register(struct ath12k_hw *ah)

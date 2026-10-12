@@ -1,4 +1,4 @@
-From 800d4207e696443428416c60d267dad8671afee2 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Bryan O'Donoghue <bryan.odonoghue@linaro.org>
 Date: Thu, 17 Sep 2026 00:58:38 +0100
 Subject: [PATCH] dt-bindings: phy: qcom: Add CSI2 C-PHY/DPHY schema
@@ -20,7 +20,7 @@ Reviewed-by: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>
 
 diff --git a/Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml b/Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml
 new file mode 100644
-index 0000000000..dc64af97da
+index 000000000000..dc64af97da6c
 --- /dev/null
 +++ b/Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml
 @@ -0,0 +1,209 @@

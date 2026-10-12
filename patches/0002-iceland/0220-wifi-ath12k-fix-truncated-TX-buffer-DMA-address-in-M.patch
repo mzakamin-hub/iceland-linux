@@ -1,4 +1,4 @@
-From 4bf94fe4f353b5454894e4696a8b6bb71b228060 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:17 +0300
 Subject: [PATCH] wifi: ath12k: fix truncated TX buffer DMA address in MSDU ext
@@ -32,7 +32,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/wifi7/dp_tx.c b/drivers/net/wireless/ath/ath12k/wifi7/dp_tx.c
-index 7ea49bcb0f..7c12dba4cc 100644
+index 7ea49bcb0f47..7c12dba4cc51 100644
 --- a/drivers/net/wireless/ath/ath12k/wifi7/dp_tx.c
 +++ b/drivers/net/wireless/ath/ath12k/wifi7/dp_tx.c
 @@ -63,7 +63,7 @@ ath12k_wifi7_hal_tx_cmd_ext_desc_setup(struct ath12k_base *ab,

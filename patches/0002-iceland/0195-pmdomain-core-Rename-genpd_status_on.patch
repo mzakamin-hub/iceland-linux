@@ -1,6 +1,6 @@
-From 235c9ef7993e1fd76d7477ce66c5ab52738c3906 Mon Sep 17 00:00:00 2001
-From: Ulf Hansson <ulf.hansson@oss.qualcomm.com>
-Date: Mon, 14 Sep 2026 17:01:37 +0200
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 10 Oct 2026 04:19:13 +0300
 Subject: [PATCH] pmdomain: core: Rename genpd_status_on()
 
 Rename the genpd_status_on() to genpd_status_on_unlocked() to make the name
@@ -21,7 +21,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 13 insertions(+), 13 deletions(-)
 
 diff --git a/drivers/pmdomain/core.c b/drivers/pmdomain/core.c
-index 052ec478df..6abe8b1989 100644
+index 052ec478dfcc..6abe8b198949 100644
 --- a/drivers/pmdomain/core.c
 +++ b/drivers/pmdomain/core.c
 @@ -173,7 +173,7 @@ static const struct genpd_lock_ops genpd_raw_spin_ops = {

@@ -1,4 +1,4 @@
-From 4ce17fdc9379eb466d8fce6796d42f2d191d050d Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 29 Jul 2026 17:57:14 -0700
 Subject: [PATCH] arm64: dts: qcom: kaanapali: Advertise a 1024-byte GPR intent
@@ -11,7 +11,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 4ff1f5ce32..f706021d36 100644
+index 4ff1f5ce3240..f706021d360b 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -3229,7 +3229,7 @@ gpr {

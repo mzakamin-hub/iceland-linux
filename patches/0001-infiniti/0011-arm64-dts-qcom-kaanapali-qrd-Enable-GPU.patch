@@ -1,4 +1,4 @@
-From afc9ff2dd800f34bd9e8a30b44e857692d5eea4d Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Akhil P Oommen <akhilpo@oss.qualcomm.com>
 Date: Tue, 7 Jul 2026 03:10:25 +0530
 Subject: [PATCH] arm64: dts: qcom: kaanapali-qrd: Enable GPU
@@ -14,7 +14,7 @@ Signed-off-by: Akhil P Oommen <akhilpo@oss.qualcomm.com>
  1 file changed, 8 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-qrd.dts b/arch/arm64/boot/dts/qcom/kaanapali-qrd.dts
-index abd3e9f8a3..f6b02223f4 100644
+index abd3e9f8a3eb..f6b02223f4df 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-qrd.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-qrd.dts
 @@ -736,6 +736,14 @@ vreg_l7n_3p3: ldo7 {

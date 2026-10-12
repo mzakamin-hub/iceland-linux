@@ -1,4 +1,4 @@
-From a3cd212a76661120d0c19d73a78af8e5ed269708 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Fri, 31 Jul 2026 18:26:56 -0700
 Subject: [PATCH] arm64: dts: qcom: kaanapali: Split the cluster power domain
@@ -12,7 +12,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 15 insertions(+), 9 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index f706021d36..994b5f6f4f 100644
+index f706021d360b..994b5f6f4f9f 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -274,53 +274,59 @@ psci {

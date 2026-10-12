@@ -1,4 +1,4 @@
-From 9a87f542f7d79fcb30457f299b63235ae18cb677 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Joonhoe Kim <26rote@gmail.com>
 Date: Sat, 26 Sep 2026 05:50:16 +0000
 Subject: [PATCH] wifi: ath12k: don't wake the device over MHI from the panic
@@ -40,7 +40,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 9 insertions(+)
 
 diff --git a/drivers/net/wireless/ath/ath12k/wifi7/pci.c b/drivers/net/wireless/ath/ath12k/wifi7/pci.c
-index 893474de48..2c2ba81842 100644
+index 893474de488d..2c2ba8184217 100644
 --- a/drivers/net/wireless/ath/ath12k/wifi7/pci.c
 +++ b/drivers/net/wireless/ath/ath12k/wifi7/pci.c
 @@ -4,6 +4,7 @@

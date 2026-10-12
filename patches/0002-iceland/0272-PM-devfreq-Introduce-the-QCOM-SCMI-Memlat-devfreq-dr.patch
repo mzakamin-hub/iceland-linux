@@ -1,4 +1,4 @@
-From f148f44163421727f65e03045b203c205f63255a Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Sibi Sankar <sibi.sankar@oss.qualcomm.com>
 Date: Fri, 24 Jul 2026 12:48:12 +0530
 Subject: [PATCH] PM / devfreq: Introduce the QCOM SCMI Memlat devfreq driver
@@ -41,7 +41,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  create mode 100644 drivers/devfreq/scmi-qcom-memlat-devfreq.c
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 15b08f3c22..110206492f 100644
+index 0c2e39e5f35f..97eb7c777d98 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
 @@ -22644,6 +22644,14 @@ F:	Documentation/networking/device_drivers/cellular/qualcomm/rmnet.rst
@@ -60,7 +60,7 @@ index 15b08f3c22..110206492f 100644
  M:	Amirreza Zarrabi <amirreza.zarrabi@oss.qualcomm.com>
  L:	linux-arm-msm@vger.kernel.org
 diff --git a/drivers/devfreq/Kconfig b/drivers/devfreq/Kconfig
-index 2caa875549..fdf6484fc7 100644
+index 2caa87554914..fdf6484fc72c 100644
 --- a/drivers/devfreq/Kconfig
 +++ b/drivers/devfreq/Kconfig
 @@ -169,6 +169,21 @@ config ARM_SUN8I_A33_MBUS_DEVFREQ
@@ -86,7 +86,7 @@ index 2caa875549..fdf6484fc7 100644
  
  endif # PM_DEVFREQ
 diff --git a/drivers/devfreq/Makefile b/drivers/devfreq/Makefile
-index cde57c8cda..b11f94e2f4 100644
+index cde57c8cda76..b11f94e2f485 100644
 --- a/drivers/devfreq/Makefile
 +++ b/drivers/devfreq/Makefile
 @@ -17,6 +17,7 @@ obj-$(CONFIG_ARM_MEDIATEK_CCI_DEVFREQ)	+= mtk-cci-devfreq.o
@@ -99,7 +99,7 @@ index cde57c8cda..b11f94e2f4 100644
  obj-$(CONFIG_PM_DEVFREQ_EVENT)		+= event/
 diff --git a/drivers/devfreq/scmi-qcom-memlat-devfreq.c b/drivers/devfreq/scmi-qcom-memlat-devfreq.c
 new file mode 100644
-index 0000000000..9ca85b2f4c
+index 000000000000..9ca85b2f4c1a
 --- /dev/null
 +++ b/drivers/devfreq/scmi-qcom-memlat-devfreq.c
 @@ -0,0 +1,1331 @@

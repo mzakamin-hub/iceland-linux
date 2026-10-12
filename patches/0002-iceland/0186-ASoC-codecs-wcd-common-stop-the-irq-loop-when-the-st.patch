@@ -1,4 +1,4 @@
-From 09df8b1804a161b810fff4b049c8da498102b959 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 3 Oct 2026 11:44:32 +0300
 Subject: [PATCH] ASoC: codecs: wcd-common: stop the irq loop when the status
@@ -22,7 +22,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 11 insertions(+), 5 deletions(-)
 
 diff --git a/sound/soc/codecs/wcd-common.c b/sound/soc/codecs/wcd-common.c
-index 9016e97458..1fd899bde4 100644
+index 9016e974582f..1fd899bde439 100644
 --- a/sound/soc/codecs/wcd-common.c
 +++ b/sound/soc/codecs/wcd-common.c
 @@ -126,14 +126,20 @@ int wcd_interrupt_callback(struct sdw_slave *slave, struct irq_domain *slave_irq

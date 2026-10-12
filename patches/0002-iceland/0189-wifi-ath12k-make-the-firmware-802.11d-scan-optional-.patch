@@ -1,4 +1,4 @@
-From 80ad8a92b79e4a128b5a5509bf09921db2d1a4be Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 3 Oct 2026 14:14:07 +0300
 Subject: [PATCH] wifi: ath12k: make the firmware 802.11d scan optional, off on
@@ -34,7 +34,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  3 files changed, 22 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/core.c b/drivers/net/wireless/ath/ath12k/core.c
-index 262a204530..a0c77c5f00 100644
+index b0107cde99ff..9a5c45191fd7 100644
 --- a/drivers/net/wireless/ath/ath12k/core.c
 +++ b/drivers/net/wireless/ath/ath12k/core.c
 @@ -35,6 +35,11 @@ module_param_named(ftm_mode, ath12k_ftm_mode, bool, 0444);
@@ -50,7 +50,7 @@ index 262a204530..a0c77c5f00 100644
  static struct list_head ath12k_hw_group_list = LIST_HEAD_INIT(ath12k_hw_group_list);
  
 diff --git a/drivers/net/wireless/ath/ath12k/debug.h b/drivers/net/wireless/ath/ath12k/debug.h
-index 658b8083c9..57e3ff2182 100644
+index 658b8083c9c3..57e3ff2182c3 100644
 --- a/drivers/net/wireless/ath/ath12k/debug.h
 +++ b/drivers/net/wireless/ath/ath12k/debug.h
 @@ -39,6 +39,7 @@ __printf(2, 3) void __ath12k_warn(struct device *dev, const char *fmt, ...);
@@ -62,7 +62,7 @@ index 658b8083c9..57e3ff2182 100644
  #ifdef CONFIG_ATH12K_DEBUG
  __printf(3, 4) void __ath12k_dbg(struct ath12k_base *ab,
 diff --git a/drivers/net/wireless/ath/ath12k/mac.c b/drivers/net/wireless/ath/ath12k/mac.c
-index 92a4659702..0a2c7f1e50 100644
+index 92a46597028e..0a2c7f1e5034 100644
 --- a/drivers/net/wireless/ath/ath12k/mac.c
 +++ b/drivers/net/wireless/ath/ath12k/mac.c
 @@ -10296,6 +10296,19 @@ static bool ath12k_mac_vif_ap_active_any(struct ath12k_base *ab)

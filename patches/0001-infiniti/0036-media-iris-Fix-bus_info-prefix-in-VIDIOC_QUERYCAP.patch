@@ -1,4 +1,4 @@
-From f25434ec3ff385541bbff1b1ab5b1990f8a7370b Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Vishnu Reddy <busanna.reddy@oss.qualcomm.com>
 Date: Tue, 18 Aug 2026 21:43:51 +0530
 Subject: [PATCH] media: iris: Fix bus_info prefix in VIDIOC_QUERYCAP
@@ -23,7 +23,7 @@ Reviewed-by: Vikash Garodia <vikash.garodia@oss.qualcomm.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_vidc.c b/drivers/media/platform/qcom/iris/iris_vidc.c
-index fcbc60016b..d39ac71a25 100644
+index fcbc60016bee..d39ac71a25aa 100644
 --- a/drivers/media/platform/qcom/iris/iris_vidc.c
 +++ b/drivers/media/platform/qcom/iris/iris_vidc.c
 @@ -466,7 +466,7 @@ static int iris_querycap(struct file *filp, void *fh, struct v4l2_capability *ca

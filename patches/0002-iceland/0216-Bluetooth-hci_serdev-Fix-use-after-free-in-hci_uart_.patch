@@ -1,4 +1,4 @@
-From fd2bd14a44106cc3ca43b7ac4fa73897b168767f Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:16 +0300
 Subject: [PATCH] Bluetooth: hci_serdev: Fix use-after-free in
@@ -42,7 +42,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 40 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/bluetooth/hci_serdev.c b/drivers/bluetooth/hci_serdev.c
-index d2eaf2f12a..48ba017e21 100644
+index d2eaf2f12aa2..48ba017e219b 100644
 --- a/drivers/bluetooth/hci_serdev.c
 +++ b/drivers/bluetooth/hci_serdev.c
 @@ -395,20 +395,54 @@ EXPORT_SYMBOL_GPL(hci_uart_register_device_priv);

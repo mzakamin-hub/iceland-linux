@@ -1,15 +1,15 @@
 # Upstream base the patch queue applies to (sourced by scripts/prepare.sh).
 UPSTREAM_URL=https://github.com/torvalds/linux
-UPSTREAM_TAG=v7.3-rc6
-UPSTREAM_COMMIT=a90ee4305c4a5df72c11b31dacfdc76e00fcf78a
-UPSTREAM_TREE=18cdff87967594810218424b52c69529757a6a78
+UPSTREAM_TAG=v7.3-rc7
+UPSTREAM_COMMIT=24a19b953e2a3d0ea5a8c4951a0ab8f32720c907
+UPSTREAM_TREE=35e4248213006b8c37f54118790a99b673c84fd9
 
 # Tree hash expected after each series (proves the queue reproduces the source exactly).
-# 0001-infiniti = infiniti-mainline/linux master (OnePlus 15, same SoC) at this commit, rebased onto v7.3-rc6
+# 0001-infiniti = infiniti-mainline/linux master (OnePlus 15, same SoC) at this commit, rebased onto v7.3-rc6, then onto v7.3-rc7 (q89e: 132 of 135 kept)
 # (135 of 138: 0004 / 0005 / 0030 are upstream in rc6):
 INFINITI_URL=https://github.com/infiniti-mainline/linux
 INFINITI_COMMIT=10650ae7bef447d04eb820bfc0c2d5a98d83e4e2
-TREE_AFTER_0001_infiniti=371742e5e8fcc417e7dac2f96e74df944d011a3b
+TREE_AFTER_0001_infiniti=b0efb1679372a619cac5b2da2a3470649e52430a
 # 0002-iceland = OnePlus Pad 4 series (map220v/sm8850-mainline iceland-7.2 ported + our fixes + upstream picks),
 # kernel q89b = 7.3.0-rc6-iceland-00377-g8e90101870e4 (see docs/Q89B-QUEUE.md) had f1c7fa5d8607;
 # kernel q89c-tb = q89b + 0255-0265 (tb323fu-linux), 7.3.0-rc6-iceland-00388-g9093690257a0 (docs/Q89C-TB-QUEUE.md) had 71601a654760;
@@ -17,5 +17,6 @@ TREE_AFTER_0001_infiniti=371742e5e8fcc417e7dac2f96e74df944d011a3b
 # kernel q89d3 = q89c-tb + 0266-0286, 7.3.0-rc6-iceland-00409-g9f9b14376d1a (docs/Q89D8-QUEUE.md) had fe91ba2d9aff;
 # kernel q89d5 = q89c-tb + 0266-0288, 7.3.0-rc6-iceland-00411-ge69f6f280d70 (docs/Q89D8-QUEUE.md) had f0749c7f6478;
 # kernel q89d8 = q89c-tb + 0266-0290, 7.3.0-rc6-iceland-00413-gfaa8eeee8c82 (docs/Q89D8-QUEUE.md) had d5caed260f61;
-# kernel q89d9 = q89c-tb + 0266-0291, 7.3.0-rc6-iceland-00414-g9e7350a6ab86 (docs/Q89D9-QUEUE.md):
-TREE_AFTER_0002_iceland=b6e37a4f5805bd582edf2c7b59c7bb5ffe6fd420
+# kernel q89d9 = q89c-tb + 0266-0291, 7.3.0-rc6-iceland-00414-g9e7350a6ab86 (docs/Q89D9-QUEUE.md) had b6e37a4f5805;
+# kernel q89e = q89d9's queue rebased onto v7.3-rc7 (merged-upstream patches dropped, numbers kept with gaps), 7.3.0-rc7-iceland-00411-ga9bb76144dab:
+TREE_AFTER_0002_iceland=b519e097ee3379fa75c1635f3d4ac6c191c3345c

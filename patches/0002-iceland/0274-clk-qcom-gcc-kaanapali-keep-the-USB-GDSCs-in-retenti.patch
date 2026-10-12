@@ -1,4 +1,4 @@
-From 97a06c06eb9ffe0cfc912143e96631c78fd5375f Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Joonhoe Kim <26rote@gmail.com>
 Date: Sat, 26 Sep 2026 07:20:57 +0000
 Subject: [PATCH] clk: qcom: gcc-kaanapali: keep the USB GDSCs in retention
@@ -25,7 +25,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/clk/qcom/gcc-kaanapali.c b/drivers/clk/qcom/gcc-kaanapali.c
-index 4255ca1698..8cb0725e94 100644
+index 4255ca169806..8cb0725e94a1 100644
 --- a/drivers/clk/qcom/gcc-kaanapali.c
 +++ b/drivers/clk/qcom/gcc-kaanapali.c
 @@ -3189,7 +3189,7 @@ static struct gdsc gcc_usb30_prim_gdsc = {

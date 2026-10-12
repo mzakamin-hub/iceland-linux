@@ -1,4 +1,4 @@
-From ab0c7886dd11a9147a9268915d771469bff527cb Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 29 Jul 2026 01:07:25 -0700
 Subject: [PATCH] ASoC: qcom: q6apm-dai: Accept S32_LE playback
@@ -11,7 +11,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 5 insertions(+), 1 deletion(-)
 
 diff --git a/sound/soc/qcom/qdsp6/q6apm-dai.c b/sound/soc/qcom/qdsp6/q6apm-dai.c
-index 033197bdd8..346b16bc63 100644
+index 033197bdd870..346b16bc63f4 100644
 --- a/sound/soc/qcom/qdsp6/q6apm-dai.c
 +++ b/sound/soc/qcom/qdsp6/q6apm-dai.c
 @@ -113,7 +113,8 @@ static const struct snd_pcm_hardware q6apm_dai_hardware_playback = {

@@ -1,4 +1,4 @@
-From d9656b57de1287e4b794757c5b27cc67a572b5ff Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 3 Oct 2026 08:53:18 +0300
 Subject: [PATCH] PCI/pwrctrl: allow the power sequencing driver to be built in
@@ -22,7 +22,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 7 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/pci/pwrctrl/Kconfig b/drivers/pci/pwrctrl/Kconfig
-index 9eec767cda..df7232890d 100644
+index 9eec767cda86..df7232890dd5 100644
 --- a/drivers/pci/pwrctrl/Kconfig
 +++ b/drivers/pci/pwrctrl/Kconfig
 @@ -7,9 +7,15 @@ config PCI_PWRCTRL

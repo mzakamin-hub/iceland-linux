@@ -1,4 +1,4 @@
-From 59e754c3df2bad1abd86e96f62d767009e3d3ed5 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:17 +0300
 Subject: [PATCH] wifi: ath12k: Free allocated CE IRQs on request_irq() failure
@@ -35,7 +35,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 19 insertions(+), 10 deletions(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/pci.c b/drivers/net/wireless/ath/ath12k/pci.c
-index 6441927b53..1525e6866c 100644
+index 8978edb44cec..4270f5d6ce4e 100644
 --- a/drivers/net/wireless/ath/ath12k/pci.c
 +++ b/drivers/net/wireless/ath/ath12k/pci.c
 @@ -313,6 +313,19 @@ static void ath12k_pci_sw_reset(struct ath12k_base *ab, bool power_on)

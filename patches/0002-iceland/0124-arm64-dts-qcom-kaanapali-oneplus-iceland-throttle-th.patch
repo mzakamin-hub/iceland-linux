@@ -1,4 +1,4 @@
-From 2695a1d8edf89b17adaf921eae17f6caae66f54a Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 2 Oct 2026 16:19:52 +0300
 Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: throttle the
@@ -25,7 +25,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 20 insertions(+), 8 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 40492d32ed..3ff002f3c5 100644
+index 40492d32edc0..3ff002f3c54c 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -12,6 +12,7 @@

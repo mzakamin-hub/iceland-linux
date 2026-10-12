@@ -1,4 +1,4 @@
-From 3927d7c0974f2bd413f99cdfd79a432e61553530 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Thu, 24 Sep 2026 02:44:18 -0700
 Subject: [PATCH] media: iris: Only allow hierarchical B-frames on kaanapali
@@ -14,7 +14,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  3 files changed, 6 insertions(+)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_ctrls.c b/drivers/media/platform/qcom/iris/iris_ctrls.c
-index bf17d310ea..5916dffc20 100644
+index bf17d310eac0..5916dffc2068 100644
 --- a/drivers/media/platform/qcom/iris/iris_ctrls.c
 +++ b/drivers/media/platform/qcom/iris/iris_ctrls.c
 @@ -464,6 +464,10 @@ void iris_session_init_caps(struct iris_core *core)
@@ -29,7 +29,7 @@ index bf17d310ea..5916dffc20 100644
  }
  
 diff --git a/drivers/media/platform/qcom/iris/iris_platform_common.h b/drivers/media/platform/qcom/iris/iris_platform_common.h
-index 58431d1cb2..0506b8ae0d 100644
+index 58431d1cb2d5..0506b8ae0d26 100644
 --- a/drivers/media/platform/qcom/iris/iris_platform_common.h
 +++ b/drivers/media/platform/qcom/iris/iris_platform_common.h
 @@ -319,6 +319,7 @@ struct iris_platform_data {
@@ -41,7 +41,7 @@ index 58431d1cb2..0506b8ae0d 100644
  	/* max number of macroblocks per frame supported */
  	u32 max_core_mbpf;
 diff --git a/drivers/media/platform/qcom/iris/iris_platform_vpu3x.c b/drivers/media/platform/qcom/iris/iris_platform_vpu3x.c
-index fa39783943..6bb1e86e61 100644
+index fa39783943c0..6bb1e86e61cc 100644
 --- a/drivers/media/platform/qcom/iris/iris_platform_vpu3x.c
 +++ b/drivers/media/platform/qcom/iris/iris_platform_vpu3x.c
 @@ -244,6 +244,7 @@ const struct iris_platform_data kaanapali_data = {

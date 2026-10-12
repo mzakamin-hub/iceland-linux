@@ -1,4 +1,4 @@
-From ad8fc6e2b34c464d2b18eb3e88da9f2ea11c7754 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Thu, 24 Sep 2026 15:51:24 -0700
 Subject: [PATCH] dt-bindings: media: i2c: samsung,s5kjn5: Allow three C-PHY
@@ -10,7 +10,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 10 insertions(+), 2 deletions(-)
 
 diff --git a/Documentation/devicetree/bindings/media/i2c/samsung,s5kjn5.yaml b/Documentation/devicetree/bindings/media/i2c/samsung,s5kjn5.yaml
-index fedb274679..abfacfe9df 100644
+index fedb274679cd..abfacfe9df62 100644
 --- a/Documentation/devicetree/bindings/media/i2c/samsung,s5kjn5.yaml
 +++ b/Documentation/devicetree/bindings/media/i2c/samsung,s5kjn5.yaml
 @@ -9,8 +9,8 @@ title: Samsung S5KJN5 Image Sensor

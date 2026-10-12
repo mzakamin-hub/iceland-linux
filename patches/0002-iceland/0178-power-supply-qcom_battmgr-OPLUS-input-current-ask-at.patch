@@ -1,4 +1,4 @@
-From d191c7c48f5b8ff5a50fc0edf0ea434016e3c74a Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 3 Oct 2026 08:53:16 +0300
 Subject: [PATCH] power: supply: qcom_battmgr: OPLUS: input current ask at the
@@ -27,7 +27,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 19 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index db153bd110..6be2375134 100644
+index db153bd11024..6be2375134df 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -2584,7 +2584,7 @@ static unsigned int qcom_battmgr_iceland_aicl(struct qcom_battmgr *battmgr, unsi

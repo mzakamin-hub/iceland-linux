@@ -1,4 +1,4 @@
-From 4059559c7472d00a7309c953bac617ce5e83e7e0 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Wenmeng Liu <wenmeng.liu@oss.qualcomm.com>
 Date: Mon, 14 Sep 2026 19:10:24 +0800
 Subject: [PATCH] dt-bindings: media: i2c: Add Samsung S5KJN5 image sensor
@@ -16,7 +16,7 @@ Signed-off-by: Wenmeng Liu <wenmeng.liu@oss.qualcomm.com>
 
 diff --git a/Documentation/devicetree/bindings/media/i2c/samsung,s5kjn5.yaml b/Documentation/devicetree/bindings/media/i2c/samsung,s5kjn5.yaml
 new file mode 100644
-index 0000000000..fedb274679
+index 000000000000..fedb274679cd
 --- /dev/null
 +++ b/Documentation/devicetree/bindings/media/i2c/samsung,s5kjn5.yaml
 @@ -0,0 +1,117 @@
@@ -138,7 +138,7 @@ index 0000000000..fedb274679
 +      };
 +...
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 45ee7f6849..84d85dc97f 100644
+index d56909dc86b4..dd6578f59ad0 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
 @@ -24420,6 +24420,12 @@ T:	git git://linuxtv.org/media_tree.git

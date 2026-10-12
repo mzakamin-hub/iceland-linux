@@ -1,4 +1,4 @@
-From fe7be3351d22fc1f1f36d5b78ed3bff62ef7c9e5 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Victor Fuentes <victor@vlinkz.dev>
 Date: Wed, 29 Jul 2026 00:24:51 -0700
 Subject: [PATCH] Input: add Synaptics TouchComm SPI touchscreen driver
@@ -15,7 +15,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  create mode 100644 drivers/input/touchscreen/synaptics_tcm_spi.c
 
 diff --git a/drivers/input/touchscreen/Kconfig b/drivers/input/touchscreen/Kconfig
-index 9b9ae8ac3f..cc6997d444 100644
+index 9b9ae8ac3f7f..cc6997d444c4 100644
 --- a/drivers/input/touchscreen/Kconfig
 +++ b/drivers/input/touchscreen/Kconfig
 @@ -1414,4 +1414,16 @@ config TOUCHSCREEN_HIMAX_HX83112B
@@ -36,7 +36,7 @@ index 9b9ae8ac3f..cc6997d444 100644
 +
  endif
 diff --git a/drivers/input/touchscreen/Makefile b/drivers/input/touchscreen/Makefile
-index bfd9de8338..5dc9c07a1f 100644
+index bfd9de83389d..5dc9c07a1f2e 100644
 --- a/drivers/input/touchscreen/Makefile
 +++ b/drivers/input/touchscreen/Makefile
 @@ -119,3 +119,4 @@ obj-$(CONFIG_TOUCHSCREEN_IQS5XX)	+= iqs5xx.o
@@ -46,7 +46,7 @@ index bfd9de8338..5dc9c07a1f 100644
 +obj-$(CONFIG_TOUCHSCREEN_SYNAPTICS_TCM_SPI)	+= synaptics_tcm_spi.o
 diff --git a/drivers/input/touchscreen/synaptics_tcm_spi.c b/drivers/input/touchscreen/synaptics_tcm_spi.c
 new file mode 100644
-index 0000000000..d530278b24
+index 000000000000..d530278b24bf
 --- /dev/null
 +++ b/drivers/input/touchscreen/synaptics_tcm_spi.c
 @@ -0,0 +1,441 @@

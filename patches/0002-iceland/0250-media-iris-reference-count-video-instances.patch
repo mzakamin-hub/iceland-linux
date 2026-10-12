@@ -1,4 +1,4 @@
-From bce9794fefb39214da95e394988aa273088d693a Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 10 Oct 2026 04:19:21 +0300
 Subject: [PATCH] media: iris: reference count video instances
@@ -37,7 +37,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  6 files changed, 32 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_hfi_gen1_response.c b/drivers/media/platform/qcom/iris/iris_hfi_gen1_response.c
-index bfd7495bf4..e2b95c22f4 100644
+index bfd7495bf44f..e2b95c22f4d1 100644
 --- a/drivers/media/platform/qcom/iris/iris_hfi_gen1_response.c
 +++ b/drivers/media/platform/qcom/iris/iris_hfi_gen1_response.c
 @@ -632,6 +632,7 @@ static void iris_hfi_gen1_handle_response(struct iris_core *core, void *response
@@ -57,7 +57,7 @@ index bfd7495bf4..e2b95c22f4 100644
  		break;
  	}
 diff --git a/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c b/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
-index 69f45d0b46..fe2f26b1f8 100644
+index 69f45d0b46f9..fe2f26b1f8de 100644
 --- a/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
 +++ b/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
 @@ -967,6 +967,7 @@ static int iris_hfi_gen2_handle_session_response(struct iris_core *core,
@@ -69,7 +69,7 @@ index 69f45d0b46..fe2f26b1f8 100644
  	return ret;
  }
 diff --git a/drivers/media/platform/qcom/iris/iris_instance.h b/drivers/media/platform/qcom/iris/iris_instance.h
-index a770331d16..dde5d0b8a8 100644
+index a770331d1675..dde5d0b8a83b 100644
 --- a/drivers/media/platform/qcom/iris/iris_instance.h
 +++ b/drivers/media/platform/qcom/iris/iris_instance.h
 @@ -6,6 +6,8 @@
@@ -98,7 +98,7 @@ index a770331d16..dde5d0b8a8 100644
  	u32				session_id;
  	const struct iris_hfi_session_ops	*hfi_session_ops;
 diff --git a/drivers/media/platform/qcom/iris/iris_utils.c b/drivers/media/platform/qcom/iris/iris_utils.c
-index ba5c8dc128..1096cc4b01 100644
+index ba5c8dc1280c..1096cc4b01c3 100644
 --- a/drivers/media/platform/qcom/iris/iris_utils.c
 +++ b/drivers/media/platform/qcom/iris/iris_utils.c
 @@ -92,6 +92,12 @@ struct iris_inst *iris_get_instance(struct iris_core *core, u32 session_id)
@@ -115,7 +115,7 @@ index ba5c8dc128..1096cc4b01 100644
  			return inst;
  		}
 diff --git a/drivers/media/platform/qcom/iris/iris_utils.h b/drivers/media/platform/qcom/iris/iris_utils.h
-index 228a5f9638..be23acc0e8 100644
+index 228a5f963812..be23acc0e848 100644
 --- a/drivers/media/platform/qcom/iris/iris_utils.h
 +++ b/drivers/media/platform/qcom/iris/iris_utils.h
 @@ -48,6 +48,7 @@ bool iris_split_mode_enabled(struct iris_inst *inst);
@@ -127,7 +127,7 @@ index 228a5f9638..be23acc0e8 100644
  			      enum vb2_buffer_state state);
  int iris_wait_for_session_response(struct iris_inst *inst, bool is_flush);
 diff --git a/drivers/media/platform/qcom/iris/iris_vidc.c b/drivers/media/platform/qcom/iris/iris_vidc.c
-index 9a73e79f76..4d9be88f25 100644
+index 9a73e79f76dc..4d9be88f2572 100644
 --- a/drivers/media/platform/qcom/iris/iris_vidc.c
 +++ b/drivers/media/platform/qcom/iris/iris_vidc.c
 @@ -40,6 +40,22 @@ static void iris_v4l2_fh_deinit(struct iris_inst *inst, struct file *filp)

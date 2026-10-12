@@ -1,4 +1,4 @@
-From d3900f500962a7129ba59b9d7b2ad473eb31d0d0 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jishnu Prakash <jishnu.prakash@oss.qualcomm.com>
 Date: Fri, 31 Jul 2026 23:36:14 +0530
 Subject: [PATCH] dt-bindings: iio: adc: Add support for QCOM PMIC5 Gen4 ADC
@@ -15,7 +15,7 @@ Signed-off-by: Jishnu Prakash <jishnu.prakash@oss.qualcomm.com>
  1 file changed, 46 insertions(+), 1 deletion(-)
 
 diff --git a/Documentation/devicetree/bindings/iio/adc/qcom,spmi-adc5-gen3.yaml b/Documentation/devicetree/bindings/iio/adc/qcom,spmi-adc5-gen3.yaml
-index 149f4af8f4..e79ddc2acc 100644
+index 149f4af8f4b8..e79ddc2acca0 100644
 --- a/Documentation/devicetree/bindings/iio/adc/qcom,spmi-adc5-gen3.yaml
 +++ b/Documentation/devicetree/bindings/iio/adc/qcom,spmi-adc5-gen3.yaml
 @@ -21,9 +21,14 @@ description: |

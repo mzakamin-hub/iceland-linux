@@ -1,4 +1,4 @@
-From a5b29ebacfef2ba87eb6febfa257e8727a73d4d5 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Joonhoe Kim <26rote@gmail.com>
 Date: Fri, 2 Oct 2026 00:03:41 +0000
 Subject: [PATCH] media: qcom: camss: hold the bandwidth vote while TITAN_TOP
@@ -44,7 +44,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  2 files changed, 53 insertions(+), 19 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
-index 22d8c95c34..b2704af640 100644
+index 22d8c95c34af..b2704af64049 100644
 --- a/drivers/media/platform/qcom/camss/camss.c
 +++ b/drivers/media/platform/qcom/camss/camss.c
 @@ -5620,6 +5620,44 @@ static const struct media_device_ops camss_media_ops = {
@@ -155,7 +155,7 @@ index 22d8c95c34..b2704af640 100644
  
  static const struct dev_pm_ops camss_pm_ops = {
 diff --git a/drivers/media/platform/qcom/camss/camss.h b/drivers/media/platform/qcom/camss/camss.h
-index 60c59ad4eb..9d9f23b3ba 100644
+index 60c59ad4eb61..9d9f23b3ba2f 100644
 --- a/drivers/media/platform/qcom/camss/camss.h
 +++ b/drivers/media/platform/qcom/camss/camss.h
 @@ -137,6 +137,8 @@ struct camss {

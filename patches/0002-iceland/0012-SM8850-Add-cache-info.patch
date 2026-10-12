@@ -1,4 +1,4 @@
-From 33f856d65d637ee9772036c462db7907dc54c4ca Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: map220v <map220v300@gmail.com>
 Date: Fri, 19 Jun 2026 17:58:04 +0000
 Subject: [PATCH] SM8850: Add cache info
@@ -9,7 +9,7 @@ Subject: [PATCH] SM8850: Add cache info
  1 file changed, 54 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 1c27220c07..f682fa1857 100644
+index 1c27220c07bb..f682fa185776 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -46,6 +46,12 @@ cpu0: cpu@0 {

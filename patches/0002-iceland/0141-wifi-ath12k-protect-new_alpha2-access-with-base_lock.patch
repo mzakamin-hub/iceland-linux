@@ -1,4 +1,4 @@
-From a3211fdc083bba8ef583453bae38899799e6eb2e Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Baochen Qiang <baochen.qiang@oss.qualcomm.com>
 Date: Wed, 29 Jul 2026 15:18:13 +0800
 Subject: [PATCH] wifi: ath12k: protect new_alpha2 access with base_lock
@@ -26,7 +26,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 9 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/mac.c b/drivers/net/wireless/ath/ath12k/mac.c
-index 43705943a3..eeae2a49ca 100644
+index 43705943a336..eeae2a49ca82 100644
 --- a/drivers/net/wireless/ath/ath12k/mac.c
 +++ b/drivers/net/wireless/ath/ath12k/mac.c
 @@ -15069,11 +15069,17 @@ static int ath12k_mac_hw_register(struct ath12k_hw *ah)
