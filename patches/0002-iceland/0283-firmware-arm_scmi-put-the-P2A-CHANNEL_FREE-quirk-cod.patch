@@ -1,0 +1,45 @@
+From 36a85acf4ae63cc57f9dcc2816fbddeb2f54c6ba Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 10 Oct 2026 18:23:42 +0300
+Subject: [PATCH] firmware: arm_scmi: put the P2A CHANNEL_FREE quirk code in a
+ QUIRK_ macro
+
+The quirk of the previous commit passed its code block straight to
+SCMI_QUIRK(), so the statement expression's '({' and '})' came from
+different macro expansions and clang warned twice
+(-Wcompound-token-split-by-macro, also without W=1). Define the block as
+QUIRK_P2A_NO_CHANNEL_FREE_ACK, the way the existing quirks do
+(QUIRK_PERF_FC_FORCE, QUIRK_OUT_OF_SPEC_TRIPLET). No functional change.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/firmware/arm_scmi/driver.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/firmware/arm_scmi/driver.c b/drivers/firmware/arm_scmi/driver.c
+index b155571edc..434a997c8c 100644
+--- a/drivers/firmware/arm_scmi/driver.c
++++ b/drivers/firmware/arm_scmi/driver.c
+@@ -1064,6 +1064,9 @@ static inline void scmi_xfer_command_release(struct scmi_info *info,
+ 	__scmi_xfer_put(&info->tx_minfo, xfer);
+ }
+ 
++/* Platform does not consume the P2A CHANNEL_FREE ack: skip the write */
++#define QUIRK_P2A_NO_CHANNEL_FREE_ACK						({										return;								})
++
+ static inline void scmi_clear_channel(struct scmi_info *info,
+ 				      struct scmi_chan_info *cinfo)
+ {
+@@ -1072,8 +1075,7 @@ static inline void scmi_clear_channel(struct scmi_info *info,
+ 		return;
+ 	}
+ 
+-	/* Platform does not consume the P2A CHANNEL_FREE ack; skip the write */
+-	SCMI_QUIRK(p2a_no_channel_free_ack, { return; });
++	SCMI_QUIRK(p2a_no_channel_free_ack, QUIRK_P2A_NO_CHANNEL_FREE_ACK);
+ 
+ 	if (info->desc->ops->clear_channel)
+ 		info->desc->ops->clear_channel(cinfo);
+-- 
+2.43.0
+

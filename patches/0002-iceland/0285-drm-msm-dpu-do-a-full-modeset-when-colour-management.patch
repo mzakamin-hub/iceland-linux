@@ -1,0 +1,64 @@
+From f15df25b7b164399fc6b6db5359bb9cb2e44b1c6 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 10 Oct 2026 18:52:25 +0300
+Subject: [PATCH] drm/msm/dpu: do a full modeset when colour management changes
+ the DSPP need
+
+A colour-management change that adds or removes the CTM or the gamma
+LUT (GNOME Night Light switching on or off, a colour profile being
+loaded or dropped) changes the number of DSPP blocks the CRTC needs.
+The DSPPs are assigned together with the mixers, and the change only
+reaches the hardware cleanly through a full modeset.
+
+Set mode_changed in dpu_crtc_check_mode_changed() when the DSPP need
+changes. A change of the CTM / LUT values alone (the Night Light ramp)
+keeps the fast colour-only path, so the panel is not re-enabled for
+every step.
+
+Based on tb323fu-linux 0079 (Joonhoe Kim, "drm/msm/dpu: keep the full
+modeset when colour management changed"), which keeps mode_changed set
+in that project's in-place VFP path (their 0065, not carried here); the
+same intent is moved to the place where this tree decides on a modeset.
+
+Link: https://github.com/joonhoekim/tb323fu-linux (kernel/patches/0079)
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
+index 0e4f2fd0a8..082c8c7dfc 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
+@@ -1509,6 +1509,11 @@ static int dpu_crtc_assign_resources(struct drm_crtc *crtc,
+ 	return 0;
+ }
+ 
++static bool dpu_crtc_needs_dspp(const struct drm_crtc_state *state)
++{
++	return state->ctm || state->gamma_lut;
++}
++
+ /**
+  * dpu_crtc_check_mode_changed: check if full modeset is required
+  * @old_crtc_state:	Previous CRTC state
+@@ -1536,6 +1541,16 @@ int dpu_crtc_check_mode_changed(struct drm_crtc_state *old_crtc_state,
+ 	    (!clone_mode_requested && clone_mode_enabled))
+ 		new_crtc_state->mode_changed = true;
+ 
++	/*
++	 * A colour-management change that adds or drops the CTM / gamma LUT
++	 * changes the number of DSPPs the CRTC needs; they are (re)assigned
++	 * with the mixers, so do a full modeset in that case. A change of the
++	 * values alone (e.g. a Night Light ramp) keeps the fast path.
++	 */
++	if (new_crtc_state->color_mgmt_changed &&
++	    dpu_crtc_needs_dspp(old_crtc_state) != dpu_crtc_needs_dspp(new_crtc_state))
++		new_crtc_state->mode_changed = true;
++
+ 	return 0;
+ }
+ 
+-- 
+2.43.0
+

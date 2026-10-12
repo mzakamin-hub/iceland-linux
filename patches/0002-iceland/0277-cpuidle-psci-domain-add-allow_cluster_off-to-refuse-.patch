@@ -1,0 +1,103 @@
+From b788c8834294c2d2ee9e23852cf3b367a8e3e99a Mon Sep 17 00:00:00 2001
+From: Joonhoe Kim <26rote@gmail.com>
+Date: Sat, 3 Oct 2026 10:24:37 +0000
+Subject: [PATCH] cpuidle: psci-domain: add allow_cluster_off to refuse cluster
+ idle states
+
+On the Lenovo TB323FU (SM8850) the tablet still resets now and then
+while it sits idle, with the system domain state already kept for
+system suspend only: CPUs of cluster0 enter PSCI CPU_SUSPEND and never
+return, and the losses line up with cluster0 being turned off and on by
+the last CPU of the cluster going idle.
+
+With a test change that made psci_pd_power_off() return -EBUSY for the
+cluster domains, the tablet ran 3 hours idle without a crash (562364
+refused cluster0 power-offs), against two crashes in 78 minutes with the
+cluster states allowed. At that rate of about 1.5 crashes per hour, 3
+crash-free hours would happen by chance about 1% of the time. Power with
+the display off, cluster states allowed / refused / allowed: 658 / 659 /
+621 mW, within the measurement noise of about 20 mW.
+
+Add a module parameter, allow_cluster_off, default Y (the current
+behaviour). When it is N, psci_pd_power_off() refuses the idle states of
+cluster domains in runtime idle. A cluster domain is one whose
+subdomains have no subdomains of their own, i.e. the parent of CPU
+domains; the CPU domains and the system domain above the clusters are
+not affected. s2idle still uses the cluster states, because the system
+domain state (CX and DDR collapse) can only be entered once the clusters
+are off. The parameter can be changed at run time through
+/sys/module/cpuidle_psci_domain/parameters/allow_cluster_off.
+
+The baldur config fragment sets cpuidle_psci_domain.allow_cluster_off=0
+on the built-in command line.
+
+This is a workaround: it avoids the symptom by not entering the cluster
+states in runtime idle, the cause is not fixed. It is not known whether
+the cause is a race around cluster off/on in the OSI idle path or a
+defect in the firmware (PSCI implementation or hypervisor). s2idle still
+enters the cluster states and is not covered by the measurement above.
+
+Signed-off-by: Joonhoe Kim <26rote@gmail.com>
+
+[mzak: driver part only, ported by hand (include context); the baldur.fragment
+ hunk is not taken: iceland keeps the default allow_cluster_off=Y, i.e. the
+ behaviour is unchanged unless the parameter is cleared at run time]
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/cpuidle/cpuidle-psci-domain.c | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/drivers/cpuidle/cpuidle-psci-domain.c b/drivers/cpuidle/cpuidle-psci-domain.c
+index 5722365b94..da03693093 100644
+--- a/drivers/cpuidle/cpuidle-psci-domain.c
++++ b/drivers/cpuidle/cpuidle-psci-domain.c
+@@ -12,12 +12,14 @@
+ #include <linux/cpu.h>
+ #include <linux/device.h>
+ #include <linux/kernel.h>
++#include <linux/moduleparam.h>
+ #include <linux/platform_device.h>
+ #include <linux/pm_domain.h>
+ #include <linux/pm_runtime.h>
+ #include <linux/psci.h>
+ #include <linux/slab.h>
+ #include <linux/string.h>
++#include <linux/suspend.h>
+ 
+ #include "cpuidle-psci.h"
+ #include "dt_idle_genpd.h"
+@@ -29,11 +31,30 @@ struct psci_pd_provider {
+ 
+ static LIST_HEAD(psci_pd_providers);
+ 
++static bool allow_cluster_off = true;
++module_param(allow_cluster_off, bool, 0644);
++MODULE_PARM_DESC(allow_cluster_off,
++		 "Use the idle states of cluster domains (parents of CPU domains) in runtime idle (default: Y)");
++
++static bool psci_pd_is_cluster(struct generic_pm_domain *pd)
++{
++	struct gpd_link *link;
++
++	link = list_first_entry_or_null(&pd->parent_links, struct gpd_link,
++					parent_node);
++	return link && list_empty(&link->child->parent_links);
++}
++
+ static int psci_pd_power_off(struct generic_pm_domain *pd)
+ {
+ 	struct genpd_power_state *state = &pd->states[pd->state_idx];
+ 	u32 *pd_state;
+ 
++	/* s2idle needs the cluster states to reach the system domain state. */
++	if (!READ_ONCE(allow_cluster_off) && !idle_should_enter_s2idle() &&
++	    psci_pd_is_cluster(pd))
++		return -EBUSY;
++
+ 	if (!state->data)
+ 		return 0;
+ 
+-- 
+2.43.0
+

@@ -1,0 +1,67 @@
+From 52e3a6f50289a26b9127e6958ec547db60443f73 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 10 Oct 2026 17:42:36 +0300
+Subject: [PATCH] cpuidle: psci-domain: add allow_system_off to keep the system
+ domain state for s2idle
+
+A run-time form of tb323fu-linux 0106 (Joonhoe Kim, "cpuidle:
+psci-domain: baldur: use the system domain state only in system
+suspend"). On the Lenovo TB323FU (same SM8850 SoC) a display on/off and
+s2idle loop reset the SoC about once in 25 cycles with the system domain
+state (CX / DDR collapse) used in runtime idle; keeping that state for
+system suspend only ran 60 cycles clean. 0106 sets
+GENPD_FLAG_RPM_ALWAYS_ON on the board's system domain at init, which
+cannot be changed later.
+
+Add a module parameter, allow_system_off, default Y (the current
+behaviour). When it is N, psci_pd_power_off() refuses the idle state of
+the top domain (one with subdomains and no parent) in runtime idle, the
+same way allow_cluster_off refuses the cluster states; s2idle still
+enters it. It can be changed at run time through
+/sys/module/cpuidle_psci_domain/parameters/allow_system_off, so a test
+can compare both settings in one boot. The default is unchanged on
+iceland: the Pad 4 has not shown the reset; this is a ready switch.
+
+Link: https://github.com/joonhoekim/tb323fu-linux (kernel/patches/0106)
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/cpuidle/cpuidle-psci-domain.c | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/drivers/cpuidle/cpuidle-psci-domain.c b/drivers/cpuidle/cpuidle-psci-domain.c
+index da03693093..8830453a70 100644
+--- a/drivers/cpuidle/cpuidle-psci-domain.c
++++ b/drivers/cpuidle/cpuidle-psci-domain.c
+@@ -45,6 +45,17 @@ static bool psci_pd_is_cluster(struct generic_pm_domain *pd)
+ 	return link && list_empty(&link->child->parent_links);
+ }
+ 
++static bool allow_system_off = true;
++module_param(allow_system_off, bool, 0644);
++MODULE_PARM_DESC(allow_system_off,
++		 "Use the idle state of the top (system) domain in runtime idle (default: Y)");
++
++/* The top domain: it has subdomains and no parent of its own. */
++static bool psci_pd_is_system(struct generic_pm_domain *pd)
++{
++	return !list_empty(&pd->parent_links) && list_empty(&pd->child_links);
++}
++
+ static int psci_pd_power_off(struct generic_pm_domain *pd)
+ {
+ 	struct genpd_power_state *state = &pd->states[pd->state_idx];
+@@ -55,6 +66,11 @@ static int psci_pd_power_off(struct generic_pm_domain *pd)
+ 	    psci_pd_is_cluster(pd))
+ 		return -EBUSY;
+ 
++	/* The system domain state stays available to s2idle. */
++	if (!READ_ONCE(allow_system_off) && !idle_should_enter_s2idle() &&
++	    psci_pd_is_system(pd))
++		return -EBUSY;
++
+ 	if (!state->data)
+ 		return 0;
+ 
+-- 
+2.43.0
+

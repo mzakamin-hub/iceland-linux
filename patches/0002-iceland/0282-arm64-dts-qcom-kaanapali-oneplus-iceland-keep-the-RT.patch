@@ -1,0 +1,61 @@
+From e42e3d8b8da711d8ab06062ad6b1ac2172ac7e69 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 10 Oct 2026 17:57:35 +0300
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: keep the RTC
+ offset in SDAM2
+
+The PMIC RTC counter is owned by the secure world and cannot be written
+from Linux, so the clock came up at 1970 after every boot without a
+network. rtc-pm8xxx can keep a UTC offset in an nvmem cell instead
+(hwclock -w and the kernel's 11-minute mode store it, every boot adds
+it to the counter).
+
+Use 8 bytes at SDAM2 0x7c-0x83 (the s64 offset of the previous commit).
+The stock iceland DT declares SDAM2 cells only at 0x48 (restart reason,
+also written by our U-Boot's reboot-bootloader), 0x50, 0x59, 0x76-0x7b,
+0x9a, 0x9c, 0x9f and 0xa2, and no consumer of the whole SDAM2 device;
+0x7c-0x83 holds no cell and never overlaps the restart reason byte.
+
+From SuperTurtleDev iceland-mainline-kernel 7a8c303db897 (Yibo Wang,
+"RTC offset cell in SDAM2 for time persistence", verified to persist
+across reboots on their Pad 4) and the DT hunk of 1d9b86fe5c8d.
+
+Link: https://github.com/SuperTurtleDev/iceland-mainline-kernel
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ .../dts/qcom/kaanapali-oneplus-iceland.dts    | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 9b7dc78dfd..a47dbae0c6 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1505,6 +1505,25 @@ &mdss_dp0_out {
+ 	link-frequencies = /bits/ 64 <1620000000 2700000000 5400000000 8100000000>;
+ };
+ 
++/*
++ * The PMIC RTC counter belongs to the secure world (writes are refused),
++ * so rtc-pm8xxx keeps a UTC offset in an nvmem cell instead: 8 bytes at
++ * SDAM2 0x7c-0x83. The stock DT declares no cell there (it uses 0x48
++ * restart reason - also written by U-Boot's reboot-bootloader -, 0x50,
++ * 0x59, 0x76-0x7b, 0x9a, 0x9c, 0x9f, 0xa2), so the offset never shares a
++ * byte with the reboot reason.
++ */
++&pmk8850_sdam_2 {
++	rtc_offset: rtc-offset@7c {
++		reg = <0x7c 0x8>;
++	};
++};
++
++&pmk8850_rtc {
++	nvmem-cells = <&rtc_offset>;
++	nvmem-cell-names = "offset";
++};
++
+ &mdss_dsi0 {
+ 	vdda-supply = <&vreg_l1d_1p2>;
+ 	qcom,dual-dsi-mode;
+-- 
+2.43.0
+
