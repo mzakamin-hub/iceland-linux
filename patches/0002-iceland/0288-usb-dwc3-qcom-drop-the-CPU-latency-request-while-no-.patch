@@ -1,0 +1,193 @@
+From e69f6f280d70ecb491091d3ea0e0eb42c2289524 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sun, 11 Oct 2026 00:01:46 +0300
+Subject: [PATCH] usb: dwc3: qcom: drop the CPU latency request while no VBUS
+ is present
+
+80aa787a7a drops the 2 us CPU latency request when the role switch
+reports "none". On the OnePlus Pad 4 that never happens: no usb_role
+class device is listed at all (/sys/class/usb_role is empty in RAM kit
+136 and in the usb-1 probe of 30 Sep), so the UCSI connector reaches no
+role switch, the pre_set_role hook is never called, qos_role stays at
+the probe value and the request is held for the whole uptime (kit 136:
+cable out, /dev/cpu_dma_latency 2 us, genpd cluster0/1 + system usage
+unchanged over the soak).
+
+Cable presence IS reported on this board through the charger firmware:
+qcom-battmgr-usb (a USB-type power supply) goes ONLINE 0 / 1 with the
+cable and wakes the system on both edges (kit 136 unplug / plug
+windows). Follow it: a power supply notifier re-reads ONLINE of every
+USB-type supply (on the freezable workqueue) and the request is held
+while the controller is active, has a role and either VBUS is present
+or the controller is in host mode. A supply that cannot answer, or no
+USB supply at all (before the charger firmware is up), counts as VBUS
+present, so only a clear "offline" drops the request. With a data cable
+attached (the case of the original hang) the request is held as before.
+
+Each attach / detach edge logs one line (held / dropped, VBUS, role).
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/usb/dwc3/dwc3-qcom.c | 92 ++++++++++++++++++++++++++++++++----
+ 1 file changed, 84 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/usb/dwc3/dwc3-qcom.c b/drivers/usb/dwc3/dwc3-qcom.c
+index b0df29d2aa..2fe9c66961 100644
+--- a/drivers/usb/dwc3/dwc3-qcom.c
++++ b/drivers/usb/dwc3/dwc3-qcom.c
+@@ -16,10 +16,12 @@
+ #include <linux/phy/phy.h>
+ #include <linux/usb/of.h>
+ #include <linux/pm_qos.h>
++#include <linux/power_supply.h>
+ #include <linux/reset.h>
+ #include <linux/iopoll.h>
+ #include <linux/usb/hcd.h>
+ #include <linux/usb.h>
++#include <linux/workqueue.h>
+ #include "core.h"
+ #include "glue.h"
+ 
+@@ -55,10 +57,11 @@
+  * CPU wakeup latency the controller needs while it is active. Fast inbound
+  * transfers with the CPUs allowed to power collapse hang some SoCs (seen on
+  * SM8850); the downstream dwc3-msm driver holds the same 2 us request while
+- * USB is busy. It is held while the controller is active AND has a role
+- * (a cable or an accessory is attached); with the role switch at "none"
+- * (nothing attached) no transfer can happen and the request is dropped, so
+- * the CPUs may enter cluster and system idle with the cable out.
++ * USB is busy. It is held while the controller is active, has a role and
++ * something is attached: VBUS from a host (a USB power supply reports
++ * online) or the controller in host mode. Boards whose role switch never
++ * reports "none" (no UCSI role link) still drop it when the cable is pulled,
++ * so the CPUs may enter cluster and system idle with the cable out.
+  */
+ #define DWC3_QCOM_PM_QOS_LATENCY_US	2
+ 
+@@ -102,22 +105,83 @@ struct dwc3_qcom {
+ 	struct pm_qos_request	pm_qos_req;
+ 	struct mutex		qos_lock;
+ 	enum usb_role		qos_role;
++	bool			qos_attached;
++	bool			vbus_online;
++	struct notifier_block	psy_nb;
++	struct work_struct	vbus_work;
+ };
+ 
+ #define to_dwc3_qcom(d) container_of((d), struct dwc3_qcom, dwc)
+ 
+-/* hold the CPU latency request only while active with a USB role */
++/*
++ * Hold the CPU latency request only while active, with a USB role and with
++ * something attached (VBUS from a host, or host mode).
++ */
+ static void dwc3_qcom_update_qos(struct dwc3_qcom *qcom)
+ {
+-	bool hold;
++	bool attached, hold;
+ 
+ 	mutex_lock(&qcom->qos_lock);
+-	hold = !qcom->is_suspended && qcom->qos_role != USB_ROLE_NONE;
++	attached = qcom->qos_role != USB_ROLE_NONE &&
++		   (READ_ONCE(qcom->vbus_online) ||
++		    qcom->dwc.current_dr_role == DWC3_GCTL_PRTCAP_HOST);
++	hold = !qcom->is_suspended && attached;
+ 	cpu_latency_qos_update_request(&qcom->pm_qos_req,
+ 				       hold ? DWC3_QCOM_PM_QOS_LATENCY_US : PM_QOS_DEFAULT_VALUE);
++	if (attached != qcom->qos_attached) {
++		qcom->qos_attached = attached;
++		dev_info(qcom->dev, "%s: CPU latency request %s (VBUS %d, role %d)\n",
++			 attached ? "attached" : "detached", hold ? "held" : "dropped",
++			 READ_ONCE(qcom->vbus_online), qcom->qos_role);
++	}
+ 	mutex_unlock(&qcom->qos_lock);
+ }
+ 
++/*
++ * VBUS from a host: any USB-type power supply online. A supply that cannot
++ * answer counts as online, and no USB supply at all (before the charger
++ * firmware is up) keeps the request: only a clear "offline" drops it.
++ */
++static int dwc3_qcom_psy_online(struct power_supply *psy, void *data)
++{
++	union power_supply_propval val;
++	int *state = data;
++
++	if (psy->desc->type != POWER_SUPPLY_TYPE_USB)
++		return 0;
++
++	if (power_supply_get_property(psy, POWER_SUPPLY_PROP_ONLINE, &val) ||
++	    val.intval > 0)
++		*state = 1;
++	else if (*state < 0)
++		*state = 0;
++
++	return 0;
++}
++
++static void dwc3_qcom_vbus_work(struct work_struct *work)
++{
++	struct dwc3_qcom *qcom = container_of(work, struct dwc3_qcom, vbus_work);
++	int state = -1;
++
++	power_supply_for_each_psy(&state, dwc3_qcom_psy_online);
++	WRITE_ONCE(qcom->vbus_online, state != 0);
++	dwc3_qcom_update_qos(qcom);
++}
++
++static int dwc3_qcom_psy_notifier(struct notifier_block *nb,
++				  unsigned long event, void *ptr)
++{
++	struct dwc3_qcom *qcom = container_of(nb, struct dwc3_qcom, psy_nb);
++	struct power_supply *psy = ptr;
++
++	if (event == PSY_EVENT_PROP_CHANGED &&
++	    psy->desc->type == POWER_SUPPLY_TYPE_USB)
++		queue_work(system_freezable_wq, &qcom->vbus_work);
++
++	return NOTIFY_OK;
++}
++
+ static inline void dwc3_qcom_setbits(void __iomem *base, u32 offset, u32 val)
+ {
+ 	u32 reg;
+@@ -772,8 +836,12 @@ static int dwc3_qcom_probe(struct platform_device *pdev)
+ 	probe_data.ignore_clocks_and_resets = true;
+ 	probe_data.properties = DWC3_DEFAULT_PROPERTIES;
+ 	mutex_init(&qcom->qos_lock);
+-	/* a role until the role switch says otherwise: the request is held from probe */
++	/* a role and VBUS until told otherwise: the request is held from probe */
+ 	qcom->qos_role = qcom->current_role;
++	qcom->vbus_online = true;
++	qcom->qos_attached = true;
++	INIT_WORK(&qcom->vbus_work, dwc3_qcom_vbus_work);
++	qcom->psy_nb.notifier_call = dwc3_qcom_psy_notifier;
+ 	cpu_latency_qos_add_request(&qcom->pm_qos_req, DWC3_QCOM_PM_QOS_LATENCY_US);
+ 	ret = dwc3_core_probe(&probe_data);
+ 	if (ret)  {
+@@ -790,6 +858,11 @@ static int dwc3_qcom_probe(struct platform_device *pdev)
+ 
+ 	qcom->is_suspended = false;
+ 
++	if (power_supply_reg_notifier(&qcom->psy_nb))
++		qcom->psy_nb.notifier_call = NULL;
++	else
++		queue_work(system_freezable_wq, &qcom->vbus_work);
++
+ 	return 0;
+ 
+ remove_core:
+@@ -810,6 +883,9 @@ static void dwc3_qcom_remove(struct platform_device *pdev)
+ 	if (pm_runtime_resume_and_get(qcom->dev) < 0)
+ 		return;
+ 
++	if (qcom->psy_nb.notifier_call)
++		power_supply_unreg_notifier(&qcom->psy_nb);
++	cancel_work_sync(&qcom->vbus_work);
+ 	dwc3_core_remove(&qcom->dwc);
+ 	clk_bulk_disable_unprepare(qcom->num_clocks, qcom->clks);
+ 	dwc3_qcom_interconnect_exit(qcom);
+-- 
+2.43.0
+

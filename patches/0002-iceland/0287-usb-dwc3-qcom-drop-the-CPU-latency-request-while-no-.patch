@@ -1,0 +1,115 @@
+From 80aa787a7a9f83837bed6efe381038da942f716e Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 10 Oct 2026 22:34:39 +0300
+Subject: [PATCH] usb: dwc3: qcom: drop the CPU latency request while no USB
+ role is set
+
+The glue holds a 2 us CPU wakeup latency request from probe for as long
+as it is not suspended (eeba9aab67; the busy-only variant 37090ad7bf was
+reverted after a hang during a download). dwc3 forbids runtime PM at
+probe, so the glue never runtime-suspends and the request stays for the
+whole uptime: /dev/cpu_dma_latency reads 2 us with the cable out, the
+cluster and system idle states are never entered (RAM kit 135 idle soak:
+genpd cluster0/1 + system usage unchanged over 575 s with the cable out),
+and the battery drains in idle.
+
+Hold the request only while the controller is active AND the role switch
+reports a role (a cable or an accessory is attached). Unplugging sets the
+role to none through UCSI; then no transfer can happen and the request
+is dropped. With a data cable attached (the case of the original hang)
+the request is held as before; system suspend drops it as before.
+
+(In kit 135 the only process holding /dev/cpu_dma_latency open was
+tuned, but tuned's profiles set no force_latency and dynamic tuning is
+off: its open file carries the default value. The 2 us came from here.)
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/usb/dwc3/dwc3-qcom.c | 29 ++++++++++++++++++++++++++---
+ 1 file changed, 26 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/usb/dwc3/dwc3-qcom.c b/drivers/usb/dwc3/dwc3-qcom.c
+index 3c8d3eef9a..b0df29d2aa 100644
+--- a/drivers/usb/dwc3/dwc3-qcom.c
++++ b/drivers/usb/dwc3/dwc3-qcom.c
+@@ -55,7 +55,10 @@
+  * CPU wakeup latency the controller needs while it is active. Fast inbound
+  * transfers with the CPUs allowed to power collapse hang some SoCs (seen on
+  * SM8850); the downstream dwc3-msm driver holds the same 2 us request while
+- * USB is busy.
++ * USB is busy. It is held while the controller is active AND has a role
++ * (a cable or an accessory is attached); with the role switch at "none"
++ * (nothing attached) no transfer can happen and the request is dropped, so
++ * the CPUs may enter cluster and system idle with the cable out.
+  */
+ #define DWC3_QCOM_PM_QOS_LATENCY_US	2
+ 
+@@ -97,10 +100,24 @@ struct dwc3_qcom {
+ 	enum usb_role		current_role;
+ 
+ 	struct pm_qos_request	pm_qos_req;
++	struct mutex		qos_lock;
++	enum usb_role		qos_role;
+ };
+ 
+ #define to_dwc3_qcom(d) container_of((d), struct dwc3_qcom, dwc)
+ 
++/* hold the CPU latency request only while active with a USB role */
++static void dwc3_qcom_update_qos(struct dwc3_qcom *qcom)
++{
++	bool hold;
++
++	mutex_lock(&qcom->qos_lock);
++	hold = !qcom->is_suspended && qcom->qos_role != USB_ROLE_NONE;
++	cpu_latency_qos_update_request(&qcom->pm_qos_req,
++				       hold ? DWC3_QCOM_PM_QOS_LATENCY_US : PM_QOS_DEFAULT_VALUE);
++	mutex_unlock(&qcom->qos_lock);
++}
++
+ static inline void dwc3_qcom_setbits(void __iomem *base, u32 offset, u32 val)
+ {
+ 	u32 reg;
+@@ -404,8 +421,8 @@ static int dwc3_qcom_suspend(struct dwc3_qcom *qcom, bool wakeup)
+ 		dwc3_qcom_enable_interrupts(qcom);
+ 	}
+ 
+-	cpu_latency_qos_update_request(&qcom->pm_qos_req, PM_QOS_DEFAULT_VALUE);
+ 	qcom->is_suspended = true;
++	dwc3_qcom_update_qos(qcom);
+ 
+ 	return 0;
+ }
+@@ -436,8 +453,8 @@ static int dwc3_qcom_resume(struct dwc3_qcom *qcom, bool wakeup)
+ 				  PWR_EVNT_LPM_IN_L2_MASK | PWR_EVNT_LPM_OUT_L2_MASK);
+ 	}
+ 
+-	cpu_latency_qos_update_request(&qcom->pm_qos_req, DWC3_QCOM_PM_QOS_LATENCY_US);
+ 	qcom->is_suspended = false;
++	dwc3_qcom_update_qos(qcom);
+ 
+ 	return 0;
+ }
+@@ -607,6 +624,9 @@ static void dwc3_qcom_set_role_notifier(struct dwc3 *dwc, enum usb_role next_rol
+ {
+ 	struct dwc3_qcom *qcom = to_dwc3_qcom(dwc);
+ 
++	qcom->qos_role = next_role;
++	dwc3_qcom_update_qos(qcom);
++
+ 	if (qcom->current_role == next_role)
+ 		return;
+ 
+@@ -751,6 +771,9 @@ static int dwc3_qcom_probe(struct platform_device *pdev)
+ 	probe_data.res = &res;
+ 	probe_data.ignore_clocks_and_resets = true;
+ 	probe_data.properties = DWC3_DEFAULT_PROPERTIES;
++	mutex_init(&qcom->qos_lock);
++	/* a role until the role switch says otherwise: the request is held from probe */
++	qcom->qos_role = qcom->current_role;
+ 	cpu_latency_qos_add_request(&qcom->pm_qos_req, DWC3_QCOM_PM_QOS_LATENCY_US);
+ 	ret = dwc3_core_probe(&probe_data);
+ 	if (ret)  {
+-- 
+2.43.0
+
