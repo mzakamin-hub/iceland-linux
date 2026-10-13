@@ -1,0 +1,94 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Tue, 13 Oct 2026 15:00:00 +0300
+Subject: [PATCH] media: i2c: dw9719: make sure the lens holds the position
+ after resume
+
+dw9719_resume() ramps the lens to the focus control's value in steps of
+DW9719_CTRL_STEPS, 1 ms apart. On the OnePlus Pad 4's DW9800K, in its
+smart actuator control (SAC) mode, the position register then read 434
+(0x01b2) while the control and the last write were 450: the chip had
+not taken the final position, which came while it still moved the lens
+to the step before. The lens stays one step short until user space
+writes the control again.
+
+Read the position register back after the ramp and, while it differs,
+write the position again 2 ms later, up to 15 times. A chip that takes
+the last write costs one register read. A position that is never taken
+only logs a warning: the lens is merely out of focus.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Assisted-by: LLM
+---
+ drivers/media/i2c/dw9719.c | 41 ++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 41 insertions(+)
+
+diff --git a/drivers/media/i2c/dw9719.c b/drivers/media/i2c/dw9719.c
+index b4bf9178370e..7be9b8524f48 100644
+--- a/drivers/media/i2c/dw9719.c
++++ b/drivers/media/i2c/dw9719.c
+@@ -22,6 +22,8 @@
+ #define DW9719_MAX_FOCUS_POS	1023
+ #define DW9719_CTRL_STEPS	16
+ #define DW9719_CTRL_DELAY_US	1000
++#define DW9719_SETTLE_TRIES	15
++#define DW9719_SETTLE_US	2000
+ 
+ #define DW9718S_PD			CCI_REG8(0)
+ 
+@@ -258,6 +260,41 @@ static int dw9719_t_focus_abs(struct dw9719_device *dw9719, s32 value)
+ 	return ret;
+ }
+ 
++/*
++ * A position written while the actuator still moves the lens to the one
++ * before may not be taken: on a DW9800K in its smart actuator control (SAC)
++ * mode the position register read one step short of the control's value
++ * after the resume ramp, whose writes are 1 ms apart. Read the register
++ * back and write the position again until the chip holds it.
++ */
++static int dw9719_settle(struct dw9719_device *dw9719, int pos)
++{
++	u32 reg = dw9719->model == DW9718S ? DW9718S_VCM_CURRENT
++					   : DW9719_VCM_CURRENT;
++	u64 val;
++	int ret;
++	int i;
++
++	for (i = 0; ; i++) {
++		ret = cci_read(dw9719->regmap, reg, &val, NULL);
++		if (ret)
++			return ret;
++		if (val == (u64)pos)
++			return 0;
++		if (i == DW9719_SETTLE_TRIES)
++			break;
++
++		fsleep(DW9719_SETTLE_US);
++		ret = dw9719_t_focus_abs(dw9719, pos);
++		if (ret)
++			return ret;
++	}
++
++	dev_warn(dw9719->dev, "lens position %d not taken: the chip holds %llu\n",
++		 pos, val);
++	return 0;
++}
++
+ static int dw9719_set_ctrl(struct v4l2_ctrl *ctrl)
+ {
+ 	struct dw9719_device *dw9719 = container_of(ctrl->handler,
+@@ -325,6 +362,10 @@ static int dw9719_resume(struct device *dev)
+ 		usleep_range(DW9719_CTRL_DELAY_US, DW9719_CTRL_DELAY_US + 10);
+ 	}
+ 
++	ret = dw9719_settle(dw9719, current_focus);
++	if (ret)
++		goto err_power_down;
++
+ 	return 0;
+ 
+ err_power_down:
+-- 
+2.43.0
+
