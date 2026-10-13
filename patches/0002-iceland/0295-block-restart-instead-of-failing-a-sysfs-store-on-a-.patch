@@ -1,0 +1,160 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Tue, 13 Oct 2026 10:21:28 +0300
+Subject: [PATCH] block: restart instead of failing a sysfs store on a busy tag
+ set lock
+
+elv_iosched_store() and queue_requests_store() take the tag set's
+update_nr_hwq_lock with down_write_trylock() and fail with -EBUSY when it
+is not free. The trylock avoids a deadlock with del_gendisk(), which
+holds the lock while kobject_del() waits for the active kernfs
+references of the queue attributes. But the lock belongs to the tag set,
+not to the disk: it is also held while any other disk of the same tag
+set changes its scheduler or nr_requests, or while one is added. All
+LUNs of one SCSI host share one tag set, so when udev sets the
+scheduler of every disk at boot, each disk in its own worker, the
+writes race and some of them fail at random:
+
+  Failed to write "bfq" to sysfs attribute "queue/scheduler":
+  Device or resource busy
+
+On a UFS device with six LUNs four or five of them were left without
+the configured scheduler at every boot.
+
+Handle this as lock_device_hotplug_sysfs() handles the same problem for
+the device hotplug lock: when the trylock fails, sleep briefly and
+restart the system call. The restart drops the active reference, so a
+concurrent del_gendisk() still completes (and the restarted write then
+fails as the attribute is gone), while a write that only raced with a
+sibling disk now waits for it and succeeds.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ block/blk-sysfs.c | 41 ++++++++++++++++++++++++++++++++++++-----
+ block/blk.h       |  1 +
+ block/elevator.c  | 12 +++++++-----
+ 3 files changed, 44 insertions(+), 10 deletions(-)
+
+diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
+index 520972676ab4..a317fa2e3045 100644
+--- a/block/blk-sysfs.c
++++ b/block/blk-sysfs.c
+@@ -10,6 +10,8 @@
+ #include <linux/backing-dev.h>
+ #include <linux/blktrace_api.h>
+ #include <linux/debugfs.h>
++#include <linux/delay.h>
++#include <linux/sched/signal.h>
+ 
+ #include "blk.h"
+ #include "blk-mq.h"
+@@ -62,6 +64,34 @@ static ssize_t queue_requests_show(struct gendisk *disk, char *page)
+ 	return ret;
+ }
+ 
++/**
++ * blk_sysfs_lock_update_nr_hwq - write-lock a tag set from a queue sysfs store
++ * @set: tag set of the queue whose attribute is being written
++ *
++ * A sysfs ->store() runs with an active reference on its kernfs node, and
++ * del_gendisk() waits for those references (kobject_del()) while it holds
++ * @set->update_nr_hwq_lock, so a store must not sleep on that lock.  A plain
++ * trylock however fails whenever any other disk of the same tag set holds the
++ * lock, e.g. when udev sets the I/O scheduler of all LUNs of one SCSI host at
++ * the same time, and the write then fails with -EBUSY for no real reason.
++ *
++ * Do what lock_device_hotplug_sysfs() does for the same problem: if the lock
++ * is not free, sleep briefly and restart the system call.  The restart drops
++ * the active reference, so a concurrent del_gendisk() can still finish, and
++ * the restarted write then fails because the attribute is gone.
++ *
++ * Return: 0 with the lock held for writing, or -ERESTARTNOINTR.
++ */
++int blk_sysfs_lock_update_nr_hwq(struct blk_mq_tag_set *set)
++{
++	if (down_write_trylock(&set->update_nr_hwq_lock))
++		return 0;
++
++	/* Avoid busy looping: 5 ms of sleep should do. */
++	fsleep(5 * USEC_PER_MSEC);
++	return restart_syscall();
++}
++
+ static ssize_t
+ queue_requests_store(struct gendisk *disk, const char *page, size_t count)
+ {
+@@ -70,7 +100,7 @@ queue_requests_store(struct gendisk *disk, const char *page, size_t count)
+ 	struct elevator_tags *et = NULL;
+ 	unsigned int memflags;
+ 	unsigned long nr;
+-	int ret;
++	int ret, err;
+ 
+ 	ret = queue_var_store(&nr, page, count);
+ 	if (ret < 0)
+@@ -80,13 +110,14 @@ queue_requests_store(struct gendisk *disk, const char *page, size_t count)
+ 	 * Serialize updating nr_requests with concurrent queue_requests_store()
+ 	 * and switching elevator.
+ 	 *
+-	 * Use trylock to avoid circular lock dependency with kernfs active
+-	 * reference during concurrent disk deletion:
++	 * Don't sleep on the lock, to avoid a circular lock dependency with the
++	 * kernfs active reference during concurrent disk deletion:
+ 	 *   update_nr_hwq_lock -> kn->active (via del_gendisk -> kobject_del)
+ 	 *   kn->active -> update_nr_hwq_lock (via this sysfs write path)
+ 	 */
+-	if (!down_write_trylock(&set->update_nr_hwq_lock))
+-		return -EBUSY;
++	err = blk_sysfs_lock_update_nr_hwq(set);
++	if (err)
++		return err;
+ 
+ 	if (nr == q->nr_requests)
+ 		goto unlock;
+diff --git a/block/blk.h b/block/blk.h
+index 50abfd932886..075d593007bc 100644
+--- a/block/blk.h
++++ b/block/blk.h
+@@ -362,6 +362,7 @@ void elv_update_nr_hw_queues(struct request_queue *q,
+ 		struct elv_change_ctx *ctx);
+ void elevator_set_default(struct request_queue *q);
+ void elevator_set_none(struct request_queue *q);
++int blk_sysfs_lock_update_nr_hwq(struct blk_mq_tag_set *set);
+ 
+ ssize_t part_size_show(struct device *dev, struct device_attribute *attr,
+ 		char *buf);
+diff --git a/block/elevator.c b/block/elevator.c
+index 2161b6eea680..fbfd3f969c99 100644
+--- a/block/elevator.c
++++ b/block/elevator.c
+@@ -808,20 +808,22 @@ ssize_t elv_iosched_store(struct gendisk *disk, const char *buf,
+ 	ctx.type = elevator_find_get(ctx.name);
+ 
+ 	/*
+-	 * Use trylock to avoid circular lock dependency with kernfs active
+-	 * reference during concurrent disk deletion:
++	 * Don't sleep on update_nr_hwq_lock, to avoid a circular lock
++	 * dependency with the kernfs active reference during concurrent disk
++	 * deletion:
+ 	 *   update_nr_hwq_lock -> kn->active (via del_gendisk -> kobject_del)
+ 	 *   kn->active -> update_nr_hwq_lock (via this sysfs write path)
++	 * blk_sysfs_lock_update_nr_hwq() restarts the write instead of failing
++	 * it while another disk of the same tag set holds the lock.
+ 	 *
+ 	 * Use the writer lock instead of the reader lock of update_nr_hwq_lock
+ 	 * to serialize the two-stage elevator switch steps in
+ 	 * elevator_change(): the core switch step under the elevator lock and
+ 	 * the elevator_change_done() step outside the elevator lock.
+ 	 */
+-	if (!down_write_trylock(&set->update_nr_hwq_lock)) {
+-		ret = -EBUSY;
++	ret = blk_sysfs_lock_update_nr_hwq(set);
++	if (ret)
+ 		goto out;
+-	}
+ 	if (!blk_queue_no_elv_switch(q)) {
+ 		ret = elevator_change(q, &ctx);
+ 		if (!ret)
+-- 
+2.43.0
+

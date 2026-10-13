@@ -1,0 +1,147 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Tue, 13 Oct 2026 10:28:20 +0300
+Subject: [PATCH] media: i2c: dw9719: hold a default lens position while the
+ sensor streams
+
+Camera stacks open the actuator's device node when they enumerate the
+cameras and keep it open for as long as they run: libcamera does so for
+the lifetime of its camera manager, which under PipeWire is the whole
+desktop session. The driver powers the actuator while the node is open,
+so any non-zero position set that way keeps current flowing through the
+coil all day, even while no camera streams. Without a position the lens
+rests at the end of its travel, where a fixed-focus module can be out of
+focus at every distance.
+
+Read the optional dongwoon,default-position property. When present:
+
+- the focus control starts at that position, so the resume ramp moves
+  the lens there and user space can still set any other position;
+- opening the device node no longer powers the actuator: the image
+  sensor that refers to it through lens-focus powers it while it
+  streams (runtime PM), and control writes made in between are applied
+  at the next power-up, as before for a suspended actuator;
+- the suspend ramp starts from the position last written instead of the
+  control's value, so that an actuator that never moved, e.g. after the
+  probe, does not jump to the control's value before ramping down.
+
+Without the property nothing changes.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/media/i2c/dw9719.c | 50 ++++++++++++++++++++++++++++++++++----
+ 1 file changed, 45 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/media/i2c/dw9719.c b/drivers/media/i2c/dw9719.c
+index 22ae711d7cd3..b4bf9178370e 100644
+--- a/drivers/media/i2c/dw9719.c
++++ b/drivers/media/i2c/dw9719.c
+@@ -91,6 +91,11 @@ struct dw9719_device {
+ 	u32 mode_low_bits;
+ 	u32 sac_mode;
+ 	u32 vcm_freq;
++	/* the position written last; 0 after power-up */
++	int pos;
++	/* dongwoon,default-position: powered by the sensor's stream only */
++	bool stream_powered;
++	u32 default_pos;
+ 
+ 	struct dw9719_v4l2_ctrls {
+ 		struct v4l2_ctrl_handler handler;
+@@ -103,6 +108,8 @@ static int dw9719_power_down(struct dw9719_device *dw9719)
+ 	u32 reg_pwr = dw9719->model == DW9718S ? DW9718S_PD : DW9719_CONTROL;
+ 	int ret;
+ 
++	dw9719->pos = 0;
++
+ 	/*
+ 	 * Worth engaging the internal SHUTDOWN mode especially due to the
+ 	 * regulator being potentially shared with other devices.
+@@ -242,7 +249,13 @@ static int dw9719_t_focus_abs(struct dw9719_device *dw9719, s32 value)
+ {
+ 	u32 reg = dw9719->model == DW9718S ? DW9718S_VCM_CURRENT
+ 					   : DW9719_VCM_CURRENT;
+-	return cci_write(dw9719->regmap, reg, value, NULL);
++	int ret;
++
++	ret = cci_write(dw9719->regmap, reg, value, NULL);
++	if (!ret)
++		dw9719->pos = value;
++
++	return ret;
+ }
+ 
+ static int dw9719_set_ctrl(struct v4l2_ctrl *ctrl)
+@@ -280,8 +293,7 @@ static int dw9719_suspend(struct device *dev)
+ 	int ret;
+ 	int val;
+ 
+-	for (val = dw9719->ctrls.focus->val; val >= 0;
+-	     val -= DW9719_CTRL_STEPS) {
++	for (val = dw9719->pos; val >= 0; val -= DW9719_CTRL_STEPS) {
+ 		ret = dw9719_t_focus_abs(dw9719, val);
+ 		if (ret)
+ 			return ret;
+@@ -320,14 +332,27 @@ static int dw9719_resume(struct device *dev)
+ 	return ret;
+ }
+ 
++/*
++ * With a default position the image sensor's driver powers the actuator
++ * while it streams (lens-focus): an open device node alone, which camera
++ * stacks keep for as long as they run, would drive the coil all the time.
++ */
+ static int dw9719_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
+ {
++	struct dw9719_device *dw9719 = to_dw9719_device(sd);
++
++	if (dw9719->stream_powered)
++		return 0;
++
+ 	return pm_runtime_resume_and_get(sd->dev);
+ }
+ 
+ static int dw9719_close(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
+ {
+-	pm_runtime_put_autosuspend(sd->dev);
++	struct dw9719_device *dw9719 = to_dw9719_device(sd);
++
++	if (!dw9719->stream_powered)
++		pm_runtime_put_autosuspend(sd->dev);
+ 
+ 	return 0;
+ }
+@@ -346,7 +371,8 @@ static int dw9719_init_controls(struct dw9719_device *dw9719)
+ 
+ 	dw9719->ctrls.focus = v4l2_ctrl_new_std(&dw9719->ctrls.handler, ops,
+ 						V4L2_CID_FOCUS_ABSOLUTE, 0,
+-						DW9719_MAX_FOCUS_POS, 1, 0);
++						DW9719_MAX_FOCUS_POS, 1,
++						dw9719->default_pos);
+ 
+ 	if (dw9719->ctrls.handler.error) {
+ 		dev_err(dw9719->dev, "Error initialising v4l2 ctrls\n");
+@@ -391,6 +417,20 @@ static int dw9719_probe(struct i2c_client *client)
+ 		return dev_err_probe(&client->dev, PTR_ERR(dw9719->vio),
+ 				     "getting the I/O regulator\n");
+ 
++	/*
++	 * Optional position for the lens while the sensor streams: the focus
++	 * control starts there, and the resume ramp moves the lens to it.
++	 */
++	if (!device_property_read_u32(&client->dev, "dongwoon,default-position",
++				      &dw9719->default_pos)) {
++		if (dw9719->default_pos > DW9719_MAX_FOCUS_POS)
++			return dev_err_probe(&client->dev, -EINVAL,
++					     "default position %u above %u\n",
++					     dw9719->default_pos,
++					     DW9719_MAX_FOCUS_POS);
++		dw9719->stream_powered = true;
++	}
++
+ 	v4l2_i2c_subdev_init(&dw9719->sd, client, &dw9719_ops);
+ 	dw9719->sd.flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
+ 	dw9719->sd.internal_ops = &dw9719_internal_ops;
+-- 
+2.43.0
+

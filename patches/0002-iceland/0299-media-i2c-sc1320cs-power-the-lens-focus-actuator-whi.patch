@@ -1,0 +1,133 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Tue, 13 Oct 2026 10:29:00 +0300
+Subject: [PATCH] media: i2c: sc1320cs: power the lens-focus actuator while
+ streaming
+
+The rear module of the OnePlus Pad 4 has a voice coil actuator next to
+its SC1320CS sensor (lens-focus). Its driver powers it while its device
+node is open, which camera stacks keep open all the time, or, with a
+default lens position in its device tree node, only on request of the
+sensor that uses it.
+
+Look the actuator up through lens-focus at probe and hold a runtime PM
+reference on it while the sensor streams: the actuator then moves the
+lens to its position at stream start and back to rest at stream stop,
+and no current flows through the coil while the camera is idle. The
+reference is taken once the stream runs; a lens that can't be powered
+only logs a warning, as an image out of focus is better than none.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/media/i2c/sc1320cs.c | 60 ++++++++++++++++++++++++++++++++++++
+ 1 file changed, 60 insertions(+)
+
+diff --git a/drivers/media/i2c/sc1320cs.c b/drivers/media/i2c/sc1320cs.c
+index 086031d6375e..c338172b3172 100644
+--- a/drivers/media/i2c/sc1320cs.c
++++ b/drivers/media/i2c/sc1320cs.c
+@@ -148,6 +148,8 @@ struct sc_sensor {
+ 	bool identified;	/* the chip id has been read and is the right one */
+ 	bool streaming;
+ 	bool bus_error;		/* a write failed since the last stream start */
++	struct device *lens;	/* the lens-focus actuator, or NULL */
++	bool lens_on;		/* this stream holds a runtime PM reference on it */
+ };
+ 
+ static inline struct sc_sensor *to_sc(struct v4l2_subdev *sd)
+@@ -331,6 +333,35 @@ static int sc_init_ctrls(struct sc_sensor *s)
+ 	return 0;
+ }
+ 
++/*
++ * The lens-focus actuator is powered while the sensor streams, so that it
++ * holds its position (a default one from its device tree node, or the last
++ * one user space set) only while the camera is in use. A lens that can't be
++ * powered never stops the stream: the image is merely out of focus.
++ */
++static void sc_lens_on(struct sc_sensor *s)
++{
++	int ret;
++
++	if (!s->lens || s->lens_on)
++		return;
++	ret = pm_runtime_resume_and_get(s->lens);
++	if (ret == -EACCES)	/* no driver bound to it */
++		dev_dbg(s->dev, "lens %s not powered: no runtime PM\n", dev_name(s->lens));
++	else if (ret)
++		dev_warn(s->dev, "lens %s not powered (%d)\n", dev_name(s->lens), ret);
++	else
++		s->lens_on = true;
++}
++
++static void sc_lens_off(struct sc_sensor *s)
++{
++	if (!s->lens_on)
++		return;
++	pm_runtime_put_autosuspend(s->lens);
++	s->lens_on = false;
++}
++
+ static int sc_enable_streams(struct v4l2_subdev *sd, struct v4l2_subdev_state *state, u32 pad, u64 streams_mask)
+ {
+ 	struct sc_sensor *s = to_sc(sd);
+@@ -358,6 +389,7 @@ static int sc_enable_streams(struct v4l2_subdev *sd, struct v4l2_subdev_state *s
+ 	if (ret)
+ 		goto err;
+ 	s->streaming = true;
++	sc_lens_on(s);
+ 	return 0;
+ err:
+ 	dev_err(s->dev, "%s: stream start failed (%d)%s\n", s->model->name, ret,
+@@ -378,6 +410,7 @@ static int sc_disable_streams(struct v4l2_subdev *sd, struct v4l2_subdev_state *
+ 	if (!s->bus_error)
+ 		cci_write(s->regmap, SC_REG_MODE_SELECT, SC_MODE_STANDBY, &ret);
+ 	s->streaming = false;
++	sc_lens_off(s);
+ 	pm_runtime_put_autosuspend(s->dev);
+ 	return 0;
+ }
+@@ -511,6 +544,30 @@ static int sc_check_endpoint(struct sc_sensor *s)
+ 	return ret;
+ }
+ 
++static void sc_put_lens(void *lens)
++{
++	put_device(lens);
++}
++
++/* the actuator named by lens-focus; its I2C device exists before its driver binds */
++static int sc_get_lens(struct sc_sensor *s)
++{
++	struct fwnode_handle *fw;
++	struct i2c_client *lens;
++
++	fw = fwnode_find_reference(dev_fwnode(s->dev), "lens-focus", 0);
++	if (IS_ERR(fw))
++		return 0;
++	lens = i2c_find_device_by_fwnode(fw);
++	fwnode_handle_put(fw);
++	if (!lens) {
++		dev_warn(s->dev, "lens-focus is not an I2C device: the lens is not powered with the stream\n");
++		return 0;
++	}
++	s->lens = &lens->dev;
++	return devm_add_action_or_reset(s->dev, sc_put_lens, s->lens);
++}
++
+ static int sc_probe(struct i2c_client *client)
+ {
+ 	struct device *dev = &client->dev;
+@@ -548,6 +605,9 @@ static int sc_probe(struct i2c_client *client)
+ 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(s->supplies), s->supplies);
+ 	if (ret)
+ 		return dev_err_probe(dev, ret, "supplies\n");
++	ret = sc_get_lens(s);
++	if (ret)
++		return ret;
+ 
+ 	ret = sc_power_on(dev);
+ 	if (ret)
+-- 
+2.43.0
+

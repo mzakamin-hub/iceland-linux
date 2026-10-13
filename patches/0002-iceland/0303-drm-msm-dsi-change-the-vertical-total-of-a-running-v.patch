@@ -1,0 +1,226 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Tue, 13 Oct 2026 10:28:44 +0300
+Subject: [PATCH] drm/msm/dsi: change the vertical total of a running video
+ timing
+
+Add msm_dsi_set_vtotal(), which changes V_TOTAL of a video mode host
+while it keeps running: the write goes through the video timing double
+buffer (TIMING_DB_MODE, 6G v2.2+) and TIMING_FLUSH copies it to the
+active registers at the next frame boundary, so the DPU can stretch or
+shorten the vertical front porch in the same frame as its INTF period
+without a modeset. ACTIVE_V and the VSYNC position are counted from the
+start of the frame and do not change.
+
+The other timing registers are rewritten with their running values, as
+the vendor driver does for its "immediate porch" refresh rate changes.
+The stored mode is not touched, and the next power-on switches the
+double buffer off again before programming the timing.
+
+The vendor device tree of the OnePlus Pad 4 panel (CSOT XN251, NT36536)
+uses exactly this mechanism for its 120 / 60 / 30 Hz rates
+("dfps_immediate_porch_mode", same link clock, only the porches change).
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/dsi/dsi.c                 | 14 ++++
+ drivers/gpu/drm/msm/dsi/dsi.h                 |  2 +
+ drivers/gpu/drm/msm/dsi/dsi_host.c            | 80 +++++++++++++++++++
+ drivers/gpu/drm/msm/msm_drv.h                 | 12 +++
+ drivers/gpu/drm/msm/registers/display/dsi.xml |  7 ++
+ 5 files changed, 115 insertions(+)
+
+diff --git a/drivers/gpu/drm/msm/dsi/dsi.c b/drivers/gpu/drm/msm/dsi/dsi.c
+index f0538ae21051..8e367ebdcf81 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi.c
++++ b/drivers/gpu/drm/msm/dsi/dsi.c
+@@ -22,6 +22,20 @@ bool msm_dsi_wide_bus_enabled(struct msm_dsi *msm_dsi)
+ 	return msm_dsi_host_is_wide_bus_enabled(msm_dsi->host);
+ }
+ 
++bool msm_dsi_can_set_vtotal(struct msm_dsi *msm_dsi)
++{
++	return msm_dsi && msm_dsi->host &&
++	       msm_dsi_host_can_set_vtotal(msm_dsi->host);
++}
++
++int msm_dsi_set_vtotal(struct msm_dsi *msm_dsi, u32 vtotal)
++{
++	if (!msm_dsi || !msm_dsi->host)
++		return -EOPNOTSUPP;
++
++	return msm_dsi_host_set_vtotal(msm_dsi->host, vtotal);
++}
++
+ static int dsi_get_phy(struct msm_dsi *msm_dsi)
+ {
+ 	struct platform_device *pdev = msm_dsi->pdev;
+diff --git a/drivers/gpu/drm/msm/dsi/dsi.h b/drivers/gpu/drm/msm/dsi/dsi.h
+index 93c028a122f3..4ad98ee4c363 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi.h
++++ b/drivers/gpu/drm/msm/dsi/dsi.h
+@@ -76,6 +76,8 @@ int msm_dsi_host_power_on(struct mipi_dsi_host *host,
+ 			struct msm_dsi_phy_shared_timings *phy_shared_timings,
+ 			bool is_bonded_dsi, struct msm_dsi_phy *phy);
+ int msm_dsi_host_power_off(struct mipi_dsi_host *host);
++bool msm_dsi_host_can_set_vtotal(struct mipi_dsi_host *host);
++int msm_dsi_host_set_vtotal(struct mipi_dsi_host *host, u32 vtotal);
+ int msm_dsi_host_set_display_mode(struct mipi_dsi_host *host,
+ 				  const struct drm_display_mode *mode);
+ enum drm_mode_status msm_dsi_host_check_dsc(struct mipi_dsi_host *host,
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
+index 52e8391deb53..e09afae16756 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_host.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
+@@ -186,6 +186,8 @@ struct msm_dsi_host {
+ 	bool registered;
+ 	bool power_on;
+ 	bool enabled;
++	/* msm_dsi_host_set_vtotal() switched the timing double buffer on */
++	bool timing_db_used;
+ 	int irq;
+ };
+ 
+@@ -1082,6 +1084,12 @@ static void dsi_timing_setup(struct msm_dsi_host *msm_host, bool is_bonded_dsi)
+ 	}
+ 
+ 	if (msm_host->mode_flags & MIPI_DSI_MODE_VIDEO) {
++		/* program the timing directly again, see msm_dsi_host_set_vtotal() */
++		if (msm_host->timing_db_used) {
++			dsi_write(msm_host, REG_DSI_TIMING_DB_MODE, 0);
++			msm_host->timing_db_used = false;
++		}
++
+ 		if (msm_host->dsc)
+ 			dsi_update_dsc_timing(msm_host, false);
+ 
+@@ -2586,6 +2594,78 @@ int msm_dsi_host_power_off(struct mipi_dsi_host *host)
+ 	return 0;
+ }
+ 
++/**
++ * msm_dsi_host_can_set_vtotal() - whether msm_dsi_host_set_vtotal() works
++ * @host: DSI host
++ *
++ * Return: true for a video mode host with the video timing double buffer
++ */
++bool msm_dsi_host_can_set_vtotal(struct mipi_dsi_host *host)
++{
++	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
++
++	return (msm_host->mode_flags & MIPI_DSI_MODE_VIDEO) &&
++	       msm_dsi_host_version_geq(msm_host, MSM_DSI_VER_MAJOR_6G,
++					MSM_DSI_6G_VER_MINOR_V2_2_1);
++}
++
++/**
++ * msm_dsi_host_set_vtotal() - change the vertical total of the running video
++ * timing without stopping it
++ * @host: DSI host
++ * @vtotal: the new vertical total
++ *
++ * Only the vertical front porch may differ from the mode the host was powered
++ * on with: ACTIVE_V and the VSYNC position are counted from the start of the
++ * frame and stay as they are, so the frame just gets longer or shorter.
++ *
++ * The write goes through the video timing double buffer and takes effect at
++ * the next frame boundary, together with the INTF that feeds the host (whose
++ * period the caller changes in the same frame). The stored mode is not
++ * changed: the next power-on programs it as before.
++ *
++ * Only MMIO, no sleeping. The caller serialises this with the power state of
++ * the host (the DPU encoder calls it under the CRTC commit lock, which also
++ * covers the bridge enable and disable).
++ *
++ * Return: 0 on success, -EOPNOTSUPP if the host cannot do it or is off
++ */
++int msm_dsi_host_set_vtotal(struct mipi_dsi_host *host, u32 vtotal)
++{
++	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
++	static const u32 regs[] = {
++		REG_DSI_ACTIVE_H, REG_DSI_ACTIVE_V, REG_DSI_ACTIVE_HSYNC,
++		REG_DSI_ACTIVE_VSYNC_HPOS, REG_DSI_ACTIVE_VSYNC_VPOS,
++		REG_DSI_VIDEO_COMPRESSION_MODE_CTRL,
++	};
++	u32 val[ARRAY_SIZE(regs)];
++	u32 total;
++	int i;
++
++	if (!vtotal || vtotal > DSI_TOTAL_V_TOTAL__MASK >> DSI_TOTAL_V_TOTAL__SHIFT ||
++	    !msm_dsi_host_can_set_vtotal(host) || !READ_ONCE(msm_host->power_on))
++		return -EOPNOTSUPP;
++
++	for (i = 0; i < ARRAY_SIZE(regs); i++)
++		val[i] = dsi_read(msm_host, regs[i]);
++	total = dsi_read(msm_host, REG_DSI_TOTAL) & ~DSI_TOTAL_V_TOTAL__MASK;
++
++	/*
++	 * With the double buffer on, the timing registers are written to the
++	 * shadow copy: write all of them, as the vendor driver does (and the
++	 * video compression control, in case it is buffered too), so that the
++	 * flush copies the running values and the new total.
++	 */
++	dsi_write(msm_host, REG_DSI_TIMING_DB_MODE, DSI_TIMING_DB_MODE_EN);
++	msm_host->timing_db_used = true;
++	for (i = 0; i < ARRAY_SIZE(regs); i++)
++		dsi_write(msm_host, regs[i], val[i]);
++	dsi_write(msm_host, REG_DSI_TOTAL, total | DSI_TOTAL_V_TOTAL(vtotal - 1));
++	dsi_write(msm_host, REG_DSI_TIMING_FLUSH, DSI_TIMING_FLUSH_FLUSH);
++
++	return 0;
++}
++
+ int msm_dsi_host_set_display_mode(struct mipi_dsi_host *host,
+ 				  const struct drm_display_mode *mode)
+ {
+diff --git a/drivers/gpu/drm/msm/msm_drv.h b/drivers/gpu/drm/msm/msm_drv.h
+index 2264bd65ebbb..d4197dd58821 100644
+--- a/drivers/gpu/drm/msm/msm_drv.h
++++ b/drivers/gpu/drm/msm/msm_drv.h
+@@ -301,6 +301,8 @@ bool msm_dsi_is_cmd_mode(struct msm_dsi *msm_dsi);
+ bool msm_dsi_is_bonded_dsi(struct msm_dsi *msm_dsi);
+ bool msm_dsi_is_master_dsi(struct msm_dsi *msm_dsi);
+ bool msm_dsi_wide_bus_enabled(struct msm_dsi *msm_dsi);
++bool msm_dsi_can_set_vtotal(struct msm_dsi *msm_dsi);
++int msm_dsi_set_vtotal(struct msm_dsi *msm_dsi, u32 vtotal);
+ struct drm_dsc_config *msm_dsi_get_dsc_config(struct msm_dsi *msm_dsi);
+ const char *msm_dsi_get_te_source(struct msm_dsi *msm_dsi);
+ #else
+@@ -336,6 +338,16 @@ static inline bool msm_dsi_wide_bus_enabled(struct msm_dsi *msm_dsi)
+ 	return false;
+ }
+ 
++static inline bool msm_dsi_can_set_vtotal(struct msm_dsi *msm_dsi)
++{
++	return false;
++}
++
++static inline int msm_dsi_set_vtotal(struct msm_dsi *msm_dsi, u32 vtotal)
++{
++	return -EOPNOTSUPP;
++}
++
+ static inline struct drm_dsc_config *msm_dsi_get_dsc_config(struct msm_dsi *msm_dsi)
+ {
+ 	return NULL;
+diff --git a/drivers/gpu/drm/msm/registers/display/dsi.xml b/drivers/gpu/drm/msm/registers/display/dsi.xml
+index e40125f75175..90746003b1b9 100644
+--- a/drivers/gpu/drm/msm/registers/display/dsi.xml
++++ b/drivers/gpu/drm/msm/registers/display/dsi.xml
+@@ -362,6 +362,13 @@ xsi:schemaLocation="https://gitlab.freedesktop.org/freedreno/ rules-fd.xsd">
+ 		<bitfield name="COUNT" low="16" high="23" type="uint"/>
+ 		<bitfield name="CLR" pos="0" type="boolean"/>
+ 	</reg32>
++	<!-- video timing double buffer (6G v2.2+): latched at the next frame -->
++	<reg32 offset="0x001e0" name="TIMING_FLUSH">
++		<bitfield name="FLUSH" pos="0" type="boolean"/>
++	</reg32>
++	<reg32 offset="0x001e4" name="TIMING_DB_MODE">
++		<bitfield name="EN" pos="0" type="boolean"/>
++	</reg32>
+ 	<reg32 offset="0x001f0" name="VERSION">
+ 		<bitfield name="MAJOR" low="24" high="31" type="uint"/>
+ 	</reg32>
+-- 
+2.43.0
+

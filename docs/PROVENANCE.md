@@ -19,3 +19,6 @@ exists, it replaces ours on the next rebase.
 
 The same five commits are in the rebased q89e (v7.3-rc7) series unchanged (same patch-id, author, date and message).
 Not taken: tb323fu 0110 (idle refresh rate; no Signed-off-by, depends on 0065) - see the iceland-mainline tracker.
+
+The idle refresh rate patches of q89f (0303-0305, drm/msm dsi / dpu) are our own work, written for this queue;
+they are not tb323fu 0110 and do not depend on its 0065.

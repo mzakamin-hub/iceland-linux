@@ -1,0 +1,35 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Tue, 13 Oct 2026 10:27:16 +0300
+Subject: [PATCH] media: i2c: dw9719: reach the focus position on resume
+
+dw9719_resume() ramps the lens back to the focus control's value in
+steps of DW9719_CTRL_STEPS, starting at the remainder of the value. The
+loop stops before it writes the value itself, so the lens is left one
+step (16 codes) short of the position user space set, until the next
+control write: at 450 the ramp ends at 434.
+
+Run the loop up to and including the control's value. For a value of
+0 the one extra write is 0, the position the lens has after power-up.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/media/i2c/dw9719.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/media/i2c/dw9719.c b/drivers/media/i2c/dw9719.c
+index 7ea976df9247..22ae711d7cd3 100644
+--- a/drivers/media/i2c/dw9719.c
++++ b/drivers/media/i2c/dw9719.c
+@@ -304,7 +304,7 @@ static int dw9719_resume(struct device *dev)
+ 	if (ret)
+ 		return ret;
+ 
+-	for (val = current_focus % DW9719_CTRL_STEPS; val < current_focus;
++	for (val = current_focus % DW9719_CTRL_STEPS; val <= current_focus;
+ 	     val += DW9719_CTRL_STEPS) {
+ 		ret = dw9719_t_focus_abs(dw9719, val);
+ 		if (ret)
+-- 
+2.43.0
+

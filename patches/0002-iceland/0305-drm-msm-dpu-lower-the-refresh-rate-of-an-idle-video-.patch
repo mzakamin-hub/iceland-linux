@@ -1,0 +1,879 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Tue, 13 Oct 2026 10:35:39 +0300
+Subject: [PATCH] drm/msm/dpu: lower the refresh rate of an idle video mode DSI
+ panel
+
+A video mode panel is scanned out at the mode rate even while nothing
+changes on screen. Many panels list several rates that share the pixel
+clock and the horizontal timing and differ only in the vertical front
+porch (the OnePlus Pad 4 panel: 120, 60 and 30 Hz with V_TOTAL 2700,
+5400 and 10800). Such rates can be switched on the running link: the
+DSI hosts and the INTFs double buffer the new vertical total and latch
+it at the same frame start, and nothing else in the frame moves.
+
+Use that while the display is idle: when nothing was committed for
+msm.dpu_idle_refresh_ms (0 = off, the default), a delayed work item
+stretches the front porch of the running mode to the slowest rate at or
+above msm.dpu_idle_refresh_hz (default 60) that the connector itself
+lists with the same timing otherwise. The next commit restores the
+mode's front porch together with its own CTL flush. An input handler
+(touch, pen, keys, pointers) restores it at once outside a commit, so
+the first frame after a touch is not held back by a long idle frame.
+The mode, the mode list and the CRTC state never change: this is not a
+modeset, and user space keeps seeing the mode it set.
+
+Details:
+- all hardware accesses run under the CRTC's commit lock, which also
+  covers the commit, the encoder enable and disable and the bridge (DSI
+  host) power state; the work item rechecks the encoder after waiting;
+- the idle rate is looked up in the connector mode list under
+  mode_config.mutex, outside the commit lock;
+- the DSI and INTF writes and the CTL flush happen in one section with
+  interrupts off, not within 32 lines of a frame start, so the DSI hosts
+  and the INTFs latch the new total at the same vsync;
+- outside a commit only the INTF bits are flushed;
+- the stretched frame stays within 4 mode frames and 40 ms, below the
+  frame done timer (5 frames) and the 50 ms flush wait;
+- the scanout position uses the stretched total while it is in use, so
+  vblank timestamps stay right;
+- the encoder's debugfs status shows the state and the counts.
+
+Only DSI video mode encoders with the DSI timing double buffer (6G
+v2.2+) and DPU 5.0+ INTFs without programmable fetch take part.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c    |   6 +-
+ drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c | 681 ++++++++++++++++++++
+ drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h |   5 +
+ drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c     |   7 +
+ 4 files changed, 696 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
+index 082c8c7dfc80..c5b26d2b32d1 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
+@@ -295,14 +295,14 @@ static bool dpu_crtc_get_scanout_position(struct drm_crtc *crtc,
+ 	vactive_start = vsw + vbp + 1;
+ 	vactive_end = vactive_start + mode->crtc_vdisplay;
+ 
+-	/* last scan line before VSYNC */
+-	vfp_end = mode->crtc_vtotal;
+-
+ 	if (stime)
+ 		*stime = ktime_get();
+ 
+ 	line = dpu_encoder_get_linecount(encoder);
+ 
++	/* last scan line before VSYNC; later while the idle rate stretches it */
++	vfp_end = dpu_encoder_frame_vtotal(encoder, line, mode->crtc_vtotal);
++
+ 	if (line < vactive_start)
+ 		line -= vactive_start;
+ 	else if (line > vactive_end)
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+index 90b3eed181e3..0f51c8e02bd3 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+@@ -9,12 +9,17 @@
+ 
+ #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
+ #include <linux/debugfs.h>
++#include <linux/delay.h>
++#include <linux/input.h>
+ #include <linux/kthread.h>
++#include <linux/moduleparam.h>
+ #include <linux/seq_file.h>
++#include <linux/workqueue.h>
+ 
+ #include <drm/drm_atomic.h>
+ #include <drm/drm_crtc.h>
+ #include <drm/drm_file.h>
++#include <drm/drm_managed.h>
+ #include <drm/drm_probe_helper.h>
+ #include <drm/drm_framebuffer.h>
+ 
+@@ -117,6 +122,48 @@ enum dpu_enc_rc_states {
+ 	DPU_ENC_RC_STATE_IDLE
+ };
+ 
++/**
++ * struct dpu_enc_idle_rr - lower refresh rate of an idle video mode DSI panel
++ * @node:		entry in dpu_idle_rr_encoders
++ * @work:		drops to the idle rate once nothing was committed
++ *			for dpu_idle_refresh_ms
++ * @capable:		the INTFs and the DSI hosts can change the vertical
++ *			front porch of the running timing
++ * @enabled:		the encoder is enabled
++ * @gen:		bumped at every enable and disable
++ * @crtc_idx:		index of the CRTC whose commit lock serialises the
++ *			hardware access, -1 before the first enable
++ * @mode:		the mode the encoder was enabled with; it is never
++ *			changed, only its front porch is stretched
++ * @idle_vtotal:	vertical total of the idle rate, 0 if there is none
++ * @looked_up:		@idle_vtotal was looked up for this @gen
++ * @lookup_hz:		dpu_idle_refresh_hz of that lookup
++ * @low:		the idle vertical total is programmed
++ * @last_kick:		jiffies of the last commit
++ * @drops:		number of drops to the idle rate
++ * @raises:		number of returns to the mode rate
++ *
++ * The fields are changed under kms->commit_lock[@crtc_idx] (the commit, the
++ * encoder enable and disable all run under it); @crtc_idx, @low, @idle_vtotal
++ * and @last_kick are also read without it.
++ */
++struct dpu_enc_idle_rr {
++	struct list_head node;
++	struct delayed_work work;
++	bool capable;
++	bool enabled;
++	unsigned int gen;
++	int crtc_idx;
++	struct drm_display_mode mode;
++	u32 idle_vtotal;
++	bool looked_up;
++	unsigned int lookup_hz;
++	bool low;
++	unsigned long last_kick;
++	unsigned int drops;
++	unsigned int raises;
++};
++
+ /**
+  * struct dpu_encoder_virt - virtual encoder. Container of one or more physical
+  *	encoders. Virtual encoder manages one "logical" display. Physical
+@@ -170,6 +217,7 @@ enum dpu_enc_rc_states {
+  * @idle_timeout:		idle timeout duration in milliseconds
+  * @wide_bus_en:		wide bus is enabled on this interface
+  * @dsc:			drm_dsc_config pointer, for DSC-enabled encoders
++ * @idle_rr:			lower refresh rate while idle
+  */
+ struct dpu_encoder_virt {
+ 	struct drm_encoder base;
+@@ -215,6 +263,8 @@ struct dpu_encoder_virt {
+ 
+ 	/* DSC configuration */
+ 	struct drm_dsc_config *dsc;
++
++	struct dpu_enc_idle_rr idle_rr;
+ };
+ 
+ #define to_dpu_encoder_virt(x) container_of(x, struct dpu_encoder_virt, base)
+@@ -223,6 +273,619 @@ static u32 dither_matrix[DITHER_MATRIX_SZ] = {
+ 	15, 7, 13, 5, 3, 11, 1, 9, 12, 4, 14, 6, 0, 8, 2, 10
+ };
+ 
++/*
++ * Idle refresh rate
++ *
++ * A video mode panel is refreshed at the mode rate even when the picture does
++ * not change. Panels that list several rates with the same pixel clock and
++ * horizontal timing, differing only in the vertical front porch, can switch
++ * between them without a modeset: the DSI link keeps its clocks, the frame
++ * only gets longer. While nothing is committed for dpu_idle_refresh_ms, the
++ * encoder stretches the front porch of the running mode to the slowest such
++ * rate at or above dpu_idle_refresh_hz; the next commit or input event brings
++ * the mode's own front porch back. The mode, the mode list and the CRTC state
++ * stay as they are: user space keeps seeing the mode it set.
++ *
++ * The DSI hosts and the INTFs double buffer the new vertical total and latch
++ * it at the same frame start, so a change shows up at the end of the frame
++ * being scanned out.
++ */
++
++/* the frame done timer allows 5 frames, the commit wait 50 ms: stay below */
++#define DPU_IDLE_RR_MAX_STRETCH		4
++#define DPU_IDLE_RR_MAX_FRAME_US	40000
++/* don't write the new total within this many lines of a frame start */
++#define DPU_IDLE_RR_GUARD_LINES		32
++#define DPU_IDLE_RR_GUARD_POLL_US	10
++#define DPU_IDLE_RR_GUARD_POLLS		20
++
++static unsigned int dpu_idle_refresh_ms;
++static unsigned int dpu_idle_refresh_hz = 60;
++
++static LIST_HEAD(dpu_idle_rr_encoders);
++/* protects dpu_idle_rr_encoders and the input handler registration */
++static DEFINE_MUTEX(dpu_idle_rr_lock);
++static bool dpu_idle_rr_input_registered;
++static atomic_t dpu_idle_rr_nr_low = ATOMIC_INIT(0);
++static unsigned long dpu_idle_rr_last_input;
++
++static void dpu_idle_rr_kick_fn(struct work_struct *work);
++static DECLARE_WORK(dpu_idle_rr_kick_work, dpu_idle_rr_kick_fn);
++
++static void dpu_idle_rr_kick(void)
++{
++	mutex_lock(&dpu_idle_rr_lock);
++	if (!list_empty(&dpu_idle_rr_encoders))
++		queue_work(system_highpri_wq, &dpu_idle_rr_kick_work);
++	mutex_unlock(&dpu_idle_rr_lock);
++}
++
++static int dpu_idle_rr_param_set(const char *val, const struct kernel_param *kp)
++{
++	int ret = param_set_uint(val, kp);
++
++	if (!ret)
++		dpu_idle_rr_kick();
++
++	return ret;
++}
++
++static const struct kernel_param_ops dpu_idle_rr_param_ops = {
++	.set = dpu_idle_rr_param_set,
++	.get = param_get_uint,
++};
++
++module_param_cb(dpu_idle_refresh_ms, &dpu_idle_rr_param_ops,
++		&dpu_idle_refresh_ms, 0644);
++MODULE_PARM_DESC(dpu_idle_refresh_ms,
++		 "Lower the refresh rate of a video mode DSI panel after this many ms without a commit, 0 = off (default)");
++module_param_cb(dpu_idle_refresh_hz, &dpu_idle_rr_param_ops,
++		&dpu_idle_refresh_hz, 0644);
++MODULE_PARM_DESC(dpu_idle_refresh_hz,
++		 "Lowest idle refresh rate: the slowest panel rate at or above it that differs from the mode only in the vertical front porch (default 60)");
++
++/* @b differs from @a at most in the length of the vertical front porch */
++static bool dpu_idle_rr_same_but_vfp(const struct drm_display_mode *a,
++				     const struct drm_display_mode *b)
++{
++	return a->clock == b->clock && a->flags == b->flags &&
++	       a->hdisplay == b->hdisplay && a->hsync_start == b->hsync_start &&
++	       a->hsync_end == b->hsync_end && a->htotal == b->htotal &&
++	       a->hskew == b->hskew && a->vdisplay == b->vdisplay &&
++	       a->vscan == b->vscan &&
++	       a->vsync_end - a->vsync_start == b->vsync_end - b->vsync_start &&
++	       a->vtotal - a->vsync_end == b->vtotal - b->vsync_end;
++}
++
++/*
++ * The vertical total of the slowest mode of @connector at or above @min_hz
++ * that differs from @cur only in the vertical front porch, or 0. Only rates
++ * the panel itself lists are used.
++ */
++static u32 dpu_idle_rr_find_vtotal(struct drm_connector *connector,
++				   const struct drm_display_mode *cur,
++				   unsigned int min_hz)
++{
++	const struct drm_display_mode *m;
++	int cur_hz = drm_mode_vrefresh(cur);
++	u32 best = 0;
++
++	if (!connector || !cur->clock || !cur->htotal)
++		return 0;
++
++	mutex_lock(&connector->dev->mode_config.mutex);
++	list_for_each_entry(m, &connector->modes, head) {
++		int hz = drm_mode_vrefresh(m);
++
++		if (m->vtotal <= cur->vtotal || hz >= cur_hz || hz < (int)min_hz ||
++		    !dpu_idle_rr_same_but_vfp(cur, m))
++			continue;
++		if (m->vtotal > DPU_IDLE_RR_MAX_STRETCH * cur->vtotal ||
++		    div_u64((u64)m->vtotal * m->htotal * 1000, m->clock) >
++		    DPU_IDLE_RR_MAX_FRAME_US)
++			continue;
++		best = max_t(u32, best, m->vtotal);
++	}
++	mutex_unlock(&connector->dev->mode_config.mutex);
++
++	return best;
++}
++
++static bool dpu_idle_rr_capable(struct dpu_encoder_virt *dpu_enc)
++{
++	struct msm_drm_private *priv = dpu_enc->base.dev->dev_private;
++	struct msm_display_info *info = &dpu_enc->disp_info;
++	unsigned int i;
++
++	if (info->intf_type != INTF_DSI || info->is_cmd_mode ||
++	    !dpu_enc->num_phys_encs || !dpu_enc->cur_master ||
++	    !dpu_enc->cur_master->ops.get_line_count)
++		return false;
++
++	for (i = 0; i < info->num_of_h_tiles; i++)
++		if (!msm_dsi_can_set_vtotal(priv->kms->dsi[info->h_tile_instance[i]]))
++			return false;
++
++	for (i = 0; i < dpu_enc->num_phys_encs; i++) {
++		struct dpu_encoder_phys *phys = dpu_enc->phys_encs[i];
++
++		if (!phys->ops.can_set_vtotal || !phys->ops.set_vtotal ||
++		    !phys->ops.can_set_vtotal(phys))
++			return false;
++	}
++
++	return true;
++}
++
++/*
++ * The DSI hosts and the INTFs latch the new total at the next frame start.
++ * Don't write it in the last lines of a frame, where a frame could start
++ * between the DSI and the INTF writes: wait until the next one has begun.
++ * The running frame ends at the mode or at the idle total.
++ */
++static void dpu_idle_rr_avoid_frame_start(struct dpu_encoder_virt *dpu_enc)
++{
++	struct dpu_encoder_phys *master = dpu_enc->cur_master;
++	struct dpu_enc_idle_rr *idle = &dpu_enc->idle_rr;
++	const u32 ends[] = { idle->mode.vtotal, idle->idle_vtotal };
++	unsigned int n, i;
++
++	for (n = 0; n < DPU_IDLE_RR_GUARD_POLLS; n++) {
++		int line = master->ops.get_line_count(master);
++		bool close = false;
++
++		if (line < 0)
++			return;
++
++		for (i = 0; i < ARRAY_SIZE(ends); i++)
++			if (ends[i] && line <= ends[i] &&
++			    line + DPU_IDLE_RR_GUARD_LINES >= ends[i])
++				close = true;
++		if (!close)
++			return;
++
++		udelay(DPU_IDLE_RR_GUARD_POLL_US);
++	}
++}
++
++/* phys_encs[@i] is the first one using its CTL */
++static bool dpu_idle_rr_first_on_ctl(struct dpu_encoder_virt *dpu_enc,
++				     unsigned int i)
++{
++	unsigned int j;
++
++	for (j = 0; j < i; j++)
++		if (dpu_enc->phys_encs[j]->hw_ctl == dpu_enc->phys_encs[i]->hw_ctl)
++			return false;
++
++	return true;
++}
++
++/*
++ * Program the idle (@low) or the mode vertical total on the DSI hosts and the
++ * INTFs and mark the INTFs for the flush. @flush: trigger the INTF flush here
++ * (outside a commit); a commit kickoff triggers it right after this, in the
++ * same section. Called under the commit lock with the encoder spinlock held,
++ * so that nothing comes between the DSI and the CTL writes.
++ */
++static int dpu_idle_rr_program(struct dpu_encoder_virt *dpu_enc, bool low,
++			       bool flush)
++{
++	struct msm_drm_private *priv = dpu_enc->base.dev->dev_private;
++	struct msm_display_info *info = &dpu_enc->disp_info;
++	struct dpu_enc_idle_rr *idle = &dpu_enc->idle_rr;
++	u32 vtotal = low ? idle->idle_vtotal : idle->mode.vtotal;
++	unsigned int i;
++	int ret = 0;
++
++	dpu_idle_rr_avoid_frame_start(dpu_enc);
++
++	for (i = 0; i < info->num_of_h_tiles && !ret; i++)
++		ret = msm_dsi_set_vtotal(priv->kms->dsi[info->h_tile_instance[i]],
++					 vtotal);
++
++	for (i = 0; i < dpu_enc->num_phys_encs && !ret; i++) {
++		struct dpu_encoder_phys *phys = dpu_enc->phys_encs[i];
++		struct dpu_hw_ctl *ctl = phys->hw_ctl;
++
++		ret = phys->ops.set_vtotal(phys, vtotal);
++		if (ret)
++			break;
++
++		/* outside a commit, flush nothing but the INTFs */
++		if (flush && dpu_idle_rr_first_on_ctl(dpu_enc, i))
++			ctl->ops.clear_pending_flush(ctl);
++		ctl->ops.update_pending_flush_intf(ctl, phys->hw_intf->idx);
++	}
++
++	for (i = 0; flush && !ret && i < dpu_enc->num_phys_encs; i++) {
++		struct dpu_hw_ctl *ctl = dpu_enc->phys_encs[i]->hw_ctl;
++
++		if (dpu_idle_rr_first_on_ctl(dpu_enc, i))
++			ctl->ops.trigger_flush(ctl);
++	}
++
++	if (ret) {
++		/* should not happen after dpu_idle_rr_capable(): stop here */
++		idle->capable = false;
++		return ret;
++	}
++
++	if (low != idle->low) {
++		if (low) {
++			idle->drops++;
++			atomic_inc(&dpu_idle_rr_nr_low);
++		} else {
++			idle->raises++;
++			atomic_dec(&dpu_idle_rr_nr_low);
++		}
++		WRITE_ONCE(idle->low, low);
++	}
++
++	return 0;
++}
++
++/* outside a commit, under the commit lock */
++static void dpu_idle_rr_set(struct dpu_encoder_virt *dpu_enc, bool low)
++{
++	unsigned long lock_flags;
++	int ret;
++
++	spin_lock_irqsave(&dpu_enc->enc_spinlock, lock_flags);
++	ret = dpu_idle_rr_program(dpu_enc, low, true);
++	spin_unlock_irqrestore(&dpu_enc->enc_spinlock, lock_flags);
++
++	if (ret)
++		DPU_ERROR_ENC_RATELIMITED(dpu_enc, "idle refresh: low %d failed: %d\n",
++					  low, ret);
++	else
++		DPU_DEBUG_ENC(dpu_enc, "idle refresh: low %d\n", low);
++}
++
++/* under the commit lock */
++static void dpu_idle_rr_arm(struct dpu_enc_idle_rr *idle)
++{
++	unsigned int ms = READ_ONCE(dpu_idle_refresh_ms);
++
++	if (!ms || !idle->capable)
++		return;
++
++	/* this mode has no slower sibling: don't wake up for nothing */
++	if (idle->looked_up && !idle->idle_vtotal &&
++	    idle->lookup_hz == READ_ONCE(dpu_idle_refresh_hz))
++		return;
++
++	schedule_delayed_work(&idle->work, msecs_to_jiffies(ms));
++}
++
++static void dpu_idle_rr_work_fn(struct work_struct *work)
++{
++	struct dpu_enc_idle_rr *idle = container_of(to_delayed_work(work),
++						    struct dpu_enc_idle_rr, work);
++	struct dpu_encoder_virt *dpu_enc = container_of(idle,
++					struct dpu_encoder_virt, idle_rr);
++	struct msm_drm_private *priv = dpu_enc->base.dev->dev_private;
++	struct msm_kms *kms = priv->kms;
++	unsigned int ms = READ_ONCE(dpu_idle_refresh_ms);
++	unsigned int hz = READ_ONCE(dpu_idle_refresh_hz);
++	int idx = READ_ONCE(idle->crtc_idx);
++	struct drm_connector *connector;
++	struct drm_display_mode mode;
++	unsigned long last, input, due;
++	unsigned int gen;
++	bool lookup;
++	u32 vtotal = 0;
++
++	if (!ms || idx < 0)
++		return;
++
++	mutex_lock(&kms->commit_lock[idx]);
++	if (!idle->enabled || idle->crtc_idx != idx || !idle->capable ||
++	    idle->low) {
++		mutex_unlock(&kms->commit_lock[idx]);
++		return;
++	}
++	gen = idle->gen;
++	lookup = !idle->looked_up || idle->lookup_hz != hz;
++	drm_mode_init(&mode, &idle->mode);
++	connector = dpu_enc->connector;
++	mutex_unlock(&kms->commit_lock[idx]);
++
++	/* the probe helpers change the mode list under mode_config.mutex */
++	if (lookup)
++		vtotal = dpu_idle_rr_find_vtotal(connector, &mode, hz);
++
++	mutex_lock(&kms->commit_lock[idx]);
++	if (!idle->enabled || idle->gen != gen || idle->low)
++		goto out;
++
++	if (lookup) {
++		WRITE_ONCE(idle->idle_vtotal, vtotal);
++		idle->looked_up = true;
++		idle->lookup_hz = hz;
++		if (vtotal)
++			DPU_DEBUG_ENC(dpu_enc, "idle refresh: %d Hz -> %llu Hz\n",
++				      drm_mode_vrefresh(&mode),
++				      DIV_ROUND_CLOSEST_ULL((u64)mode.clock * 1000,
++							    (u64)mode.htotal * vtotal));
++	}
++	if (!idle->idle_vtotal)
++		goto out;
++
++	/* idle since the last commit and the last input event */
++	last = READ_ONCE(idle->last_kick);
++	input = READ_ONCE(dpu_idle_rr_last_input);
++	if (time_after(input, last))
++		last = input;
++	due = last + msecs_to_jiffies(ms);
++	if (time_before(jiffies, due)) {
++		schedule_delayed_work(&idle->work, due - jiffies);
++		goto out;
++	}
++
++	dpu_idle_rr_set(dpu_enc, true);
++out:
++	mutex_unlock(&kms->commit_lock[idx]);
++}
++
++/* back to the mode rate outside a commit: input, the switch turned off */
++static void dpu_idle_rr_raise(struct dpu_encoder_virt *dpu_enc)
++{
++	struct msm_drm_private *priv = dpu_enc->base.dev->dev_private;
++	struct dpu_enc_idle_rr *idle = &dpu_enc->idle_rr;
++	int idx = READ_ONCE(idle->crtc_idx);
++
++	if (idx < 0)
++		return;
++
++	mutex_lock(&priv->kms->commit_lock[idx]);
++	if (idle->enabled && idle->crtc_idx == idx) {
++		if (idle->low)
++			dpu_idle_rr_set(dpu_enc, false);
++		dpu_idle_rr_arm(idle);
++	}
++	mutex_unlock(&priv->kms->commit_lock[idx]);
++}
++
++static void dpu_idle_rr_input_event(struct input_handle *handle,
++				    unsigned int type, unsigned int code,
++				    int value)
++{
++	if (type == EV_SYN || type == EV_MSC)
++		return;
++
++	WRITE_ONCE(dpu_idle_rr_last_input, jiffies);
++	if (atomic_read(&dpu_idle_rr_nr_low))
++		queue_work(system_highpri_wq, &dpu_idle_rr_kick_work);
++}
++
++static int dpu_idle_rr_input_connect(struct input_handler *handler,
++				     struct input_dev *dev,
++				     const struct input_device_id *id)
++{
++	struct input_handle *handle;
++	int ret;
++
++	handle = kzalloc_obj(*handle, GFP_KERNEL);
++	if (!handle)
++		return -ENOMEM;
++
++	handle->dev = dev;
++	handle->handler = handler;
++	handle->name = handler->name;
++
++	ret = input_register_handle(handle);
++	if (ret)
++		goto err_free;
++
++	ret = input_open_device(handle);
++	if (ret)
++		goto err_unregister;
++
++	return 0;
++
++err_unregister:
++	input_unregister_handle(handle);
++err_free:
++	kfree(handle);
++	return ret;
++}
++
++static void dpu_idle_rr_input_disconnect(struct input_handle *handle)
++{
++	input_close_device(handle);
++	input_unregister_handle(handle);
++	kfree(handle);
++}
++
++/* touch screens, pens, keys and buttons, pointers */
++static const struct input_device_id dpu_idle_rr_input_ids[] = {
++	{
++		.flags = INPUT_DEVICE_ID_MATCH_EVBIT,
++		.evbit = { BIT_MASK(EV_ABS) },
++	},
++	{
++		.flags = INPUT_DEVICE_ID_MATCH_EVBIT,
++		.evbit = { BIT_MASK(EV_KEY) },
++	},
++	{
++		.flags = INPUT_DEVICE_ID_MATCH_EVBIT,
++		.evbit = { BIT_MASK(EV_REL) },
++	},
++	{ },
++};
++
++static struct input_handler dpu_idle_rr_input_handler = {
++	.event = dpu_idle_rr_input_event,
++	.connect = dpu_idle_rr_input_connect,
++	.disconnect = dpu_idle_rr_input_disconnect,
++	.name = "msm_dpu_idle_refresh",
++	.id_table = dpu_idle_rr_input_ids,
++};
++
++/* called with dpu_idle_rr_lock held */
++static void dpu_idle_rr_input_update(bool on)
++{
++	if (on == dpu_idle_rr_input_registered)
++		return;
++
++	if (on) {
++		if (input_register_handler(&dpu_idle_rr_input_handler))
++			return;
++	} else {
++		input_unregister_handler(&dpu_idle_rr_input_handler);
++	}
++	dpu_idle_rr_input_registered = on;
++}
++
++/* input, or a parameter change: return to the mode rate, re-arm the drop */
++static void dpu_idle_rr_kick_fn(struct work_struct *work)
++{
++	struct dpu_encoder_virt *dpu_enc;
++
++	mutex_lock(&dpu_idle_rr_lock);
++	if (!list_empty(&dpu_idle_rr_encoders))
++		dpu_idle_rr_input_update(READ_ONCE(dpu_idle_refresh_ms) != 0);
++	list_for_each_entry(dpu_enc, &dpu_idle_rr_encoders, idle_rr.node)
++		dpu_idle_rr_raise(dpu_enc);
++	mutex_unlock(&dpu_idle_rr_lock);
++}
++
++/* encoder enable, under the commit lock */
++static void dpu_idle_rr_enable(struct dpu_encoder_virt *dpu_enc)
++{
++	struct dpu_enc_idle_rr *idle = &dpu_enc->idle_rr;
++	struct drm_crtc *crtc = dpu_enc->base.crtc;
++
++	idle->gen++;
++	idle->looked_up = false;
++	WRITE_ONCE(idle->idle_vtotal, 0);
++	WRITE_ONCE(idle->low, false);
++	drm_mode_copy(&idle->mode, &crtc->state->adjusted_mode);
++	WRITE_ONCE(idle->crtc_idx, drm_crtc_index(crtc));
++	idle->capable = dpu_idle_rr_capable(dpu_enc);
++	WRITE_ONCE(idle->last_kick, jiffies);
++	idle->enabled = true;
++
++	dpu_idle_rr_arm(idle);
++}
++
++/* encoder disable, under the commit lock: the next enable programs the mode */
++static void dpu_idle_rr_disable(struct dpu_encoder_virt *dpu_enc)
++{
++	struct dpu_enc_idle_rr *idle = &dpu_enc->idle_rr;
++
++	if (!idle->enabled)
++		return;
++
++	idle->enabled = false;
++	idle->gen++;
++	if (idle->low)
++		atomic_dec(&dpu_idle_rr_nr_low);
++	WRITE_ONCE(idle->low, false);
++	/* a running work item sees !enabled under the lock we hold */
++	cancel_delayed_work(&idle->work);
++}
++
++/* prepare for a commit kickoff, under the commit lock: re-arm the drop */
++static void dpu_idle_rr_prepare_kickoff(struct dpu_encoder_virt *dpu_enc)
++{
++	struct dpu_enc_idle_rr *idle = &dpu_enc->idle_rr;
++
++	if (!idle->enabled || !idle->capable)
++		return;
++
++	WRITE_ONCE(idle->last_kick, jiffies);
++	dpu_idle_rr_arm(idle);
++}
++
++/*
++ * Commit kickoff, under the commit lock and the encoder spinlock, right
++ * before the CTL flush: back to the mode rate with this frame's flush.
++ */
++static void dpu_idle_rr_kickoff_locked(struct dpu_encoder_virt *dpu_enc)
++{
++	struct dpu_enc_idle_rr *idle = &dpu_enc->idle_rr;
++
++	if (idle->enabled && idle->capable && idle->low)
++		dpu_idle_rr_program(dpu_enc, false, false);
++}
++
++/**
++ * dpu_encoder_idle_rr_fini - stop the idle refresh rate handling
++ * @drm_enc: encoder pointer
++ *
++ * Called before the KMS goes away; safe to call more than once.
++ */
++void dpu_encoder_idle_rr_fini(struct drm_encoder *drm_enc)
++{
++	struct dpu_encoder_virt *dpu_enc = to_dpu_encoder_virt(drm_enc);
++	struct dpu_enc_idle_rr *idle = &dpu_enc->idle_rr;
++	bool last;
++
++	mutex_lock(&dpu_idle_rr_lock);
++	list_del_init(&idle->node);
++	last = list_empty(&dpu_idle_rr_encoders);
++	if (last)
++		dpu_idle_rr_input_update(false);
++	mutex_unlock(&dpu_idle_rr_lock);
++
++	cancel_delayed_work_sync(&idle->work);
++	if (last)
++		cancel_work_sync(&dpu_idle_rr_kick_work);
++}
++
++static void dpu_idle_rr_release(struct drm_device *dev, void *ptr)
++{
++	dpu_encoder_idle_rr_fini(ptr);
++}
++
++static int dpu_idle_rr_init(struct dpu_encoder_virt *dpu_enc)
++{
++	struct dpu_enc_idle_rr *idle = &dpu_enc->idle_rr;
++	int ret;
++
++	INIT_DELAYED_WORK(&idle->work, dpu_idle_rr_work_fn);
++	idle->crtc_idx = -1;
++
++	mutex_lock(&dpu_idle_rr_lock);
++	list_add_tail(&idle->node, &dpu_idle_rr_encoders);
++	mutex_unlock(&dpu_idle_rr_lock);
++
++	/* in case the KMS init fails before dpu_kms_destroy() can run */
++	ret = drmm_add_action_or_reset(dpu_enc->base.dev, dpu_idle_rr_release,
++				       &dpu_enc->base);
++	if (ret)
++		return ret;
++
++	/* apply a dpu_idle_refresh_ms given at load time */
++	dpu_idle_rr_kick();
++
++	return 0;
++}
++
++/**
++ * dpu_encoder_frame_vtotal - vertical total of the frame being scanned out
++ * @drm_enc: encoder pointer
++ * @line: the current INTF line count
++ * @mode_vtotal: vertical total of the mode
++ *
++ * Return: the idle vertical total while the front porch is stretched,
++ * else @mode_vtotal
++ */
++int dpu_encoder_frame_vtotal(struct drm_encoder *drm_enc, int line,
++			     int mode_vtotal)
++{
++	struct dpu_enc_idle_rr *idle = &to_dpu_encoder_virt(drm_enc)->idle_rr;
++	int idle_vtotal = READ_ONCE(idle->idle_vtotal);
++
++	if (idle_vtotal > mode_vtotal &&
++	    (READ_ONCE(idle->low) || line > mode_vtotal))
++		return idle_vtotal;
++
++	return mode_vtotal;
++}
++
+ /**
+  * dpu_encoder_get_drm_fmt - return DRM fourcc format
+  * @phys_enc: Pointer to physical encoder structure
+@@ -1356,6 +2019,8 @@ static void dpu_encoder_virt_atomic_enable(struct drm_encoder *drm_enc,
+ 
+ 	dpu_enc->enabled = true;
+ 
++	dpu_idle_rr_enable(dpu_enc);
++
+ out:
+ 	mutex_unlock(&dpu_enc->enc_lock);
+ }
+@@ -1384,6 +2049,8 @@ static void dpu_encoder_virt_atomic_disable(struct drm_encoder *drm_enc,
+ 	mutex_lock(&dpu_enc->enc_lock);
+ 	dpu_enc->enabled = false;
+ 
++	dpu_idle_rr_disable(dpu_enc);
++
+ 	trace_dpu_enc_disable(DRMID(drm_enc));
+ 
+ 	/* wait for idle */
+@@ -1771,6 +2438,8 @@ static void _dpu_encoder_kickoff_phys(struct dpu_encoder_virt *dpu_enc)
+ 	/* update pending counts and trigger kickoff ctl flush atomically */
+ 	spin_lock_irqsave(&dpu_enc->enc_spinlock, lock_flags);
+ 
++	dpu_idle_rr_kickoff_locked(dpu_enc);
++
+ 	/* don't perform flush/start operations for slave encoders */
+ 	for (i = 0; i < dpu_enc->num_phys_encs; i++) {
+ 		struct dpu_encoder_phys *phys = dpu_enc->phys_encs[i];
+@@ -2078,6 +2747,8 @@ void dpu_encoder_prepare_for_kickoff(struct drm_encoder *drm_enc)
+ 
+ 	if (dpu_enc->dsc)
+ 		dpu_encoder_prep_dsc(dpu_enc, dpu_enc->dsc);
++
++	dpu_idle_rr_prepare_kickoff(dpu_enc);
+ }
+ 
+ /**
+@@ -2501,6 +3172,12 @@ static int _dpu_encoder_status_show(struct seq_file *s, void *data)
+ 	}
+ 	mutex_unlock(&dpu_enc->enc_lock);
+ 
++	seq_printf(s, "idle_refresh: capable:%d mode_vtotal:%d idle_vtotal:%u low:%d drops:%u raises:%u\n",
++		   dpu_enc->idle_rr.capable, dpu_enc->idle_rr.mode.vtotal,
++		   READ_ONCE(dpu_enc->idle_rr.idle_vtotal),
++		   READ_ONCE(dpu_enc->idle_rr.low),
++		   dpu_enc->idle_rr.drops, dpu_enc->idle_rr.raises);
++
+ 	return 0;
+ }
+ 
+@@ -2764,6 +3441,10 @@ struct drm_encoder *dpu_encoder_init(struct drm_device *dev,
+ 	mutex_init(&dpu_enc->enc_lock);
+ 	mutex_init(&dpu_enc->rc_lock);
+ 
++	ret = dpu_idle_rr_init(dpu_enc);
++	if (ret)
++		return ERR_PTR(ret);
++
+ 	ret = dpu_encoder_setup_display(dpu_enc, dpu_kms, disp_info);
+ 	if (ret) {
+ 		DPU_ERROR("failed to setup encoder\n");
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h
+index 7dfaa3ed4dff..05908cccb012 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h
+@@ -68,6 +68,11 @@ struct drm_encoder *dpu_encoder_init(struct drm_device *dev,
+ 
+ int dpu_encoder_get_linecount(struct drm_encoder *drm_enc);
+ 
++int dpu_encoder_frame_vtotal(struct drm_encoder *drm_enc, int line,
++			     int mode_vtotal);
++
++void dpu_encoder_idle_rr_fini(struct drm_encoder *drm_enc);
++
+ int dpu_encoder_get_vsync_count(struct drm_encoder *drm_enc);
+ 
+ bool dpu_encoder_is_widebus_enabled(const struct drm_encoder *drm_enc);
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
+index 1b64f7406157..963e85fabe51 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
+@@ -915,6 +915,13 @@ static void dpu_kms_destroy(struct msm_kms *kms)
+ 
+ 	dpu_kms = to_dpu_kms(kms);
+ 
++	if (dpu_kms->dev) {
++		struct drm_encoder *encoder;
++
++		drm_for_each_encoder(encoder, dpu_kms->dev)
++			dpu_encoder_idle_rr_fini(encoder);
++	}
++
+ 	_dpu_kms_hw_destroy(dpu_kms);
+ 
+ 	msm_kms_destroy(&dpu_kms->base);
+-- 
+2.43.0
+

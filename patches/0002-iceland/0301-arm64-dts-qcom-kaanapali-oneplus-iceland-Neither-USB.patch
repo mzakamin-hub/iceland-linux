@@ -1,0 +1,61 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Tue, 13 Oct 2026 10:32:16 +0300
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: Neither USB nor
+ the Wi-Fi port wakes the tablet
+
+Two wakeup sources are enabled by default that the tablet must not
+use; until now a udev rule of the device package disabled them after
+boot:
+
+- the USB controller (wakeup-source in kaanapali.dtsi): in host mode
+  dwc3-qcom arms the PHY line interrupts for the sleep, and a USB 2 hub
+  on the port woke the tablet the moment s2idle started;
+- the PCIe root port of the WCN7860 (wake-gpios): the PCI core makes a
+  port with a WAKE# GPIO a wakeup source, but no Wake-on-WLAN is set up
+  and Wi-Fi is powered off for a suspend.
+
+Drop wakeup-source from the USB node and the WAKE# GPIO from the root
+port. The power key, the cover, the pogo keyboard, the RTC and the
+charger (through the battery manager) keep waking the tablet.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ .../boot/dts/qcom/kaanapali-oneplus-iceland.dts    | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 476baa53359a..1af140298172 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1635,7 +1635,11 @@ &pcie0_phy {
+ };
+ 
+ &pcie_port0 {
+-	wake-gpios = <&tlmm 104 GPIO_ACTIVE_LOW>;
++	/*
++	 * No wake-gpios: the Wi-Fi chip's WAKE# (GPIO 104) would make the
++	 * root port a wakeup source, and Wake-on-WLAN is not set up (Wi-Fi
++	 * is powered off for a suspend).
++	 */
+ 	reset-gpios = <&tlmm 102 GPIO_ACTIVE_LOW>;
+ 
+ 	wifi@0 {
+@@ -2397,6 +2401,14 @@ &ufs_mem_phy {
+ };
+ 
+ &usb {
++	/*
++	 * The USB controller does not wake the tablet: in host mode a USB 2
++	 * hub on the port woke it the moment the sleep started. The power key,
++	 * the cover, the pogo keyboard and the charger (battery manager) still
++	 * do.
++	 */
++	/delete-property/ wakeup-source;
++
+ 	status = "okay";
+ };
+ 
+-- 
+2.43.0
+

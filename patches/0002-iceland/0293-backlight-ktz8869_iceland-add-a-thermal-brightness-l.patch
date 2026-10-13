@@ -1,0 +1,190 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Tue, 13 Oct 2026 10:18:05 +0300
+Subject: [PATCH] backlight: ktz8869_iceland: add a thermal brightness limit
+
+Stock OxygenOS limits the panel brightness by "temperature gear" (the
+skin temperature policy's 0..19 level) in its display HAL, below the
+brightness the user chose and without the user seeing it. Under
+mainline the policy runs in userspace (iceland-thermal) and could only
+write the backlight's sysfs brightness; GNOME 50 takes every such write
+as the user's new level and writes it back through logind, so the cap
+fought the desktop: the screen flickered in a bright room and stayed
+dimmed after cooling in a dark one.
+
+Register a thermal cooling device "ktz8869-backlight" with one state per
+stock temperature gear (0..19). Each state has the brightness limit of
+stock's per-gear table (globalPolicy brightness level -> nits -> the
+panel's 12-bit level: no limit at gears 0-3, 800 nits = 3744 at 4-5,
+down to 100 nits = 1402 from gear 12). The ICs get min(user brightness,
+limit of the state); the user's value stays in props.brightness, so
+sysfs "brightness" (which mutter reads) is unchanged, no change uevent
+is sent, and lowering the state restores the user's level. The ICs'
+PWM_RAMP_TIME ramp smooths every change. "actual_brightness" now reports
+the level the ICs run at.
+
+A failed cooling device registration only loses the limit; the
+backlight works as before.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Assisted-by: LLM
+---
+ drivers/video/backlight/ktz8869_iceland.c | 91 +++++++++++++++++++++++
+ 1 file changed, 91 insertions(+)
+
+diff --git a/drivers/video/backlight/ktz8869_iceland.c b/drivers/video/backlight/ktz8869_iceland.c
+index d1196bd0300a..9d6dde311e58 100644
+--- a/drivers/video/backlight/ktz8869_iceland.c
++++ b/drivers/video/backlight/ktz8869_iceland.c
+@@ -12,6 +12,7 @@
+ #include <linux/module.h>
+ #include <linux/of.h>
+ #include <linux/regmap.h>
++#include <linux/thermal.h>
+ 
+ #define DEFAULT_BRIGHTNESS 2047
+ #define MAX_BRIGHTNESS 4095
+@@ -43,11 +44,29 @@
+ #define KTZ_SLAVE 0x2
+ #define KTZ_BOTH 0x3
+ 
++/*
++ * The brightness limit of stock's temperature policy per temperature gear 0..19 (= the cooling
++ * state): the brightness level of each gear's globalPolicy entry (odm
++ * sys_thermal_control_config.xml) through temperature_limit_nit
++ * (display_brightness_config_common.xml) and the panel's nits-to-level table
++ * (display_brightness_config_P_D.xml), on the same 12-bit scale as this driver: 800 nits = 3744,
++ * 600 = 3241, 500 = 2963, 450 = 2817, 350 = 2498, 250 = 2133, 100 = 1402. Gears 0-3 have no
++ * limit.
++ */
++static const u16 ktz8869_thermal_limit[] = {
++	MAX_BRIGHTNESS, MAX_BRIGHTNESS, MAX_BRIGHTNESS, MAX_BRIGHTNESS,
++	3744, 3744, 3241, 2963, 2963, 2817, 2498, 2133,
++	1402, 1402, 1402, 1402, 1402, 1402, 1402, 1402,
++};
++
+ struct ktz8869 {
+ 	struct i2c_client *client;
+ 	struct regmap *regmap;
+ 	bool led_on;
+ 	struct gpio_desc *enable_gpio;
++	struct backlight_device *bl;
++	unsigned long cool_state;
++	unsigned int hw_brightness;
+ };
+ 
+ static const struct regmap_config ktz8869_regmap_config = {
+@@ -75,6 +94,14 @@ static int ktz8869_backlight_update_status(struct backlight_device *backlight_de
+ 	struct ktz8869 *ktz = bl_get_data(backlight_dev);
+ 	unsigned int brightness = backlight_get_brightness(backlight_dev);
+ 
++	/*
++	 * The thermal limit only lowers what the ICs get: the brightness the user set stays in
++	 * props.brightness (sysfs "brightness"), so the cap is invisible to the desktop and goes
++	 * away by itself when the cooling state drops back.
++	 */
++	brightness = min_t(unsigned int, brightness,
++			   ktz8869_thermal_limit[READ_ONCE(ktz->cool_state)]);
++
+ 	/* Set brightness */
+ 	ktz8869_write(ktz, BL_BRT_LSB, brightness & 0xF, KTZ_BOTH);
+ 	ktz8869_write(ktz, BL_BRT_MSB, (brightness >> 4) & 0xFF, KTZ_BOTH);
+@@ -87,12 +114,64 @@ static int ktz8869_backlight_update_status(struct backlight_device *backlight_de
+ 		ktz->led_on = false;
+ 	}
+ 
++	WRITE_ONCE(ktz->hw_brightness, brightness);
++
+ 	return 0;
+ }
+ 
++/* "actual_brightness": the level the ICs run at, after the thermal limit */
++static int ktz8869_backlight_get_brightness(struct backlight_device *backlight_dev)
++{
++	struct ktz8869 *ktz = bl_get_data(backlight_dev);
++
++	return READ_ONCE(ktz->hw_brightness);
++}
++
+ static const struct backlight_ops ktz8869_backlight_ops = {
+ 	.options = BL_CORE_SUSPENDRESUME,
+ 	.update_status = ktz8869_backlight_update_status,
++	.get_brightness = ktz8869_backlight_get_brightness,
++};
++
++static int ktz8869_cool_get_max_state(struct thermal_cooling_device *cdev,
++				      unsigned long *state)
++{
++	*state = ARRAY_SIZE(ktz8869_thermal_limit) - 1;
++
++	return 0;
++}
++
++static int ktz8869_cool_get_cur_state(struct thermal_cooling_device *cdev,
++				      unsigned long *state)
++{
++	struct ktz8869 *ktz = cdev->devdata;
++
++	*state = READ_ONCE(ktz->cool_state);
++
++	return 0;
++}
++
++static int ktz8869_cool_set_cur_state(struct thermal_cooling_device *cdev,
++				      unsigned long state)
++{
++	struct ktz8869 *ktz = cdev->devdata;
++
++	if (state >= ARRAY_SIZE(ktz8869_thermal_limit))
++		return -EINVAL;
++
++	if (state == READ_ONCE(ktz->cool_state))
++		return 0;
++
++	WRITE_ONCE(ktz->cool_state, state);
++
++	/* No backlight_generate_event(): the user's brightness did not change */
++	return backlight_update_status(ktz->bl);
++}
++
++static const struct thermal_cooling_device_ops ktz8869_cooling_ops = {
++	.get_max_state = ktz8869_cool_get_max_state,
++	.get_cur_state = ktz8869_cool_get_cur_state,
++	.set_cur_state = ktz8869_cool_set_cur_state,
+ };
+ 
+ struct ktz8869_reg {
+@@ -164,6 +243,7 @@ static int ktz8869_probe(struct i2c_client *client)
+ {
+ 	const struct i2c_device_id *id = i2c_client_get_device_id(client);
+ 	struct backlight_device *backlight_dev;
++	struct thermal_cooling_device *cdev;
+ 	struct backlight_properties props;
+ 	struct ktz8869 *ktz;
+ 	int ret = 0;
+@@ -212,11 +292,22 @@ static int ktz8869_probe(struct i2c_client *client)
+ 		return dev_err_probe(&client->dev, PTR_ERR(backlight_dev),
+ 				"failed to register backlight device\n");
+ 
++	ktz->bl = backlight_dev;
+ 	ktz8869_init(ktz);
+ 
+ 	i2c_set_clientdata(client, backlight_dev);
+ 	backlight_update_status(backlight_dev);
+ 
++	/*
++	 * Stock limits the brightness by temperature gear in its display HAL; here the limit is a
++	 * cooling device, so that whoever runs the temperature policy sets a state instead of
++	 * writing over the user's brightness. Without it the backlight works unlimited.
++	 */
++	cdev = devm_thermal_of_cooling_device_register(&client->dev, 0, "ktz8869-backlight",
++						       ktz, &ktz8869_cooling_ops);
++	if (IS_ERR(cdev))
++		dev_warn(&client->dev, "no thermal brightness limit: %pe\n", cdev);
++
+ end:
+ 	return 0;
+ }
+-- 
+2.43.0
+

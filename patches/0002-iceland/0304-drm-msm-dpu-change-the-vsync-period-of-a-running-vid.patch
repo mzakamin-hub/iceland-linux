@@ -1,0 +1,229 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Tue, 13 Oct 2026 10:29:39 +0300
+Subject: [PATCH] drm/msm/dpu: change the vsync period of a running video
+ interface
+
+Add an INTF op that rewrites only INTF_VSYNC_PERIOD_F0, reusing the line
+length already programmed into INTF_HSYNC_CTL (so the split, compression
+and wide bus adjustments stay as they are), and video encoder ops on top
+of it: can_set_vtotal() and set_vtotal(). The register is double
+buffered: the new period is latched at the next vsync after an INTF flush
+of the active CTL, so it is limited to DPU 5.0+ and DSI interfaces.
+
+The active window, the vsync pulse and display_v_end are counted from the
+start of the frame, so a different vertical total only moves the end of
+the front porch. can_set_vtotal() refuses when the programmable fetch is
+in use, as its start is counted back from the end of the frame.
+
+The horizontal halving of the mode for split interfaces moves into a
+helper shared with the timing engine setup; no functional change there.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ .../gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h  |  6 ++
+ .../drm/msm/disp/dpu1/dpu_encoder_phys_vid.c  | 80 +++++++++++++++----
+ drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c   | 17 ++++
+ drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.h   |  5 ++
+ 4 files changed, 91 insertions(+), 17 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h
+index 0bfbce317575..7af6113b6ad5 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h
+@@ -90,6 +90,10 @@ struct dpu_encoder_phys;
+  *                              on idle power collapse prepare
+  * @restore:			Restore all the encoder configs.
+  * @get_line_count:		Obtain current vertical line count
++ * @can_set_vtotal:		Whether @set_vtotal can change the vertical
++ *				front porch of the running timing in place
++ * @set_vtotal:			Change the vertical total of the running
++ *				timing; the caller flushes the INTF
+  */
+ 
+ struct dpu_encoder_phys_ops {
+@@ -113,6 +117,8 @@ struct dpu_encoder_phys_ops {
+ 	void (*restore)(struct dpu_encoder_phys *phys);
+ 	int (*get_line_count)(struct dpu_encoder_phys *phys);
+ 	int (*get_frame_count)(struct dpu_encoder_phys *phys);
++	bool (*can_set_vtotal)(struct dpu_encoder_phys *phys_enc);
++	int (*set_vtotal)(struct dpu_encoder_phys *phys_enc, u32 vtotal);
+ 	void (*prepare_wb_job)(struct dpu_encoder_phys *phys_enc,
+ 			struct drm_writeback_job *job);
+ 	void (*cleanup_wb_job)(struct dpu_encoder_phys *phys_enc,
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
+index 76e9e2a26406..dc39f9806da5 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
+@@ -256,6 +256,62 @@ static void programmable_fetch_config(struct dpu_encoder_phys *phys_enc,
+ 	spin_unlock_irqrestore(phys_enc->enc_spinlock, lock_flags);
+ }
+ 
++/*
++ * The mode this INTF drives: the horizontal timing is halved when two INTFs
++ * share the panel (or for YUV420).
++ */
++static void dpu_encoder_phys_vid_intf_mode(struct dpu_encoder_phys *phys_enc,
++					   struct drm_display_mode *mode)
++{
++	drm_mode_init(mode, &phys_enc->cached_mode);
++
++	if (phys_enc->split_role != ENC_ROLE_SOLO ||
++	    dpu_encoder_get_drm_fmt(phys_enc) == DRM_FORMAT_YUV420) {
++		mode->hdisplay >>= 1;
++		mode->htotal >>= 1;
++		mode->hsync_start >>= 1;
++		mode->hsync_end >>= 1;
++		mode->hskew >>= 1;
++	}
++}
++
++/*
++ * The vertical front porch can change while the timing engine runs (only the
++ * vsync period moves) as long as the programmable fetch is off: its start is
++ * counted back from the end of the frame and is not part of the change.
++ */
++static bool dpu_encoder_phys_vid_can_set_vtotal(struct dpu_encoder_phys *phys_enc)
++{
++	struct dpu_hw_intf_timing_params timing;
++	struct drm_display_mode mode;
++
++	if (!phys_enc->hw_intf || !phys_enc->hw_intf->ops.set_vsync_period ||
++	    phys_enc->hw_intf->cap->type != INTF_DSI ||
++	    !phys_enc->hw_ctl || !phys_enc->hw_ctl->ops.update_pending_flush_intf)
++		return false;
++
++	dpu_encoder_phys_vid_intf_mode(phys_enc, &mode);
++	drm_mode_to_intf_timing_params(phys_enc, &mode, &timing);
++
++	return !programmable_fetch_get_num_lines(phys_enc, &timing);
++}
++
++/*
++ * Write the new vsync period; it is latched at the next vsync after the
++ * caller's INTF flush. Called with the encoder spinlock held.
++ */
++static int dpu_encoder_phys_vid_set_vtotal(struct dpu_encoder_phys *phys_enc,
++					   u32 vtotal)
++{
++	if (phys_enc->enable_state != DPU_ENC_ENABLED ||
++	    !phys_enc->hw_intf || !phys_enc->hw_intf->ops.set_vsync_period)
++		return -EOPNOTSUPP;
++
++	phys_enc->hw_intf->ops.set_vsync_period(phys_enc->hw_intf, vtotal);
++
++	return 0;
++}
++
+ static void dpu_encoder_phys_vid_setup_timing_engine(
+ 		struct dpu_encoder_phys *phys_enc)
+ {
+@@ -266,8 +322,6 @@ static void dpu_encoder_phys_vid_setup_timing_engine(
+ 	unsigned long lock_flags;
+ 	struct dpu_hw_intf_cfg intf_cfg = { 0 };
+ 
+-	drm_mode_init(&mode, &phys_enc->cached_mode);
+-
+ 	if (!phys_enc->hw_ctl->ops.setup_intf_cfg) {
+ 		DPU_ERROR("invalid encoder %d\n", phys_enc != NULL);
+ 		return;
+@@ -279,24 +333,14 @@ static void dpu_encoder_phys_vid_setup_timing_engine(
+ 	}
+ 
+ 	DPU_DEBUG_VIDENC(phys_enc, "enabling mode:\n");
+-	drm_mode_debug_printmodeline(&mode);
++	drm_mode_debug_printmodeline(&phys_enc->cached_mode);
+ 
+ 	fmt_fourcc = dpu_encoder_get_drm_fmt(phys_enc);
+ 
+-	if (phys_enc->split_role != ENC_ROLE_SOLO || fmt_fourcc == DRM_FORMAT_YUV420) {
+-		mode.hdisplay >>= 1;
+-		mode.htotal >>= 1;
+-		mode.hsync_start >>= 1;
+-		mode.hsync_end >>= 1;
+-		mode.hskew >>= 1;
+-
+-		DPU_DEBUG_VIDENC(phys_enc,
+-			"split_role %d, halve horizontal %d %d %d %d %d\n",
+-			phys_enc->split_role,
+-			mode.hdisplay, mode.htotal,
+-			mode.hsync_start, mode.hsync_end,
+-			mode.hskew);
+-	}
++	dpu_encoder_phys_vid_intf_mode(phys_enc, &mode);
++	DPU_DEBUG_VIDENC(phys_enc, "split_role %d, horizontal %d %d %d %d %d\n",
++			 phys_enc->split_role, mode.hdisplay, mode.htotal,
++			 mode.hsync_start, mode.hsync_end, mode.hskew);
+ 
+ 	drm_mode_to_intf_timing_params(phys_enc, &mode, &timing_params);
+ 
+@@ -753,6 +797,8 @@ static void dpu_encoder_phys_vid_init_ops(struct dpu_encoder_phys_ops *ops)
+ 	ops->needs_single_flush = dpu_encoder_phys_vid_needs_single_flush;
+ 	ops->get_line_count = dpu_encoder_phys_vid_get_line_count;
+ 	ops->get_frame_count = dpu_encoder_phys_vid_get_frame_count;
++	ops->can_set_vtotal = dpu_encoder_phys_vid_can_set_vtotal;
++	ops->set_vtotal = dpu_encoder_phys_vid_set_vtotal;
+ }
+ 
+ /**
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
+index 6aa58f25217d..dd6476cd0f4c 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
+@@ -281,6 +281,19 @@ static void dpu_hw_intf_enable_timing_engine(
+ 	DPU_REG_WRITE(c, INTF_TIMING_ENGINE_EN, enable != 0);
+ }
+ 
++/*
++ * The vsync period is counted in pixel clocks of this INTF: reuse the line
++ * length programmed by dpu_hw_intf_setup_timing_engine(), which already
++ * accounts for the split, the compression and the wide bus.
++ */
++static void dpu_hw_intf_set_vsync_period(struct dpu_hw_intf *intf, u32 vtotal)
++{
++	struct dpu_hw_blk_reg_map *c = &intf->hw;
++	u32 hsync_period = DPU_REG_READ(c, INTF_HSYNC_CTL) >> 16;
++
++	DPU_REG_WRITE(c, INTF_VSYNC_PERIOD_F0, vtotal * hsync_period);
++}
++
+ static void dpu_hw_intf_setup_prg_fetch(
+ 		struct dpu_hw_intf *intf,
+ 		const struct dpu_hw_intf_prog_fetch *fetch)
+@@ -667,6 +680,10 @@ struct dpu_hw_intf *dpu_hw_intf_init(struct drm_device *dev,
+ 	if (mdss_rev->core_major_ver >= 5)
+ 		c->ops.bind_pingpong_blk = dpu_hw_intf_bind_pingpong_blk;
+ 
++	/* needs the per-INTF flush of the active CTLs to latch it in place */
++	if (mdss_rev->core_major_ver >= 5 && cfg->type == INTF_DSI)
++		c->ops.set_vsync_period = dpu_hw_intf_set_vsync_period;
++
+ 	/* INTF TE is only for DSI interfaces */
+ 	if (mdss_rev->core_major_ver >= 5 && cfg->type == INTF_DSI) {
+ 		WARN_ON(!cfg->intr_tear_rd_ptr);
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.h
+index 4d135ae80b55..6b6510647db4 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.h
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.h
+@@ -61,6 +61,9 @@ struct dpu_hw_intf_cmd_mode_cfg {
+  *  Assumption is these functions will be called after clocks are enabled
+  * @setup_timing_gen : programs the timing engine
+  * @setup_prg_fetch  : enables/disables the programmable fetch logic
++ * @set_vsync_period: changes only the vertical total of the programmed
++ *                    timing; double buffered, latched at the next vsync
++ *                    after an INTF flush
+  * @enable_timing: enable/disable timing engine
+  * @get_status: returns if timing engine is enabled or not
+  * @get_line_count: reads current vertical line counter
+@@ -85,6 +88,8 @@ struct dpu_hw_intf_ops {
+ 	void (*setup_prg_fetch)(struct dpu_hw_intf *intf,
+ 			const struct dpu_hw_intf_prog_fetch *fetch);
+ 
++	void (*set_vsync_period)(struct dpu_hw_intf *intf, u32 vtotal);
++
+ 	void (*enable_timing)(struct dpu_hw_intf *intf,
+ 			u8 enable);
+ 
+-- 
+2.43.0
+

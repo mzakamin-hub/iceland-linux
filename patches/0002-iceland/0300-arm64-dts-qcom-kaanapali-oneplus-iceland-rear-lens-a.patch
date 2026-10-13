@@ -1,0 +1,33 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Tue, 13 Oct 2026 10:29:18 +0300
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: rear lens at the
+ stock start position
+
+Without autofocus in user space the rear lens rests at the far end of
+its travel. Stock's camera stack starts every session with the lens at
+450 of 1023 (CustomActuatorInitDac of its icelandmain_actuator), which
+is sharp from about arm's length to across a table. Give the actuator
+that default position: it holds it while the rear sensor streams.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index a47dbae0c661..476baa53359a 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1336,6 +1336,8 @@ vcm: actuator@c {
+ 
+ 		dongwoon,sac-mode = <2>;
+ 		dongwoon,vcm-prescale = <0x79>;
++		/* stock's start position (CustomActuatorInitDac of icelandmain_actuator) */
++		dongwoon,default-position = <450>;
+ 	};
+ 
+ 	/* rear: SmartSens SC1320CS, chip id 0xc658 (stock "icelandmain") */
+-- 
+2.43.0
+

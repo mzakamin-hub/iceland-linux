@@ -1,0 +1,53 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Tue, 13 Oct 2026 10:27:32 +0300
+Subject: [PATCH] dt-bindings: media: i2c: dongwoon,dw9800k: add a default lens
+ position
+
+A camera module without autofocus in user space still needs its lens
+somewhere useful while it streams: with no current through the coil the
+lens rests at the far end of its travel, which is beyond infinity on
+some modules. The module maker's camera stack starts at a known position
+(the OnePlus Pad 4's rear module: 450 of 1023).
+
+Add dongwoon,default-position for that position. The lens is held there
+only while the image sensor that refers to the actuator through
+lens-focus streams, so that the coil carries no current while the
+camera is idle.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ .../bindings/media/i2c/dongwoon,dw9800k.yaml          | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/media/i2c/dongwoon,dw9800k.yaml b/Documentation/devicetree/bindings/media/i2c/dongwoon,dw9800k.yaml
+index 046c0a88bcef..2cf53c071563 100644
+--- a/Documentation/devicetree/bindings/media/i2c/dongwoon,dw9800k.yaml
++++ b/Documentation/devicetree/bindings/media/i2c/dongwoon,dw9800k.yaml
+@@ -65,6 +65,16 @@ properties:
+     maximum: 0x3f
+     default: 0x20
+ 
++  dongwoon,default-position:
++    description:
++      Lens position, as the 10-bit output current code, that the camera
++      module needs while its image sensor streams and no other position has
++      been asked for, e.g. the module maker's start position for focusing.
++      The actuator then holds the lens only while the image sensor that
++      refers to it through lens-focus streams.
++    $ref: /schemas/types.yaml#/definitions/uint32
++    maximum: 1023
++
+ required:
+   - compatible
+   - reg
+@@ -87,5 +97,6 @@ examples:
+             dongwoon,sac-mode = <4>;
+             dongwoon,clock-presc = <0>;
+             dongwoon,timing-control = <16>;
++            dongwoon,default-position = <450>;
+         };
+     };
+-- 
+2.43.0
+
