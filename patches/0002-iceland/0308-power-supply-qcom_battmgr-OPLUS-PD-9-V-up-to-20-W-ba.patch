@@ -1,0 +1,430 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Wed, 14 Oct 2026 13:41:24 +0000
+Subject: [PATCH] power: supply: qcom_battmgr: OPLUS PD 9 V up to 20 W, 5 V at 4.5 V and in cool-down
+
+The Pad 4 charger setup asks a USB-PD charger for 9 V within stock's
+PD row: 13.5 W, so 1500 mA at 9 V, and only at the attach.
+
+Raise the PD row's input power to 20 W. This is the owner's decision
+(14 Oct 2026) and above stock: 9 V now takes min(20 W / VBUS, 2220 mA)
+instead of 1500 mA. Stock's 13.5 W stays as a reference constant. The
+rest of the PD row stays stock: 5 V at 2000 mA (10 W), 3300 mA charge
+current, 9 V only (never 12 V), and only below a 4.5 V battery.
+
+The step from the 5 V ladder's top step (2000 mA, 18 W at 9 V) to the
+9 V current is only taken when the 5 V ladder held that top step and
+the 9 V request left VBUS high. It is kept only while the source holds
+it: 50 ms after the write there must be no VBUS collapse and VBUS must
+be at 7.5 V or more (charge_boost_lite's threshold for a 9 V
+contract). Otherwise the current goes back to the step held before.
+
+Close two gaps to stock, which re-checks the PD voltage while
+charging:
+
+- back to 5 V when the battery reaches 4.5 V (vbatt_pdqc_to_5v_thr);
+- 5 V while a cool-down applies: the cool-down levels 1-3 have a 5 V
+  PD voltage (cool_down_pdqc_vol_mv = 5000 5000 5000 9000), and 9 V
+  again once the cool-down is over.
+
+The cool-down reaches the driver through the host's charge current cap
+(constant_charge_current_max). iceland-battery-guard writes the
+smallest of its temperature region's current, its USB-C connector
+cool-down (1200 mA) and iceland-thermal's gear (1200 / 1500 / 2000 mA).
+Any cap below the PD row's 3300 mA counts as a cool-down. That also
+takes the cold and warm temperature regions (1959 / 1000 mA) to 5 V,
+which stock does not do; it is the lower side, as the cap does not say
+which rule set it.
+
+The attach poll (every 5 s with a charger in) runs the check. As on
+the way up, the input current goes down first (to the 5 V current, at
+most 18 W at 9 V), then the 5 V request (SET_PDO 5000), then VBUS is
+read after the settle time. An unreadable VBUS still counts as 9 V
+(fail low): the next poll asks again, up to three times per setup. An
+unreadable battery voltage also goes to 5 V. Going back to 9 V after a
+cool-down is a new attach setup: the ladder from its floor and the 9 V
+request with all its checks.
+
+No input current is written while the host's input suspend is in force.
+That also covers a suspend set during the 2 s wait after the 9 V
+request: before this patch, the 5 V current written after that wait
+could end such a suspend until the next poll sent it again.
+
+Assisted-by: Claude:claude-opus-5-5
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/power/supply/qcom_battmgr.c | 236 +++++++++++++++++++++++++---
+ 1 file changed, 213 insertions(+), 23 deletions(-)
+
+diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
+index 63aa980d5724282107e6b93bc6b1e5b82629c67b..86de9567970a899a5e759581ebe212a45db7cac6 100644
+--- a/drivers/power/supply/qcom_battmgr.c
++++ b/drivers/power/supply/qcom_battmgr.c
+@@ -443,6 +443,11 @@ struct qcom_battmgr {
+ 	/* the charger type the limits were last set for, and its changes during this attach */
+ 	unsigned int chg_type;
+ 	unsigned int chg_type_changes;
++	/* PD 9 V during this attach, see qcom_battmgr_iceland_pd_check() */
++	bool pd_9v;			/* VBUS may be 9 V (requested, or high at the setup) */
++	bool pd_9v_again;		/* at 5 V for a reason that can end (cool-down) */
++	unsigned int pd_5v_tries;	/* 5 V requests sent since the last setup */
++	unsigned int pd_icl_5v_ua;	/* the input current to go back to 5 V with */
+ 	/* the charge limit kept by the driver, see qcom_battmgr_oplus_limit_update() */
+ 	unsigned int chg_limit_end;	/* percent, 100 = no limit */
+ 	unsigned int chg_limit_start;	/* percent, 0 = CHARGE_CTRL_DELTA_SOC below the end */
+@@ -2340,13 +2345,37 @@ static int qcom_battmgr_oplus_set(struct qcom_battmgr *battmgr, int property, u3
+  * - fccmax-ma groups [unknown SDP CDP DCP VOOC QC PD ...] = 2200 600 1600 2200 3300 3300 3300 mA in the normal
+  *   temperature regions (iceland-battery-guard lowers it per temperature region through
+  *   constant_charge_current_max);
+- * - PD at 9 V (cool_down_pdqc_vol_mv), and only while the battery is below 4.5 V (vbatt_pdqc_to_9v_thr).
++ * - PD at 9 V (cool_down_pdqc_vol_mv), and only while the battery is below 4.5 V
++ *   (vbatt_pdqc_to_9v_thr); back to 5 V when it reaches 4.5 V (vbatt_pdqc_to_5v_thr) and at the
++ *   cool-down levels 1-3, whose voltage is 5 V (cool_down_pdqc_vol_mv = 5000 5000 5000 9000,
++ *   cool_down_pdqc_curr_ma = 1200 1500 2000 1500).
+  * The firmware reports VOOC/SVOOC adapters as DCP here, so they get the DCP limits. Stock's tables have no Apple
+  * entry, so an Apple brick gets the "unknown" limits.
++ *
++ * One exception, the owner's decision of 14 Oct 2026 and ABOVE STOCK: the PD row's input power is
++ * 20 W instead of stock's 13.5 W, so 9 V takes min(20 W / VBUS, 2220 mA) (stock: 1500 mA). 5 V PD
++ * stays at 2000 mA (10 W); the charge current, the voltages (9 V only, never 12 V) and every other
++ * row stay stock. The 9 V current above the 5 V ladder's top step is only kept while the source
++ * holds it (no VBUS collapse, VBUS at 7.5 V or more).
+  */
+-#define ICELAND_PD_ICL_MA		2000
++#define ICELAND_PD_ICL_MA		2000	/* pd-iclmax-ma: PD at 5 V */
+ #define ICELAND_PD_MV			9000
+-#define ICELAND_PD_9V_VBAT_MAX_UV	4500000
++#define ICELAND_PD_5V_MV		5000
++#define ICELAND_PD_9V_VBAT_MAX_UV	4500000	/* vbatt_pdqc_to_9v_thr = vbatt_pdqc_to_5v_thr */
++#define ICELAND_PD_STOCK_POWER_MW	13500	/* stock's PD row (input-power-mw), for reference */
++#define ICELAND_PD_POWER_MW		20000	/* the owner's PD row, above stock (see above) */
++#define ICELAND_PD_9V_ICL_MA		2220	/* 20 W at 9 V, rounded down */
++#define ICELAND_PD_9V_AICL_MV		7500	/* OURS: a 9 V contract holds (charge_boost_lite) */
++/*
++ * The cool-down reaches this driver as the host's charge current cap (constant_charge_current_max):
++ * the guard writes the smallest of its temperature region's current, its USB-C connector cool-down
++ * (1200 mA, level 1) and iceland-thermal's gear (1200 / 1500 / 2000 mA, levels 1-3). Any cap below
++ * the PD row's charge current counts as a cool-down. That also takes the cold / warm temperature
++ * regions (1959 / 1000 mA) to 5 V, which stock does not (OURS, the lower side: the cap does not say
++ * which rule set it).
++ */
++#define ICELAND_PD_9V_FCC_MIN_UA	3300000
++#define ICELAND_PD_5V_TRIES		3	/* 5 V requests per attach the charger may ignore */
+ /* type changes followed during one attach; one more puts the "unknown" limits in force until the unplug */
+ #define ICELAND_TYPE_CHANGES_MAX	5
+ 
+@@ -2369,7 +2398,7 @@ static void qcom_battmgr_iceland_type_limits(unsigned int type, unsigned int *po
+ 	case POWER_SUPPLY_USB_TYPE_PD:
+ 	case POWER_SUPPLY_USB_TYPE_PD_DRP:
+ 	case POWER_SUPPLY_USB_TYPE_PD_PPS:
+-		*power_mw = 13500;
++		*power_mw = ICELAND_PD_POWER_MW;
+ 		*fcc_ma = 3300;
+ 		break;
+ 	default:	/* unknown, Type-C current, ACA, Apple brick: the stock "unknown" limits */
+@@ -2379,18 +2408,36 @@ static void qcom_battmgr_iceland_type_limits(unsigned int type, unsigned int *po
+ 	}
+ }
+ 
++static bool qcom_battmgr_iceland_is_pd(unsigned int type)
++{
++	return type == POWER_SUPPLY_USB_TYPE_PD || type == POWER_SUPPLY_USB_TYPE_PD_DRP ||
++	       type == POWER_SUPPLY_USB_TYPE_PD_PPS;
++}
++
++/* VBUS may be 9 V: above the 5 V / 9 V midpoint the setup uses everywhere */
++static bool qcom_battmgr_iceland_vbus_high(unsigned int vbus_mv)
++{
++	return vbus_mv > ICELAND_PD_MV - 2000;
++}
++
+ static unsigned int qcom_battmgr_iceland_icl_ua(unsigned int type, unsigned int power_mw,
+ 						unsigned int vbus_mv)
+ {
+ 	unsigned int icl_ma = power_mw * 1000 / vbus_mv;
+ 
+-	if (type == POWER_SUPPLY_USB_TYPE_PD || type == POWER_SUPPLY_USB_TYPE_PD_DRP ||
+-	    type == POWER_SUPPLY_USB_TYPE_PD_PPS)
+-		icl_ma = min(icl_ma, ICELAND_PD_ICL_MA);
++	if (qcom_battmgr_iceland_is_pd(type))
++		icl_ma = min(icl_ma, qcom_battmgr_iceland_vbus_high(vbus_mv) ?
++				     ICELAND_PD_9V_ICL_MA : ICELAND_PD_ICL_MA);
+ 
+ 	return icl_ma * 1000;
+ }
+ 
++/* a cool-down (ICELAND_PD_9V_FCC_MIN_UA) applies: PD stays at, or goes back to, 5 V; lock held */
++static bool qcom_battmgr_iceland_pd_cool_down(struct qcom_battmgr *battmgr)
++{
++	return battmgr->chg_fcc_host_ua && battmgr->chg_fcc_host_ua < ICELAND_PD_9V_FCC_MIN_UA;
++}
++
+ /*
+  * constant_charge_current_max: the host can lower the charge current (never raise it above the attach value).
+  * 0 is refused rather than read as "no cap": use charge_behaviour to stop charging.
+@@ -2611,11 +2658,44 @@ static unsigned int qcom_battmgr_iceland_aicl(struct qcom_battmgr *battmgr, unsi
+ 	return held * 1000;
+ }
+ 
++/*
++ * At 9 V: from the ladder's top step (2000 mA, 18 W at 9 V) up to the PD row's 9 V current
++ * (the owner's 20 W, see ICELAND_PD_POWER_MW). Only after the 5 V ladder held its top step,
++ * and kept only while the source holds it: no VBUS collapse and VBUS at ICELAND_PD_9V_AICL_MV
++ * or above 50 ms after the write. Anything else (refused write, collapse, low or unreadable
++ * VBUS) goes back to @icl_ua. Returns the input current in force. Called with the lock held.
++ */
++static unsigned int qcom_battmgr_iceland_pd_raise(struct qcom_battmgr *battmgr, unsigned int type,
++						  unsigned int power_mw, unsigned int vbus_mv,
++						  unsigned int icl_5v_ua, unsigned int icl_ua)
++{
++	unsigned int icl_9v_ua = qcom_battmgr_iceland_icl_ua(type, power_mw, vbus_mv);
++	bool collapse_ok = true;
++	unsigned int mv = 0;
++	int ret;
++
++	if (icl_5v_ua < ICELAND_PD_ICL_MA * 1000 || icl_9v_ua <= icl_ua)
++		return icl_ua;
++
++	ret = qcom_battmgr_oplus_set(battmgr, OPLUS_USB_INPUT_CURR_LIMIT, icl_9v_ua);
++	if (!ret && qcom_battmgr_iceland_aicl_held(battmgr, ICELAND_PD_9V_AICL_MV, &collapse_ok,
++						   &mv))
++		return icl_9v_ua;
++
++	dev_info(battmgr->dev,
++		 "charger: 9 V input current %u uA not held (%d, VBUS %u mV), back to %u uA\n",
++		 icl_9v_ua, ret, mv, icl_ua);
++	ret = qcom_battmgr_oplus_set(battmgr, OPLUS_USB_INPUT_CURR_LIMIT, icl_ua);
++	qcom_battmgr_iceland_check(battmgr, ret, "input current limit");
++
++	return icl_ua;
++}
++
+ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+ {
+ 	unsigned int type, power_mw, fcc_ma, icl_ua, mv;
+ 	unsigned int icl_ask_ua, icl_5v_ua, aicl_mv = 0, vbus_mv;
+-	bool pd;
++	bool pd, want_9v;
+ 	int ret;
+ 
+ 	mutex_lock(&battmgr->lock);
+@@ -2627,11 +2707,16 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+ 	/*
+ 	 * The input current ask is computed at the VBUS in force. A setup that runs while a PD charger already
+ 	 * holds 9 V (a type change after the 9 V request, the release of a host input suspend) would otherwise ask
+-	 * the 5 V current (2000 mA) at 9 V = 18 W, above stock's 13.5 W, until the 9 V branch lowers it - and not at
+-	 * all with the battery at or above 4.5 V. An unreadable VBUS counts as 9 V (fail low).
++	 * a 5 V current at 9 V, above the row's power, until the 9 V branch lowers it - and not at
++	 * all with the battery at or above 4.5 V. An unreadable VBUS counts as 9 V (fail low), for
++	 * the poll's 5 V check too.
+ 	 */
+ 	ret = qcom_battmgr_request_property(battmgr, BATTMGR_USB_PROPERTY_GET, USB_VOLT_NOW, 0);
+ 	vbus_mv = ret ? ICELAND_PD_MV : max(battmgr->usb.voltage_now / 1000, 5000U);
++	battmgr->pd_9v = qcom_battmgr_iceland_vbus_high(vbus_mv);
++	battmgr->pd_9v_again = false;
++	battmgr->pd_5v_tries = 0;
++	battmgr->pd_icl_5v_ua = OPLUS_USB_ICL_BOOT_UA;
+ 
+ 	/* the charger type as the sysfs path reads it on this firmware: USB_ADAP_TYPE, mapped */
+ 	ret = qcom_battmgr_request_property(battmgr, BATTMGR_USB_PROPERTY_GET, USB_ADAP_TYPE, 0);
+@@ -2640,8 +2725,7 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+ 		type = POWER_SUPPLY_USB_TYPE_UNKNOWN;
+ 	battmgr->chg_type = type;
+ 	qcom_battmgr_iceland_type_limits(type, &power_mw, &fcc_ma);
+-	pd = type == POWER_SUPPLY_USB_TYPE_PD || type == POWER_SUPPLY_USB_TYPE_PD_DRP ||
+-	     type == POWER_SUPPLY_USB_TYPE_PD_PPS;
++	pd = qcom_battmgr_iceland_is_pd(type);
+ 
+ 	battmgr->chg_fcc_ua = fcc_ma * 1000;
+ 	qcom_battmgr_iceland_check(battmgr,
+@@ -2677,21 +2761,32 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+ 	icl_5v_ua = qcom_battmgr_iceland_aicl(battmgr, type, icl_ask_ua, &aicl_mv);
+ 	icl_ua = icl_5v_ua;
+ 	mv = 0;		/* VBUS is only read after a 9 V request */
++	battmgr->pd_icl_5v_ua = min(icl_5v_ua,
++				    qcom_battmgr_iceland_icl_ua(type, power_mw, ICELAND_PD_5V_MV));
+ 
+ 	/*
+-	 * Stock asks for 9 V only below 4.5 V; lower the input current first so 9 V never exceeds the power. Only
+-	 * from 5 V: at 9 V already the ask above is the 9 V one and no request is needed.
++	 * Stock asks for 9 V only below 4.5 V and outside its cool-down levels 1-3; lower the
++	 * input current first so 9 V never exceeds the power. Only from 5 V: at 9 V already the
++	 * ask above is the 9 V one and no request is needed (the poll's check goes back to 5 V
++	 * if needed). The ladder's top step at 9 V is 18 W.
+ 	 */
+-	if (pd && vbus_mv <= ICELAND_PD_MV - 2000 && !qcom_battmgr_oplus_update_gauge(battmgr) &&
+-	    battmgr->status.voltage_now < ICELAND_PD_9V_VBAT_MAX_UV) {
++	want_9v = pd && !battmgr->pd_9v && !qcom_battmgr_oplus_update_gauge(battmgr) &&
++		  battmgr->status.voltage_now < ICELAND_PD_9V_VBAT_MAX_UV;
++	if (want_9v && qcom_battmgr_iceland_pd_cool_down(battmgr)) {
++		/* 9 V once the cool-down ends, through the poll's check */
++		battmgr->pd_9v_again = true;
++		want_9v = false;
++	}
++	if (want_9v) {
+ 		icl_ua = min(qcom_battmgr_iceland_icl_ua(type, power_mw, ICELAND_PD_MV), icl_5v_ua);
+ 		ret = qcom_battmgr_oplus_set(battmgr, OPLUS_USB_INPUT_CURR_LIMIT, icl_ua);
+ 		qcom_battmgr_iceland_check(battmgr, ret, "9 V input current limit");
+-		/* no 9 V request unless the lower current is in place */
+-		if (!ret)
+-			qcom_battmgr_iceland_check(battmgr,
+-						   qcom_battmgr_oplus_set(battmgr, OPLUS_SET_PDO, ICELAND_PD_MV),
+-						   "9 V request");
++		/* no 9 V request unless the lower current is in place; then VBUS may be 9 V */
++		if (!ret) {
++			battmgr->pd_9v = true;
++			ret = qcom_battmgr_oplus_set(battmgr, OPLUS_SET_PDO, ICELAND_PD_MV);
++			qcom_battmgr_iceland_check(battmgr, ret, "9 V request");
++		}
+ 		mutex_unlock(&battmgr->lock);
+ 
+ 		msleep(OPLUS_PDO_SETTLE_MS);
+@@ -2704,12 +2799,20 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+ 		 * The charger stayed at 5 V: the 5 V input current again. If VBUS could not be read, keep the lower
+ 		 * 9 V current (fail low: VBUS may be 9 V).
+ 		 */
+-		if (!ret && mv <= ICELAND_PD_MV - 2000) {
++		if (!ret && !qcom_battmgr_iceland_vbus_high(mv))
++			battmgr->pd_9v = false;
++		/* an input suspend the host set during the wait stays in force: no current write */
++		if (battmgr->input_suspend) {
++			icl_ua = 0;
++		} else if (!ret && !battmgr->pd_9v) {
+ 			icl_ua = icl_5v_ua;	/* what the source held at 5 V */
+ 			qcom_battmgr_iceland_check(battmgr,
+ 						   qcom_battmgr_oplus_set(battmgr, OPLUS_USB_INPUT_CURR_LIMIT,
+ 									  icl_ua),
+ 						   "input current limit");
++		} else if (!ret) {
++			icl_ua = qcom_battmgr_iceland_pd_raise(battmgr, type, power_mw, mv,
++							       icl_5v_ua, icl_ua);
+ 		}
+ 	}
+ 	mutex_unlock(&battmgr->lock);
+@@ -2721,6 +2824,87 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+ 		 battmgr->chg_limit_hold ? ", charging held by the charge limit" : "");
+ }
+ 
++/*
++ * Stock checks the PD voltage while charging, not only at the attach: back to 5 V when the
++ * battery reaches 4.5 V (vbatt_pdqc_to_5v_thr) or a cool-down level 1-3 applies
++ * (cool_down_pdqc_vol_mv, see ICELAND_PD_9V_FCC_MIN_UA), and 9 V again once the cool-down is
++ * over. Run from the attach poll while a charger is in. As on the way up the input current goes
++ * down first (the 5 V current is at most 2000 mA, 18 W at 9 V), then the 5 V request. An
++ * unreadable battery voltage goes to 5 V as well; an unreadable VBUS after the request counts as
++ * 9 V (fail low) and the next poll asks again, up to ICELAND_PD_5V_TRIES times. 9 V again is a
++ * new attach setup: the ladder from its floor and the 9 V request with all its checks.
++ */
++static void qcom_battmgr_iceland_pd_check(struct qcom_battmgr *battmgr)
++{
++	unsigned int icl_ua, mv;
++	const char *why;
++	bool again = true;
++	int ret;
++
++	mutex_lock(&battmgr->lock);
++	/* the host's input suspend: no current write (none flows); its release runs a setup */
++	if (battmgr->input_suspend || !battmgr->usb.online || !battmgr->charger_configured)
++		goto out_unlock;
++
++	if (!battmgr->pd_9v) {
++		if (battmgr->pd_9v_again && !qcom_battmgr_iceland_pd_cool_down(battmgr) &&
++		    !qcom_battmgr_oplus_update_gauge(battmgr) &&
++		    battmgr->status.voltage_now < ICELAND_PD_9V_VBAT_MAX_UV) {
++			battmgr->pd_9v_again = false;
++			/* the next poll runs the attach setup */
++			battmgr->charger_configured = false;
++			dev_info(battmgr->dev, "charger: no cool-down any more, a new setup for 9 V\n");
++		}
++		goto out_unlock;
++	}
++	if (battmgr->pd_5v_tries >= ICELAND_PD_5V_TRIES)
++		goto out_unlock;
++
++	if (qcom_battmgr_iceland_pd_cool_down(battmgr)) {
++		why = "cool-down";
++	} else if (qcom_battmgr_oplus_update_gauge(battmgr)) {
++		why = "battery voltage unreadable";
++	} else if (battmgr->status.voltage_now >= ICELAND_PD_9V_VBAT_MAX_UV) {
++		why = "battery at 4.5 V";
++		again = false;
++	} else {
++		goto out_unlock;
++	}
++
++	battmgr->pd_5v_tries++;
++	icl_ua = battmgr->pd_icl_5v_ua;
++	/* the 5 V request goes out even if the lower current was refused: 5 V is the lower power */
++	ret = qcom_battmgr_oplus_set(battmgr, OPLUS_USB_INPUT_CURR_LIMIT, icl_ua);
++	qcom_battmgr_iceland_check(battmgr, ret, "5 V input current limit");
++	ret = qcom_battmgr_oplus_set(battmgr, OPLUS_SET_PDO, ICELAND_PD_5V_MV);
++	qcom_battmgr_iceland_check(battmgr, ret, "5 V request");
++	mutex_unlock(&battmgr->lock);
++
++	msleep(OPLUS_PDO_SETTLE_MS);
++
++	mutex_lock(&battmgr->lock);
++	ret = qcom_battmgr_request_property(battmgr, BATTMGR_USB_PROPERTY_GET, USB_VOLT_NOW, 0);
++	mv = ret ? 0 : battmgr->usb.voltage_now / 1000;
++	if (!ret && !qcom_battmgr_iceland_vbus_high(mv)) {
++		battmgr->pd_9v = false;
++		battmgr->pd_9v_again = again;
++		/* the 5 V current again after the new contract (a suspend set meanwhile stays) */
++		if (!battmgr->input_suspend) {
++			ret = qcom_battmgr_oplus_set(battmgr, OPLUS_USB_INPUT_CURR_LIMIT, icl_ua);
++			qcom_battmgr_iceland_check(battmgr, ret, "input current limit");
++		}
++		dev_info(battmgr->dev, "charger: back to 5 V (%s), input limit %u uA, VBUS %u mV\n",
++			 why, icl_ua, mv);
++	} else {
++		dev_warn(battmgr->dev,
++			 "charger: 5 V request %u of %u (%s): VBUS %s%u mV, the input limit stays %u uA\n",
++			 battmgr->pd_5v_tries, ICELAND_PD_5V_TRIES, why,
++			 ret ? "unreadable " : "", mv, icl_ua);
++	}
++out_unlock:
++	mutex_unlock(&battmgr->lock);
++}
++
+ static void qcom_battmgr_oplus_setup_charger(struct qcom_battmgr *battmgr)
+ {
+ 	static const unsigned int pdo_mv[] = { 12000, 9000 };
+@@ -2772,7 +2956,7 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+ 	struct qcom_battmgr *battmgr = container_of(to_delayed_work(work),
+ 						    struct qcom_battmgr, cid_work);
+ 	unsigned int next = OPLUS_CID_POLL_MS;
+-	bool attached, setup_charger = false, status_changed = false;
++	bool attached, setup_charger = false, pd_check = false, status_changed = false;
+ 	int ret;
+ 
+ 	if (!battmgr->service_up)
+@@ -2834,6 +3018,9 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+ 		 */
+ 		if (!battmgr->usb.online) {
+ 			battmgr->chg_type_changes = 0;
++			/* the firmware starts every attach at 5 V */
++			battmgr->pd_9v = false;
++			battmgr->pd_9v_again = false;
+ 		} else if (battmgr->chg_stock_limits && !setup_charger &&
+ 			   battmgr->chg_type_changes <= ICELAND_TYPE_CHANGES_MAX &&
+ 			   !qcom_battmgr_request_property(battmgr, BATTMGR_USB_PROPERTY_GET,
+@@ -2846,6 +3033,7 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+ 				 ": too many, the unknown-type limits until the unplug" : "");
+ 			setup_charger = true;
+ 		}
++		pd_check = battmgr->chg_stock_limits && battmgr->usb.online && !setup_charger;
+ 		next = OPLUS_CID_IDLE_POLL_MS;
+ 		goto out_unlock;
+ 	}
+@@ -2878,6 +3066,8 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+ 
+ 	if (setup_charger)
+ 		qcom_battmgr_oplus_setup_charger(battmgr);
++	else if (pd_check)
++		qcom_battmgr_iceland_pd_check(battmgr);
+ 
+ 	queue_delayed_work(system_dfl_long_wq, &battmgr->cid_work, msecs_to_jiffies(next));
+ }
+-- 
+2.43.0
+
