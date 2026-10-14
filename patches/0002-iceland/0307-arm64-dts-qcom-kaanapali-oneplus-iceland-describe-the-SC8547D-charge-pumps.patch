@@ -1,0 +1,116 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Wed, 14 Oct 2026 16:40:00 +0300
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: describe the
+ SC8547D charge pumps (disabled)
+
+The Pad 4 has two Southchip SC8547D 2:1 charge pumps for VOOC /
+SuperVOOC and PPS charging. The stock device tree has the primary one,
+which is also the VOOC / UFCS PHY, at 0x6a on qupv3_hub_i2c0 (our
+i2c_hub_0) with its interrupt on gpio0, and the secondary one at 0x6a
+on qupv3_se12_i2c (our i2c12) with its interrupt on gpio3; both buses
+run at 400 kHz (qcom,clk-freq-out). Stock has no other device on
+either bus. The interrupt pins are plain GPIO inputs with a pull-up and
+2 mA drive (charging_inter_active / slave_charging_inter_active, the
+same as the _sleep states); the vendor driver requests the interrupt
+falling-edge triggered.
+
+Describe both chips, their interrupts and pin states, and the bus rate.
+Nothing changes at run time: both buses stay disabled, both chip nodes
+are disabled and no driver binds to them, so none of the pins is muxed
+or configured. gpio0, gpio3, gpio66 / gpio67 (i2c_hub_0) and
+gpio208 / gpio209 (i2c12) are outside gpio-reserved-ranges. This is the
+first step towards a charge-pump driver; a read-only identification
+test enables the two buses through a test-only DTB.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 58 +
+ 1 file changed, 58 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1398,6 +1398,27 @@
+ 	drive-strength = <8>;
+ };
+ 
++/*
++ * The secondary SC8547D 2:1 charge pump of the VOOC / SuperVOOC path (stock:
++ * sc8547-charger-slave@6A on qupv3_se12_i2c, 400 kHz, IRQ on gpio3). Only
++ * described: the bus stays disabled and no driver binds to the chip.
++ */
++&i2c12 {
++	clock-frequency = <400000>;
++
++	sc8547d_secondary: charger@6a {
++		compatible = "southchip,sc8547d";
++		reg = <0x6a>;
++
++		interrupts-extended = <&tlmm 3 IRQ_TYPE_EDGE_FALLING>;
++
++		pinctrl-0 = <&cp_secondary_int_default>;
++		pinctrl-names = "default";
++
++		status = "disabled";
++	};
++};
++
+ &i2c14 {
+ 	status = "okay";
+ 
+@@ -1421,6 +1442,27 @@
+ 	};
+ };
+ 
++/*
++ * The primary SC8547D 2:1 charge pump, also the VOOC / UFCS PHY (stock:
++ * oplus,sc8547d@6A on qupv3_hub_i2c0, 400 kHz, IRQ on gpio0). Only
++ * described: the bus stays disabled and no driver binds to the chip.
++ */
++&i2c_hub_0 {
++	clock-frequency = <400000>;
++
++	sc8547d_primary: charger@6a {
++		compatible = "southchip,sc8547d";
++		reg = <0x6a>;
++
++		interrupts-extended = <&tlmm 0 IRQ_TYPE_EDGE_FALLING>;
++
++		pinctrl-0 = <&cp_primary_int_default>;
++		pinctrl-names = "default";
++
++		status = "disabled";
++	};
++};
++
+ &i2c_hub_1 {
+ 	/* the vendor I2C driver's default; the vendor tree sets no other rate for this bus */
+ 	clock-frequency = <400000>;
+@@ -2173,6 +2215,22 @@
+ 	/* stock's qcom,gpios-reserved: 36-43, 74, 119, 120, 144-147 */
+ 	gpio-reserved-ranges = <36 8>, <74 1>, <119 2>, <144 4>;
+ 
++	/* stock charging_inter_active (= _sleep): the primary SC8547D's interrupt */
++	cp_primary_int_default: cp-primary-int-default-state {
++		pins = "gpio0";
++		function = "gpio";
++		drive-strength = <2>;
++		bias-pull-up;
++	};
++
++	/* stock slave_charging_inter_active (= _sleep): the secondary SC8547D's interrupt */
++	cp_secondary_int_default: cp-secondary-int-default-state {
++		pins = "gpio3";
++		function = "gpio";
++		drive-strength = <2>;
++		bias-pull-up;
++	};
++
+ 	/* the pogo data line as a GPIO: low = a dock is attached and unpowered or asleep (stock uart_wake_gpio) */
+ 	pogo_detect_default: pogo-detect-default-state {
+ 		pins = "gpio151";
+-- 
+2.43.0
+
