@@ -1,0 +1,47 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Saim Shujah <saimzst@gmail.com>
+Date: Wed, 26 Aug 2026 23:24:59 +0500
+Subject: [PATCH] drm/msm/dpu: clear pending flush state before physical
+ cleanup
+
+Hardware can consume an active-frame CTL flush while the cached software
+pending-flush mask retains the submitted bits. Video-mode disable stops the
+timing engine before physical cleanup, which then adds teardown bits to the
+stale cached mask.
+
+The teardown trigger can replay source-pipe bits after timing
+stops, leaving one pending and preventing the first commit after re-enable.
+
+Clear the cached pending-flush bookkeeping before constructing the teardown
+state. clear_pending_flush() updates software bookkeeping only; it does not
+write the hardware CTL_FLUSH register.
+
+Fixes: 22cb02bc96ff ("drm/msm/disp/dpu: reset the datapath after timing engine disable")
+Cc: stable@vger.kernel.org
+Signed-off-by: Saim Shujah <saimzst@gmail.com>
+Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+Link: https://lore.kernel.org/r/20260826182459.1506522-1-saimzst@gmail.com
+
+[ from patchwork.kernel.org series 1152247, patch 1; not applied upstream yet ]
+[ upstream author: Saim Shujah <saimzst@gmail.com>; picked for the iceland kernel q89 ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+index cdb33b9a371a..93ad4248930c 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+@@ -2927,6 +2927,7 @@ void dpu_encoder_helper_phys_cleanup(struct dpu_encoder_phys *phys_enc)
+ 
+ 	dpu_enc = to_dpu_encoder_virt(phys_enc->parent);
+ 
++	ctl->ops.clear_pending_flush(ctl);
+ 	ctl->ops.reset(ctl);
+ 
+ 	dpu_encoder_helper_reset_mixers(phys_enc);
+-- 
+2.43.0
+

@@ -1,0 +1,78 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 16 Oct 2026 02:10:20 +0300
+Subject: [PATCH] drm/msm/dpu: compute the CRTC clock from the state being
+ checked
+
+_dpu_core_perf_calc_clk() is called with the new CRTC state but takes
+the largest plane clock over drm_atomic_crtc_for_each_plane(), i.e. the
+planes of the committed state. When the CRTC is re-enabled (DPMS on,
+system resume) the committed state has no planes attached, so the check
+computes the core clock from the mode alone and ignores plane_clk of
+the planes that the same commit attaches, until a later commit.
+
+Commit 480ba24aa340 ("drm/msm/dpu: compute the CRTC bandwidth from the
+state being checked") fixed the same mistake for the bandwidth. Iterate
+the plane states of the CRTC state being checked here too, and drop
+the then unused crtc argument.
+drm_atomic_crtc_state_for_each_plane_state() falls back to the current
+plane state for planes that are not part of the commit, so the result
+is unchanged for commits that do touch the planes.
+
+Fixes: c33b7c0389e1 ("drm/msm/dpu: add support for clk and bw scaling for display")
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_core_perf.c | 16 +++++-----------
+ 1 file changed, 5 insertions(+), 11 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_core_perf.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_core_perf.c
+index 9fa55904dba1..4f5c70229f63 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_core_perf.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_core_perf.c
+@@ -80,15 +80,14 @@ static u64 _dpu_core_perf_calc_bw(const struct dpu_perf_cfg *perf_cfg,
+ /**
+  * _dpu_core_perf_calc_clk() - to calculate clock per crtc
+  * @perf_cfg: performance configuration
+- * @crtc: pointer to a crtc
+  * @state: pointer to a crtc state
+  * Return: returns max clk for all planes in crtc.
+  */
+ static u64 _dpu_core_perf_calc_clk(const struct dpu_perf_cfg *perf_cfg,
+-		struct drm_crtc *crtc, struct drm_crtc_state *state)
++		struct drm_crtc_state *state)
+ {
+ 	struct drm_plane *plane;
+-	struct dpu_plane_state *pstate;
++	const struct drm_plane_state *plane_state;
+ 	struct drm_display_mode *mode;
+ 	u64 mode_clk;
+ 
+@@ -96,13 +95,8 @@ static u64 _dpu_core_perf_calc_clk(const struct dpu_perf_cfg *perf_cfg,
+ 
+ 	mode_clk = (u64)mode->vtotal * mode->hdisplay * drm_mode_vrefresh(mode);
+ 
+-	drm_atomic_crtc_for_each_plane(plane, crtc) {
+-		pstate = to_dpu_plane_state(plane->state);
+-		if (!pstate)
+-			continue;
+-
+-		mode_clk = max(pstate->plane_clk, mode_clk);
+-	}
++	drm_atomic_crtc_state_for_each_plane_state(plane, plane_state, state)
++		mode_clk = max(to_dpu_plane_state(plane_state)->plane_clk, mode_clk);
+ 
+ 	return dpu_core_perf_adjusted_mode_clk(mode_clk, perf_cfg);
+ }
+@@ -128,7 +122,7 @@ static void _dpu_core_perf_calc_crtc(const struct dpu_core_perf *core_perf,
+ 
+ 	perf->bw_ctl = _dpu_core_perf_calc_bw(perf_cfg, state);
+ 	perf->max_per_pipe_ib = perf_cfg->min_dram_ib;
+-	perf->core_clk_rate = _dpu_core_perf_calc_clk(perf_cfg, crtc, state);
++	perf->core_clk_rate = _dpu_core_perf_calc_clk(perf_cfg, state);
+ 	DRM_DEBUG_ATOMIC(
+ 		"crtc=%d clk_rate=%llu core_ib=%u core_ab=%u\n",
+ 			crtc->base.id, perf->core_clk_rate,
+-- 
+2.43.0
+

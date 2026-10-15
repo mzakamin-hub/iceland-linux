@@ -1,0 +1,253 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 16 Oct 2026 02:21:23 +0300
+Subject: [PATCH] drm/msm/dpu: cap the resume latency of the MDSS interrupt CPU
+ while on
+
+The DPU interrupts are children of the MDSS interrupt controller, whose
+parent interrupt is chained, so all of them run on the one CPU that the
+parent is routed to (CPU0 by default; the affinity of a chained
+interrupt cannot be changed from user space). When that CPU's cluster
+and the system power domain are collapsed, every vblank and frame-done
+interrupt waits for the domain exit. On a Kaanapali tablet (OnePlus Pad
+4, dual-DSI video mode panel) the vblank interrupt latency measured with
+the irq tracepoints was 1.9 to 2.2 ms in every stage, the exit latency of
+the little cluster's power-down state (1983 us in the DT); with all deep
+idle blocked through /dev/cpu_dma_latency it dropped to 126 us and the
+screen glitches of that stage were gone.
+
+While any CRTC is enabled, hold a DEV_PM_QOS_RESUME_LATENCY request on
+the CPU device of the CPU that takes the MDSS interrupt, resolved from
+the effective affinity of the MDSS parent interrupt (CPU0 if it cannot
+be resolved). The cpuidle governors and the genpd CPU domain governor
+(cpu_power_down_ok()) honour the per-CPU resume latency, so a limit of
+500 us keeps the cluster and system domains of that CPU powered while
+the display scans out and still allows the CPU's own power-down state.
+The request is added with the first enabled CRTC and removed with the
+last disabled one; system suspend disables the CRTCs first
+(drm_mode_config_helper_suspend()), so neither a blanked screen nor
+s2idle is held back.
+
+The limit is the module parameter msm.dpu_irq_cpu_latency_us (default
+500, 0 = off, applied at the next enable); the read-only parameter
+msm.dpu_irq_cpu_latency_cpu shows the CPU that holds the request now
+(-1 = none), as the cpuN/power/pm_qos_resume_latency_us file shows only
+the request made through sysfs.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c |   2 +
+ drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c  | 113 +++++++++++++++++++++++
+ drivers/gpu/drm/msm/disp/dpu1/dpu_kms.h  |  13 +++
+ 3 files changed, 128 insertions(+)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
+index 9da81f77430b..d1c6a8ea4318 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
+@@ -1274,6 +1274,7 @@ static void dpu_crtc_disable(struct drm_crtc *crtc,
+ 		spin_unlock_irqrestore(&crtc->dev->event_lock, flags);
+ 	}
+ 
++	dpu_kms_irq_cpu_latency_put(_dpu_crtc_get_kms(crtc));
+ 	pm_runtime_put_sync(crtc->dev->dev);
+ }
+ 
+@@ -1288,6 +1289,7 @@ static void dpu_crtc_enable(struct drm_crtc *crtc,
+ 	old_crtc_state = drm_atomic_get_old_crtc_state(state, crtc);
+ 
+ 	pm_runtime_get_sync(crtc->dev->dev);
++	dpu_kms_irq_cpu_latency_get(_dpu_crtc_get_kms(crtc));
+ 
+ 	DRM_DEBUG_KMS("crtc%d\n", crtc->base.id);
+ 
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
+index 963e85fabe51..2951984edffa 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
+@@ -9,9 +9,11 @@
+ 
+ #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
+ 
++#include <linux/cpu.h>
+ #include <linux/debugfs.h>
+ #include <linux/delay.h>
+ #include <linux/dma-buf.h>
++#include <linux/irq.h>
+ #include <linux/of_address.h>
+ #include <linux/of_irq.h>
+ #include <linux/pm_opp.h>
+@@ -57,6 +59,16 @@
+ bool dpu_use_virtual_planes = true;
+ module_param(dpu_use_virtual_planes, bool, 0);
+ 
++static unsigned int dpu_irq_cpu_latency_us = 500;
++module_param(dpu_irq_cpu_latency_us, uint, 0644);
++MODULE_PARM_DESC(dpu_irq_cpu_latency_us,
++		 "Resume latency limit in us of the CPU that takes the MDSS interrupt while a CRTC is enabled, applied at the next enable (0 = off, default 500)");
++
++static int dpu_irq_cpu_latency_cpu = -1;
++module_param(dpu_irq_cpu_latency_cpu, int, 0444);
++MODULE_PARM_DESC(dpu_irq_cpu_latency_cpu,
++		 "CPU that holds the dpu_irq_cpu_latency_us request now (-1 = none)");
++
+ static int dpu_kms_hw_init(struct msm_kms *kms);
+ static void _dpu_kms_mmu_destroy(struct dpu_kms *dpu_kms);
+ 
+@@ -1385,6 +1397,103 @@ static int dpu_kms_mmap_dpu(struct dpu_kms *dpu_kms)
+ 	return 0;
+ }
+ 
++/*
++ * The DPU interrupt is a child of the MDSS interrupt controller, whose parent
++ * interrupt is chained: every DPU interrupt runs on the CPU that the parent
++ * interrupt is routed to. Resolve that CPU from the parent's effective
++ * affinity; CPU0 when it cannot be resolved.
++ */
++static unsigned int dpu_kms_irq_cpu(struct dpu_kms *dpu_kms)
++{
++	struct device *mdss = dpu_kms->pdev->dev.parent;
++	const struct cpumask *mask;
++	struct irq_data *d;
++	unsigned int cpu;
++	int irq;
++
++	if (!mdss || !mdss->of_node ||
++	    !of_property_read_bool(mdss->of_node, "interrupt-controller"))
++		return 0;
++
++	irq = of_irq_get(mdss->of_node, 0);
++	d = irq > 0 ? irq_get_irq_data(irq) : NULL;
++	if (!d)
++		return 0;
++
++	mask = irq_data_get_effective_affinity_mask(d);
++	cpu = cpumask_first_and(mask, cpu_online_mask);
++	if (cpu >= nr_cpu_ids)
++		cpu = cpumask_first_and(irq_data_get_affinity_mask(d), cpu_online_mask);
++
++	return cpu < nr_cpu_ids ? cpu : 0;
++}
++
++/**
++ * dpu_kms_irq_cpu_latency_get() - limit the resume latency of the MDSS IRQ CPU
++ * @dpu_kms: the DPU KMS
++ *
++ * Called when a CRTC is enabled. With the first enabled CRTC, add a resume
++ * latency request of dpu_irq_cpu_latency_us on the CPU that takes the MDSS
++ * interrupt. The cpuidle governors and the genpd CPU domain governor honour
++ * it, so the CPU and its cluster stay out of idle states whose exit latency
++ * would delay the vblank and frame-done interrupts by milliseconds.
++ */
++void dpu_kms_irq_cpu_latency_get(struct dpu_kms *dpu_kms)
++{
++	unsigned int us = READ_ONCE(dpu_irq_cpu_latency_us);
++	struct device *cpu_dev;
++	unsigned int cpu;
++	int ret;
++
++	mutex_lock(&dpu_kms->irq_cpu_lock);
++	if (dpu_kms->irq_cpu_users++ || !us)
++		goto out;
++
++	cpu = dpu_kms_irq_cpu(dpu_kms);
++	cpu_dev = get_cpu_device(cpu);
++	if (!cpu_dev)
++		goto out;
++
++	ret = dev_pm_qos_add_request(cpu_dev, &dpu_kms->irq_cpu_req,
++				     DEV_PM_QOS_RESUME_LATENCY,
++				     min_t(unsigned int, us, S32_MAX));
++	if (ret < 0) {
++		DPU_ERROR("cpu%u resume latency request failed: %d\n", cpu, ret);
++		goto out;
++	}
++
++	WRITE_ONCE(dpu_irq_cpu_latency_cpu, cpu);
++	DRM_DEBUG_KMS("cpu%u resume latency limited to %u us\n", cpu, us);
++out:
++	mutex_unlock(&dpu_kms->irq_cpu_lock);
++}
++
++/**
++ * dpu_kms_irq_cpu_latency_put() - drop the MDSS IRQ CPU resume latency limit
++ * @dpu_kms: the DPU KMS
++ *
++ * Called when a CRTC is disabled, also on the way into system suspend
++ * (drm_mode_config_helper_suspend()). With the last enabled CRTC, remove the
++ * request, so that a blanked screen and suspend reach every idle state.
++ */
++void dpu_kms_irq_cpu_latency_put(struct dpu_kms *dpu_kms)
++{
++	mutex_lock(&dpu_kms->irq_cpu_lock);
++	if (WARN_ON(!dpu_kms->irq_cpu_users))
++		goto out;
++
++	if (--dpu_kms->irq_cpu_users)
++		goto out;
++
++	if (dev_pm_qos_request_active(&dpu_kms->irq_cpu_req)) {
++		dev_pm_qos_remove_request(&dpu_kms->irq_cpu_req);
++		WRITE_ONCE(dpu_irq_cpu_latency_cpu, -1);
++		DRM_DEBUG_KMS("cpu resume latency limit released\n");
++	}
++out:
++	mutex_unlock(&dpu_kms->irq_cpu_lock);
++}
++
+ static int dpu_dev_probe(struct platform_device *pdev)
+ {
+ 	struct device *dev = &pdev->dev;
+@@ -1401,6 +1510,10 @@ static int dpu_dev_probe(struct platform_device *pdev)
+ 
+ 	dpu_kms->pdev = pdev;
+ 
++	ret = devm_mutex_init(dev, &dpu_kms->irq_cpu_lock);
++	if (ret)
++		return ret;
++
+ 	ret = devm_pm_opp_set_clkname(dev, "core");
+ 	if (ret)
+ 		return ret;
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.h
+index e39831a397b1..32e81dd561af 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.h
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.h
+@@ -9,6 +9,8 @@
+ #define __DPU_KMS_H__
+ 
+ #include <linux/interconnect.h>
++#include <linux/mutex.h>
++#include <linux/pm_qos.h>
+ 
+ #include <drm/drm_drv.h>
+ 
+@@ -101,6 +103,14 @@ struct dpu_kms {
+ 	atomic_t bandwidth_ref;
+ 	struct icc_path *path[2];
+ 	u32 num_paths;
++
++	/*
++	 * Resume latency request on the CPU that takes the MDSS interrupt,
++	 * held while any CRTC is enabled, see dpu_kms_irq_cpu_latency_get().
++	 */
++	struct mutex irq_cpu_lock;
++	unsigned int irq_cpu_users;
++	struct dev_pm_qos_request irq_cpu_req;
+ };
+ 
+ struct vsync_info {
+@@ -114,6 +124,9 @@ struct vsync_info {
+ 
+ #define to_dpu_kms(x) container_of(x, struct dpu_kms, base)
+ 
++void dpu_kms_irq_cpu_latency_get(struct dpu_kms *dpu_kms);
++void dpu_kms_irq_cpu_latency_put(struct dpu_kms *dpu_kms);
++
+ #define to_dpu_global_state(x) container_of(x, struct dpu_global_state, base)
+ 
+ /* Global private object state for tracking resources that are shared across
+-- 
+2.43.0
+

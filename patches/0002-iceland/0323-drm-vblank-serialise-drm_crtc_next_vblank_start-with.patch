@@ -1,0 +1,125 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+Date: Wed, 16 Sep 2026 16:22:41 +0300
+Subject: [PATCH] drm/vblank: serialise drm_crtc_next_vblank_start() with
+ vblank_off
+
+drm_crtc_vblank_off() zeroes vblank->hwmode.crtc_clock to arm the sanity
+check in drm_crtc_vblank_helper_get_vblank_timestamp_internal(), which
+asserts that an atomic driver never asks for a vblank timestamp while the
+mode timings are not set up.  The only caller that can ask for one outside
+the vblank machinery is the fence deadline code, and it decides from atomic
+state rather than from the vblank state:
+
+  msm_dpu ae01000.display-controller: [drm] drm_WARN_ON_ONCE(drm_drv_uses_atomic_modeset(dev))
+  WARNING: drivers/gpu/drm/drm_vblank.c:756 at drm_crtc_vblank_helper_get_vblank_timestamp_internal+0x310/0x380
+   drm_crtc_vblank_helper_get_vblank_timestamp
+   drm_crtc_get_last_vbltimestamp
+   drm_crtc_next_vblank_start
+   drm_atomic_helper_wait_for_fences
+   drm_atomic_helper_commit
+   drm_mode_cursor_universal
+   drm_mode_cursor_common
+   drm_mode_cursor_ioctl
+
+set_fence_deadline() skips CRTCs that need a modeset or are not active, but
+both of those describe the commit it is called for.  A cursor update on a
+CRTC that a concurrent, already swapped in commit is taking through
+drm_crtc_vblank_off() has neither flag set, and that commit runs in parallel
+by design: drm_atomic_helper_wait_for_fences() is called before
+drm_atomic_helper_swap_state(), i.e. before commit_tail() waits for the
+previous commit.  kms_cursor_legacy@long-nonblocking-modeset-vs-cursor-atomic
+hits this window.
+
+drm_crtc_next_vblank_start() cannot spot it either.  It guards on
+framedur_ns and linedur_ns, which drm_crtc_vblank_off() leaves at their old
+values, so it walks into the timestamp query anyway.  Nor would testing
+crtc_clock there be enough on its own: both it and the query read state the
+writer may be changing underneath.
+
+Take vblank_time_lock across the check and the query, and take it over the
+store in drm_crtc_vblank_off(), so the two cannot interleave, and reject the
+call when the mode timings are gone.  Every other reader of hwmode already
+holds this lock, drm_crtc_accurate_vblank_count() already calls into the
+same timestamp path under it from process context, and it is the innermost
+of the vblank locks, so nothing nests the wrong way round.
+
+This does put the driver's get_scanout_position() callback inside an
+interrupts-off section on the atomic commit path.  That is the same cost
+drm_crtc_accurate_vblank_count() already pays, and it is bounded by
+DRM_TIMESTAMP_MAXRETRIES.
+
+Fixes: d39e48ca80c0 ("drm/atomic-helper: Set fence deadline for vblank")
+Reported-by: Rob Clark <robin.clark@oss.qualcomm.com>
+Closes: https://gitlab.freedesktop.org/drm/msm/-/merge_requests/243#note_3662857
+Assisted-by: LLM
+Signed-off-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+Link: https://lore.kernel.org/r/20260916-vblank-deadline-lock-v1-1-df377ba7f184@oss.qualcomm.com
+
+[ from patchwork.kernel.org series 1166496, patch 1; not applied upstream yet ]
+[ upstream author: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>; picked for the iceland kernel q89 ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/drm_vblank.c | 20 +++++++++++++++-----
+ 1 file changed, 15 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/gpu/drm/drm_vblank.c b/drivers/gpu/drm/drm_vblank.c
+index f90fb2d13e42..2984ce3b68ed 100644
+--- a/drivers/gpu/drm/drm_vblank.c
++++ b/drivers/gpu/drm/drm_vblank.c
+@@ -1020,28 +1020,36 @@ EXPORT_SYMBOL(drm_crtc_vblank_count_and_time);
+  */
+ int drm_crtc_next_vblank_start(struct drm_crtc *crtc, ktime_t *vblanktime)
+ {
++	struct drm_device *dev = crtc->dev;
+ 	struct drm_vblank_crtc *vblank;
+ 	struct drm_display_mode *mode;
++	unsigned long irqflags;
+ 	u64 vblank_start;
++	int ret = -EINVAL;
+ 
+-	if (!drm_dev_has_vblank(crtc->dev))
++	if (!drm_dev_has_vblank(dev))
+ 		return -EINVAL;
+ 
+ 	vblank = drm_crtc_vblank_crtc(crtc);
+ 	mode = &vblank->hwmode;
+ 
+-	if (!vblank->framedur_ns || !vblank->linedur_ns)
+-		return -EINVAL;
++	spin_lock_irqsave(&dev->vblank_time_lock, irqflags);
++
++	if (!vblank->framedur_ns || !vblank->linedur_ns || !mode->crtc_clock)
++		goto out;
+ 
+ 	if (!drm_crtc_get_last_vbltimestamp(crtc, vblanktime, false))
+-		return -EINVAL;
++		goto out;
+ 
+ 	vblank_start = DIV_ROUND_DOWN_ULL(
+ 			(u64)vblank->framedur_ns * mode->crtc_vblank_start,
+ 			mode->crtc_vtotal);
+ 	*vblanktime  = ktime_add(*vblanktime, ns_to_ktime(vblank_start));
++	ret = 0;
++out:
++	spin_unlock_irqrestore(&dev->vblank_time_lock, irqflags);
+ 
+-	return 0;
++	return ret;
+ }
+ EXPORT_SYMBOL(drm_crtc_next_vblank_start);
+ 
+@@ -1405,7 +1413,9 @@ void drm_crtc_vblank_off(struct drm_crtc *crtc)
+ 
+ 	/* Will be reset by the modeset helpers when re-enabling the crtc by
+ 	 * calling drm_calc_timestamping_constants(). */
++	spin_lock_irq(&dev->vblank_time_lock);
+ 	vblank->hwmode.crtc_clock = 0;
++	spin_unlock_irq(&dev->vblank_time_lock);
+ 
+ 	/* Wait for any vblank work that's still executing to finish */
+ 	drm_vblank_flush_worker(vblank);
+-- 
+2.43.0
+

@@ -1,0 +1,53 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Gris Ge <cnfourt@gmail.com>
+Date: Thu, 1 Oct 2026 07:46:08 +0800
+Subject: [PATCH] usb: typec: ucsi: Skip CAM query when partner has no alt
+ modes
+
+Since Thunderbolt alternate mode support was added,
+`ucsi_altmode_update_active()` is called on every Connector Partner
+Changed event.  This made the driver send `UCSI_GET_CURRENT_CAM` to
+PPMs even when the partner had no alternate modes registered. Firmware
+that does not support the optional alternate mode details answered Not
+Supported, which produced a spurious error on every partner change:
+
+```
+ucsi_acpi USBC000:00: GET_CURRENT_CAM command failed
+```
+
+Fixed by skipping the command when there is nothing to update.
+
+Fixes: da87d45b1951 ("usb: typec: ucsi: Add Thunderbolt alternate mode support")
+Assisted-by: Codex:deepseek-v4.1-flash
+Cc: stable <stable@kernel.org>
+Signed-off-by: Gris Ge <cnfourt@gmail.com>
+Reviewed-by: Andrei Kuchynski <akuchynski@chromium.org>
+Reviewed-by: Heikki Krogerus <heikki.krogerus@linux.intel.com>
+Link: https://patch.msgid.link/20260930234611.468765-2-cnfourt@gmail.com
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+[ upstream commit 7c590f0716e in linux-next (usb), not in v7.3-rc7 ]
+[ upstream author: Gris Ge <cnfourt@gmail.com>; picked for the iceland kernel q89 ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/usb/typec/ucsi/ucsi.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/usb/typec/ucsi/ucsi.c b/drivers/usb/typec/ucsi/ucsi.c
+index 635644187629..244792e809a9 100644
+--- a/drivers/usb/typec/ucsi/ucsi.c
++++ b/drivers/usb/typec/ucsi/ucsi.c
+@@ -1620,7 +1620,8 @@ static void ucsi_handle_connector_change(struct work_struct *work)
+ 
+ 	if (con->partner && (change & UCSI_CONSTAT_PARTNER_CHANGE)) {
+ 		ucsi_partner_change(con);
+-		ucsi_altmode_update_active(con);
++		if (con->partner_altmode[0])
++			ucsi_altmode_update_active(con);
+ 
+ 		/* Complete pending data role swap */
+ 		if (!completion_done(&con->complete))
+-- 
+2.43.0
+

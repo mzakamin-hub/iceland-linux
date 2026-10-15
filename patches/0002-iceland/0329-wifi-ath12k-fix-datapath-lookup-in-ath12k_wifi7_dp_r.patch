@@ -1,0 +1,50 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Lorenzo Bianconi <lorenzo.bianconi@oss.qualcomm.com>
+Date: Wed, 14 Oct 2026 16:37:11 +0200
+Subject: [PATCH] wifi: ath12k: fix datapath lookup in
+ ath12k_wifi7_dp_rx_process_err()
+
+ath12k_wifi7_dp_rx_process_err() resolves the per-pdev datapath with
+ath12k_dp_to_pdev_dp(dp, pdev_idx), using the local 'dp', while
+'pdev_idx' is computed from the owning 'partner_dp'. As dp_pdevs[] is
+indexed per ath12k_dp, this picks the wrong pdev when the REO exception
+descriptor was sourced by a partner device in a multi-device group.
+
+The error is currently masked by the drop condition that only processes
+same-device fragments (partner_dp->device_id == dp->device_id), but it
+is still incorrect and would misbehave as soon as that restriction is
+relaxed. For this reason do not add a specific 'Fixes' tag to backport
+the patch.
+
+Look the pdev datapath up from partner_dp, as already done in the other
+Rx processing paths.
+
+Tested-on: WCN7850 hw2.0 PCI WLAN.HMT.1.1.c7-00108-QCAHMTSWPL_V1.0_V2.0_SILICONZ_UPSTREAM-3
+
+Signed-off-by: Lorenzo Bianconi <lorenzo.bianconi@oss.qualcomm.com>
+Link: https://lore.kernel.org/r/20261014-ath12k_wifi7_dp_rx_process_err-fix-lookup-v1-1-4670f8f98589@oss.qualcomm.com
+
+[ from patchwork.kernel.org series 1185662, patch 1; not applied upstream yet ]
+[ upstream author: Lorenzo Bianconi <lorenzo.bianconi@oss.qualcomm.com>; picked for the iceland kernel q89 ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c b/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
+index 92663531963f..44f1cc3fbb14 100644
+--- a/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
++++ b/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
+@@ -1532,7 +1532,7 @@ int ath12k_wifi7_dp_rx_process_err(struct ath12k_dp *dp, struct napi_struct *nap
+ 
+ 		rcu_read_lock();
+ 
+-		dp_pdev = ath12k_dp_to_pdev_dp(dp, pdev_idx);
++		dp_pdev = ath12k_dp_to_pdev_dp(partner_dp, pdev_idx);
+ 		if (!dp_pdev) {
+ 			rcu_read_unlock();
+ 			continue;
+-- 
+2.43.0
+
