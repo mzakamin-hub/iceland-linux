@@ -108,6 +108,6 @@ anywhere by these scripts.
 - [iceland-u-boot](https://github.com/mzakamin-hub/iceland-u-boot): the U-Boot that starts the kernel.
 - [iceland-firmware](https://github.com/mzakamin-hub/iceland-firmware): the generic firmware files.
 - [iceland-mainline](https://github.com/mzakamin-hub/iceland-mainline): the project, the install guide, the device
-  package and the test records.
+  package and the list of working features.
 - Upstream: [torvalds/linux](https://github.com/torvalds/linux) (v7.3-rc7) and
   [infiniti-mainline/linux](https://github.com/infiniti-mainline/linux) (the first series).

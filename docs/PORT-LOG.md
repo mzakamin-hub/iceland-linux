@@ -112,10 +112,9 @@ Condensed from the project log. Golden = the rehearsal image of that queue (see 
 - **13 Oct: rc7 and the final queue.** q89e (rc7, 0292 iris colorimetry) with the microphone chain is golden B147
   (06:02). q89f (0293-0305) adds the brightness limit at thermal level, the focus lens fixes (K7), the wake fix (K6)
   and the idle refresh rate, compiled in and off. q89g (0306) makes the focus lens hold its position. Its golden,
-  B149, was committed at 15:45 after the final rehearsal and is the image the owner installed that evening.
+  B149, was committed at 15:45 after the final rehearsal and is the first install image.
 - **14 Oct:** q89g is on `main`. The DisplayPort-over-USB-C investigation found no picture. The DT allows up to HBR3 on
-  two lanes; whether the monitor's power draw causes a supply cut-off is unverified. The power diagnostic of the installed system is recorded in
-  the iceland-mainline project notes.
+  two lanes; whether the monitor's power draw causes a supply cut-off is unverified.
 
 Test items left open by the port (from the rc4 table above, unchanged): the speaker level check on the installed
-system; the Android comparison is inconclusive and the owner's listening check decides.
+system (the Android comparison is inconclusive; a listening check decides).
