@@ -1,0 +1,51 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Thu, 15 Oct 2026 15:00:00 +0300
+Subject: [PATCH] drm/msm/adreno: turn GPU preemption off by default
+
+Not for upstream as is: this is the OnePlus Pad 4 (A840) queue's
+default, until A8xx preemption is fixed.
+
+On A840 (ADRENO_QUIRK_PREEMPTION, with IFPC) the auto default gives the
+GPU four rings, and a8xx_preempt_trigger() fenced-writes
+CP_CONTEXT_SWITCH_SMMU_INFO (0x8c1) while the GX can be in IFPC. The
+writes then land late ("delay in fenced register write (0x8c1)", three
+in 16 minutes of desktop use), the GPU went through recoveries, and
+every recovery counts as a context loss for all users of the reset
+status, so Chromium / Electron applications drop their GPU process.
+Booted with msm.enable_preemption=0 the same installed system logged no
+fenced-write delay, no GPU fault and no recovery, and the desktop felt
+smoother.
+
+Change the default of enable_preemption from -1 (auto) to 0, which is
+exactly the tested msm.enable_preemption=0 state. The parameter stays:
+msm.enable_preemption=1 turns preemption back on, -1 restores the
+per-GPU quirk choice. The default changes for every GPU because the
+parameter is also read by msm_submitqueue_create(), so a per-GPU
+default would not match the tested state; this kernel only drives an
+A840.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Assisted-by: Claude
+---
+ drivers/gpu/drm/msm/adreno/adreno_device.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/adreno/adreno_device.c b/drivers/gpu/drm/msm/adreno/adreno_device.c
+index 05c77fe27e62..35b2c0db0ee8 100644
+--- a/drivers/gpu/drm/msm/adreno/adreno_device.c
++++ b/drivers/gpu/drm/msm/adreno/adreno_device.c
+@@ -16,8 +16,8 @@ bool snapshot_debugbus = false;
+ MODULE_PARM_DESC(snapshot_debugbus, "Include debugbus sections in GPU devcoredump (if not fused off)");
+ module_param_named(snapshot_debugbus, snapshot_debugbus, bool, 0600);
+ 
+-int enable_preemption = -1;
+-MODULE_PARM_DESC(enable_preemption, "Enable preemption (A7xx+ only) (1=on , 0=disable, -1=auto (default))");
++int enable_preemption;
++MODULE_PARM_DESC(enable_preemption, "Enable preemption (A7xx+ only) (1=on, 0=disable (default), -1=auto)");
+ module_param(enable_preemption, int, 0600);
+ 
+ bool disable_acd;
+-- 
+2.43.0
+
