@@ -1,0 +1,110 @@
+From 9f7ec52f1bc71a629f936c582aab4003ab243e6e Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Thu, 15 Oct 2026 17:09:26 +0300
+Subject: [PATCH] Input: oneplus-pogo-keyboard: keep the keyboard backlight
+ registered
+
+The keyboard backlight LED class device was registered when a dock
+attached and unregistered when it went away. UPower looks for keyboard
+backlights (LEDs named *kbd_backlight) when it starts, and
+gnome-settings-daemon reads the range of UPower's keyboard backlight
+once, when it starts. A dock that is attached after that, or a boot
+without the dock, leaves both with a keyboard backlight of range 0:
+gsd-power then logs "gsd_power_backlight_abs_to_percentage: assertion
+'max > min' failed" and "failed to set dim kbd backlight to 30%: ...
+brightness value must be non-negative" at every idle dim, and the
+dock's backlight is never under GNOME's control.
+
+Register the LED once at probe, managed, for the life of the driver.
+A level set while no dock is attached is kept (the transfer reports
+-ENODEV with the port closed; that is not an error for the LED core)
+and sent at the next attach, as a level set before a detach already
+was.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ .../input/keyboard/oneplus-pogo-keyboard.c    | 36 ++++++++++---------
+ 1 file changed, 20 insertions(+), 16 deletions(-)
+
+diff --git a/drivers/input/keyboard/oneplus-pogo-keyboard.c b/drivers/input/keyboard/oneplus-pogo-keyboard.c
+index 1fe56c8..38ee1d9 100644
+--- a/drivers/input/keyboard/oneplus-pogo-keyboard.c
++++ b/drivers/input/keyboard/oneplus-pogo-keyboard.c
+@@ -444,7 +444,6 @@ struct pogo {
+ 	unsigned long led_jiffies;
+ 
+ 	struct led_classdev backlight;
+-	bool backlight_registered;
+ 	bool backlight_set;
+ 	u8 backlight_level;
+ 
+@@ -902,11 +901,15 @@ static void pogo_led_work(struct work_struct *work)
+ static int pogo_backlight_set(struct led_classdev *cdev, enum led_brightness value)
+ {
+ 	struct pogo *pogo = container_of(cdev, struct pogo, backlight);
++	int ret;
+ 
+ 	pogo->backlight_level = value;
+ 	pogo->backlight_set = true;
+ 
+-	return pogo_send_backlight(pogo);
++	ret = pogo_send_backlight(pogo);
++
++	/* no dock attached: the level is kept and sent when one is */
++	return ret == -ENODEV ? 0 : ret;
+ }
+ 
+ /* -------------------------------------------------------------- receive */
+@@ -1344,10 +1347,6 @@ static int pogo_power_on(struct pogo *pogo)
+ /* Supply off; the next state is left to the caller. */
+ static void pogo_power_off(struct pogo *pogo)
+ {
+-	if (pogo->backlight_registered) {
+-		led_classdev_unregister(&pogo->backlight);
+-		pogo->backlight_registered = false;
+-	}
+ 	if (pogo->kbd) {
+ 		pogo_unregister_inputs(pogo);
+ 		dev_info(pogo->dev, "keyboard detached\n");
+@@ -1384,16 +1383,7 @@ static void pogo_connect(struct pogo *pogo)
+ 	if (ret)
+ 		dev_dbg(pogo->dev, "wake notification failed: %d\n", ret);
+ 
+-	memset(&pogo->backlight, 0, sizeof(pogo->backlight));
+-	pogo->backlight.name = "oneplus_pogo::kbd_backlight";
+-	pogo->backlight.max_brightness = POGO_BRIGHTNESS_MAX;
+-	pogo->backlight.brightness = pogo->backlight_level;
+-	pogo->backlight.brightness_set_blocking = pogo_backlight_set;
+-	pogo->backlight.flags = LED_RETAIN_AT_SHUTDOWN;
+-	if (!led_classdev_register(pogo->dev, &pogo->backlight))
+-		pogo->backlight_registered = true;
+-
+-	/* what the user had set before the dock was taken off */
++	/* what the user had set before the dock was attached */
+ 	if (pogo->backlight_set)
+ 		pogo_send_backlight(pogo);
+ 	schedule_work(&pogo->led_work);
+@@ -1973,6 +1963,20 @@ static int pogo_probe(struct serdev_device *serdev)
+ 	if (ret)
+ 		return ret;
+ 
++	/*
++	 * The keyboard backlight is there for the life of the driver, also
++	 * without a dock: UPower looks for keyboard backlights when it starts,
++	 * and GNOME reads their range once. A level set without a dock is
++	 * kept and sent at the next attach.
++	 */
++	pogo->backlight.name = "oneplus_pogo::kbd_backlight";
++	pogo->backlight.max_brightness = POGO_BRIGHTNESS_MAX;
++	pogo->backlight.brightness_set_blocking = pogo_backlight_set;
++	pogo->backlight.flags = LED_RETAIN_AT_SHUTDOWN;
++	ret = devm_led_classdev_register(dev, &pogo->backlight);
++	if (ret)
++		return dev_err_probe(dev, ret, "cannot register the keyboard backlight\n");
++
+ 	dev_info(dev, "UART at %u baud, data line %s\n", baud,
+ 		 pogo_line_low(pogo) ? "low: a dock is there" : "high: no dock");
+ 
+-- 
+2.43.0
+
