@@ -1,39 +1,59 @@
 # SPDX-License-Identifier: GPL-2.0-only
-# Manual-only kernel build (Actions minutes on private repos count against the account).
-# Start it from the Actions tab -> "kernel" -> Run workflow.
+# Full arm64 kernel build (Image, dtbs, modules) on GitHub's arm64 runner (free for public repositories; 4 cores,
+# about 1-2 hours), so it does not run on every push:
+#   - by hand: Actions -> kernel -> Run workflow (builds the selected branch, or the "ref" given there)
+#   - weekly: GitHub runs schedules from the default branch's copy of this file only; that run builds
+#     CURRENT_BRANCH below (move it together with the README's current branch)
 name: kernel
 
 on:
   workflow_dispatch:
+    inputs:
+      ref:
+        description: 'branch / tag to build (empty: the selected branch)'
+        required: false
+        default: ''
+  schedule:
+    - cron: '23 3 * * 1'
+
+env:
+  CURRENT_BRANCH: iceland-7.3-rc7-next
 
 permissions:
   contents: read
 
 concurrency:
-  group: kernel-${{ github.ref }}
+  group: kernel-${{ github.ref }}-${{ inputs.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-24.04-arm
-    timeout-minutes: 150
+    timeout-minutes: 240
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event_name == 'schedule' && env.CURRENT_BRANCH || inputs.ref }}
+          persist-credentials: false
 
       - name: Install build dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y clang lld llvm flex bison bc libssl-dev libelf-dev \
-            device-tree-compiler zstd cpio
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq clang lld llvm flex bison bc libssl-dev libelf-dev \
+            device-tree-compiler zstd cpio >/dev/null
+          df -h "$RUNNER_TEMP" | tail -n 1; nproc
 
       - name: Prepare source (upstream tag + patch queue, tree hashes verified)
         run: scripts/prepare.sh "$RUNNER_TEMP/src"
 
       - name: Build
-        run: scripts/build.sh "$RUNNER_TEMP/src" "$RUNNER_TEMP/out"
+        run: |
+          start=$(date +%s)
+          scripts/build.sh "$RUNNER_TEMP/src" "$RUNNER_TEMP/out"
+          echo "build: $(( ($(date +%s) - start) / 60 )) min"; df -h "$RUNNER_TEMP" | tail -n 1
 
       - name: Upload build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: iceland-kernel-${{ github.sha }}
           path: ${{ runner.temp }}/out/dist/
