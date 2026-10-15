@@ -4,9 +4,13 @@ Mainline Linux for the OnePlus Pad 4 (`iceland`, Qualcomm SM8850P "kaanapali"). 
 on an upstream tag, Linux v7.3-rc7, so every commit keeps its original author. This is the same approach as the
 postmarketOS kernel packages and other tablet ports.
 
-Current state (14 Oct 2026): queue **q89g**, on branch `iceland-7.3-rc7-q89g` (tag `q89g`), which `main` now points
-to too. The kernel release is `7.3.0-rc7-iceland-00426-g520e85da9244`. It is the kernel of the final install golden
-B149 (committed 13 Oct 2026), and the owner runs it on the installed Fedora 44 system.
+**The current branch is [`iceland-7.3-rc7-next`](https://github.com/mzakamin-hub/iceland-linux/tree/iceland-7.3-rc7-next)**
+(15 Oct 2026): queue q89k, kernel release `7.3.0-rc7-iceland-00436-gf1673c99e731`, the default kernel of the Fedora 44
+system installed on the tablet. Build from that branch.
+
+`main` holds queue q89g (`7.3.0-rc7-iceland-00426-g520e85da9244`, branch `iceland-7.3-rc7-q89g`, tag `q89g`), the kernel
+of the install image B149 of 13 Oct 2026. The tables below describe q89g; q89h to q89k are listed in the README of
+`iceland-7.3-rc7-next`.
 
 ## What is in the repository
 
@@ -92,12 +96,9 @@ anywhere by these scripts.
 
 ## Status on the installed tablet
 
-- Fedora 44 GNOME has run on the tablet since 13 Oct 2026 with the B149 image, which carries this kernel. The owner
-  uses the installed system.
-- Open kernel items: no picture over DisplayPort on USB-C (the monitor is detected, the pipeline times out; see the
-  matrix); camera into the hardware encoder does not negotiate; Chromium and Electron GPU acceleration; the idle
-  refresh rate stays off.
-- The feature matrix and its evidence are in
+- Fedora 44 GNOME runs on the tablet since 13 Oct 2026, first with this queue (q89g, in the B149 image). Since 15 Oct
+  2026 its default kernel is q89k from `iceland-7.3-rc7-next`.
+- What works, feature by feature:
   [iceland-mainline/docs/FEATURES.md](https://github.com/mzakamin-hub/iceland-mainline/blob/main/docs/FEATURES.md).
 
 ## Related repositories
