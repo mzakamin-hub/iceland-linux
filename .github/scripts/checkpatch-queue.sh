@@ -14,7 +14,8 @@ for p in "$@"; do
 	[ -f "$p" ] || continue
 	n=$((n + 1))
 	if grep -m1 '^From: ' "$p" | grep -q -F '<mzak.amin@gmail.com>'; then own=1; mode=--strict; else own=0; mode=; fi
-	out=$(perl "$dir/checkpatch.pl" --no-tree $mode --emacs --terse --no-summary --color=never "$p" 2>&1)
+	# on stdin: checkpatch treats a file name that git tracks as a source file, not as a patch
+	out=$(perl "$dir/checkpatch.pl" --no-tree $mode --emacs --terse --no-summary --color=never - < "$p" 2>&1)
 	while IFS= read -r line; do
 		# "<patch>:<line>: ERROR|WARNING|CHECK: <TYPE>: <text>"
 		case "$line" in
