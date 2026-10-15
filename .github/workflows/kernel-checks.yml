@@ -1,0 +1,112 @@
+# SPDX-License-Identifier: GPL-2.0-only
+# Static checks of the patch queue on every push and pull request that touches it:
+#   checkpatch   checkpatch.pl on the new / changed patches (--strict for ours; fails only on an ERROR in ours)
+#   queue        scripts/prepare.sh: the queue applies onto the pinned upstream tag and every series' tree hash matches
+#                kernel.pin; then dt_binding_check of the queue's bindings and dtbs_check of the iceland DT against
+#                .github/dtbs-check-baseline.txt
+# Run it by hand ("Run workflow") with "all patches" to checkpatch the whole queue.
+name: kernel-checks
+
+on:
+  push:
+    paths:
+      - 'patches/**'
+      - 'kernel.pin'
+      - 'scripts/**'
+      - 'configs/**'
+      - '.github/**'
+  pull_request:
+    paths:
+      - 'patches/**'
+      - 'kernel.pin'
+      - 'scripts/**'
+      - 'configs/**'
+      - '.github/**'
+  workflow_dispatch:
+    inputs:
+      all:
+        description: 'checkpatch every patch of the queue (not only the changed ones)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kernel-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checkpatch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Fetch checkpatch.pl of the pinned upstream commit
+        run: |
+          . ./kernel.pin
+          mkdir -p "$RUNNER_TEMP/cp"
+          for f in checkpatch.pl spelling.txt const_structs.checkpatch; do
+            curl -fsSL --retry 3 -o "$RUNNER_TEMP/cp/$f" \
+              "https://raw.githubusercontent.com/torvalds/linux/$UPSTREAM_COMMIT/scripts/$f"
+          done
+
+      - name: checkpatch the new / changed patches
+        env:
+          ALL: ${{ inputs.all }}
+          BEFORE: ${{ github.event.before }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          base=${BASE:-$BEFORE}
+          if [ "$ALL" = true ]; then
+            git ls-files 'patches/*.patch' > "$RUNNER_TEMP/list"
+          elif [ -n "$base" ] && [ "$base" != 0000000000000000000000000000000000000000 ] \
+              && git cat-file -e "$base^{commit}" 2>/dev/null; then
+            git diff --name-only --diff-filter=AM "$base" "$HEAD_SHA" -- 'patches/*.patch' > "$RUNNER_TEMP/list"
+          else
+            git diff --name-only --diff-filter=AM "$HEAD_SHA~1" "$HEAD_SHA" -- 'patches/*.patch' > "$RUNNER_TEMP/list"
+          fi
+          echo "$(wc -l < "$RUNNER_TEMP/list") patch(es) to check"
+          [ -s "$RUNNER_TEMP/list" ] || exit 0
+          xargs -a "$RUNNER_TEMP/list" -d '\n' bash .github/scripts/checkpatch-queue.sh "$RUNNER_TEMP/cp"
+
+  queue:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install the DT tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq flex bison yamllint python3-venv libyaml-dev >/dev/null
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install -q dtschema==2026.9
+          echo "$RUNNER_TEMP/venv/bin" >> "$GITHUB_PATH"
+
+      - name: Apply the queue onto the pinned upstream tag (tree hashes verified)
+        run: |
+          start=$(date +%s)
+          scripts/prepare.sh "$RUNNER_TEMP/src"
+          echo "prepare.sh: $(( $(date +%s) - start )) s"
+
+      - name: dt_binding_check (queue bindings) + dtbs_check (iceland DT)
+        run: bash .github/scripts/dt-check.sh "$RUNNER_TEMP/src" "$RUNNER_TEMP/out"
+
+      - name: Keep the DT check output
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dt-check-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/out/dt-warnings.txt
+            ${{ runner.temp }}/out/dt-raw.log
+          if-no-files-found: ignore
+          retention-days: 14
