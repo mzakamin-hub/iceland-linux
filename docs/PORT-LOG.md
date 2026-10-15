@@ -1,5 +1,8 @@
 # Port log — map220v iceland-7.2 (Linux 7.2) → infiniti-mainline master (Linux 7.3-rc4)
 
+Current base (14 Oct 2026): Linux v7.3-rc7, queue q89g. The port table below is the rc4 port; the kernel history
+after it, to 14 Oct 2026, is at the end.
+
 Base changed from "Linux 7.2 + map220v" to "Linux 7.3-rc4 + infiniti-mainline (OnePlus 15, same SoC) + ported
 Pad 4 commits": infiniti already carries most SoC work (GPU, WCN7860 Wi-Fi/BT, QFPROM, SOCCP, iris, CAMSS,
 DP, ADC5 Gen4, crypto, remoteproc fixes), so porting map220v's device commits forward is far smaller than
@@ -82,8 +85,37 @@ working chain, link by link:
    slots 0/2/4 (i2c0 0x34/0x36/0x37), right = slots 1/3/5 (i2c22). The DT compatible `oneplus,iceland-sndcard`
    (0050).
 Proof:
-- iceland-mainline S16-S19: `relay/results/pc-026-critical-items.md`, sessions 26r-26u.
+- iceland-mainline sessions 26r-26u (items S16-S19; the test records are not in this repository).
 - area-audio-1 (2026-09-29): all six amplifiers engage on stereo, each side exactly its three, and the user heard
   GNOME's Sound test.
 0051: the audioreach volume control stays within the topology maximum (area-audio-2: writes above 2056 rejected with EINVAL).
 0052: the WCD939x analog TX gain scale, 1.5 dB per step without a mute (measured in area-audio-2, reported in area-audio-4).
+
+## Kernel history after the port (to 14 Oct 2026)
+
+Condensed from the project log. Golden = the rehearsal image of that queue (see the README table).
+
+- **28-30 Sep (queue on rc4):** suspend fixed (PCIe WAKE# polarity, 0040); 144 Hz black screen (0058); pink UBWC
+  glitch (0060); thermal trips and cooling maps at stock (0022-0023); a freeze under fast USB traffic (0063); hardware
+  video decode checked bit-exact. The green picture was traced to a debug option and fixed in the config.
+- **1-2 Oct:** NPU, microphone, Wi-Fi 5 GHz (0066-0068); the first camera frames from both sensors; battery estimate
+  (0071-0072); libcamera on both cameras (0073); charging as stock (0078-0080); camera focus motor (0087-0089); pogo
+  keyboard and pen charger (0090-0097).
+- **3-9 Oct (q84 to q87, rc4 base):** the first consolidated build and its goldens (B112, B118). The fresh-boot
+  rehearsal of q87 (golden B123) showed a microphone stall in 3 of 10 fresh opens (F55), so that image was held. Queue 0190 was added
+  with the F55 work in q87 (commit a8739a6).
+- **10 Oct: rc6 rebase (q89 -> q89b).** The F55 replay passes on q89b; golden B130 confirmed it. The tb323fu-linux
+  patches were added as q89c-tb (0255-0265). An upstream scan by hardware block ran the same day.
+- **11-12 Oct: q89d8 and q89d9.** The SuperTurtleDev and tb323fu items were added (0266-0290, q89d8, golden B143,
+  first clean final rehearsal). 0291 (q89d9, golden B145) discards the RX burst of the WCN7860 baud-rate change, which
+  caused the Bluetooth "-84" line. Then the rc7 rebase started (q89e).
+- **13 Oct: rc7 and the final queue.** q89e (rc7, 0292 iris colorimetry) with the microphone chain is golden B147
+  (06:02). q89f (0293-0305) adds the brightness limit at thermal level, the focus lens fixes (K7), the wake fix (K6)
+  and the idle refresh rate, compiled in and off. q89g (0306) makes the focus lens hold its position. Its golden,
+  B149, was committed at 15:45 after the final rehearsal and is the image the owner installed that evening.
+- **14 Oct:** q89g is on `main`. The DisplayPort-over-USB-C investigation found no picture. The DT allows up to HBR3 on
+  two lanes; whether the monitor's power draw causes a supply cut-off is unverified. The power diagnostic of the installed system is recorded in
+  the iceland-mainline project notes.
+
+Test items left open by the port (from the rc4 table above, unchanged): the speaker level check on the installed
+system; the Android comparison is inconclusive and the owner's listening check decides.
