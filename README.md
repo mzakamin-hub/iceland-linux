@@ -9,6 +9,12 @@ Current state (15 Oct 2026): queue **q89k** on the branch `iceland-7.3-rc7-next`
 `0002-iceland`). It is the default kernel of the Fedora 44 system installed on the tablet since 15 Oct 2026, packaged as
 `kernel-iceland` and installed with dnf.
 
+## Download
+
+Release [`q89k`](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89k) (queue commit `90869cf`): the Fedora 44 package
+`kernel-iceland-7.3.0.rc7.iceland.00436.gf1673c99e731-1.fc44.aarch64.rpm` (sha256 `ca9bc275ba4b9f99...`), its
+source RPM and the build's config, with `SHA256SUMS`.
+
 ## What is in the repository
 
 | Path | Content |
