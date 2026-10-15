@@ -12,6 +12,12 @@ system installed on the tablet. Build from that branch.
 of the first Fedora 44 install image (13 Oct 2026). The tables below describe q89g; q89h to q89k are listed in the README of
 `iceland-7.3-rc7-next`.
 
+## Download
+
+Release [`q89k`](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89k) (queue commit `90869cf`): the Fedora 44 package
+`kernel-iceland-7.3.0.rc7.iceland.00436.gf1673c99e731-1.fc44.aarch64.rpm` (sha256 `ca9bc275ba4b9f99...`), its
+source RPM and the build's config, with `SHA256SUMS`.
+
 ## What is in the repository
 
 | Path | Content |
