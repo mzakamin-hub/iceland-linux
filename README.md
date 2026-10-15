@@ -9,7 +9,7 @@ postmarketOS kernel packages and other tablet ports.
 system installed on the tablet. Build from that branch.
 
 `main` holds queue q89g (`7.3.0-rc7-iceland-00426-g520e85da9244`, branch `iceland-7.3-rc7-q89g`, tag `q89g`), the kernel
-of the install image B149 of 13 Oct 2026. The tables below describe q89g; q89h to q89k are listed in the README of
+of the first Fedora 44 install image (13 Oct 2026). The tables below describe q89g; q89h to q89k are listed in the README of
 `iceland-7.3-rc7-next`.
 
 ## What is in the repository
@@ -96,8 +96,8 @@ anywhere by these scripts.
 
 ## Status on the installed tablet
 
-- Fedora 44 GNOME runs on the tablet since 13 Oct 2026, first with this queue (q89g, in the B149 image). Since 15 Oct
-  2026 its default kernel is q89k from `iceland-7.3-rc7-next`.
+- The first Fedora 44 install image carries this queue (q89g). Installed systems update to q89k from
+  `iceland-7.3-rc7-next` with dnf; it is the default kernel since 15 Oct 2026.
 - What works, feature by feature:
   [iceland-mainline/docs/FEATURES.md](https://github.com/mzakamin-hub/iceland-mainline/blob/main/docs/FEATURES.md).
 
@@ -106,6 +106,6 @@ anywhere by these scripts.
 - [iceland-u-boot](https://github.com/mzakamin-hub/iceland-u-boot): the U-Boot that starts the kernel.
 - [iceland-firmware](https://github.com/mzakamin-hub/iceland-firmware): the generic firmware files.
 - [iceland-mainline](https://github.com/mzakamin-hub/iceland-mainline): the project, the install guide, the device
-  package and the test records.
+  package and the list of working features.
 - Upstream: [torvalds/linux](https://github.com/torvalds/linux) (v7.3-rc7) and
   [infiniti-mainline/linux](https://github.com/infiniti-mainline/linux) (the first series).
