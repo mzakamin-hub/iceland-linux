@@ -1,0 +1,41 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Thu, 15 Oct 2026 22:36:40 +0300
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: the battery's
+ design energy
+
+Give the battery node its design energy, so that qcom_battmgr reports
+the energy at the battery's nominal voltage instead of user space
+converting the charge with the 4.5 V maximum design voltage.
+
+13380 mAh is stock's design capacity (oplus,batt_capacity_mah and
+battery.capacity in the framework's power profile). The 3.89 V nominal
+voltage is our estimate, typical of a 4.5 V float lithium cell: no
+stock file we have gives the cell's rated energy. The owner accepts
+3.89 V as that estimate (16 Oct 2026), after a 30 minute battery check
+on the tablet: UPower showed 62.23 Wh full, charge_full x 4.5 V, where
+the same charge at 3.89 V is about 53.8 Wh. If the cell's rated energy
+turns up, it replaces the estimate.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 31851f4f22fa..64589cbb4dfc 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -56,6 +56,8 @@ aliases {
+ 	battery: battery {
+ 		compatible = "simple-battery";
+ 		charge-full-design-microamp-hours = <13380000>;
++		/* 13380 mAh at 3.89 V nominal: our estimate, no cell rating known */
++		energy-full-design-microwatt-hours = <52048200>;
+ 		/* stock oplus,comm: vbat_uv_thr_mv 3300 (power off) and fv-mv 4500 (float, normal temperature) */
+ 		voltage-min-design-microvolt = <3300000>;
+ 		voltage-max-design-microvolt = <4500000>;
+-- 
+2.43.0
+

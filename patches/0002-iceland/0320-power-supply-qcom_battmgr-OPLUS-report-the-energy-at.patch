@@ -1,0 +1,179 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Thu, 15 Oct 2026 22:36:40 +0300
+Subject: [PATCH] power: supply: qcom_battmgr: OPLUS: report the energy at the
+ nominal voltage
+
+The OPLUS gauge counts charge only, so the battery supply has charge_full
+and charge_now and no energy. UPower then converts the charge to energy
+itself, with voltage_max_design when the supply has one: on the OnePlus
+Pad 4 that is the DT's 4.5 V float voltage, and UPower shows 62.06 Wh
+full and 60.21 Wh design for a 13380 mAh battery (installed system,
+11 Oct; 62.23 Wh full in the 30 minute battery check of 16 Oct), about
+a sixth above the energy the battery holds. Its rate is |current_now|
+x 4.5 V as well, not the power_now the driver reports.
+
+When the monitored battery's DT node gives a design energy, take its
+nominal voltage as that energy over the design charge and report
+energy_full and energy_now as charge_full and charge_now at that voltage.
+On the OnePlus Pad 4 that is 3.89 V (52048200 uWh / 13380000 uAh), our
+estimate of the cell's nominal voltage, which the owner accepts.
+UPower then uses the energy and power_now (voltage x current) directly.
+The design energy itself reaches sysfs from the battery info as
+energy_full_design. A battery node without a design energy (the OnePlus
+15) keeps the property list it has, without energy properties: a listed
+property that has no data would read as 0 Wh in UPower.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/power/supply/qcom_battmgr.c | 103 ++++++++++++++++++++++++++--
+ 1 file changed, 99 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
+index 86de9567970a..7719ab5798a6 100644
+--- a/drivers/power/supply/qcom_battmgr.c
++++ b/drivers/power/supply/qcom_battmgr.c
+@@ -402,6 +402,8 @@ struct qcom_battmgr {
+ 
+ 	/* from the DT battery node (simple-battery), used when the firmware reports no design capacity */
+ 	u32 dt_design_capacity;
++	/* OPLUS: the battery's nominal voltage, from its DT design energy and charge (0: none) */
++	u32 nominal_uv;
+ 
+ 	enum qcom_battmgr_unit unit;
+ 
+@@ -964,6 +966,32 @@ static int qcom_battmgr_bat_get_property(struct power_supply *psy,
+ 		return 0;
+ 	}
+ 
++	/*
++	 * The OPLUS gauge counts charge only. Report the energy as that charge
++	 * at the battery's nominal voltage (its design energy over its design
++	 * charge), so that user space does not convert it with another voltage:
++	 * UPower takes voltage_max_design, the charge voltage, for that and
++	 * overstates the energy by about a sixth.
++	 */
++	if (battmgr->variant == QCOM_BATTMGR_OPLUS &&
++	    (psp == POWER_SUPPLY_PROP_ENERGY_FULL || psp == POWER_SUPPLY_PROP_ENERGY_NOW)) {
++		unsigned int charge;
++
++		if (!battmgr->nominal_uv)
++			return -ENODATA;
++		ret = qcom_battmgr_bat_sm8350_update(battmgr, psp == POWER_SUPPLY_PROP_ENERGY_FULL ?
++						     POWER_SUPPLY_PROP_CHARGE_FULL :
++						     POWER_SUPPLY_PROP_CHARGE_NOW);
++		if (ret < 0)
++			return ret;
++		charge = psp == POWER_SUPPLY_PROP_ENERGY_FULL ? battmgr->info.last_full_capacity :
++								battmgr->status.capacity;
++		if (!charge)
++			return -ENODATA;
++		val->intval = div_u64((u64)charge * battmgr->nominal_uv, 1000000);
++		return 0;
++	}
++
+ 	if (battmgr->variant == QCOM_BATTMGR_SC8280XP ||
+ 	    battmgr->variant == QCOM_BATTMGR_X1E80100)
+ 		ret = qcom_battmgr_bat_sc8280xp_update(battmgr, psp);
+@@ -1454,6 +1482,40 @@ static const struct power_supply_desc oplus_bat_psy_desc = {
+ 			     BIT(POWER_SUPPLY_CHARGE_BEHAVIOUR_INHIBIT_CHARGE),
+ };
+ 
++/* the same with the energy, for a battery whose DT node gives its design energy */
++static const enum power_supply_property oplus_bat_energy_props[] = {
++	POWER_SUPPLY_PROP_STATUS,
++	POWER_SUPPLY_PROP_HEALTH,
++	POWER_SUPPLY_PROP_PRESENT,
++	POWER_SUPPLY_PROP_CAPACITY,
++	POWER_SUPPLY_PROP_VOLTAGE_NOW,
++	POWER_SUPPLY_PROP_CURRENT_NOW,
++	POWER_SUPPLY_PROP_POWER_NOW,
++	POWER_SUPPLY_PROP_TEMP,
++	POWER_SUPPLY_PROP_CHARGE_FULL,
++	POWER_SUPPLY_PROP_CHARGE_NOW,
++	POWER_SUPPLY_PROP_ENERGY_FULL,
++	POWER_SUPPLY_PROP_ENERGY_NOW,
++	POWER_SUPPLY_PROP_CYCLE_COUNT,
++	POWER_SUPPLY_PROP_STATE_OF_HEALTH,
++	POWER_SUPPLY_PROP_CHARGE_BEHAVIOUR,
++	POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX,
++	POWER_SUPPLY_PROP_CHARGE_CONTROL_START_THRESHOLD,
++	POWER_SUPPLY_PROP_CHARGE_CONTROL_END_THRESHOLD,
++};
++
++static const struct power_supply_desc oplus_bat_energy_psy_desc = {
++	.name = "qcom-battmgr-bat",
++	.type = POWER_SUPPLY_TYPE_BATTERY,
++	.properties = oplus_bat_energy_props,
++	.num_properties = ARRAY_SIZE(oplus_bat_energy_props),
++	.get_property = qcom_battmgr_bat_get_property,
++	.set_property = qcom_battmgr_bat_set_property,
++	.property_is_writeable = qcom_battmgr_bat_is_writeable,
++	.charge_behaviours = BIT(POWER_SUPPLY_CHARGE_BEHAVIOUR_AUTO) |
++			     BIT(POWER_SUPPLY_CHARGE_BEHAVIOUR_INHIBIT_CHARGE),
++};
++
+ static int qcom_battmgr_ac_get_property(struct power_supply *psy,
+ 					enum power_supply_property psp,
+ 					union power_supply_propval *val)
+@@ -3142,6 +3204,36 @@ static void qcom_battmgr_dt_battery_info(struct qcom_battmgr *battmgr)
+ 	power_supply_put_battery_info(battmgr->bat_psy, info);
+ }
+ 
++/*
++ * The nominal voltage of the monitored battery: its design energy over its
++ * design charge. Read before the battery supply is registered, as it decides
++ * the supply's properties. 0 if the node gives no design energy or the result
++ * is not a lithium cell's nominal voltage.
++ */
++static u32 qcom_battmgr_oplus_nominal_uv(struct device *dev)
++{
++	struct fwnode_handle *bat;
++	u32 uwh, uah;
++	u64 uv = 0;
++
++	bat = fwnode_find_reference(dev_fwnode(dev), "monitored-battery", 0);
++	if (IS_ERR(bat))
++		return 0;
++	if (!fwnode_property_read_u32(bat, "energy-full-design-microwatt-hours", &uwh) &&
++	    !fwnode_property_read_u32(bat, "charge-full-design-microamp-hours", &uah) && uah)
++		uv = div_u64((u64)uwh * 1000000, uah);
++	fwnode_handle_put(bat);
++
++	if (uv < 3000000 || uv > 4200000) {
++		if (uv)
++			dev_warn(dev, "battery nominal voltage %llu uV out of range: no energy\n",
++				 uv);
++		return 0;
++	}
++
++	return uv;
++}
++
+ static int qcom_battmgr_probe(struct auxiliary_device *adev,
+ 			      const struct auxiliary_device_id *id)
+ {
+@@ -3215,12 +3307,15 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
+ 			return dev_err_probe(dev, PTR_ERR(battmgr->wls_psy),
+ 					     "failed to register wireless charing power supply\n");
+ 	} else {
+-		if (battmgr->variant == QCOM_BATTMGR_OPLUS)
+-			psy_desc = &oplus_bat_psy_desc;
+-		else if (battmgr->variant == QCOM_BATTMGR_SM8550)
++		if (battmgr->variant == QCOM_BATTMGR_OPLUS) {
++			battmgr->nominal_uv = qcom_battmgr_oplus_nominal_uv(dev);
++			psy_desc = battmgr->nominal_uv ? &oplus_bat_energy_psy_desc :
++							 &oplus_bat_psy_desc;
++		} else if (battmgr->variant == QCOM_BATTMGR_SM8550) {
+ 			psy_desc = &sm8550_bat_psy_desc;
+-		else
++		} else {
+ 			psy_desc = &sm8350_bat_psy_desc;
++		}
+ 
+ 		battmgr->bat_psy = devm_power_supply_register(dev, psy_desc, &psy_cfg);
+ 		if (IS_ERR(battmgr->bat_psy))
+-- 
+2.43.0
+
