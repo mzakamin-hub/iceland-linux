@@ -26,7 +26,7 @@ fi
 mk CHECK_DTBS=y qcom/kaanapali-oneplus-iceland.dtb >> "$out/dt-raw.log" 2>&1 || { cat "$out/dt-raw.log"; echo "::error title=dtbs_check::the iceland DT does not build"; exit 1; }
 
 # warnings: every log line except make's progress lines (dtc, dt-validate, dt-doc-validate output); paths relative
-grep -v -E '^(  [A-Z0-9_-]+ |make(\[[0-9]+\])?: |#|\*|[[:space:]]*$)' "$out/dt-raw.log" |
+grep -v -E '^(  [A-Z0-9_-]+ |make(\[[0-9]+\])?: |#|\*|[[:space:]]*$)' "$out/dt-raw.log" | grep -v 'jobserver' |
 	sed -e "s#$out/##g" -e "s#$src/##g" | sed -E 's/[[:space:]]+$//' | LC_ALL=C sort -u > "$out/dt-warnings.txt"
 n=$(wc -l < "$out/dt-warnings.txt")
 base=$top/.github/dtbs-check-baseline.txt
