@@ -1,0 +1,103 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 16 Oct 2026 23:30:00 +0300
+Subject: [PATCH] drm/msm/dpu: keep the vsync interrupt of an idle video mode encoder
+
+Until "drm/msm/dpu: count the pending frame before kicking it off" the
+frame_pending count of a CRTC stayed one too high, so a video mode
+encoder never reached DPU_ENC_RC_STATE_IDLE. With the count fixed, an
+idle desktop enters the idle state IDLE_TIMEOUT (58 ms) after every
+frame done: the vsync and underrun interrupts are unregistered, and the
+next kickoff registers them again - many times a second, a path video
+mode encoders had not run on this tablet before.
+
+On the OnePlus Pad 4 (Kaanapali, a dual-DSI video mode panel with DSC)
+mid-session display stalls appeared with exactly that change: two
+"vblank timeout: 400000" / "wait for commit done returned -110" pairs
+about 60 ms apart, i.e. the commit's own wait and the next commit's
+wait for the previous flush, each 50 ms with only the DSC flush bit
+(CTL_FLUSH bit 22) still pending. Boots of the kernels before it showed
+none. The mechanism is not known yet.
+
+Keep video mode encoders in DPU_ENC_RC_STATE_ON after a frame done, as
+before the count was fixed, unless the new module parameter
+msm.dpu_vid_idle_irq_off (0644, default off) asks for the idle state;
+the corrected frame_pending accounting itself stays. The parameter is
+read at every frame done, so the two behaviours can be compared at run
+time.
+
+Also print the INTF timing engine state (enabled, frame and line count)
+and the vblank reference count with a vblank timeout: a stuck flush on
+a running INTF then reads differently from a stopped INTF.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+  drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c        |   20 ++++++++++++++++++++
+  .../gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c   |   12 +++++++++++-
+  2 files changed, 31 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+index 93ad4248930c..14df37deeb2e 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+@@ -344,6 +344,16 @@ module_param_cb(dpu_idle_refresh_hz, &dpu_idle_rr_param_ops,
+ MODULE_PARM_DESC(dpu_idle_refresh_hz,
+ 		 "Lowest idle refresh rate: the slowest panel rate at or above it that differs from the mode only in the vertical front porch (default 60)");
+ 
++/*
++ * An idle video mode encoder (no frame for IDLE_TIMEOUT) used to drop its
++ * vsync interrupt until the next kickoff. Keep it on unless this is set, see
++ * the DPU_ENC_RC_EVENT_FRAME_DONE case of dpu_encoder_resource_control().
++ */
++static bool dpu_vid_idle_irq_off;
++module_param(dpu_vid_idle_irq_off, bool, 0644);
++MODULE_PARM_DESC(dpu_vid_idle_irq_off,
++		 "Drop the vsync interrupt of an idle video mode encoder until the next commit (default: keep it on)");
++
+ /* @b differs from @a at most in the length of the vertical front porch */
+ static bool dpu_idle_rr_same_but_vfp(const struct drm_display_mode *a,
+ 				     const struct drm_display_mode *b)
+@@ -1622,6 +1632,16 @@ static int dpu_encoder_resource_control(struct drm_encoder *drm_enc,
+ 			return 0;
+ 		}
+ 
++		/*
++		 * A video mode encoder only drops its vsync interrupt in the
++		 * idle state. Until the frame_pending count was fixed it never
++		 * got there; now an idle desktop enters and leaves it many
++		 * times a second, and the CTL flush timeouts of a dual-DSI
++		 * panel came with that. Stay on unless asked otherwise.
++		 */
++		if (is_vid_mode && !READ_ONCE(dpu_vid_idle_irq_off))
++			return 0;
++
+ 		queue_delayed_work(priv->kms->wq, &dpu_enc->delayed_off_work,
+ 				   msecs_to_jiffies(dpu_enc->idle_timeout));
+ 
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
+index dc39f9806da5..e422ca15edb3 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
+@@ -588,7 +588,17 @@ static int dpu_encoder_phys_vid_wait_for_commit_done(
+ 		(hw_ctl->ops.get_flush_register(hw_ctl) == 0),
+ 		msecs_to_jiffies(50));
+ 	if (ret <= 0) {
+-		DPU_ERROR("vblank timeout: %x\n", hw_ctl->ops.get_flush_register(hw_ctl));
++		struct dpu_hw_intf_status s = {0};
++
++		if (phys_enc->hw_intf && phys_enc->hw_intf->ops.get_status)
++			phys_enc->hw_intf->ops.get_status(phys_enc->hw_intf, &s);
++
++		/* the timing engine state tells a stuck flush from a stopped INTF */
++		DPU_ERROR("vblank timeout: %x, intf %d en %u frame %u line %u, vblank refs %d\n",
++			  hw_ctl->ops.get_flush_register(hw_ctl),
++			  phys_enc->hw_intf ? phys_enc->hw_intf->idx - INTF_0 : -1,
++			  s.is_en, s.frame_count, s.line_count,
++			  READ_ONCE(phys_enc->vblank_refcount));
+ 		return -ETIMEDOUT;
+ 	}
+ 
+-- 
+2.43.0
+

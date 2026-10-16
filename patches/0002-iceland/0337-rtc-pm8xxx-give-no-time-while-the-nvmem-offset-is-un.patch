@@ -1,0 +1,142 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 16 Oct 2026 23:30:00 +0300
+Subject: [PATCH] rtc: pm8xxx: give no time while the nvmem offset is unset
+
+With an nvmem cell for the offset, the time is the PMIC counter plus
+the stored offset. A cell that was never written - or one that was
+cleared - reads 0, and read_time() then returns the bare counter: on
+the OnePlus Pad 4 one boot set the system clock to 1970-03-16 from it,
+journald stamped the first seconds of that boot in 1970 / at systemd's
+built-in epoch, and the clock stayed wrong until NTP corrected it.
+
+Treat a zero offset read from the nvmem cell as unset: read_time(),
+read_alarm() and set_alarm() return -EINVAL until set_time() stores an
+offset, which it now always writes while unset (no 30 s deferral), and
+warn once at probe. Boards without an offset store (no cell, no UEFI
+variable) and those with allow-set-time keep reading the counter as the
+time, as before.
+
+A missing provider defers the probe (devm_nvmem_cell_get() returns
+-EPROBE_DEFER) and a failed read fails it, so neither can produce the
+bare counter; only a successful read of 0 can.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+  drivers/rtc/rtc-pm8xxx.c |   32 +++++++++++++++++++++++++++++---
+  1 file changed, 29 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/rtc/rtc-pm8xxx.c b/drivers/rtc/rtc-pm8xxx.c
+index c0cf54534014..d01ddf0a3a20 100644
+--- a/drivers/rtc/rtc-pm8xxx.c
++++ b/drivers/rtc/rtc-pm8xxx.c
+@@ -67,6 +67,7 @@ struct qcom_uefi_rtc_info {
+  * @offset:		offset from epoch in seconds (s64 for full Unix
+  *			timestamp range)
+  * @offset_dirty:	offset needs to be stored on shutdown
++ * @offset_valid:	offset holds a stored or set value: the time can be read
+  */
+ struct pm8xxx_rtc {
+ 	struct rtc_device *rtc;
+@@ -80,6 +81,7 @@ struct pm8xxx_rtc {
+ 	struct nvmem_cell *nvmem_cell;
+ 	s64 offset;
+ 	bool offset_dirty;
++	bool offset_valid;
+ };
+ 
+ #ifdef CONFIG_EFI
+@@ -256,14 +258,14 @@ static int pm8xxx_rtc_update_offset(struct pm8xxx_rtc *rtc_dd, s64 secs)
+ 
+ 	offset = secs - raw_secs;
+ 
+-	if (offset == rtc_dd->offset)
++	if (rtc_dd->offset_valid && offset == rtc_dd->offset)
+ 		return 0;
+ 
+ 	/*
+ 	 * Reduce flash wear by deferring updates due to clock drift until
+ 	 * shutdown.
+ 	 */
+-	if (abs_diff(offset, rtc_dd->offset) < 30) {
++	if (rtc_dd->offset_valid && abs_diff(offset, rtc_dd->offset) < 30) {
+ 		rtc_dd->offset_dirty = true;
+ 		goto out;
+ 	}
+@@ -279,6 +281,7 @@ static int pm8xxx_rtc_update_offset(struct pm8xxx_rtc *rtc_dd, s64 secs)
+ 	rtc_dd->offset_dirty = false;
+ out:
+ 	rtc_dd->offset = offset;
++	rtc_dd->offset_valid = true;
+ 
+ 	return 0;
+ }
+@@ -372,6 +375,10 @@ static int pm8xxx_rtc_read_time(struct device *dev, struct rtc_time *tm)
+ 	s64 secs;
+ 	int rc;
+ 
++	/* the bare counter is not the time: give none until one is set */
++	if (!rtc_dd->offset_valid)
++		return -EINVAL;
++
+ 	rc = pm8xxx_rtc_read_raw(rtc_dd, &raw_secs);
+ 	if (rc)
+ 		return rc;
+@@ -393,6 +400,9 @@ static int pm8xxx_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alarm)
+ 	u32 secs;
+ 	int rc;
+ 
++	if (!rtc_dd->offset_valid)
++		return -EINVAL;
++
+ 	secs = rtc_tm_to_time64(&alarm->time);
+ 	secs -= rtc_dd->offset;
+ 	put_unaligned_le32(secs, value);
+@@ -428,6 +438,9 @@ static int pm8xxx_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alarm)
+ 	u32 secs;
+ 	int rc;
+ 
++	if (!rtc_dd->offset_valid)
++		return -EINVAL;
++
+ 	rc = regmap_bulk_read(rtc_dd->regmap, regs->alarm_rw, value,
+ 			      sizeof(value));
+ 	if (rc)
+@@ -576,12 +589,24 @@ static int pm8xxx_rtc_probe_offset(struct pm8xxx_rtc *rtc_dd)
+ 			return rc;
+ 		rtc_dd->nvmem_cell = NULL;
+ 	} else {
+-		return pm8xxx_rtc_read_nvmem_offset(rtc_dd);
++		rc = pm8xxx_rtc_read_nvmem_offset(rtc_dd);
++		if (rc)
++			return rc;
++
++		/* a cell that was never written (or was cleared) reads 0 */
++		rtc_dd->offset_valid = rtc_dd->offset != 0;
++		if (!rtc_dd->offset_valid)
++			dev_warn(rtc_dd->dev,
++				 "no stored offset: no time until the clock is set\n");
++
++		return 0;
+ 	}
+ 
+ 	/* Use UEFI storage as fallback if available */
+ 	rtc_dd->use_uefi = of_property_read_bool(rtc_dd->dev->of_node,
+ 						 "qcom,uefi-rtc-info");
++	/* no offset store: the counter is the time, as before */
++	rtc_dd->offset_valid = true;
+ 	if (!rtc_dd->use_uefi)
+ 		return 0;
+ 
+@@ -625,6 +650,7 @@ static int pm8xxx_rtc_probe(struct platform_device *pdev)
+ 
+ 	rtc_dd->allow_set_time = of_property_read_bool(pdev->dev.of_node,
+ 						      "allow-set-time");
++	rtc_dd->offset_valid = rtc_dd->allow_set_time;
+ 	if (!rtc_dd->allow_set_time) {
+ 		rc = pm8xxx_rtc_probe_offset(rtc_dd);
+ 		if (rc)
+-- 
+2.43.0
+
