@@ -4,16 +4,19 @@ Mainline Linux for the OnePlus Pad 4 (`iceland`, Qualcomm SM8850P "kaanapali"). 
 on an upstream tag, Linux v7.3-rc7, so every commit keeps its original author. This is the same approach as the
 postmarketOS kernel packages and other tablet ports.
 
-Current state (16 Oct 2026): queue **q89l** on the branch `iceland-7.3-rc7-next` (this branch). The kernel release is
-`7.3.0-rc7-iceland-00438-gc7bc30386efe`: Linux v7.3-rc7 plus 438 patches (132 in `0001-infiniti`, 306 in
-`0002-iceland`). It is the default kernel of the Fedora 44 system installed on the tablet since 16 Oct 2026, packaged as
+Current state (16 Oct 2026): queue **q89m** on the branch `iceland-7.3-rc7-next` (this branch). The kernel release is
+`7.3.0-rc7-iceland-00453-ga028210c2e52`: Linux v7.3-rc7 plus 453 patches (132 in `0001-infiniti`, 321 in
+`0002-iceland`). It is the current kernel of the Fedora 44 system installed on the tablet, packaged as
 `kernel-iceland` and installed with dnf.
 
 ## Download
 
-The current queue q89l has no release yet. The latest release is [`q89k`](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89k) (queue commit `90869cf`, the queue before q89l): the Fedora 44 package
-`kernel-iceland-7.3.0.rc7.iceland.00436.gf1673c99e731-1.fc44.aarch64.rpm` (sha256 `ca9bc275ba4b9f99...`), its
-source RPM and the build's config, with `SHA256SUMS`.
+The current queue q89m has the release [`q89m`](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89m)
+(queue commit `8c717e2`): the Fedora 44 package
+`kernel-iceland-7.3.0.rc7.iceland.00453.ga028210c2e52-1.fc44.aarch64.rpm` (sha256 `ff84d2cb5a8c08ec...`), its
+source RPM and the build's config, with `SHA256SUMS`. Earlier releases:
+[`q89l`](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89l),
+[`q89k`](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89k).
 
 ## What is in the repository
 
@@ -21,7 +24,7 @@ source RPM and the build's config, with `SHA256SUMS`.
 |---|---|
 | `kernel.pin` | upstream tag and commit, the expected tree hash after each series, the kernel release of each queue |
 | `patches/0001-infiniti/` | 132 patches: infiniti-mainline/linux master (OnePlus 15, same SoC), rebased onto v7.3-rc7 |
-| `patches/0002-iceland/` | 306 patches: the OnePlus Pad 4 series, numbered with gaps up to 0320 (see below) |
+| `patches/0002-iceland/` | 321 patches: the OnePlus Pad 4 series, numbered with gaps up to 0335 (see below) |
 | `configs/` | `distro-neutral.config` (merged into the build) and `required.config` (options the build checks) |
 | `scripts/prepare.sh` | clones the upstream tag, checks its commit, applies both series with `git am`, checks the tree hashes |
 | `scripts/build.sh` | configures and builds the kernel; writes `dist/` with `BUILD_INFO` and `SHA256SUMS` |
@@ -53,7 +56,8 @@ updates through dnf: each boots once as a trial and becomes the default after a 
 | q89i | `7.3.0-rc7-iceland-00430-ge15255f5a056` | v7.3-rc7 | + 0310-0311 (A8xx GMU keep-alive register, GPU preemption off by default) and the config commits 0309 / 0312 (binderfs-only binder devices, TEO and lazy RCU built) | `iceland-7.3-rc7-next` | none (dnf update) |
 | q89j | `7.3.0-rc7-iceland-00431-g47151df8a814` | v7.3-rc7 | + 0313: the pogo keyboard backlight registered at probe | `iceland-7.3-rc7-next` | none (dnf update) |
 | q89k | `7.3.0-rc7-iceland-00436-gf1673c99e731` | v7.3-rc7 | + 0314-0318, upstream fixes: DPU pending-frame count and frame-done timer, ath12k multi-buffer MSDU decap, pmic_glink altmode ack, GPU RSC awake for poweroff | `iceland-7.3-rc7-next` | none (dnf update) |
-| **q89l** | `7.3.0-rc7-iceland-00438-gc7bc30386efe` | v7.3-rc7 | + 0319-0320: the battery's design energy in the device tree and the battery energy reported at its nominal voltage (UPower's full energy 53.80 Wh, was 62.23 Wh = charge x 4.5 V); built with a neutral build host name | `iceland-7.3-rc7-next` | none (dnf update) |
+| q89l | `7.3.0-rc7-iceland-00438-gc7bc30386efe` | v7.3-rc7 | + 0319-0320: the battery's design energy in the device tree and the battery energy reported at its nominal voltage (UPower's full energy 53.80 Wh, was 62.23 Wh = charge x 4.5 V); built with a neutral build host name | `iceland-7.3-rc7-next` | none (dnf update) |
+| **q89m** | `7.3.0-rc7-iceland-00453-ga028210c2e52` | v7.3-rc7 | + 0321-0335: display fixes after a blank / unblank (DPU pending flush, CRTC clock, vblank_off race), the MDSS interrupt CPU resume latency cap, upstream stable fixes (q6apm, ath12k, UCSI, qcom_battmgr, a6xx) | `iceland-7.3-rc7-next`, tag `q89m` | none (dnf update) |
 
 The earlier queues on Linux 7.3-rc4 (q84 to q87) are not kept on a branch. Their story is in `docs/PORT-LOG.md`.
 
@@ -105,8 +109,8 @@ anywhere by these scripts.
 
 ## Status on the installed tablet
 
-- Fedora 44 GNOME runs on the tablet since 13 Oct 2026. Kernel q89l (`7.3.0-rc7-iceland-00438`) is its default kernel
-  since 16 Oct 2026.
+- Fedora 44 GNOME runs on the tablet since 13 Oct 2026. Kernel q89m (`7.3.0-rc7-iceland-00453`) is its current kernel
+  (16 Oct 2026), installed with dnf.
 - What works, feature by feature:
   [iceland-mainline/docs/FEATURES.md](https://github.com/mzakamin-hub/iceland-mainline/blob/main/docs/FEATURES.md).
 
