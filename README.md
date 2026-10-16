@@ -5,18 +5,21 @@ on an upstream tag, Linux v7.3-rc7, so every commit keeps its original author. T
 postmarketOS kernel packages and other tablet ports.
 
 **The current branch is [`iceland-7.3-rc7-next`](https://github.com/mzakamin-hub/iceland-linux/tree/iceland-7.3-rc7-next)**
-(16 Oct 2026): queue q89l, kernel release `7.3.0-rc7-iceland-00438-gc7bc30386efe`, the default kernel of the Fedora 44
+(16 Oct 2026): queue q89m, kernel release `7.3.0-rc7-iceland-00453-ga028210c2e52`, the current kernel of the Fedora 44
 system installed on the tablet. Build from that branch.
 
 `main` holds queue q89g (`7.3.0-rc7-iceland-00426-g520e85da9244`, branch `iceland-7.3-rc7-q89g`, tag `q89g`), the kernel
-of the first Fedora 44 install image (13 Oct 2026). The tables below describe q89g; q89h to q89l are listed in the README of
+of the first Fedora 44 install image (13 Oct 2026). The tables below describe q89g; q89h to q89m are listed in the README of
 `iceland-7.3-rc7-next`.
 
 ## Download
 
-The current queue q89l has no release yet. The latest release is [`q89k`](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89k) (queue commit `90869cf`, the queue before q89l): the Fedora 44 package
-`kernel-iceland-7.3.0.rc7.iceland.00436.gf1673c99e731-1.fc44.aarch64.rpm` (sha256 `ca9bc275ba4b9f99...`), its
-source RPM and the build's config, with `SHA256SUMS`.
+The current queue q89m has the release [`q89m`](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89m)
+(queue commit `8c717e2`): the Fedora 44 package
+`kernel-iceland-7.3.0.rc7.iceland.00453.ga028210c2e52-1.fc44.aarch64.rpm` (sha256 `ff84d2cb5a8c08ec...`), its
+source RPM and the build's config, with `SHA256SUMS`. Earlier releases:
+[`q89l`](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89l),
+[`q89k`](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89k).
 
 ## What is in the repository
 
@@ -102,8 +105,8 @@ anywhere by these scripts.
 
 ## Status on the installed tablet
 
-- The first Fedora 44 install image carries this queue (q89g). Installed systems update to q89l from
-  `iceland-7.3-rc7-next` with dnf; it is the default kernel since 16 Oct 2026.
+- The first Fedora 44 install image carries this queue (q89g). Installed systems update to q89m from
+  `iceland-7.3-rc7-next` with dnf (16 Oct 2026).
 - What works, feature by feature:
   [iceland-mainline/docs/FEATURES.md](https://github.com/mzakamin-hub/iceland-mainline/blob/main/docs/FEATURES.md).
 
