@@ -1,0 +1,64 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sun, 18 Oct 2026 12:00:00 +0300
+Subject: [PATCH] drm/msm/dpu: make the pending flush clear of the phys cleanup
+ switchable
+
+"drm/msm/dpu: clear pending flush state before physical cleanup" (Saim
+Shujah, patchwork series 1152247) drops the cached CTL pending flush
+mask in dpu_encoder_helper_phys_cleanup() before the teardown flush is
+built. It is not merged: review on 14 Sep reported that it breaks IGT
+tests on sc7180 (kms_plane_alpha_blend constant alpha, kms_rotation_crc
+180). On the OnePlus Pad 4 it came in with the post-blank fixes and has
+not shown a measured gain or loss of its own.
+
+Keep the clear on by default, so the default behaviour does not change,
+and gate it with the new module parameter msm.dpu_pending_flush_clear
+(bool, 0644, default Y). msm.dpu_pending_flush_clear=0 on the kernel
+command line, or writing N to
+/sys/module/msm/parameters/dpu_pending_flush_clear, gives the behaviour
+without the clear, for an A/B comparison without another kernel. The
+parameter is read at every physical encoder cleanup.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c | 15 ++++++++++++++-
+ 1 file changed, 14 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+index 14df37deeb2e..de7940eb8ef0 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+@@ -354,6 +354,18 @@ module_param(dpu_vid_idle_irq_off, bool, 0644);
+ MODULE_PARM_DESC(dpu_vid_idle_irq_off,
+ 		 "Drop the vsync interrupt of an idle video mode encoder until the next commit (default: keep it on)");
+ 
++/*
++ * dpu_encoder_helper_phys_cleanup() drops the cached CTL pending flush mask
++ * before it builds the teardown flush, so that bits a running timing engine
++ * already consumed are not replayed after it stopped. Upstream review found
++ * IGT regressions with that clear on sc7180 (plane alpha blend, rotation
++ * CRC); keep it on by default and let it be switched off for comparison.
++ */
++static bool dpu_pending_flush_clear = true;
++module_param(dpu_pending_flush_clear, bool, 0644);
++MODULE_PARM_DESC(dpu_pending_flush_clear,
++		 "Clear the cached CTL pending flush mask before the physical encoder cleanup (default: on)");
++
+ /* @b differs from @a at most in the length of the vertical front porch */
+ static bool dpu_idle_rr_same_but_vfp(const struct drm_display_mode *a,
+ 				     const struct drm_display_mode *b)
+@@ -2947,7 +2959,8 @@ void dpu_encoder_helper_phys_cleanup(struct dpu_encoder_phys *phys_enc)
+ 
+ 	dpu_enc = to_dpu_encoder_virt(phys_enc->parent);
+ 
+-	ctl->ops.clear_pending_flush(ctl);
++	if (READ_ONCE(dpu_pending_flush_clear))
++		ctl->ops.clear_pending_flush(ctl);
+ 	ctl->ops.reset(ctl);
+ 
+ 	dpu_encoder_helper_reset_mixers(phys_enc);
+-- 
+2.43.0
+

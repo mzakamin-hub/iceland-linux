@@ -1,0 +1,52 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sun, 18 Oct 2026 12:00:00 +0300
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: no placeholder
+ Bluetooth address
+
+The Bluetooth node carried a fixed local-bd-address, a value shared by
+every unit. The WCN7860 reports the address of its NVM file, so btqca
+sets HCI_QUIRK_USE_BDADDR_PROPERTY and the core programs the device
+tree value: the controller came up configured on the shared value, and
+when userspace did not manage to set the unit's own address in time
+bluetoothd used it (a new adapter directory, the pairings missing).
+
+Use an all-zero value instead. The core ignores an all-zero property,
+so the controller registers as unconfigured (MGMT reports the missing
+public-address option) and becomes configured only once the unit's own
+address is set, either by a boot loader that fills the property or by
+Set Public Address from userspace (iceland-bdaddr v3 of iceland-device
+0.28-26, which must be installed first). "Bluetooth: qca: check the
+device address on every setup" (queue 0261) keeps the quirk on every
+later setup, so the address set once is programmed again at every
+power on.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 64589cbb4dfc..226050e78304 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -2428,7 +2428,14 @@ &uart18 {
+ 	bluetooth {
+ 		compatible = "qcom,wcn7860-bt";
+ 
+-		local-bd-address = [ 25 00 00 00 5a ad ];
++		/*
++		 * All zero: filled by the boot loader when it knows the unit's
++		 * address; otherwise the controller registers unconfigured
++		 * (btqca sets HCI_QUIRK_USE_BDADDR_PROPERTY because the chip
++		 * reports its NVM default) until userspace sets the public address,
++		 * so no shared placeholder address is ever used.
++		 */
++		local-bd-address = [ 00 00 00 00 00 00 ];
+ 
+ 		vddrfacmn-supply = <&vreg_pmu_rfa_cmn>;
+ 		vddaon-supply = <&vreg_pmu_aon_0p59>;
+-- 
+2.43.0
+
