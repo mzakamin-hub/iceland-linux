@@ -1,0 +1,71 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sun, 18 Oct 2026 19:00:00 +0300
+Subject: [PATCH] soc: qcom: smp2p_sleepstate: add run-time switches for an A/B
+
+The sleep-state notifier changes what the ADSP and its sensor engine do
+while Linux suspends. Give both halves a switch, so that a trial can
+compare them without another kernel:
+
+  smp2p_sleepstate.notify  clear the AP-awake bit before suspend
+  smp2p_sleepstate.wakeup  report the inbound sleep-state interrupt
+                           as a wakeup event
+
+Both default to on, the behaviour of the stock driver; both can be set
+on the kernel command line or at run time under
+/sys/module/smp2p_sleepstate/parameters/. With notify off the bit stays
+set across suspend, so the DSP always sees the AP as awake. The bit is
+set again after every suspend whatever the switch says, so a change
+during suspend cannot leave the DSP believing the AP is asleep.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/soc/qcom/smp2p_sleepstate.c | 15 +++++++++++++--
+ 1 file changed, 13 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/soc/qcom/smp2p_sleepstate.c b/drivers/soc/qcom/smp2p_sleepstate.c
+index 70f1a4e6e866..608966c021bd 100644
+--- a/drivers/soc/qcom/smp2p_sleepstate.c
++++ b/drivers/soc/qcom/smp2p_sleepstate.c
+@@ -20,6 +20,14 @@
+ #define PROC_AWAKE_ID	12
+ #define AWAKE_BIT	BIT(PROC_AWAKE_ID)
+ 
++static bool sleepstate_notify = true;
++module_param_named(notify, sleepstate_notify, bool, 0644);
++MODULE_PARM_DESC(notify, "Clear the AP-awake bit for the DSPs during system suspend (default: on)");
++
++static bool sleepstate_wakeup = true;
++module_param_named(wakeup, sleepstate_wakeup, bool, 0644);
++MODULE_PARM_DESC(wakeup, "Report a DSP sleep-state interrupt as a wakeup event (default: on)");
++
+ struct smp2p_sleepstate {
+ 	struct qcom_smem_state *state;
+ 	struct wakeup_source *ws;
+@@ -33,9 +41,11 @@ static int smp2p_sleepstate_pm_notifier(struct notifier_block *nb,
+ 
+ 	switch (event) {
+ 	case PM_SUSPEND_PREPARE:
+-		qcom_smem_state_update_bits(ss->state, AWAKE_BIT, 0);
++		if (READ_ONCE(sleepstate_notify))
++			qcom_smem_state_update_bits(ss->state, AWAKE_BIT, 0);
+ 		break;
+ 	case PM_POST_SUSPEND:
++		/* Unconditional: the switch may have changed while suspended. */
+ 		qcom_smem_state_update_bits(ss->state, AWAKE_BIT, AWAKE_BIT);
+ 		break;
+ 	}
+@@ -47,7 +57,8 @@ static irqreturn_t smp2p_sleepstate_handler(int irq, void *data)
+ {
+ 	struct smp2p_sleepstate *ss = data;
+ 
+-	__pm_wakeup_event(ss->ws, 200);
++	if (READ_ONCE(sleepstate_wakeup))
++		__pm_wakeup_event(ss->ws, 200);
+ 
+ 	return IRQ_HANDLED;
+ }
+-- 
+2.43.0
+

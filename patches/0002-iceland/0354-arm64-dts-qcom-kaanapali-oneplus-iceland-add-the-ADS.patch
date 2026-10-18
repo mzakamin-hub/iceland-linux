@@ -1,0 +1,60 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sun, 18 Oct 2026 19:00:00 +0300
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: add the ADSP
+ sleep-state entries
+
+The stock iceland DT gives the ADSP's SMP2P edge two more entries, an
+outbound "sleepstate" (the AP-awake bit) and an inbound "sleepstate_see"
+(the sensor engine), and a qcom,smp2p-sleepstate node that ties them to
+the sleep-state notifier. Mainline lacks all three, so the ADSP and its
+sensor hub are never told that Linux suspends.
+
+Add the entries and the consumer node as the stock DT has them. The
+inbound interrupt is requested on both edges, like the stock driver.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../dts/qcom/kaanapali-oneplus-iceland.dts    | 28 +++++++++++++++++++
+ 1 file changed, 28 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index be9c4112fe6a..4688d399057a 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -3882,3 +3882,31 @@ map1 {
+ 		};
+ 	};
+ };
++
++/*
++ * The sleep-state entries of the ADSP's SMP2P edge, as in the stock DT:
++ * Linux clears the AP-awake bit of "sleepstate" before system suspend and
++ * sets it again after resume; "sleepstate_see" is the inbound entry of the
++ * sensor engine (SEE) on the ADSP.
++ */
++&{/smp2p-adsp} {
++	smp2p_adsp_sleepstate_out: sleepstate-out {
++		qcom,entry-name = "sleepstate";
++		#qcom,smem-state-cells = <1>;
++	};
++
++	smp2p_adsp_sleepstate_in: sleepstate-in {
++		qcom,entry-name = "sleepstate_see";
++		interrupt-controller;
++		#interrupt-cells = <2>;
++	};
++};
++
++/ {
++	smp2p-sleepstate {
++		compatible = "qcom,smp2p-sleepstate";
++		qcom,smem-states = <&smp2p_adsp_sleepstate_out 0>;
++		interrupts-extended = <&smp2p_adsp_sleepstate_in 0 IRQ_TYPE_EDGE_BOTH>;
++		interrupt-names = "smp2p-sleepstate-in";
++	};
++};
+-- 
+2.43.0
+
