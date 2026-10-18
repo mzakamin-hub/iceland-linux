@@ -1,0 +1,102 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sun, 18 Oct 2026 17:00:00 +0300
+Subject: [PATCH] drm/msm/dpu: program the DSC blocks once per enable when
+ asked
+
+dpu_encoder_prepare_for_kickoff() calls dpu_encoder_prep_dsc() on every
+commit: both DSC blocks get their configuration, thresholds and
+pingpong binding written again and the CTL DSC flush bit set, although
+the configuration only changes with a mode set.
+
+On the OnePlus Pad 4 (Kaanapali, dual-DSI video mode panel with DSC)
+the display stalls of the field logs are always two 50 ms commit-done
+timeouts with exactly that bit pending ("vblank timeout: 400000", i.e.
+CTL_FLUSH bit 22) while the timing engine keeps running: 22 pairs on
+q89n / q89o, 12 of them within five minutes of a display enable, and
+the same pairs on kernels before q89k. Upstream fixed the same pattern
+for merge_3d, where a needless flush bit gave vblank timeouts.
+
+Add the module parameter msm.dpu_dsc_once (bool, 0644, default off =
+the current behaviour): when set, the DSC blocks are programmed only on
+the first kickoff after an enable, a mode set or a hardware reset. The
+parameter is read at every kickoff, so both behaviours can be compared
+at run time on one kernel.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c | 21 ++++++++++++++++++++-
+ 1 file changed, 20 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+index de7940eb8ef0..cb0cc4454b01 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+@@ -263,6 +263,7 @@ struct dpu_encoder_virt {
+ 
+ 	/* DSC configuration */
+ 	struct drm_dsc_config *dsc;
++	bool dsc_programmed;
+ 
+ 	struct dpu_enc_idle_rr idle_rr;
+ };
+@@ -354,6 +355,18 @@ module_param(dpu_vid_idle_irq_off, bool, 0644);
+ MODULE_PARM_DESC(dpu_vid_idle_irq_off,
+ 		 "Drop the vsync interrupt of an idle video mode encoder until the next commit (default: keep it on)");
+ 
++/*
++ * dpu_encoder_prepare_for_kickoff() reprograms the DSC blocks and sets their CTL flush bit on
++ * every commit. On a dual-DSI video mode panel with DSC that flush bit (CTL_FLUSH bit 22) is the
++ * one left pending in the 50 ms "vblank timeout: 400000" stalls. When this is set, the DSC blocks
++ * are programmed only on the first kickoff after an enable, a mode set or a hardware reset; the
++ * configuration does not change in between. Read at every kickoff.
++ */
++static bool dpu_dsc_once;
++module_param(dpu_dsc_once, bool, 0644);
++MODULE_PARM_DESC(dpu_dsc_once,
++		 "Program the DSC blocks once per enable / mode set (default: on every commit)");
++
+ /*
+  * dpu_encoder_helper_phys_cleanup() drops the cached CTL pending flush mask
+  * before it builds the teardown flush, so that bits a running timing engine
+@@ -1844,6 +1857,7 @@ static void dpu_encoder_virt_atomic_mode_set(struct drm_encoder *drm_enc,
+ 	}
+ 
+ 	dpu_enc = to_dpu_encoder_virt(drm_enc);
++	dpu_enc->dsc_programmed = false;
+ 	DPU_DEBUG_ENC(dpu_enc, "\n");
+ 
+ 	priv = drm_enc->dev->dev_private;
+@@ -2012,6 +2026,7 @@ static void dpu_encoder_virt_atomic_enable(struct drm_encoder *drm_enc,
+ 	struct drm_display_mode *cur_mode = NULL;
+ 
+ 	dpu_enc = to_dpu_encoder_virt(drm_enc);
++	dpu_enc->dsc_programmed = false;
+ 	dpu_enc->dsc = dpu_encoder_get_dsc_config(drm_enc);
+ 
+ 	atomic_set(&dpu_enc->frame_done_timeout_cnt, 0);
+@@ -2065,6 +2080,7 @@ static void dpu_encoder_virt_atomic_disable(struct drm_encoder *drm_enc,
+ 	struct drm_crtc_state *old_state = NULL;
+ 
+ 	dpu_enc = to_dpu_encoder_virt(drm_enc);
++	dpu_enc->dsc_programmed = false;
+ 	DPU_DEBUG_ENC(dpu_enc, "\n");
+ 
+ 	crtc = drm_atomic_get_old_crtc_for_encoder(state, drm_enc);
+@@ -2792,8 +2808,11 @@ void dpu_encoder_prepare_for_kickoff(struct drm_encoder *drm_enc)
+ 		}
+ 	}
+ 
+-	if (dpu_enc->dsc)
++	if (dpu_enc->dsc &&
++	    (!READ_ONCE(dpu_dsc_once) || needs_hw_reset || !dpu_enc->dsc_programmed)) {
+ 		dpu_encoder_prep_dsc(dpu_enc, dpu_enc->dsc);
++		dpu_enc->dsc_programmed = true;
++	}
+ 
+ 	dpu_idle_rr_prepare_kickoff(dpu_enc);
+ }
+-- 
+2.43.0
+
