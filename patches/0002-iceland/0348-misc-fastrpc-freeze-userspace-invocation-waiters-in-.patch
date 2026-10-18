@@ -1,0 +1,52 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: slwyts <slwyts@foxmail.com>
+Date: Thu, 15 Oct 2026 09:13:16 +0800
+Subject: [PATCH 348/349] misc: fastrpc: freeze userspace invocation waiters in
+ place
+
+The sensor daemon can wait indefinitely for an inbound DSP listener call.
+Its interruptible completion wait is woken by the process freezer and
+returns -ERESTARTSYS. The interrupted context is retained, but retrying
+the ioctl allocates and sends another context rather than resuming it.
+This can break the listener protocol across suspend.
+
+Use the existing completion API with TASK_INTERRUPTIBLE | TASK_FREEZABLE.
+The freezer can stop and resume the waiter without resending the RPC.
+Ordinary signal interruption remains supported, and the bounded kernel
+invocation path is unchanged. This candidate needs suspend/resume testing
+with the real sensor daemon; it does not implement general ioctl restart.
+
+[ from github.com/yzddmr6/linux-sm8750-piano, change 3dd68c8d03b1
+  (also Project-SunUEFI linux patch 0033, same author); the source
+  carries no Signed-off-by ]
+[ ported: in v7.3 the wait sits in fastrpc_wait_for_response() (the
+  poll-mode series), not in fastrpc_internal_invoke(); the changed
+  lines and the comment are the source's ]
+[ upstream author: slwyts <slwyts@foxmail.com>; picked for the
+  iceland kernel q89r ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/misc/fastrpc.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/misc/fastrpc.c b/drivers/misc/fastrpc.c
+index b35751212095..1b90ef4f640b 100644
+--- a/drivers/misc/fastrpc.c
++++ b/drivers/misc/fastrpc.c
+@@ -1326,7 +1326,11 @@ static inline int fastrpc_wait_for_response(struct fastrpc_invoke_ctx *ctx,
+ 		if (!wait_for_completion_timeout(&ctx->work, 10 * HZ))
+ 			err = -ETIMEDOUT;
+ 	} else {
+-		err = wait_for_completion_interruptible(&ctx->work);
++		/* Freeze this waiter in place during system sleep, retaining the
++		 * in-flight DSP context instead of restarting and resending it.
++		 * Real signals remain interruptible. */
++		err = wait_for_completion_state(&ctx->work,
++						TASK_INTERRUPTIBLE | TASK_FREEZABLE);
+ 	}
+ 
+ 	return err;
+-- 
+2.43.0
+
