@@ -1,63 +1,77 @@
 # iceland-linux
 
-Mainline Linux for the OnePlus Pad 4 (`iceland`, Qualcomm SM8850P "kaanapali"). The kernel is kept as a patch queue
+The Linux kernel for the OnePlus Pad 4 (`iceland`, Qualcomm SM8850P "kaanapali"). The kernel is kept as a patch queue
 on an upstream tag, Linux v7.3-rc7, so every commit keeps its original author. This is the same approach as the
 postmarketOS kernel packages and other tablet ports.
 
-**The current branch is [`iceland-7.3-rc7-next`](https://github.com/mzakamin-hub/iceland-linux/tree/iceland-7.3-rc7-next)**
-(16 Oct 2026): queue q89m, kernel release `7.3.0-rc7-iceland-00453-ga028210c2e52`, the current kernel of the Fedora 44
-system installed on the tablet. Build from that branch.
+This repository is one part of the project. The boot chain and the install are described in the hub,
+[iceland-mainline](https://github.com/mzakamin-hub/iceland-mainline#boot-chain), and the install steps are in its
+[manual install](https://github.com/mzakamin-hub/iceland-mainline#manual-install) section.
 
-`main` holds queue q89g (`7.3.0-rc7-iceland-00426-g520e85da9244`, branch `iceland-7.3-rc7-q89g`, tag `q89g`), the kernel
-of the first Fedora 44 install image (13 Oct 2026). The tables below describe q89g; q89h to q89m are listed in the README of
-`iceland-7.3-rc7-next`.
+## Current kernel
+
+- **Branch:** [`iceland-7.3-rc7-next`](https://github.com/mzakamin-hub/iceland-linux/tree/iceland-7.3-rc7-next). Build from this branch.
+- **Queue:** q89w (tag `q89w`), kernel release `7.3.0-rc7-iceland-00519-gec0a0e306dd9`, packaged as `kernel-iceland`.
+- **`main`** holds the older queue q89g, the kernel of the first install image. Later queues are only on
+  `iceland-7.3-rc7-next`.
 
 ## Download
 
-The current queue q89m has the release [`q89m`](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89m)
-(queue commit `8c717e2`): the Fedora 44 package
-`kernel-iceland-7.3.0.rc7.iceland.00453.ga028210c2e52-1.fc44.aarch64.rpm` (sha256 `ff84d2cb5a8c08ec...`), its
-source RPM and the build's config, with `SHA256SUMS`. Earlier releases:
-[`q89l`](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89l),
-[`q89k`](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89k).
+The [`q89w` release](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89w) has:
+
+- `kernel-iceland-7.3.0.rc7.iceland.00519.gec0a0e306dd9-1.fc44.aarch64.rpm`, the Fedora 44 package for the tablet;
+- the source RPM, which carries this repository's queue at its head, and the build's config;
+- `SHA256SUMS`.
+
+Check the files with `sha256sum -c SHA256SUMS`. On the tablet's Fedora 44 system, install the package with dnf:
+
+```bash
+sudo dnf install ./kernel-iceland-7.3.0.rc7.iceland.00519.gec0a0e306dd9-1.fc44.aarch64.rpm
+```
+
+Earlier releases: [q89m](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89m),
+[q89l](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89l) and
+[q89k](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89k).
 
 ## What is in the repository
 
+The counts below are for `iceland-7.3-rc7-next`.
+
 | Path | Content |
 |---|---|
-| `kernel.pin` | upstream tag and commit, the expected tree hash after each series, the kernel release of each queue |
-| `patches/0001-infiniti/` | 132 patches: infiniti-mainline/linux master (OnePlus 15, same SoC), rebased onto v7.3-rc7 |
-| `patches/0002-iceland/` | 294 patches: the OnePlus Pad 4 series, numbered with gaps up to 0306 (see below) |
+| `kernel.pin` | the upstream tag and commit, the tree hash expected after each series, the kernel release of each queue |
+| `patches/0001-infiniti/` | 132 patches from infiniti-mainline/linux (OnePlus 15, the same SoC), rebased onto v7.3-rc7 |
+| `patches/0002-iceland/` | 385 patches: the OnePlus Pad 4 series, numbered with gaps up to 0402 |
 | `configs/` | `distro-neutral.config` (merged into the build) and `required.config` (options the build checks) |
 | `scripts/prepare.sh` | clones the upstream tag, checks its commit, applies both series with `git am`, checks the tree hashes |
-| `scripts/build.sh` | configures and builds the kernel; writes `dist/` with `BUILD_INFO` and `SHA256SUMS` |
+| `scripts/build.sh` | configures and builds the kernel; writes `out/dist/` with `BUILD_INFO` and `SHA256SUMS` |
 | `packaging/fedora/` | `kernel-iceland.spec`, `build-rpm.sh` and the kernel-install plugin for the Fedora 44 package |
-| `packaging/repo/make-repo.sh` | builds a dnf repository from the kernel-iceland and iceland-device RPMs |
-| `docs/` | one note per queue (`Q89B`, `Q89C-TB`, `Q89D8`, `Q89D9`, `Q89F`, `Q89G`), `PORT-LOG.md` and `PROVENANCE.md` |
-| `.github/workflows/build.yml` | manual GitHub Actions build of the kernel (see below) |
+| `packaging/repo/make-repo.sh` | builds a dnf repository from the `kernel-iceland` and `iceland-device` RPMs |
+| `docs/` | one note per queue, `PORT-LOG.md` (each commit of the original port) and `PROVENANCE.md` |
+| `.github/workflows/build.yml` | a manual GitHub Actions build of the kernel |
 
-The 0002 series is map220v's `iceland-7.2` work for the Pad 4, ported to 7.3 with the authors kept, plus our fixes,
-upstream picks, the tb323fu-linux patches and our later queue items. `docs/PORT-LOG.md` accounts for each commit of
-the original port, and the kernel history after it.
+## Build
 
-## Queues and branches
+Packages needed on Ubuntu 24.04 (the list the GitHub workflow installs): `clang lld llvm flex bison bc libssl-dev
+libelf-dev device-tree-compiler zstd cpio`. The build uses LLVM (`LLVM=1`).
 
-Each queue is a rebase or an addition on the one before it. The golden is the rehearsal image built from that queue
-that passed the RAM-boot rehearsals.
+```bash
+git clone --branch iceland-7.3-rc7-next https://github.com/mzakamin-hub/iceland-linux
+cd iceland-linux
+scripts/prepare.sh ./src        # clones v7.3-rc7, checks the commit, applies both series, checks the tree hashes
+scripts/build.sh ./src ./out    # Image, Image.gz, the DTB and the modules; writes out/dist/
+```
 
-| Queue | Kernel release | Base | Change | Branch / tag | Golden |
-|---|---|---|---|---|---|
-| q89b | `7.3.0-rc6-iceland-00377-g8e90101870e4` | v7.3-rc6 | first rc6 rebase of the queue ([notes](docs/Q89B-QUEUE.md)) | `iceland-7.3-rc6-q89b`, tag `q89b` (and tag `q89b-1`) | B130 |
-| q89c-tb | `7.3.0-rc6-iceland-00388-g9093690257a0` | v7.3-rc6 | + 0255-0265, eleven patches from tb323fu-linux; a test candidate ([notes](docs/Q89C-TB-QUEUE.md)) | `iceland-7.3-rc6-q89c-tb`, tag `q89c-tb` | none |
-| q89d8 | `7.3.0-rc6-iceland-00413-gfaa8eeee8c82` | v7.3-rc6 | + 0266-0290, in four stages ([notes](docs/Q89D8-QUEUE.md)) | `iceland-7.3-rc6-q89d8`, tag `q89d8` | B143 |
-| q89d9 | `7.3.0-rc6-iceland-00414-g9e7350a6ab86` | v7.3-rc6 | + 0291, the Bluetooth hci_qca baud-rate burst ([notes](docs/Q89D9-QUEUE.md)) | `iceland-7.3-rc6-q89d9`, tag `q89d9` | B145 |
-| q89e | `7.3.0-rc7-iceland-00412-g4917dfb48aab` | v7.3-rc7 | q89d9 rebased onto rc7 (three patches merged upstream were dropped) + 0292 | `iceland-7.3-rc7-q89e`, tag `q89e` | B147 |
-| q89f | `7.3.0-rc7-iceland-00425-g8165b4e0b2d8` | v7.3-rc7 | + 0293-0305: brightness limit, focus lens, wake, idle refresh rate ([notes](docs/Q89F-QUEUE.md)) | `iceland-7.3-rc7-q89f`, tag `q89f` | none |
-| q89g | `7.3.0-rc7-iceland-00426-g520e85da9244` | v7.3-rc7 | + 0306: the focus lens holds its position ([notes](docs/Q89G-QUEUE.md)) | `iceland-7.3-rc7-q89g`, tag `q89g`, `main` | B149 |
-
-The earlier queues on Linux 7.3-rc4 (q84 to q87) are not kept on a branch. Their story is in `docs/PORT-LOG.md`.
-
-The idle refresh rate (0303-0305) is compiled into q89f and q89g but off by default (`msm.dpu_idle_refresh_ms=0`).
+- `scripts/build.sh` runs `defconfig`, merges `arch/arm64/configs/sm8850.config` (map220v's fragment; drift is reported
+  but not fatal) and `configs/distro-neutral.config`, then checks `distro-neutral.config` and `required.config` strictly.
+  A failed strict check stops the build unless `ALLOW_CONFIG_DRIFT=1` is set.
+- `out/dist/` holds `Image`, `Image.gz`, `kaanapali-oneplus-iceland.dtb`, the config, `modules-<release>.tar.zst`,
+  `BUILD_INFO` (kernel release, source commit, queue commit, compiler) and `SHA256SUMS`.
+- The Fedora package: `packaging/fedora/build-rpm.sh BUILD_OUT RPM_OUT [RELEASE]` builds `kernel-iceland` for aarch64,
+  with a source RPM that carries this repository. Check out the branch or tag you built before you package it: the
+  source RPM carries the queue at its head. See [packaging/fedora/README.md](packaging/fedora/README.md).
+- The GitHub workflow runs the same build when it is started by hand. It keeps `out/dist/` as an artifact for 14 days
+  and does not build the RPM.
 
 ## Authorship and sign-off
 
@@ -76,45 +90,11 @@ The idle refresh rate (0303-0305) is compiled into q89f and q89g but off by defa
 Licence: GPL-2.0 (Linux `COPYING`). Every patch keeps its authorship and SPDX headers. Proprietary firmware is never
 stored here; the generic firmware is in [iceland-firmware](https://github.com/mzakamin-hub/iceland-firmware).
 
-## Build
-
-Packages needed on Ubuntu 24.04 (the same list the GitHub workflow installs): `clang lld llvm flex bison bc libssl-dev
-libelf-dev device-tree-compiler zstd cpio`. The build uses LLVM (`LLVM=1`).
-
-```
-scripts/prepare.sh ./src        # clones v7.3-rc7, checks the commit, applies both series, checks the tree hashes
-scripts/build.sh ./src ./out    # Image, Image.gz, the DTB and the modules; writes out/dist/
-```
-
-`scripts/build.sh` runs `defconfig`, merges `arch/arm64/configs/sm8850.config` (map220v's fragment; drift is reported
-but not fatal) and `configs/distro-neutral.config`, then checks `distro-neutral.config` and `required.config` strictly.
-A failed strict check stops the build unless `ALLOW_CONFIG_DRIFT=1` is set. `out/dist/` holds `Image`, `Image.gz`,
-`kaanapali-oneplus-iceland.dtb`, the config, `modules-<release>.tar.zst`, `BUILD_INFO` (kernel release, source commit,
-queue commit, compiler) and `SHA256SUMS`.
-
-The Fedora package is made from that output (see [packaging/fedora/README.md](packaging/fedora/README.md)):
-`packaging/fedora/build-rpm.sh BUILD_OUT RPM_OUT [RELEASE]` builds `kernel-iceland` for aarch64 and a source RPM that
-carries this repository. `packaging/repo/make-repo.sh` turns the RPMs into a dnf repository. Nothing is published
-anywhere by these scripts.
-
-### GitHub Actions
-
-`.github/workflows/build.yml` (workflow `kernel`) is started by hand from the Actions tab. It runs on an
-`ubuntu-24.04-arm` runner: it prepares the source, builds it and uploads `out/dist/` as the artifact
-`iceland-kernel-<commit>`, kept for 14 days. The workflow does not build the RPM.
-
-## Status on the installed tablet
-
-- The first Fedora 44 install image carries this queue (q89g). Installed systems update to q89m from
-  `iceland-7.3-rc7-next` with dnf (16 Oct 2026).
-- What works, feature by feature:
-  [iceland-mainline/docs/FEATURES.md](https://github.com/mzakamin-hub/iceland-mainline/blob/main/docs/FEATURES.md).
-
 ## Related repositories
 
-- [iceland-u-boot](https://github.com/mzakamin-hub/iceland-u-boot): the U-Boot that starts the kernel.
+- [iceland-mainline](https://github.com/mzakamin-hub/iceland-mainline): the project, the boot chain, the install guide,
+  the device package and the [list of working features](https://github.com/mzakamin-hub/iceland-mainline/blob/main/docs/FEATURES.md).
+- [iceland-u-boot](https://github.com/mzakamin-hub/iceland-u-boot): the U-Boot that starts this kernel.
 - [iceland-firmware](https://github.com/mzakamin-hub/iceland-firmware): the generic firmware files.
-- [iceland-mainline](https://github.com/mzakamin-hub/iceland-mainline): the project, the install guide, the device
-  package and the list of working features.
 - Upstream: [torvalds/linux](https://github.com/torvalds/linux) (v7.3-rc7) and
   [infiniti-mainline/linux](https://github.com/infiniti-mainline/linux) (the first series).
