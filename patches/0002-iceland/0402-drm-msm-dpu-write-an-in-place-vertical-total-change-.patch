@@ -1,0 +1,576 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 19 Oct 2026 06:56:20 +0300
+Subject: [PATCH 402/402] drm/msm/dpu: write an in-place vertical total change
+ in the front porch
+
+An in-place front porch change (msm.dpu_vfp_inplace) and the idle refresh
+rate write the new vertical total to both DSI hosts (V_TOTAL through the
+timing double buffer, TIMING_FLUSH) and to both INTFs
+(INTF_VSYNC_PERIOD_F0, latched with the INTF bits of the CTL flush) in one
+section with interrupts off, wherever the kickoff happens to be in the
+frame (only the last 32 lines before a frame start are avoided).
+
+On the OnePlus Pad 4 (bonded DSI, DSC, 2400 active + 274 sync/back porch
+lines, front porch 26 lines at 120 Hz and 2726 at 60 Hz) about two thirds
+of the 120 <-> 60 Hz changes made this way still underrun both INTFs once,
+without any modeset (q89v, 19 Oct: 16 pairs in 23 changes; 11 of 12
+changes from 120 Hz and 5 of 10 from 60 Hz). That is the share of the
+running frame taken by the active lines (89 % at 120 Hz, 44 % at 60 Hz):
+written during the active lines, the DSI hosts and the INTFs do not switch
+on the same frame. The vendor driver applies such "immediate porch" rates
+the same way (DSI timing double buffer, then the INTF flush), with no
+placement in the frame of its own.
+
+Write the new total in a line window of the running frame instead,
+selected by msm.dpu_vfp_window:
+ 1 (default) the end of the vertical front porch: the last 200 lines up to
+   dpu_vfp_win_tail (12) lines before the frame start, but not earlier than
+   dpu_vfp_win_head (4) lines after the last active line; 120 Hz: lines
+   2678-2688 of 2700, 60 Hz: 5188-5388 of 5400;
+ 2 the vertical sync and back porch at the start of a frame;
+ 0 the old behaviour.
+The kickoff (and the idle refresh work) sleeps until 300 us before the
+window opens and polls the INTF line count with interrupts off for at
+most 600 us; when the window is missed it unlocks without flushing and
+tries again on the next frame, and writes anyway after four frames
+(counted as "late"). The line count at the write and after it, the window
+and the tries go to the new dpu_enc_vtotal_write tracepoint and to the
+encoder's debugfs status, so that a capture can tell which window
+underruns.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c | 336 +++++++++++++++++---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_trace.h   |  24 ++
+ 2 files changed, 320 insertions(+), 40 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+index 60b679698c1c..08fe4cb5c75e 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+@@ -147,6 +147,14 @@ enum dpu_enc_rc_states {
+  * @prev_vtotal:	vertical total that ran before the last in-place
+  *			front porch change, 0 if there was none
+  * @vfp_changes:	number of in-place front porch changes
++ * @last_from:		running vertical total before the last write
++ * @last_to:		vertical total of the last write
++ * @last_line:		INTF line count when it was written
++ * @last_after:		INTF line count after the writes
++ * @last_window:	dpu_vfp_window of the last write (0: none was used)
++ * @last_tries:		frames it took to hit the window
++ * @late:		writes made outside the window after
++ *			DPU_VFP_WIN_TRIES frames
+  *
+  * The fields are changed under kms->commit_lock[@crtc_idx] (the commit, the
+  * encoder enable and disable all run under it); @crtc_idx, @low, @idle_vtotal,
+@@ -169,6 +177,13 @@ struct dpu_enc_idle_rr {
+ 	unsigned int raises;
+ 	u32 prev_vtotal;
+ 	unsigned int vfp_changes;
++	u32 last_from;
++	u32 last_to;
++	int last_line;
++	int last_after;
++	unsigned int last_window;
++	unsigned int last_tries;
++	unsigned int late;
+ };
+ 
+ /**
+@@ -294,15 +309,17 @@ static u32 dither_matrix[DITHER_MATRIX_SZ] = {
+  * the mode's own front porch back. The mode, the mode list and the CRTC state
+  * stay as they are: user space keeps seeing the mode it set.
+  *
+- * The DSI hosts and the INTFs double buffer the new vertical total and latch
+- * it at the same frame start, so a change shows up at the end of the frame
+- * being scanned out.
++ * The DSI hosts and the INTFs double buffer the new vertical total. They only
++ * switch on the same frame when it is written in the vertical blanking: a
++ * write during the active lines underruns both INTFs of a bonded pair once.
++ * The write therefore waits for a line window late in the front porch of the
++ * running frame (dpu_vfp_window), and the change shows up after that frame.
+  */
+ 
+ /* the frame done timer allows 5 frames, the commit wait 50 ms: stay below */
+ #define DPU_IDLE_RR_MAX_STRETCH		4
+ #define DPU_IDLE_RR_MAX_FRAME_US	40000
+-/* don't write the new total within this many lines of a frame start */
++/* window 0: don't write the new total within this many lines of a frame start */
+ #define DPU_IDLE_RR_GUARD_LINES		32
+ #define DPU_IDLE_RR_GUARD_POLL_US	10
+ #define DPU_IDLE_RR_GUARD_POLLS		20
+@@ -399,6 +416,42 @@ module_param(dpu_vfp_inplace, bool, 0644);
+ MODULE_PARM_DESC(dpu_vfp_inplace,
+ 		 "Change the vertical front porch of a running DSI video mode timing in place instead of a modeset (default: on)");
+ 
++/*
++ * Where in the running frame a new vertical total is written (an in-place
++ * front porch change, the idle refresh rate): written while the INTFs scan out
++ * active lines, the DSI hosts and the INTFs do not switch on the same frame
++ * and both INTFs underrun once (OnePlus Pad 4, about two changes in three).
++ * 1 = late in the vertical front porch of the running frame (default),
++ * 2 = in the vertical sync and back porch at the start of a frame,
++ * 0 = wherever the kickoff happens (outside the last lines of a frame).
++ * Read at every write.
++ */
++static unsigned int dpu_vfp_window = 1;
++module_param(dpu_vfp_window, uint, 0644);
++MODULE_PARM_DESC(dpu_vfp_window,
++		 "Line window for an in-place vertical total change: 1 = end of the front porch (default), 2 = vsync + back porch, 0 = anywhere");
++
++/*
++ * Lines kept free after the last active line (window 1) or the frame start
++ * (window 2), and before a frame start (window 1) or the first active line
++ * (window 2): room for the DSI pipeline delay and for the writes and the
++ * flush. Read at every write.
++ */
++static unsigned int dpu_vfp_win_head = 4;
++module_param(dpu_vfp_win_head, uint, 0644);
++MODULE_PARM_DESC(dpu_vfp_win_head, "Lines kept free at the start of the write window (default 4)");
++static unsigned int dpu_vfp_win_tail = 12;
++module_param(dpu_vfp_win_tail, uint, 0644);
++MODULE_PARM_DESC(dpu_vfp_win_tail, "Lines kept free at the end of the write window (default 12)");
++
++/* window 1 covers at most this many lines at the end of the front porch */
++#define DPU_VFP_WIN_SPAN_LINES		200
++/* sleep until this long before the window opens, then poll with irqs off */
++#define DPU_VFP_WIN_SLACK_US		300
++#define DPU_VFP_WIN_POLL_US		600
++/* frames to wait for the window before writing anyway */
++#define DPU_VFP_WIN_TRIES		4
++
+ /* @b differs from @a at most in the length of the vertical front porch */
+ static bool dpu_idle_rr_same_but_vfp(const struct drm_display_mode *a,
+ 				     const struct drm_display_mode *b)
+@@ -571,21 +624,159 @@ static int dpu_idle_rr_write(struct dpu_encoder_virt *dpu_enc, u32 vtotal,
+ 	return ret;
+ }
+ 
++/* the vertical total of the frame being scanned out */
++static u32 dpu_idle_rr_running(const struct dpu_enc_idle_rr *idle)
++{
++	return idle->low ? idle->idle_vtotal : idle->mode.vtotal;
++}
++
++/*
++ * The INTF line window of a frame of @run lines in which a new vertical total
++ * is written (dpu_vfp_window). The INTF line count is 1 at the start of the
++ * vertical sync, then come the back porch, the active lines and the front
++ * porch, which ends at @run. Return the window used, 0 for none.
++ */
++static unsigned int dpu_idle_rr_window(const struct dpu_encoder_virt *dpu_enc,
++				       u32 run, u32 *lo, u32 *hi)
++{
++	const struct drm_display_mode *m = &dpu_enc->idle_rr.mode;
++	u32 sof = m->vtotal - m->vsync_start;	/* vsync + back porch */
++	u32 act_end = sof + m->vdisplay;	/* last active line */
++	unsigned int win = READ_ONCE(dpu_vfp_window);
++	u32 head = min(READ_ONCE(dpu_vfp_win_head), 256U);
++	u32 tail = min(READ_ONCE(dpu_vfp_win_tail), 256U);
++
++	if (win == 1 && act_end + head + tail < run) {
++		*hi = run - tail;
++		*lo = max(act_end + head,
++			  *hi > DPU_VFP_WIN_SPAN_LINES ? *hi - DPU_VFP_WIN_SPAN_LINES : 0);
++		return 1;
++	}
++
++	/* also when the front porch is too short for window 1 */
++	if (win && head + tail < sof) {
++		*lo = max(head, 1U);
++		*hi = sof - tail;
++		return 2;
++	}
++
++	return 0;
++}
++
++/*
++ * Sleep until shortly before the write window of the running frame opens;
++ * the write then polls for it with interrupts off. Under the commit lock,
++ * outside the encoder spinlock.
++ */
++static void dpu_idle_rr_sleep_to_window(struct dpu_encoder_virt *dpu_enc)
++{
++	struct dpu_encoder_phys *master = dpu_enc->cur_master;
++	const struct drm_display_mode *m = &dpu_enc->idle_rr.mode;
++	u32 run = dpu_idle_rr_running(&dpu_enc->idle_rr);
++	int line, ahead;
++	u32 lo, hi;
++	u64 us;
++
++	if (!master || !master->ops.get_line_count || !m->clock || !run ||
++	    !dpu_idle_rr_window(dpu_enc, run, &lo, &hi))
++		return;
++
++	line = master->ops.get_line_count(master);
++	if (line < 0 || (line >= lo && line <= hi))
++		return;
++
++	ahead = (int)lo - line;
++	if (ahead < 0)
++		ahead += run;
++	if (ahead < 0)
++		return;
++
++	us = div_u64((u64)ahead * m->htotal * 1000, m->clock);
++	if (us > DPU_VFP_WIN_SLACK_US)
++		usleep_range(us - DPU_VFP_WIN_SLACK_US,
++			     us - DPU_VFP_WIN_SLACK_US + 50);
++}
++
++/*
++ * Poll the INTF line count into [@lo, @hi] for at most DPU_VFP_WIN_POLL_US.
++ * Return false at once when it is past @hi (the window of this frame is
++ * gone). Called with the encoder spinlock held.
++ */
++static bool dpu_idle_rr_poll_window(struct dpu_encoder_virt *dpu_enc,
++				    u32 lo, u32 hi, int *line)
++{
++	struct dpu_encoder_phys *master = dpu_enc->cur_master;
++	ktime_t end = ktime_add_us(ktime_get(), DPU_VFP_WIN_POLL_US);
++
++	do {
++		*line = master->ops.get_line_count(master);
++		if (*line < 0 || *line > hi)
++			return false;
++		if (*line >= lo)
++			return true;
++		udelay(1);
++	} while (ktime_before(ktime_get(), end));
++
++	return false;
++}
++
++/*
++ * Write @vtotal (dpu_idle_rr_write()) inside the line window of the running
++ * frame. @tries counts the frames this write has waited for; up to
++ * DPU_VFP_WIN_TRIES it returns -EAGAIN without writing when the window was
++ * missed, so that the caller can unlock, sleep and try again; then it writes
++ * anyway. Called with the encoder spinlock held.
++ */
++static int dpu_idle_rr_write_in_window(struct dpu_encoder_virt *dpu_enc,
++				       u32 vtotal, bool flush,
++				       unsigned int tries)
++{
++	struct dpu_enc_idle_rr *idle = &dpu_enc->idle_rr;
++	struct dpu_encoder_phys *master = dpu_enc->cur_master;
++	u32 run = dpu_idle_rr_running(idle);
++	unsigned int win;
++	int line = -1, ret;
++	u32 lo, hi;
++
++	win = dpu_idle_rr_window(dpu_enc, run, &lo, &hi);
++	if (!win) {
++		dpu_idle_rr_avoid_frame_start(dpu_enc, idle->mode.vtotal,
++					      idle->idle_vtotal);
++		line = master->ops.get_line_count(master);
++	} else if (!dpu_idle_rr_poll_window(dpu_enc, lo, hi, &line)) {
++		if (tries < DPU_VFP_WIN_TRIES)
++			return -EAGAIN;
++		idle->late++;
++	}
++
++	ret = dpu_idle_rr_write(dpu_enc, vtotal, flush);
++
++	idle->last_from = run;
++	idle->last_to = vtotal;
++	idle->last_line = line;
++	idle->last_after = master->ops.get_line_count(master);
++	idle->last_window = win;
++	idle->last_tries = tries;
++	trace_dpu_enc_vtotal_write(DRMID(&dpu_enc->base), run, vtotal, line,
++				   idle->last_after, win, tries);
++
++	return ret;
++}
++
+ /*
+  * Program the idle (@low) or the mode vertical total, see
+- * dpu_idle_rr_write().
++ * dpu_idle_rr_write_in_window().
+  */
+ static int dpu_idle_rr_program(struct dpu_encoder_virt *dpu_enc, bool low,
+-			       bool flush)
++			       bool flush, unsigned int tries)
+ {
+ 	struct dpu_enc_idle_rr *idle = &dpu_enc->idle_rr;
+ 	u32 vtotal = low ? idle->idle_vtotal : idle->mode.vtotal;
+ 	int ret;
+ 
+-	dpu_idle_rr_avoid_frame_start(dpu_enc, idle->mode.vtotal,
+-				      idle->idle_vtotal);
+-
+-	ret = dpu_idle_rr_write(dpu_enc, vtotal, flush);
++	ret = dpu_idle_rr_write_in_window(dpu_enc, vtotal, flush, tries);
++	if (ret == -EAGAIN)
++		return ret;
+ 	if (ret) {
+ 		/* should not happen after dpu_idle_rr_capable(): stop here */
+ 		idle->capable = false;
+@@ -610,11 +801,15 @@ static int dpu_idle_rr_program(struct dpu_encoder_virt *dpu_enc, bool low,
+ static void dpu_idle_rr_set(struct dpu_encoder_virt *dpu_enc, bool low)
+ {
+ 	unsigned long lock_flags;
++	unsigned int tries = 0;
+ 	int ret;
+ 
+-	spin_lock_irqsave(&dpu_enc->enc_spinlock, lock_flags);
+-	ret = dpu_idle_rr_program(dpu_enc, low, true);
+-	spin_unlock_irqrestore(&dpu_enc->enc_spinlock, lock_flags);
++	do {
++		dpu_idle_rr_sleep_to_window(dpu_enc);
++		spin_lock_irqsave(&dpu_enc->enc_spinlock, lock_flags);
++		ret = dpu_idle_rr_program(dpu_enc, low, true, ++tries);
++		spin_unlock_irqrestore(&dpu_enc->enc_spinlock, lock_flags);
++	} while (ret == -EAGAIN);
+ 
+ 	if (ret)
+ 		DPU_ERROR_ENC_RATELIMITED(dpu_enc, "idle refresh: low %d failed: %d\n",
+@@ -884,13 +1079,18 @@ static void dpu_idle_rr_prepare_kickoff(struct dpu_encoder_virt *dpu_enc)
+ /*
+  * Commit kickoff, under the commit lock and the encoder spinlock, right
+  * before the CTL flush: back to the mode rate with this frame's flush.
++ * Return false if the write window was missed (see
++ * dpu_idle_rr_write_in_window()).
+  */
+-static void dpu_idle_rr_kickoff_locked(struct dpu_encoder_virt *dpu_enc)
++static bool dpu_idle_rr_kickoff_locked(struct dpu_encoder_virt *dpu_enc,
++				       unsigned int tries)
+ {
+ 	struct dpu_enc_idle_rr *idle = &dpu_enc->idle_rr;
+ 
+ 	if (idle->enabled && idle->capable && idle->low)
+-		dpu_idle_rr_program(dpu_enc, false, false);
++		return dpu_idle_rr_program(dpu_enc, false, false, tries) != -EAGAIN;
++
++	return true;
+ }
+ 
+ /**
+@@ -921,49 +1121,66 @@ bool dpu_encoder_can_change_vfp(struct drm_encoder *drm_enc,
+ 	       dpu_idle_rr_hw_capable(dpu_enc, new);
+ }
+ 
++/*
++ * The CRTC mode of the commit being kicked off if its vertical total differs
++ * from the one the timing runs with (an in-place front porch change), else
++ * NULL. Under the commit lock.
++ */
++static const struct drm_display_mode *
++dpu_encoder_vfp_pending(struct dpu_encoder_virt *dpu_enc)
++{
++	struct dpu_enc_idle_rr *idle = &dpu_enc->idle_rr;
++	struct drm_crtc *crtc = dpu_enc->base.crtc;
++
++	if (!idle->enabled || !crtc || !crtc->state ||
++	    crtc->state->adjusted_mode.vtotal == idle->mode.vtotal)
++		return NULL;
++
++	return &crtc->state->adjusted_mode;
++}
++
+ /*
+  * Commit kickoff, under the commit lock and the encoder spinlock, right
+  * before the CTL flush. If the CRTC mode differs from the one the timing runs
+  * with, dpu_crtc_atomic_check() found that only the vertical front porch
+  * changes and kept the commit from being a modeset: write the new vertical
+- * total to the DSI hosts and the INTFs with this frame's flush (they latch it
+- * at the same frame start) and make the new mode the one the encoder, its
+- * physical encoders and the DSI hosts work with from now on.
++ * total to the DSI hosts and the INTFs with this frame's flush, inside the
++ * write window of the running frame (dpu_idle_rr_write_in_window()), and make
++ * the new mode the one the encoder, its physical encoders and the DSI hosts
++ * work with from now on. Return false if the window was missed and the
++ * caller should sleep and try again (@tries counts the attempts).
+  */
+-static void dpu_encoder_vfp_kickoff_locked(struct dpu_encoder_virt *dpu_enc)
++static bool dpu_encoder_vfp_kickoff_locked(struct dpu_encoder_virt *dpu_enc,
++					   unsigned int tries)
+ {
+ 	struct msm_drm_private *priv = dpu_enc->base.dev->dev_private;
+ 	struct msm_display_info *info = &dpu_enc->disp_info;
+ 	struct dpu_enc_idle_rr *idle = &dpu_enc->idle_rr;
+-	struct drm_crtc *crtc = dpu_enc->base.crtc;
+ 	const struct drm_display_mode *mode;
+ 	u32 running;
+ 	unsigned int i;
+ 	int ret;
+ 
+-	if (!idle->enabled || !crtc || !crtc->state)
+-		return;
+-
+-	mode = &crtc->state->adjusted_mode;
+-	if (mode->vtotal == idle->mode.vtotal)
+-		return;
++	mode = dpu_encoder_vfp_pending(dpu_enc);
++	if (!mode)
++		return true;
+ 
+ 	if (!dpu_idle_rr_same_but_vfp(&idle->mode, mode) ||
+ 	    !dpu_idle_rr_hw_capable(dpu_enc, mode)) {
+-		DPU_ERROR_ENC(dpu_enc, "in-place change %d -> %d lines refused\n",
+-			      idle->mode.vtotal, mode->vtotal);
+-		return;
++		DPU_ERROR_ENC_RATELIMITED(dpu_enc, "in-place change %d -> %d lines refused\n",
++					  idle->mode.vtotal, mode->vtotal);
++		return true;
+ 	}
+ 
+-	running = idle->low ? idle->idle_vtotal : idle->mode.vtotal;
+-	dpu_idle_rr_avoid_frame_start(dpu_enc, idle->mode.vtotal,
+-				      idle->idle_vtotal);
+-	ret = dpu_idle_rr_write(dpu_enc, mode->vtotal, false);
++	running = dpu_idle_rr_running(idle);
++	ret = dpu_idle_rr_write_in_window(dpu_enc, mode->vtotal, false, tries);
++	if (ret == -EAGAIN)
++		return false;
+ 	if (ret) {
+ 		idle->capable = false;
+ 		DPU_ERROR_ENC(dpu_enc, "in-place change %u -> %d lines failed: %d\n",
+ 			      running, mode->vtotal, ret);
+-		return;
++		return true;
+ 	}
+ 
+ 	for (i = 0; i < info->num_of_h_tiles; i++) {
+@@ -990,6 +1207,25 @@ static void dpu_encoder_vfp_kickoff_locked(struct dpu_encoder_virt *dpu_enc)
+ 	WRITE_ONCE(idle->idle_vtotal, 0);
+ 	idle->capable = dpu_idle_rr_capable(dpu_enc);
+ 	idle->vfp_changes++;
++
++	return true;
++}
++
++/*
++ * Commit kickoff, under the commit lock, before the encoder spinlock is
++ * taken: if this commit writes a new vertical total (an in-place front porch
++ * change, or the return from the idle rate), sleep until shortly before its
++ * write window.
++ */
++static void dpu_encoder_vtotal_kickoff_sleep(struct dpu_encoder_virt *dpu_enc)
++{
++	struct dpu_enc_idle_rr *idle = &dpu_enc->idle_rr;
++	const struct drm_display_mode *mode = dpu_encoder_vfp_pending(dpu_enc);
++
++	if ((mode && dpu_idle_rr_same_but_vfp(&idle->mode, mode) &&
++	     dpu_idle_rr_hw_capable(dpu_enc, mode)) ||
++	    (idle->enabled && idle->capable && idle->low))
++		dpu_idle_rr_sleep_to_window(dpu_enc);
+ }
+ 
+ /**
+@@ -2665,8 +2901,13 @@ static void dpu_encoder_helper_hw_reset(struct dpu_encoder_phys *phys_enc)
+  *	use cases that require visibility into multiple physical encoders at
+  *	a time.
+  * @dpu_enc: Pointer to virtual encoder structure
++ * @tries: attempt number, see dpu_idle_rr_write_in_window()
++ *
++ * Return: false, without a flush, if this commit writes a new vertical total
++ * and its write window was missed: sleep and call again.
+  */
+-static void _dpu_encoder_kickoff_phys(struct dpu_encoder_virt *dpu_enc)
++static bool _dpu_encoder_kickoff_phys(struct dpu_encoder_virt *dpu_enc,
++				      unsigned int tries)
+ {
+ 	struct dpu_hw_ctl *ctl;
+ 	uint32_t i, pending_flush;
+@@ -2677,8 +2918,11 @@ static void _dpu_encoder_kickoff_phys(struct dpu_encoder_virt *dpu_enc)
+ 	/* update pending counts and trigger kickoff ctl flush atomically */
+ 	spin_lock_irqsave(&dpu_enc->enc_spinlock, lock_flags);
+ 
+-	dpu_encoder_vfp_kickoff_locked(dpu_enc);
+-	dpu_idle_rr_kickoff_locked(dpu_enc);
++	if (!dpu_encoder_vfp_kickoff_locked(dpu_enc, tries) ||
++	    !dpu_idle_rr_kickoff_locked(dpu_enc, tries)) {
++		spin_unlock_irqrestore(&dpu_enc->enc_spinlock, lock_flags);
++		return false;
++	}
+ 
+ 	/* don't perform flush/start operations for slave encoders */
+ 	for (i = 0; i < dpu_enc->num_phys_encs; i++) {
+@@ -2715,6 +2959,8 @@ static void _dpu_encoder_kickoff_phys(struct dpu_encoder_virt *dpu_enc)
+ 	_dpu_encoder_trigger_start(dpu_enc->cur_master);
+ 
+ 	spin_unlock_irqrestore(&dpu_enc->enc_spinlock, lock_flags);
++
++	return true;
+ }
+ 
+ /**
+@@ -3047,15 +3293,20 @@ void dpu_encoder_kickoff(struct drm_encoder *drm_enc)
+ {
+ 	struct dpu_encoder_virt *dpu_enc;
+ 	struct dpu_encoder_phys *phys;
+-	unsigned int i;
++	unsigned int i, tries = 0;
+ 
+ 	DPU_ATRACE_BEGIN("encoder_kickoff");
+ 	dpu_enc = to_dpu_encoder_virt(drm_enc);
+ 
+ 	trace_dpu_enc_kickoff(DRMID(drm_enc));
+ 
+-	/* All phys encs are ready to go, trigger the kickoff */
+-	_dpu_encoder_kickoff_phys(dpu_enc);
++	/*
++	 * All phys encs are ready to go, trigger the kickoff; a new vertical
++	 * total waits for its write window, at most DPU_VFP_WIN_TRIES frames
++	 */
++	do {
++		dpu_encoder_vtotal_kickoff_sleep(dpu_enc);
++	} while (!_dpu_encoder_kickoff_phys(dpu_enc, ++tries));
+ 
+ 	/* allow phys encs to handle any post-kickoff business */
+ 	for (i = 0; i < dpu_enc->num_phys_encs; i++) {
+@@ -3425,6 +3676,11 @@ static int _dpu_encoder_status_show(struct seq_file *s, void *data)
+ 	seq_printf(s, "vfp_inplace: on:%d changes:%u prev_vtotal:%u\n",
+ 		   READ_ONCE(dpu_vfp_inplace), dpu_enc->idle_rr.vfp_changes,
+ 		   READ_ONCE(dpu_enc->idle_rr.prev_vtotal));
++	seq_printf(s, "vtotal_write: window:%u last:%u->%u line:%d after:%d used_window:%u tries:%u late:%u\n",
++		   READ_ONCE(dpu_vfp_window), dpu_enc->idle_rr.last_from,
++		   dpu_enc->idle_rr.last_to, dpu_enc->idle_rr.last_line,
++		   dpu_enc->idle_rr.last_after, dpu_enc->idle_rr.last_window,
++		   dpu_enc->idle_rr.last_tries, dpu_enc->idle_rr.late);
+ 
+ 	return 0;
+ }
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_trace.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_trace.h
+index 805d117493da..43c42fc4e533 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_trace.h
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_trace.h
+@@ -454,6 +454,30 @@ TRACE_EVENT(dpu_enc_trigger_flush,
+ 		  __entry->extra_flush_bits, __entry->pending_flush_ret)
+ );
+ 
++TRACE_EVENT(dpu_enc_vtotal_write,
++	TP_PROTO(u32 drm_id, u32 from, u32 to, int line, int after, u32 window, u32 tries),
++	TP_ARGS(drm_id, from, to, line, after, window, tries),
++	TP_STRUCT__entry(__field(u32, drm_id)
++			 __field(u32, from)
++			 __field(u32, to)
++			 __field(int, line)
++			 __field(int, after)
++			 __field(u32, window)
++			 __field(u32, tries)),
++	TP_fast_assign(
++		__entry->drm_id = drm_id;
++		__entry->from = from;
++		__entry->to = to;
++		__entry->line = line;
++		__entry->after = after;
++		__entry->window = window;
++		__entry->tries = tries;
++	),
++	TP_printk("id=%u vtotal=%u->%u line=%d after=%d window=%u tries=%u",
++		  __entry->drm_id, __entry->from, __entry->to, __entry->line,
++		  __entry->after, __entry->window, __entry->tries)
++);
++
+ DECLARE_EVENT_CLASS(dpu_id_event_template,
+ 	TP_PROTO(uint32_t drm_id, u32 event),
+ 	TP_ARGS(drm_id, event),
+-- 
+2.43.0
+
