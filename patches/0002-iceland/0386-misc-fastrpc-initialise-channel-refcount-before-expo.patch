@@ -1,0 +1,73 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jianping Li <jianping.li@oss.qualcomm.com>
+Date: Wed, 7 Oct 2026 16:44:45 +0800
+Subject: [PATCH 386/394] misc: fastrpc: initialise channel refcount before
+ exposing the misc device
+
+fastrpc_device_register() calls misc_register(), which immediately makes
+/dev/fastrpc-<domain> visible to userspace. However, kref_init() on the
+channel context refcount only runs after the whole domain switch()
+completes, several statements later.
+
+Any process that opens the device in that window reaches
+fastrpc_device_open() -> fastrpc_channel_ctx_get() -> kref_get() on a
+refcount that has never been initialised and is still zero, which
+refcount_t correctly reports as a use-after-free:
+
+  refcount_t: addition on 0; use-after-free.
+  WARNING: CPU: 0 PID: 760 at lib/refcount.c:25 refcount_warn_saturate+0x120/0x144
+  CPU: 0 UID: 0 PID: 760 Comm: adsprpcd
+  Call trace:
+    refcount_warn_saturate
+    fastrpc_device_open [fastrpc]
+    misc_open
+    chrdev_open
+    do_dentry_open
+    vfs_open
+    path_openat
+    do_filp_open
+    do_sys_openat2
+    __arm64_sys_openat
+
+This is easy to hit after a subsystem restart, when the DSP daemon
+reopens the device as soon as it observes the PD coming back up, racing
+with fastrpc_rpmsg_probe() on the rebind path.
+
+Move kref_init() ahead of the device registration so the refcount is
+always valid by the time the node is reachable from userspace.
+
+Fixes: f6f9279f2bf0 ("misc: fastrpc: Add Qualcomm fastrpc basic driver model")
+Signed-off-by: Jianping Li <jianping.li@oss.qualcomm.com>
+Link: https://lore.kernel.org/r/20261007084447.922-2-jianping.li@oss.qualcomm.com
+
+[ from patchwork.kernel.org series 1180737 (patch 14871572, 1 of 3); not applied upstream yet ]
+[ upstream author: Jianping Li <jianping.li@oss.qualcomm.com>; picked for the iceland kernel q89v ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/misc/fastrpc.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/misc/fastrpc.c b/drivers/misc/fastrpc.c
+index 1b90ef4f640b..cf81bde56427 100644
+--- a/drivers/misc/fastrpc.c
++++ b/drivers/misc/fastrpc.c
+@@ -2606,6 +2606,7 @@ static int fastrpc_rpmsg_probe(struct rpmsg_device *rpdev)
+ 	data->poll_mode_supported = soc_data->poll_mode_supported ||
+ 		of_machine_get_match(fastrpc_poll_supported_machines);
+ 
++	kref_init(&data->refcount);
+ 	switch (domain_id) {
+ 	case ADSP_DOMAIN_ID:
+ 	case MDSP_DOMAIN_ID:
+@@ -2633,7 +2634,6 @@ static int fastrpc_rpmsg_probe(struct rpmsg_device *rpdev)
+ 		goto err_free_data;
+ 	}
+ 
+-	kref_init(&data->refcount);
+ 	atomic_set(&data->ctx_seq, 0);
+ 
+ 	rdev->dma_mask = &data->dma_mask;
+-- 
+2.43.0
+

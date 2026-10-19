@@ -1,0 +1,60 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+Date: Sat, 3 Oct 2026 03:30:21 +0300
+Subject: [PATCH 380/394] drm/msm/dpu: clear the CDM block left by a previous
+ reservation
+
+dpu_encoder_virt_atomic_mode_set() only updates cur_master->hw_cdm for a
+writeback with a job or for DP, so a modeset of a writeback without a job
+keeps the CDM of the previous reservation, which the crtc may no longer
+own.  dpu_encoder_helper_phys_cleanup() later unbinds that CDM from its
+pingpong and flushes it, changing a block which may by then belong to
+another display.
+
+Store NULL when no CDM is assigned.
+
+Fixes: 8b45a26f2ba9 ("drm/msm/dpu: reserve cdm blocks for writeback in case of YUV output")
+Assisted-by: LLM
+Signed-off-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+Link: https://lore.kernel.org/r/20261003-fd-kms-fix-smmu-v4-6-2a44d4d8ac77@oss.qualcomm.com
+[ from patchwork.kernel.org series 1178688 (patch 14864622, 6 of 10, v4); not applied upstream yet ]
+[ upstream author: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>; picked for the iceland kernel q89v ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c | 9 ++++-----
+ 1 file changed, 4 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+index d816de4993b6..ca63b8cc2365 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+@@ -1995,6 +1995,7 @@ static void dpu_encoder_virt_atomic_mode_set(struct drm_encoder *drm_enc,
+ 	struct dpu_hw_blk *hw_ctl[MAX_CHANNELS_PER_ENC];
+ 	struct dpu_hw_blk *hw_dsc[MAX_CHANNELS_PER_ENC];
+ 	struct dpu_hw_blk *hw_cwb[MAX_CHANNELS_PER_ENC];
++	struct dpu_hw_blk *hw_cdm = NULL;
+ 	int num_ctl, num_pp, num_dsc, num_pp_per_intf;
+ 	int num_cwb = 0;
+ 	bool is_cwb_encoder;
+@@ -2067,14 +2068,12 @@ static void dpu_encoder_virt_atomic_mode_set(struct drm_encoder *drm_enc,
+ 	dpu_enc->dsc_mask = dsc_mask;
+ 
+ 	if ((dpu_enc->disp_info.intf_type == INTF_WB && conn_state->writeback_job) ||
+-	    dpu_enc->disp_info.intf_type == INTF_DP) {
+-		struct dpu_hw_blk *hw_cdm = NULL;
+-
++	    dpu_enc->disp_info.intf_type == INTF_DP)
+ 		dpu_rm_get_assigned_resources(&dpu_kms->rm, global_state,
+ 					      drm_enc->crtc, DPU_HW_BLK_CDM,
+ 					      &hw_cdm, 1);
+-		dpu_enc->cur_master->hw_cdm = hw_cdm ? to_dpu_hw_cdm(hw_cdm) : NULL;
+-	}
++
++	dpu_enc->cur_master->hw_cdm = hw_cdm ? to_dpu_hw_cdm(hw_cdm) : NULL;
+ 
+ 	/*
+ 	 * There may be 4 PP and 2 INTF for quad pipe case, so INTF is not
+-- 
+2.43.0
+

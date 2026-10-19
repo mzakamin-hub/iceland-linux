@@ -1,0 +1,57 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Joonhoe Kim <26rote@gmail.com>
+Date: Wed, 7 Oct 2026 21:39:45 +0900
+Subject: [PATCH 371/394] drm/msm/dpu: add the SSPP rec0/rec1 blocks to the
+ snapshot
+
+On DPU 13 the SSPP block is only 0x84 long and the fetch registers
+(source address, size, format, multirect) live in the rec0/rec1
+sub-blocks at 0x1000 and 0x3000. The snapshot dumps the SSPP block and
+its scaler and CSC sub-blocks, but not rec0/rec1, so the plane fetch
+state is missing from the devcoredump and from debugfs dri/N/kms.
+
+Add the rec0/rec1 sub-blocks to the snapshot.
+
+Tested on a Lenovo Legion Tab Y700 gen 5 (SM8850).
+
+Fixes: 688c7734002a ("drm/msm/dpu: Add Kaanapali SSPP sub-block support")
+Assisted-by: LLM
+Signed-off-by: Joonhoe Kim <26rote@gmail.com>
+Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+Link: https://lore.kernel.org/r/20261007123945.1694-1-26rote@gmail.com
+[ from patchwork.kernel.org series 1180871 (patch 14872282, 1 of 1); not applied upstream yet; = tb323fu-linux 0052 ]
+[ upstream author: Joonhoe Kim <26rote@gmail.com>; picked for the iceland kernel q89v ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
+index 2951984edffa..8d01ac5be62c 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
+@@ -1027,6 +1027,20 @@ static void dpu_kms_mdp_snapshot(struct msm_disp_state *disp_state, struct msm_k
+ 						    base + cat->sspp[i].sblk->csc_blk.base,
+ 						    "%s_%s", cat->sspp[i].name,
+ 						    cat->sspp[i].sblk->csc_blk.name);
++
++		if (cat->sspp[i].sblk && cat->sspp[i].sblk->sspp_rec0_blk.len > 0)
++			msm_disp_snapshot_add_block(disp_state,
++						    cat->sspp[i].sblk->sspp_rec0_blk.len,
++						    base + cat->sspp[i].sblk->sspp_rec0_blk.base,
++						    "%s_%s", cat->sspp[i].name,
++						    cat->sspp[i].sblk->sspp_rec0_blk.name);
++
++		if (cat->sspp[i].sblk && cat->sspp[i].sblk->sspp_rec1_blk.len > 0)
++			msm_disp_snapshot_add_block(disp_state,
++						    cat->sspp[i].sblk->sspp_rec1_blk.len,
++						    base + cat->sspp[i].sblk->sspp_rec1_blk.base,
++						    "%s_%s", cat->sspp[i].name,
++						    cat->sspp[i].sblk->sspp_rec1_blk.name);
+ 	}
+ 
+ 	/* dump LM sub-blocks HW regs info */
+-- 
+2.43.0
+

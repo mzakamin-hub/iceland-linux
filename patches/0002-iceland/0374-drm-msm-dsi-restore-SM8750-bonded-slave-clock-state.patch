@@ -1,0 +1,193 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: slwyts <slwyts@foxmail.com>
+Date: Tue, 13 Oct 2026 03:19:42 +0800
+Subject: [PATCH 374/394] drm/msm/dsi: restore SM8750 bonded slave clock state
+
+The SM8750 slave PHY selects the external bit clock, but still has its own
+pixel divider and clock mux. A PHY reset clears those registers. Saving and
+restoring only the clock master leaves the slave's hardware state different
+from the common clock framework's cached rates.
+
+On Piano at 120 Hz, post-clock register capture shows CMN_CLK_CFG0=0x51
+on both PHYs at first boot. After DPMS off/on the master stays at 0x51,
+but the slave becomes 0xf1 and immediately reports VID_MDP FIFO overflow.
+Its local PLL DECIMAL_DIV_START_1 also changes from 0x1f to 0x41.
+
+Opt SM8750 into saving and restoring the slave's existing PLL/divider
+state through the same lifecycle as the master. Keep other PHY variants'
+restore policy unchanged. No divider value or display mode is hardcoded.
+
+Piano register capture confirms both dividers return to 0x51 after DPMS
+off/on. The previous FIFO fault no longer occurs during the 120 Hz
+off/on cycle or 60/120/90/144/120 Hz modeset sequence.
+
+Imported from SunUEFI a485cc01c639: patches/linux/7.2.9/0025-dsi-sm8750-restore-bonded-slave.patch
+
+The manager hunk uses the equivalent piano21 shutdown-order comment as context; all added code and the original semantics are retained.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+[ from github.com/yzddmr6/linux-sm8750-piano, change c6a971f9bedb
+  (13 Oct 2026); the source carries no Signed-off-by ]
+[mzak: adapted to the iceland queue as a Kaanapali opt-in: the flag is
+ set in dsi_phy_3nm_kaanapali_cfgs only (SM8750 is not changed here, we
+ cannot test it). The slave is saved through a new
+ msm_dsi_phy_slave_pll_save_state() (no-op unless the PHY is a slave of
+ an opted-in config) and restored only after such a save
+ (slave_state_saved), so the bootloader state saved at PLL init is not
+ written back at the first enable. msm.dsi_slave_pll_restore (default
+ off, read at the save) turns it on at runtime for an A/B. Our
+ post_disable has no piano21 shutdown-order comment; the save follows
+ the master's. Ship only if the read-only register probe shows the
+ slave's CMN_CLK_CFG0 / DECIMAL_DIV_START_1 changing over a modeset or
+ DPMS cycle on the OnePlus Pad 4]
+[mzak: off by default for the q89v trial, to be compared at run time:
+ the read-only probe on q89u read the bonded slave's CMN_CLK_CFG0 as
+ 0xf1 (the master's 0x31) and its DECIMAL_DIV_START_1 as 65 (master
+ 35), the same over 120 / 60 Hz changes and DPMS]
+[ upstream author: slwyts <slwyts@foxmail.com>; picked for the iceland kernel q89v (candidate) ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/dsi/dsi.h             |  1 +
+ drivers/gpu/drm/msm/dsi/dsi_manager.c     |  3 ++
+ drivers/gpu/drm/msm/dsi/phy/dsi_phy.c     | 40 +++++++++++++++++++++--
+ drivers/gpu/drm/msm/dsi/phy/dsi_phy.h     |  4 +++
+ drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c |  1 +
+ 5 files changed, 47 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/dsi/dsi.h b/drivers/gpu/drm/msm/dsi/dsi.h
+index a409627c0598..91aa1cfdaeb5 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi.h
++++ b/drivers/gpu/drm/msm/dsi/dsi.h
+@@ -151,6 +151,7 @@ void msm_dsi_phy_disable(struct msm_dsi_phy *phy);
+ void msm_dsi_phy_set_usecase(struct msm_dsi_phy *phy,
+ 			     enum msm_dsi_phy_usecase uc);
+ void msm_dsi_phy_pll_save_state(struct msm_dsi_phy *phy);
++void msm_dsi_phy_slave_pll_save_state(struct msm_dsi_phy *phy);
+ int msm_dsi_phy_pll_restore_state(struct msm_dsi_phy *phy);
+ void msm_dsi_phy_snapshot(struct msm_disp_state *disp_state, struct msm_dsi_phy *phy);
+ bool msm_dsi_phy_set_continuous_clock(struct msm_dsi_phy *phy, bool enable);
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_manager.c b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+index 959daa88b1d0..d88377abeea7 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_manager.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+@@ -368,6 +368,9 @@ static void dsi_mgr_bridge_post_disable(struct drm_bridge *bridge,
+ 
+ 	/* Save PHY status if it is a clock source */
+ 	msm_dsi_phy_pll_save_state(msm_dsi->phy);
++	/* and the bonded slave's dividers, where its PHY needs them back */
++	if (is_bonded_dsi && msm_dsi1)
++		msm_dsi_phy_slave_pll_save_state(msm_dsi1->phy);
+ 
+ 	ret = msm_dsi_host_power_off(host);
+ 	if (ret)
+diff --git a/drivers/gpu/drm/msm/dsi/phy/dsi_phy.c b/drivers/gpu/drm/msm/dsi/phy/dsi_phy.c
+index 737b44ec3787..e7e157d29879 100644
+--- a/drivers/gpu/drm/msm/dsi/phy/dsi_phy.c
++++ b/drivers/gpu/drm/msm/dsi/phy/dsi_phy.c
+@@ -4,12 +4,24 @@
+  */
+ 
+ #include <linux/clk-provider.h>
++#include <linux/moduleparam.h>
+ #include <linux/platform_device.h>
+ #include <linux/pm_runtime.h>
+ #include <dt-bindings/phy/phy.h>
+ 
+ #include "dsi_phy.h"
+ 
++/*
++ * For PHYs whose bonded slave loses its own divider / mux state over a power
++ * off (restore_slave_pll): save it at the disable and restore it at the next
++ * enable, as for the clock master. Read at the save; a restore only follows a
++ * save of the same disable.
++ */
++static bool dsi_slave_pll_restore;
++module_param(dsi_slave_pll_restore, bool, 0644);
++MODULE_PARM_DESC(dsi_slave_pll_restore,
++		 "Save and restore the PLL / divider state of a bonded slave DSI PHY where the PHY needs it (default: off)");
++
+ #define S_DIV_ROUND_UP(n, d)	\
+ 	(((n) >= 0) ? (((n) + (d) - 1) / (d)) : (((n) - (d) + 1) / (d)))
+ 
+@@ -791,9 +803,12 @@ int msm_dsi_phy_enable(struct msm_dsi_phy *phy,
+ 	 * Resetting DSI PHY silently changes its PLL registers to reset status,
+ 	 * which will confuse clock driver and result in wrong output rate of
+ 	 * link clocks. Restore PLL status if its PLL is being used as clock
+-	 * source.
++	 * source, or if it is a bonded slave whose own dividers were saved
++	 * (msm_dsi_phy_slave_pll_save_state()).
+ 	 */
+-	if (phy->usecase != MSM_DSI_PHY_SLAVE) {
++	if (phy->usecase != MSM_DSI_PHY_SLAVE ||
++	    (phy->cfg->restore_slave_pll && phy->slave_state_saved)) {
++		phy->slave_state_saved = false;
+ 		ret = msm_dsi_phy_pll_restore_state(phy);
+ 		if (ret) {
+ 			DRM_DEV_ERROR(dev, "%s: failed to restore phy state, %d\n",
+@@ -850,6 +865,27 @@ void msm_dsi_phy_pll_save_state(struct msm_dsi_phy *phy)
+ 	}
+ }
+ 
++/**
++ * msm_dsi_phy_slave_pll_save_state() - save the dividers of a bonded slave PHY
++ * @phy: the slave PHY, still enabled
++ *
++ * The slave runs on the master's bit clock, but its own divider and mux
++ * registers still matter on some PHYs and a PHY reset clears them, while the
++ * clock framework keeps its cached rates. For those (restore_slave_pll) save
++ * the state like the master's, so that the next msm_dsi_phy_enable() writes
++ * it back. No-op for other PHYs, for a PHY that is not a slave, or with
++ * msm.dsi_slave_pll_restore=0.
++ */
++void msm_dsi_phy_slave_pll_save_state(struct msm_dsi_phy *phy)
++{
++	if (!phy || phy->usecase != MSM_DSI_PHY_SLAVE ||
++	    !phy->cfg->restore_slave_pll || !READ_ONCE(dsi_slave_pll_restore))
++		return;
++
++	msm_dsi_phy_pll_save_state(phy);
++	phy->slave_state_saved = phy->state_saved;
++}
++
+ int msm_dsi_phy_pll_restore_state(struct msm_dsi_phy *phy)
+ {
+ 	int ret;
+diff --git a/drivers/gpu/drm/msm/dsi/phy/dsi_phy.h b/drivers/gpu/drm/msm/dsi/phy/dsi_phy.h
+index e658dd283be8..ad5f32d686d3 100644
+--- a/drivers/gpu/drm/msm/dsi/phy/dsi_phy.h
++++ b/drivers/gpu/drm/msm/dsi/phy/dsi_phy.h
+@@ -37,6 +37,8 @@ struct msm_dsi_phy_cfg {
+ 	const int quirks;
+ 	bool has_phy_regulator;
+ 	bool has_phy_lane;
++	/* Bonded slave has independently reset divider/mux registers. */
++	bool restore_slave_pll;
+ };
+ 
+ extern const struct msm_dsi_phy_cfg dsi_phy_28nm_hpm_cfgs;
+@@ -124,6 +126,8 @@ struct msm_dsi_phy {
+ 	struct clk_hw_onecell_data *provided_clocks;
+ 
+ 	bool state_saved;
++	/* msm_dsi_phy_slave_pll_save_state() saved this slave at its disable */
++	bool slave_state_saved;
+ };
+ 
+ /*
+diff --git a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
+index f9debc05591c..c2ed4b13d1d2 100644
+--- a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
++++ b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
+@@ -1555,6 +1555,7 @@ const struct msm_dsi_phy_cfg dsi_phy_3nm_8750_cfgs = {
+ 
+ const struct msm_dsi_phy_cfg dsi_phy_3nm_kaanapali_cfgs = {
+ 	.has_phy_lane = true,
++	.restore_slave_pll = true,
+ 	.regulator_data = dsi_phy_7nm_98000uA_regulators,
+ 	.num_regulators = ARRAY_SIZE(dsi_phy_7nm_98000uA_regulators),
+ 	.ops = {
+-- 
+2.43.0
+

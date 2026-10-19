@@ -1,0 +1,52 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jianping Li <jianping.li@oss.qualcomm.com>
+Date: Wed, 7 Oct 2026 16:44:46 +0800
+Subject: [PATCH 387/394] misc: fastrpc: wake poll-mode waiters on SSR
+
+fastrpc_notify_users() sets ctx->retval to -EPIPE and completes
+ctx->work for every pending and interrupted context, which is enough to
+release a thread blocked in fastrpc_wait_for_response().
+
+A thread using polling mode does not wait on that completion. It spins
+in poll_for_remote_response(), whose exit condition is:
+
+  (val == FASTRPC_POLL_RESPONSE) || ctx->is_work_done
+
+Since the DSP is already down, it will never write FASTRPC_POLL_RESPONSE
+into the poll address, and is_work_done is left untouched by
+fastrpc_notify_users(). The thread therefore keeps spinning until
+FASTRPC_POLL_MAX_TIMEOUT_US expires instead of bailing out immediately.
+
+Worse, the poll address lives inside ctx->buf, so a polling thread that
+has not been told to stop is still reading a buffer that the SSR
+teardown path is about to reclaim.
+
+Set is_work_done along with retval so polling waiters observe the
+termination on their next iteration, exactly like completion waiters do.
+
+Signed-off-by: Jianping Li <jianping.li@oss.qualcomm.com>
+Link: https://lore.kernel.org/r/20261007084447.922-3-jianping.li@oss.qualcomm.com
+
+[ from patchwork.kernel.org series 1180737 (patch 14871573, 2 of 3); not applied upstream yet ]
+[ upstream author: Jianping Li <jianping.li@oss.qualcomm.com>; picked for the iceland kernel q89v ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/misc/fastrpc.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/misc/fastrpc.c b/drivers/misc/fastrpc.c
+index cf81bde56427..374eff6aff48 100644
+--- a/drivers/misc/fastrpc.c
++++ b/drivers/misc/fastrpc.c
+@@ -2670,6 +2670,7 @@ static void fastrpc_notify_users(struct fastrpc_user *user)
+ 	spin_lock(&user->lock);
+ 	list_for_each_entry(ctx, &user->pending, node) {
+ 		ctx->retval = -EPIPE;
++		ctx->is_work_done = true;
+ 		complete(&ctx->work);
+ 	}
+ 	spin_unlock(&user->lock);
+-- 
+2.43.0
+

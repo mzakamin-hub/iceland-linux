@@ -1,0 +1,44 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+Date: Sat, 3 Oct 2026 03:30:25 +0300
+Subject: [PATCH 384/394] drm/ci: mark pixel-format tests as passing on SC7180
+
+kms_plane@pixel-format and kms_plane@pixel-format-source-clamping timed out
+waiting for the first CRC once the test had set a legacy gamma LUT.  They
+pass since "drm/msm/dpu: only reassign resources when the encoder is
+reprogrammed", so drop them from the expected failures.
+
+Signed-off-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+Link: https://lore.kernel.org/r/20261003-fd-kms-fix-smmu-v4-10-2a44d4d8ac77@oss.qualcomm.com
+[ from patchwork.kernel.org series 1178688 (patch 14864626, 10 of 10, v4); not applied upstream yet ]
+[ upstream author: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>; picked for the iceland kernel q89v ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../gpu/drm/ci/xfails/msm-sc7180-trogdor-kingoftown-fails.txt   | 2 --
+ .../drm/ci/xfails/msm-sc7180-trogdor-lazor-limozeen-fails.txt   | 2 --
+ 2 files changed, 4 deletions(-)
+
+diff --git a/drivers/gpu/drm/ci/xfails/msm-sc7180-trogdor-kingoftown-fails.txt b/drivers/gpu/drm/ci/xfails/msm-sc7180-trogdor-kingoftown-fails.txt
+index 2daf4ab879a9..ea3013faa37c 100644
+--- a/drivers/gpu/drm/ci/xfails/msm-sc7180-trogdor-kingoftown-fails.txt
++++ b/drivers/gpu/drm/ci/xfails/msm-sc7180-trogdor-kingoftown-fails.txt
+@@ -18,5 +18,3 @@ kms_pipe_crc_basic@compare-crc-sanitycheck-nv12,Fail
+ kms_plane_alpha_blend@alpha-7efc,Fail
+ kms_plane_alpha_blend@coverage-7efc,Fail
+ kms_plane_alpha_blend@coverage-vs-premult-vs-constant,Fail
+-kms_plane@pixel-format,Fail
+-kms_plane@pixel-format-source-clamping,Fail
+diff --git a/drivers/gpu/drm/ci/xfails/msm-sc7180-trogdor-lazor-limozeen-fails.txt b/drivers/gpu/drm/ci/xfails/msm-sc7180-trogdor-lazor-limozeen-fails.txt
+index 2daf4ab879a9..ea3013faa37c 100644
+--- a/drivers/gpu/drm/ci/xfails/msm-sc7180-trogdor-lazor-limozeen-fails.txt
++++ b/drivers/gpu/drm/ci/xfails/msm-sc7180-trogdor-lazor-limozeen-fails.txt
+@@ -18,5 +18,3 @@ kms_pipe_crc_basic@compare-crc-sanitycheck-nv12,Fail
+ kms_plane_alpha_blend@alpha-7efc,Fail
+ kms_plane_alpha_blend@coverage-7efc,Fail
+ kms_plane_alpha_blend@coverage-vs-premult-vs-constant,Fail
+-kms_plane@pixel-format,Fail
+-kms_plane@pixel-format-source-clamping,Fail
+-- 
+2.43.0
+

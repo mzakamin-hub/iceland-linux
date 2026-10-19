@@ -1,0 +1,153 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 19 Oct 2026 02:00:00 +0300
+Subject: [PATCH 392/394] media: i2c: dw9719: configure the DW9800K only once
+ it is ready
+
+The OnePlus Pad 4's rear focus actuator (the dongwoon,dw9800k entry: IC
+INFO reads 0xfe, a DW9714V in its register-mapped mode) gets its ringing
+configuration right after the power-down release: CONTROL 0x02 (ringing
+enable), MODE 0x80 (RING_EN + SAC2) and VCM_FREQ 0x79, the values of the
+vendor's actuator init. The part needs tOPR (1 ms) after the release and
+then reports BUSY in STATUS; while BUSY it acknowledges every write but
+drops all of them except the power-down one. The configuration came
+200 us after the release, so it could be lost without an error, and the
+lens would then move without ringing control (audible, slower settling).
+The same silent drop was seen for position writes during a move (see
+"make sure the lens holds the position after resume").
+
+For the DW9800K entry, wait tOPR, poll STATUS until BUSY clears (1 ms
+steps, 100 ms at most; a part that never clears it is configured anyway
+with a warning), write the configuration, read the three registers back
+and write them once more if they were not taken. A configuration that is
+still not taken only logs a warning, as before nothing fails. The other
+models are unchanged.
+
+The BUSY behaviour and the register layout of this part were measured
+by Yibo Wang (SuperTurtleDev iceland-mainline-kernel-linux e9b66e94bc
+"media: i2c: dw9719: Add DW9714V support" and 87b96a2a8d, 16 Oct 2026);
+their DT values equal the ones this board already writes, so only the
+ordering is taken here, not their new DW9714V model.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/media/i2c/dw9719.c | 81 ++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 77 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/media/i2c/dw9719.c b/drivers/media/i2c/dw9719.c
+index 7be9b8524f48..ef1a53fe54e9 100644
+--- a/drivers/media/i2c/dw9719.c
++++ b/drivers/media/i2c/dw9719.c
+@@ -10,6 +10,7 @@
+ 
+ #include <linux/delay.h>
+ #include <linux/i2c.h>
++#include <linux/iopoll.h>
+ #include <linux/pm_runtime.h>
+ #include <linux/regulator/consumer.h>
+ #include <linux/types.h>
+@@ -73,6 +74,17 @@
+ #define DW9800K_DEFAULT_SAC		1
+ #define DW9800K_MODE_SAC_SHIFT		6
+ #define DW9800K_DEFAULT_VCM_FREQ		0x10
++/*
++ * The OnePlus Pad 4 part (IC INFO 0xfe, sold as DW9714V) has an 8-bit STATUS
++ * register at 0x05; while BUSY it acknowledges every write but drops all of
++ * them except the power-down one. tOPR: power-down release to operation.
++ */
++#define DW9800K_STATUS			CCI_REG8(5)
++#define DW9800K_STATUS_BUSY		BIT(0)
++#define DW9800K_T_OPR_US		1000
++#define DW9800K_BUSY_POLL_US		1000
++#define DW9800K_BUSY_TIMEOUT_US		100000
++#define DW9800K_CONFIG_TRIES		2
+ 
+ #define to_dw9719_device(x) container_of(x, struct dw9719_device, sd)
+ 
+@@ -123,6 +135,69 @@ static int dw9719_power_down(struct dw9719_device *dw9719)
+ 	return ret;
+ }
+ 
++/*
++ * Wait until the actuator takes writes after its power-down release: tOPR,
++ * then STATUS BUSY clear. A part that does not clear BUSY in time is
++ * configured anyway; dw9800k_configure() reads the result back.
++ */
++static void dw9800k_wait_ready(struct dw9719_device *dw9719)
++{
++	u64 val = 0;
++	int ret, err;
++
++	fsleep(DW9800K_T_OPR_US);
++
++	ret = read_poll_timeout(cci_read, err,
++				err || !(val & DW9800K_STATUS_BUSY),
++				DW9800K_BUSY_POLL_US, DW9800K_BUSY_TIMEOUT_US,
++				false, dw9719->regmap, DW9800K_STATUS, &val,
++				NULL);
++	if (ret || err)
++		dev_warn(dw9719->dev, "actuator not ready after power-up: %d, status 0x%02llx\n",
++			 ret ? ret : err, val);
++}
++
++/*
++ * The ringing configuration (CONTROL ringing enable, MODE with RING_EN and the
++ * SAC mode, VCM_FREQ) is lost without an error when the part is still busy, and
++ * the lens then moves without ringing control. Write it once the part is ready,
++ * read it back, and write it once more if it was not taken.
++ */
++static int dw9800k_configure(struct dw9719_device *dw9719)
++{
++	u32 mode = dw9719->sac_mode << DW9800K_MODE_SAC_SHIFT;
++	u64 ctrl = 0, mode_rd = 0, freq = 0;
++	int ret = 0;
++	int i;
++
++	for (i = 0; i < DW9800K_CONFIG_TRIES; i++) {
++		dw9800k_wait_ready(dw9719);
++
++		cci_write(dw9719->regmap, DW9719_CONTROL, DW9719_ENABLE_RINGING, &ret);
++		cci_write(dw9719->regmap, DW9719_MODE, mode, &ret);
++		cci_write(dw9719->regmap, DW9719_VCM_FREQ, dw9719->vcm_freq, &ret);
++		if (ret)
++			return ret;
++
++		cci_read(dw9719->regmap, DW9719_CONTROL, &ctrl, &ret);
++		cci_read(dw9719->regmap, DW9719_MODE, &mode_rd, &ret);
++		cci_read(dw9719->regmap, DW9719_VCM_FREQ, &freq, &ret);
++		if (ret)
++			return ret;
++
++		if (ctrl == DW9719_ENABLE_RINGING && mode_rd == (mode & 0xff) &&
++		    freq == (dw9719->vcm_freq & 0xff)) {
++			dev_dbg(dw9719->dev, "configured: control 0x%02llx mode 0x%02llx vcm_freq 0x%02llx (try %d)\n",
++				ctrl, mode_rd, freq, i + 1);
++			return 0;
++		}
++	}
++
++	dev_warn(dw9719->dev, "configuration not taken: control 0x%02llx mode 0x%02llx vcm_freq 0x%02llx\n",
++		 ctrl, mode_rd, freq);
++	return 0;
++}
++
+ static int dw9719_power_up(struct dw9719_device *dw9719, bool detect)
+ {
+ 	u32 reg_pwr = dw9719->model == DW9718S ? DW9718S_PD : DW9719_CONTROL;
+@@ -212,10 +287,8 @@ static int dw9719_power_up(struct dw9719_device *dw9719, bool detect)
+ 
+ 	switch (dw9719->model) {
+ 	case DW9800K:
+-		cci_write(dw9719->regmap, DW9719_CONTROL, DW9719_ENABLE_RINGING, &ret);
+-		cci_write(dw9719->regmap, DW9719_MODE,
+-			  dw9719->sac_mode << DW9800K_MODE_SAC_SHIFT, &ret);
+-		cci_write(dw9719->regmap, DW9719_VCM_FREQ, dw9719->vcm_freq, &ret);
++		if (!ret)
++			ret = dw9800k_configure(dw9719);
+ 		break;
+ 	case DW9718S:
+ 		/* Datasheet says [OCP/UVLO] should be disabled below 2.5V */
+-- 
+2.43.0
+

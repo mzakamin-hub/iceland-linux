@@ -1,0 +1,148 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+Date: Sat, 3 Oct 2026 03:30:24 +0300
+Subject: [PATCH 383/394] drm/msm/dpu: only reassign resources when the encoder
+ is reprogrammed
+
+Running kms_plane@pixel-format-source-clamping causes SMMU faults
+(fsr=0x402, iova=0x0001fb00): it sets a CTM, after which the display stops
+updating, so the test times out waiting for a CRC and the pipe is still
+fetching the framebuffers released when the runner kills it.
+
+dpu_crtc_atomic_check() reassigns resources whenever color_mgmt_changed is
+set, but crtc_set_mode() only calls ->atomic_mode_set() for mode_changed or
+connectors_changed.  A colour management update therefore re-reserves and
+can get a different CTL: cstate->mixers[].lm_ctl points at the new one
+while phys->hw_ctl still points at the old, so the flush mask is
+accumulated on one and triggered on the other.  CTL_FLUSH is written with
+zero, so the pipe is not reprogrammed again until the next modeset.
+
+Reassign only when the encoder is reprogrammed too.  Enabling colour
+management still needs a modeset, as that is when DSPPs join the topology,
+so ask for one in dpu_crtc_check_mode_changed() and only there.  Drop the
+msm_atomic_check() hack, which forced a modeset both ways, ignored
+GAMMA_LUT and overrode allow_modeset behind userspace's back.
+
+Fixes: 39a750ff5fc9 ("drm/msm/dpu: Add DSPP GC driver to provide GAMMA_LUT DRM property")
+Assisted-by: LLM
+Signed-off-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+Tested-by: Joonhoe Kim <26rote@gmail.com>
+Link: https://lore.kernel.org/r/20261003-fd-kms-fix-smmu-v4-9-2a44d4d8ac77@oss.qualcomm.com
+[ from patchwork.kernel.org series 1178688 (patch 14864625, 9 of 10, v4); not applied upstream yet ]
+[mzak: adapted to the iceland queue: our 295fc627ff93 ("drm/msm/dpu: do
+ a full modeset when colour management changes the DSPP need", after
+ tb323fu-linux 0079) already defines dpu_crtc_needs_dspp() with the same
+ body and forced a modeset whenever a colour change added or dropped the
+ CTM / gamma LUT; that block is replaced by this patch's
+ needs-but-has-no-DSPP test (the upstream semantics: dropping the CTM no
+ longer takes a modeset), dpu_crtc_has_dspp() sits next to
+ dpu_crtc_needs_dspp() instead of between the kerneldoc of
+ dpu_crtc_check_mode_changed() and the function, and the reassign test
+ in dpu_crtc_atomic_check() follows our in-place front porch check
+ ("drm/msm/dpu+dsi: change the vertical front porch in place", which
+ refuses any colour management change). The
+ msm_atomic.c hunk is as posted]
+[ upstream author: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>; picked for the iceland kernel q89v ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c | 33 +++++++++++++++---------
+ drivers/gpu/drm/msm/msm_atomic.c         | 17 +-----------
+ 2 files changed, 22 insertions(+), 28 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
+index 2b07720c3d7a..55343a16c362 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
+@@ -1527,6 +1527,21 @@ static bool dpu_crtc_needs_dspp(const struct drm_crtc_state *state)
+ 	return state->ctm || state->gamma_lut;
+ }
+ 
++static bool dpu_crtc_has_dspp(const struct drm_crtc_state *crtc_state)
++{
++	const struct dpu_crtc_state *cstate = to_dpu_crtc_state(crtc_state);
++	unsigned int i;
++
++	if (!cstate->num_mixers)
++		return false;
++
++	for (i = 0; i < cstate->num_mixers; i++)
++		if (!cstate->mixers[i].hw_dspp)
++			return false;
++
++	return true;
++}
++
+ /**
+  * dpu_crtc_check_mode_changed: check if full modeset is required
+  * @old_crtc_state:	Previous CRTC state
+@@ -1544,6 +1559,11 @@ int dpu_crtc_check_mode_changed(struct drm_crtc_state *old_crtc_state,
+ 
+ 	DRM_DEBUG_ATOMIC("%d\n", crtc->base.id);
+ 
++	/* DSPPs are only reserved during a modeset */
++	if (dpu_crtc_needs_dspp(new_crtc_state) &&
++	    !dpu_crtc_has_dspp(old_crtc_state))
++		new_crtc_state->mode_changed = true;
++
+ 	/* there might be cases where encoder needs a modeset too */
+ 	drm_for_each_encoder_mask(drm_enc, crtc->dev, new_crtc_state->encoder_mask) {
+ 		if (dpu_encoder_needs_modeset(drm_enc, new_crtc_state->state))
+@@ -1554,16 +1574,6 @@ int dpu_crtc_check_mode_changed(struct drm_crtc_state *old_crtc_state,
+ 	    (!clone_mode_requested && clone_mode_enabled))
+ 		new_crtc_state->mode_changed = true;
+ 
+-	/*
+-	 * A colour-management change that adds or drops the CTM / gamma LUT
+-	 * changes the number of DSPPs the CRTC needs; they are (re)assigned
+-	 * with the mixers, so do a full modeset in that case. A change of the
+-	 * values alone (e.g. a Night Light ramp) keeps the fast path.
+-	 */
+-	if (new_crtc_state->color_mgmt_changed &&
+-	    dpu_crtc_needs_dspp(old_crtc_state) != dpu_crtc_needs_dspp(new_crtc_state))
+-		new_crtc_state->mode_changed = true;
+-
+ 	return 0;
+ }
+ 
+@@ -1624,8 +1634,7 @@ static int dpu_crtc_atomic_check(struct drm_crtc *crtc,
+ 	}
+ 
+ 	/* don't reallocate resources if only ACTIVE has beeen changed */
+-	if (crtc_state->mode_changed || crtc_state->connectors_changed ||
+-	    crtc_state->color_mgmt_changed) {
++	if (crtc_state->mode_changed || crtc_state->connectors_changed) {
+ 		rc = dpu_crtc_assign_resources(crtc, crtc_state);
+ 		if (rc < 0)
+ 			return rc;
+diff --git a/drivers/gpu/drm/msm/msm_atomic.c b/drivers/gpu/drm/msm/msm_atomic.c
+index a8babf1dbe0d..7b480981becc 100644
+--- a/drivers/gpu/drm/msm/msm_atomic.c
++++ b/drivers/gpu/drm/msm/msm_atomic.c
+@@ -185,22 +185,7 @@ int msm_atomic_check(struct drm_device *dev, struct drm_atomic_commit *state)
+ {
+ 	struct msm_drm_private *priv = dev->dev_private;
+ 	struct msm_kms *kms = priv->kms;
+-	struct drm_crtc_state *old_crtc_state, *new_crtc_state;
+-	struct drm_crtc *crtc;
+-	int i, ret = 0;
+-
+-	/*
+-	 * FIXME: stop setting allow_modeset and move this check to the DPU
+-	 * driver.
+-	 */
+-	for_each_oldnew_crtc_in_state(state, crtc, old_crtc_state,
+-				      new_crtc_state, i) {
+-		if ((old_crtc_state->ctm && !new_crtc_state->ctm) ||
+-		    (!old_crtc_state->ctm && new_crtc_state->ctm)) {
+-			new_crtc_state->mode_changed = true;
+-			state->allow_modeset = true;
+-		}
+-	}
++	int ret = 0;
+ 
+ 	if (kms && kms->funcs && kms->funcs->check_mode_changed)
+ 		ret = kms->funcs->check_mode_changed(kms, state);
+-- 
+2.43.0
+
