@@ -4,17 +4,26 @@ Mainline Linux for the OnePlus Pad 4 (`iceland`, Qualcomm SM8850P "kaanapali"). 
 on an upstream tag, Linux v7.3-rc7, so every commit keeps its original author. This is the same approach as the
 postmarketOS kernel packages and other tablet ports.
 
-Current state (16 Oct 2026): queue **q89m** on the branch `iceland-7.3-rc7-next` (this branch). The kernel release is
-`7.3.0-rc7-iceland-00453-ga028210c2e52`: Linux v7.3-rc7 plus 453 patches (132 in `0001-infiniti`, 321 in
+Current state (19 Oct 2026): queue **q89w** on the branch `iceland-7.3-rc7-next` (this branch). The kernel release is
+`7.3.0-rc7-iceland-00519-gec0a0e306dd9`: Linux v7.3-rc7 plus the queue's 517 patches (132 in `0001-infiniti`, 385 in
 `0002-iceland`). It is the current kernel of the Fedora 44 system installed on the tablet, packaged as
 `kernel-iceland` and installed with dnf.
 
+The queue commits of q89q to q89w were made while each kernel was a trial build: their subjects say "(TRIAL)" and their
+messages "Not for release before the tablet checks". Each of these kernels then passed its checks on the tablet, and
+q89w is the current kernel. 0347 (`msm.dpu_dsc_once`) stays off by default.
+
+Wi-Fi PCIe: queue patch 0349 (q89r) limits the Wi-Fi card's PCIe link to Gen2 (5 GT/s). The installed tablet runs the
+link at Gen3 (8 GT/s, the card's own speed) through a device-tree override on its default boot entry; 0349 is dropped
+from the queue in the next round.
+
 ## Download
 
-The current queue q89m has the release [`q89m`](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89m)
-(queue commit `8c717e2`): the Fedora 44 package
-`kernel-iceland-7.3.0.rc7.iceland.00453.ga028210c2e52-1.fc44.aarch64.rpm` (sha256 `ff84d2cb5a8c08ec...`), its
+The current queue q89w has the release [`q89w`](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89w)
+(queue commit `c8c8087`): the Fedora 44 package
+`kernel-iceland-7.3.0.rc7.iceland.00519.gec0a0e306dd9-1.fc44.aarch64.rpm` (sha256 `b903dfc095cde978...`), its
 source RPM and the build's config, with `SHA256SUMS`. Earlier releases:
+[`q89m`](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89m),
 [`q89l`](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89l),
 [`q89k`](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89k).
 
@@ -24,7 +33,7 @@ source RPM and the build's config, with `SHA256SUMS`. Earlier releases:
 |---|---|
 | `kernel.pin` | upstream tag and commit, the expected tree hash after each series, the kernel release of each queue |
 | `patches/0001-infiniti/` | 132 patches: infiniti-mainline/linux master (OnePlus 15, same SoC), rebased onto v7.3-rc7 |
-| `patches/0002-iceland/` | 321 patches: the OnePlus Pad 4 series, numbered with gaps up to 0335 (see below) |
+| `patches/0002-iceland/` | 385 patches: the OnePlus Pad 4 series, numbered with gaps up to 0402 (see below) |
 | `configs/` | `distro-neutral.config` (merged into the build) and `required.config` (options the build checks) |
 | `scripts/prepare.sh` | clones the upstream tag, checks its commit, applies both series with `git am`, checks the tree hashes |
 | `scripts/build.sh` | configures and builds the kernel; writes `dist/` with `BUILD_INFO` and `SHA256SUMS` |
@@ -57,7 +66,17 @@ updates through dnf: each boots once as a trial and becomes the default after a 
 | q89j | `7.3.0-rc7-iceland-00431-g47151df8a814` | v7.3-rc7 | + 0313: the pogo keyboard backlight registered at probe | `iceland-7.3-rc7-next` | none (dnf update) |
 | q89k | `7.3.0-rc7-iceland-00436-gf1673c99e731` | v7.3-rc7 | + 0314-0318, upstream fixes: DPU pending-frame count and frame-done timer, ath12k multi-buffer MSDU decap, pmic_glink altmode ack, GPU RSC awake for poweroff | `iceland-7.3-rc7-next` | none (dnf update) |
 | q89l | `7.3.0-rc7-iceland-00438-gc7bc30386efe` | v7.3-rc7 | + 0319-0320: the battery's design energy in the device tree and the battery energy reported at its nominal voltage (UPower's full energy 53.80 Wh, was 62.23 Wh = charge x 4.5 V); built with a neutral build host name | `iceland-7.3-rc7-next` | none (dnf update) |
-| **q89m** | `7.3.0-rc7-iceland-00453-ga028210c2e52` | v7.3-rc7 | + 0321-0335: display fixes after a blank / unblank (DPU pending flush, CRTC clock, vblank_off race), the MDSS interrupt CPU resume latency cap, upstream stable fixes (q6apm, ath12k, UCSI, qcom_battmgr, a6xx) | `iceland-7.3-rc7-next`, tag `q89m` | none (dnf update) |
+| q89m | `7.3.0-rc7-iceland-00453-ga028210c2e52` | v7.3-rc7 | + 0321-0335: display fixes after a blank / unblank (DPU pending flush, CRTC clock, vblank_off race), the MDSS interrupt CPU resume latency cap, upstream stable fixes (q6apm, ath12k, UCSI, qcom_battmgr, a6xx) | `iceland-7.3-rc7-next`, tag `q89m` | none (dnf update) |
+| q89n | `7.3.0-rc7-iceland-00455-g5baf75b61533` | v7.3-rc7 | + 0336-0337: the vsync interrupt of an idle video-mode encoder kept (a switch); the RTC gives no time while its offset is unset | `iceland-7.3-rc7-next` | none (dnf update) |
+| q89o | `7.3.0-rc7-iceland-00456-g7cb44cc55f8d` | v7.3-rc7 | + 0338: with GPU preemption, the GPU waits for the GMU to leave IFPC | `iceland-7.3-rc7-next` | none (dnf update) |
+| q89p | `7.3.0-rc7-iceland-00464-g16351b002939` | v7.3-rc7 | + 0339-0346: q6apm unmap fixes, the UCSI connector race, drm_exec prelocked objects, msm VM_BIND submit check, the DPU pending-flush clear as a switch, no placeholder Bluetooth address in the device tree | `iceland-7.3-rc7-next` | none (dnf update) |
+| q89q | `7.3.0-rc7-iceland-00465-g12077ab9264e` | v7.3-rc7 | + 0347: the DSC blocks programmed once per enable (`msm.dpu_dsc_once`, off by default) | `iceland-7.3-rc7-next` | none (dnf update) |
+| q89r | `7.3.0-rc7-iceland-00467-g66b3328b54d9` | v7.3-rc7 | + 0348-0349: fastrpc user waits freezable; the Wi-Fi PCIe link limited to Gen2 (see above) | `iceland-7.3-rc7-next` | none (dnf update) |
+| q89s | `7.3.0-rc7-iceland-00480-g390139cb1641` | v7.3-rc7 | + 0350-0362: ath12k RX ring size, the SMP2P sleep-state notifier for the DSPs, 0255 / 0262 replaced by their posted versions, UFS / cmd-db / wcd-common / iris fixes, the USB / DP PHY as a mode switch | `iceland-7.3-rc7-next` | none (dnf update) |
+| q89t | `7.3.0-rc7-iceland-00481-gf27a488fdec9` | v7.3-rc7 | + 0363: a video-mode DSI slave torn down only after both timing engines stop (no underrun at screen off) | `iceland-7.3-rc7-next` | none (dnf update) |
+| q89u | `7.3.0-rc7-iceland-00487-gd9580aa77bd5` | v7.3-rc7 | + 0365-0370: iris, power-supply and ath12k upstream fixes | `iceland-7.3-rc7-next` | none (dnf update) |
+| q89v | `7.3.0-rc7-iceland-00511-g85d399a435db` | v7.3-rc7 | + 0371-0394: a 120 <-> 60 Hz change made in place without a modeset (`msm.dpu_vfp_inplace`), DSI PHY / PLL and SMMU fault-dump fixes, fastrpc / pas / ath12k / iris / dw9719 fixes, PCIe T_POWER_ON, CPU bandwidth monitors voting for LLCC; config: everyday USB / HID / network / file-system options, IOMMU in lazy mode | `iceland-7.3-rc7-next` | none (dnf update) |
+| **q89w** | `7.3.0-rc7-iceland-00519-gec0a0e306dd9` | v7.3-rc7 | + 0395-0402: DisplayPort over USB-C sized to the lanes of the Type-C pin assignment, with a link-training fallback and `msm.dp_max_lanes` (not yet tested with a monitor); the in-place vertical total written in a front-porch window; config: modules for USB-C devices (card readers, serial adapters, LTE modems, USB Wi-Fi) | `iceland-7.3-rc7-next`, tag `q89w` | none (dnf update) |
 
 The earlier queues on Linux 7.3-rc4 (q84 to q87) are not kept on a branch. Their story is in `docs/PORT-LOG.md`.
 
@@ -109,8 +128,8 @@ anywhere by these scripts.
 
 ## Status on the installed tablet
 
-- Fedora 44 GNOME runs on the tablet since 13 Oct 2026. Kernel q89m (`7.3.0-rc7-iceland-00453`) is its current kernel
-  (16 Oct 2026), installed with dnf.
+- Fedora 44 GNOME runs on the tablet since 13 Oct 2026. Kernel q89w (`7.3.0-rc7-iceland-00519`) is its current kernel
+  (19 Oct 2026), installed with dnf.
 - What works, feature by feature:
   [iceland-mainline/docs/FEATURES.md](https://github.com/mzakamin-hub/iceland-mainline/blob/main/docs/FEATURES.md).
 
