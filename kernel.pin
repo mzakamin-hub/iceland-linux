@@ -9,7 +9,8 @@ UPSTREAM_TREE=35e4248213006b8c37f54118790a99b673c84fd9
 # (135 of 138: 0004 / 0005 / 0030 are upstream in rc6):
 INFINITI_URL=https://github.com/infiniti-mainline/linux
 INFINITI_COMMIT=10650ae7bef447d04eb820bfc0c2d5a98d83e4e2
-TREE_AFTER_0001_infiniti=b0efb1679372a619cac5b2da2a3470649e52430a
+# q89y (TRIAL) drops 0132 (split cluster power domain): 131 of the 132 kept; q89x's 0001 tree was b0efb1679372
+TREE_AFTER_0001_infiniti=ac624feca4ae398dba937657af9787d3208751be
 # 0002-iceland = OnePlus Pad 4 series (map220v/sm8850-mainline iceland-7.2 ported + our fixes + upstream picks),
 # kernel q89b = 7.3.0-rc6-iceland-00377-g8e90101870e4 (see docs/Q89B-QUEUE.md) had f1c7fa5d8607;
 # kernel q89c-tb = q89b + 0255-0265 (tb323fu-linux), 7.3.0-rc6-iceland-00388-g9093690257a0 (docs/Q89C-TB-QUEUE.md) had 71601a654760;
@@ -37,5 +38,6 @@ TREE_AFTER_0001_infiniti=b0efb1679372a619cac5b2da2a3470649e52430a
 # kernel q89u (TRIAL) = q89t + 0365-0370 (iris OOB / unbind, power-supply unregister serialisation, ath12k re-inject DMA direction), 7.3.0-rc7-iceland-00487-gd9580aa77bd5 had 8ce3f56ce8ce;
 # kernel q89v (TRIAL) = q89u + 0371-0394 (display D-1 / D-3 / D-5 / D-6 / D-9, fastrpc / pas / ath12k / iris / dw9719 fixes, PCIe T_POWER_ON, CPU bwmon -> LLCC; + the K-1 / K-3 fragment section), 7.3.0-rc7-iceland-00511-g85d399a435db had 1c955d203639;
 # kernel q89w (TRIAL) = q89v + 0395-0402 (DP lanes from the Type-C pin assignment, link-training fallback, modes vs the trained link, link-status BAD, msm.dp_max_lanes; vtotal write window; + the USB-C device fragment section), 7.3.0-rc7-iceland-00519-gec0a0e306dd9 had f755e421b3f5;
-# kernel q89x (TRIAL) = q89w - 0349 (Gen2 limit) - 0357 (UFS v1) + 0404 0406-0412 (DSI PLL_SYSTEM_MUXES at PHY enable + msm.dsi_phy_muxes_first, codec DMA channel map reset, devfreq after the GPU init, UFS outstanding_reqs v2), 7.3.0-rc7-iceland-00529-g2968dd8b437e:
-TREE_AFTER_0002_iceland=ea9fec590a9024da7ff6018031fc0d5be3b8c523
+# kernel q89x (TRIAL) = q89w - 0349 (Gen2 limit) - 0357 (UFS v1) + 0404 0406-0412 (DSI PLL_SYSTEM_MUXES at PHY enable + msm.dsi_phy_muxes_first, codec DMA channel map reset, devfreq after the GPU init, UFS outstanding_reqs v2), 7.3.0-rc7-iceland-00529-g2968dd8b437e had ea9fec590a90;
+# kernel q89y (TRIAL) = q89x - 0001-infiniti 0132 (one cluster power domain for all 8 CPUs, the upstream / SuperTurtleDev topology), 7.3.0-rc7-iceland-00530-g242d83c86fe0:
+TREE_AFTER_0002_iceland=75b4c8bb637c636302d3ae63e1efd8e3f39da3a0
