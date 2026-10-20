@@ -1,0 +1,62 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Tue, 20 Oct 2026 21:32:00 +0300
+Subject: [PATCH 7/8] drm/msm/a6xx: GLITCHFIX add a disable_ifpc module
+ parameter
+
+Test kernel q89z (OnePlus Pad 4 display glitch bundle), not for upstream.
+
+msm.disable_ifpc=1 keeps the GMU idle level at ACTIVE on a GPU whose
+catalog entry has ADRENO_QUIRK_IFPC (A840 among them), so the GPU never
+enters inter-frame power collapse. Default off: IFPC as before. Read
+once at GMU probe (0400). GPU preemption keeps its own switch,
+msm.enable_preemption.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/adreno/a6xx_gmu.c      | 8 +++++---
+ drivers/gpu/drm/msm/adreno/adreno_device.c | 4 ++++
+ 2 files changed, 9 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
+index 04a8aa1955ab..27ef1d5e0bd5 100644
+--- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
++++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
+@@ -15,6 +15,8 @@
+ 
+ #include "a6xx_gpu.h"
+ #include "a6xx_gmu.xml.h"
++
++extern bool disable_ifpc;
+ #include "msm_gem.h"
+ #include "msm_gpu_trace.h"
+ #include "msm_mmu.h"
+@@ -2364,9 +2366,9 @@ int a6xx_gmu_init(struct a6xx_gpu *a6xx_gpu, struct device_node *node)
+ 	if (ret)
+ 		return ret;
+ 
+-	/* Set GMU idle level */
+-	gmu->idle_level = (adreno_gpu->info->quirks & ADRENO_QUIRK_IFPC) ?
+-		GMU_IDLE_STATE_IFPC : GMU_IDLE_STATE_ACTIVE;
++	/* Set GMU idle level; msm.disable_ifpc keeps the GPU out of IFPC */
++	gmu->idle_level = (adreno_gpu->info->quirks & ADRENO_QUIRK_IFPC) &&
++		!disable_ifpc ? GMU_IDLE_STATE_IFPC : GMU_IDLE_STATE_ACTIVE;
+ 
+ 	pm_runtime_enable(gmu->dev);
+ 
+diff --git a/drivers/gpu/drm/msm/adreno/adreno_device.c b/drivers/gpu/drm/msm/adreno/adreno_device.c
+index ba6671ec1d37..61ba2e8ed8a8 100644
+--- a/drivers/gpu/drm/msm/adreno/adreno_device.c
++++ b/drivers/gpu/drm/msm/adreno/adreno_device.c
+@@ -20,6 +20,10 @@ int enable_preemption;
+ MODULE_PARM_DESC(enable_preemption, "Enable preemption (A7xx+ only) (1=on, 0=disable (default), -1=auto)");
+ module_param(enable_preemption, int, 0600);
+ 
++bool disable_ifpc;
++MODULE_PARM_DESC(disable_ifpc, "Keep the GMU out of inter-frame power collapse (IFPC) on GPUs that support it (default: IFPC on)");
++module_param(disable_ifpc, bool, 0400);
++
+ bool disable_acd;
+ MODULE_PARM_DESC(disable_acd, "Forcefully disable GPU ACD");
+ module_param_unsafe(disable_acd, bool, 0400);

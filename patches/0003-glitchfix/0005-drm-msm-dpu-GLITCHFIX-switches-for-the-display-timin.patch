@@ -1,0 +1,295 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Tue, 20 Oct 2026 21:30:00 +0300
+Subject: [PATCH 5/8] drm/msm/dpu: GLITCHFIX switches for the display timing
+ patches without one
+
+Test kernel q89z (OnePlus Pad 4 display glitch bundle), not for upstream.
+
+Every display-timing patch of the queue can now be set to its upstream
+behaviour at run time, so that a glitch bundle can be bisected without a
+rebuild. The defaults keep the q89y behaviour:
+
+  msm.dpu_frame_pending_early   count the pending frame before the
+                                kickoff (0314); off: after it
+  msm.dpu_fd_timer_irq_delete   delete a stale frame-done timer from the
+                                frame-done interrupt (0315)
+  msm.dpu_vid_slave_late_cleanup  clean a bonded video slave up after
+                                the master's last frame (0363); off:
+                                the slave's own full disable first
+  msm.dpu_scanout_frame_vtotal  vblank timestamps use the vertical total
+                                being scanned out (idle rate / in-place
+                                change); off: the mode's
+  msm.fb_unpin_after_vblank     unpin a retired scanout framebuffer one
+                                vblank later (SMMU fault fix); off: at
+                                once
+
+All are 0644 and read where they act (kickoff, interrupt, disable,
+vblank timestamp, framebuffer retire).
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c      | 40 +++++++++++++++++--
+ drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c   | 36 +++++++++++++++--
+ .../gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h  |  3 ++
+ .../drm/msm/disp/dpu1/dpu_encoder_phys_vid.c  |  2 +-
+ drivers/gpu/drm/msm/msm_fb.c                  | 15 ++++++-
+ 5 files changed, 88 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
+index 55343a16c362..2eac51b9d8af 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
+@@ -11,6 +11,7 @@
+ #include <linux/debugfs.h>
+ #include <linux/ktime.h>
+ #include <linux/bits.h>
++#include <linux/moduleparam.h>
+ 
+ #include <drm/drm_atomic.h>
+ #include <drm/drm_blend.h>
+@@ -267,6 +268,27 @@ static int dpu_crtc_get_crc(struct drm_crtc *crtc)
+ 	return -EINVAL;
+ }
+ 
++/*
++ * dpu_crtc_get_scanout_position() ends the frame at the vertical total that
++ * is really scanned out while the idle refresh rate or an in-place front
++ * porch change stretches it (dpu_encoder_frame_vtotal()). Off: the mode's
++ * vertical total, as upstream. Read at every vblank timestamp.
++ */
++static bool dpu_scanout_frame_vtotal = true;
++module_param(dpu_scanout_frame_vtotal, bool, 0644);
++MODULE_PARM_DESC(dpu_scanout_frame_vtotal,
++		 "Vblank timestamps use the vertical total being scanned out (idle rate / in-place change) instead of the mode's (default: on)");
++
++/*
++ * Count the pending frame before the encoders kick off (on, q89k 0314), so
++ * that a frame-done handled before the kickoff returns finds it; off: after
++ * the kickoff, as upstream. Read at every kickoff.
++ */
++static bool dpu_frame_pending_early = true;
++module_param(dpu_frame_pending_early, bool, 0644);
++MODULE_PARM_DESC(dpu_frame_pending_early,
++		 "Count the pending frame before the kickoff instead of after it (default: on)");
++
+ static bool dpu_crtc_get_scanout_position(struct drm_crtc *crtc,
+ 					   bool in_vblank_irq,
+ 					   int *vpos, int *hpos,
+@@ -301,7 +323,9 @@ static bool dpu_crtc_get_scanout_position(struct drm_crtc *crtc,
+ 	line = dpu_encoder_get_linecount(encoder);
+ 
+ 	/* last scan line before VSYNC; later while the idle rate stretches it */
+-	vfp_end = dpu_encoder_frame_vtotal(encoder, line, mode->crtc_vtotal);
++	vfp_end = READ_ONCE(dpu_scanout_frame_vtotal) ?
++		  dpu_encoder_frame_vtotal(encoder, line, mode->crtc_vtotal) :
++		  mode->crtc_vtotal;
+ 
+ 	if (line < vactive_start)
+ 		line -= vactive_start;
+@@ -1054,6 +1078,7 @@ static int dpu_crtc_kickoff_clone_mode(struct drm_crtc *crtc)
+ {
+ 	struct drm_encoder *encoder;
+ 	struct drm_encoder *rt_encoder = NULL, *wb_encoder = NULL;
++	bool early = READ_ONCE(dpu_frame_pending_early);
+ 	struct dpu_kms *dpu_kms = _dpu_crtc_get_kms(crtc);
+ 
+ 	/* Find encoder for real time display */
+@@ -1075,7 +1100,8 @@ static int dpu_crtc_kickoff_clone_mode(struct drm_crtc *crtc)
+ 
+ 	dpu_vbif_clear_errors(dpu_kms);
+ 
+-	dpu_crtc_count_pending_frame(crtc);
++	if (early)
++		dpu_crtc_count_pending_frame(crtc);
+ 
+ 	/*
+ 	 * Kickoff real time encoder last as it's the encoder that
+@@ -1084,6 +1110,9 @@ static int dpu_crtc_kickoff_clone_mode(struct drm_crtc *crtc)
+ 	dpu_encoder_kickoff(wb_encoder);
+ 	dpu_encoder_kickoff(rt_encoder);
+ 
++	if (!early)
++		dpu_crtc_count_pending_frame(crtc);
++
+ 	/* Don't start frame done timers until the kickoffs have finished */
+ 	dpu_encoder_start_frame_done_timer(wb_encoder);
+ 	dpu_encoder_start_frame_done_timer(rt_encoder);
+@@ -1101,6 +1130,7 @@ void dpu_crtc_commit_kickoff(struct drm_crtc *crtc)
+ 	struct dpu_crtc *dpu_crtc = to_dpu_crtc(crtc);
+ 	struct dpu_kms *dpu_kms = _dpu_crtc_get_kms(crtc);
+ 	struct dpu_crtc_state *cstate = to_dpu_crtc_state(crtc->state);
++	bool early = READ_ONCE(dpu_frame_pending_early);
+ 
+ 	/*
+ 	 * If no mixers has been allocated in dpu_crtc_atomic_check(),
+@@ -1134,13 +1164,17 @@ void dpu_crtc_commit_kickoff(struct drm_crtc *crtc)
+ 
+ 		dpu_vbif_clear_errors(dpu_kms);
+ 
+-		dpu_crtc_count_pending_frame(crtc);
++		if (early)
++			dpu_crtc_count_pending_frame(crtc);
+ 
+ 		drm_for_each_encoder_mask(encoder, crtc->dev,
+ 				crtc->state->encoder_mask) {
+ 			dpu_encoder_kickoff(encoder);
+ 			dpu_encoder_start_frame_done_timer(encoder);
+ 		}
++
++		if (!early)
++			dpu_crtc_count_pending_frame(crtc);
+ 	}
+ 
+ 	dpu_crtc->play_count++;
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+index 08fe4cb5c75e..fdcd6d48bb97 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+@@ -375,6 +375,32 @@ MODULE_PARM_DESC(dpu_idle_refresh_hz,
+  * the DPU_ENC_RC_EVENT_FRAME_DONE case of dpu_encoder_resource_control().
+  */
+ static bool dpu_vid_idle_irq_off;
++
++/*
++ * A frame-done without busy encoders deletes a frame-done timer that the
++ * kickoff armed after the interrupt had already cleared the busy bits (on,
++ * q89k 0315); off: the timer runs out, as upstream. Read in the interrupt.
++ */
++static bool dpu_fd_timer_irq_delete = true;
++module_param(dpu_fd_timer_irq_delete, bool, 0644);
++MODULE_PARM_DESC(dpu_fd_timer_irq_delete,
++		 "Delete a stale frame-done timer from the frame-done interrupt (default: on)");
++
++/*
++ * A bonded video-mode slave is cleaned up only after the master waited for
++ * the frame in which both timing engines stopped (on, 0363); off: the slave
++ * does its own full disable first, as with upstream's slave-first order.
++ * Read at every encoder disable.
++ */
++static bool dpu_vid_slave_late_cleanup = true;
++module_param(dpu_vid_slave_late_cleanup, bool, 0644);
++MODULE_PARM_DESC(dpu_vid_slave_late_cleanup,
++		 "Clean a bonded video-mode slave up after the master's last frame (default: on)");
++
++bool dpu_encoder_slave_late_cleanup(void)
++{
++	return READ_ONCE(dpu_vid_slave_late_cleanup);
++}
+ module_param(dpu_vid_idle_irq_off, bool, 0644);
+ MODULE_PARM_DESC(dpu_vid_idle_irq_off,
+ 		 "Drop the vsync interrupt of an idle video mode encoder until the next commit (default: keep it on)");
+@@ -2466,6 +2492,7 @@ static void dpu_encoder_virt_atomic_disable(struct drm_encoder *drm_enc,
+ 	struct dpu_encoder_virt *dpu_enc = NULL;
+ 	struct drm_crtc *crtc;
+ 	struct drm_crtc_state *old_state = NULL;
++	bool late = dpu_encoder_slave_late_cleanup();
+ 
+ 	dpu_enc = to_dpu_encoder_virt(drm_enc);
+ 	dpu_enc->dsc_programmed = false;
+@@ -2494,8 +2521,10 @@ static void dpu_encoder_virt_atomic_disable(struct drm_encoder *drm_enc,
+ 
+ 	dpu_encoder_resource_control(drm_enc, DPU_ENC_RC_EVENT_PRE_STOP);
+ 
+-	if (dpu_enc->cur_slave && dpu_enc->cur_slave->ops.disable)
++	if (dpu_enc->cur_slave && dpu_enc->cur_slave->ops.disable) {
++		dpu_enc->cur_slave->late_cleanup = late;
+ 		dpu_enc->cur_slave->ops.disable(dpu_enc->cur_slave);
++	}
+ 
+ 	if (dpu_enc->cur_master && dpu_enc->cur_master->ops.disable)
+ 		dpu_enc->cur_master->ops.disable(dpu_enc->cur_master);
+@@ -2506,7 +2535,7 @@ static void dpu_encoder_virt_atomic_disable(struct drm_encoder *drm_enc,
+ 	 * both timing engines stopped, so the slave is torn down only now;
+ 	 * doing it earlier underruns both INTFs for the final frame.
+ 	 */
+-	if (dpu_enc->cur_slave && dpu_enc->cur_master &&
++	if (late && dpu_enc->cur_slave && dpu_enc->cur_master &&
+ 	    dpu_enc->cur_slave->intf_mode == INTF_MODE_VIDEO) {
+ 		struct dpu_encoder_phys *slave = dpu_enc->cur_slave;
+ 		struct dpu_hw_intf_status status = { 0 };
+@@ -2688,7 +2717,8 @@ void dpu_encoder_frame_done_callback(
+ 			 * confusion and visual defect.
+ 			 * delete the timer here to fix it.
+ 			 */
+-			if (atomic_read(&dpu_enc->frame_done_timeout_ms)) {
++			if (READ_ONCE(dpu_fd_timer_irq_delete) &&
++			    atomic_read(&dpu_enc->frame_done_timeout_ms)) {
+ 				atomic_set(&dpu_enc->frame_done_timeout_ms, 0);
+ 				timer_delete(&dpu_enc->frame_done_timer);
+ 			}
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h
+index 483ac7f5e11b..01b026be572b 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h
+@@ -198,6 +198,7 @@ struct dpu_encoder_phys {
+ 	enum dpu_intf_mode intf_mode;
+ 	spinlock_t *enc_spinlock;
+ 	enum dpu_enc_enable_state enable_state;
++	bool late_cleanup;
+ 	int vblank_refcount;
+ 	atomic_t vsync_cnt;
+ 	atomic_t underrun_cnt;
+@@ -322,6 +323,8 @@ unsigned int dpu_encoder_helper_get_cwb_mask(struct dpu_encoder_phys *phys_enc);
+ 
+ unsigned int dpu_encoder_helper_get_dsc(struct dpu_encoder_phys *phys_enc);
+ 
++bool dpu_encoder_slave_late_cleanup(void);
++
+ u32 dpu_encoder_get_drm_fmt(struct dpu_encoder_phys *phys_enc);
+ 
+ bool dpu_encoder_needs_periph_flush(struct dpu_encoder_phys *phys_enc);
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
+index 3d4cd6d9c36e..382cef94e53a 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
+@@ -670,7 +670,7 @@ static void dpu_encoder_phys_vid_disable(struct dpu_encoder_phys *phys_enc)
+ 	 * has waited for the last frame of both timing engines; resetting
+ 	 * the CTL while an engine still scans out underruns the INTFs.
+ 	 */
+-	if (!dpu_encoder_phys_vid_is_master(phys_enc)) {
++	if (!dpu_encoder_phys_vid_is_master(phys_enc) && phys_enc->late_cleanup) {
+ 		phys_enc->enable_state = DPU_ENC_DISABLED;
+ 		return;
+ 	}
+diff --git a/drivers/gpu/drm/msm/msm_fb.c b/drivers/gpu/drm/msm/msm_fb.c
+index cc71c42d4e12..8fe726f000e7 100644
+--- a/drivers/gpu/drm/msm/msm_fb.c
++++ b/drivers/gpu/drm/msm/msm_fb.c
+@@ -11,6 +11,8 @@
+ #include <drm/drm_gem_framebuffer_helper.h>
+ #include <drm/drm_probe_helper.h>
+ 
++#include <linux/moduleparam.h>
++
+ #include "msm_drv.h"
+ #include "msm_kms.h"
+ #include "msm_gem.h"
+@@ -143,6 +145,16 @@ void msm_framebuffer_unpin(struct drm_framebuffer *fb)
+ 	msm_framebuffer_unpin_planes(fb, fb->format->num_planes);
+ }
+ 
++/*
++ * Unpin a retired scanout framebuffer from a vblank work one vblank after its
++ * retire (on); off: at once, as upstream before the SMMU fault fix (the
++ * display may then fetch from an unmapped buffer). Read at every retire.
++ */
++static bool fb_unpin_after_vblank = true;
++module_param(fb_unpin_after_vblank, bool, 0644);
++MODULE_PARM_DESC(fb_unpin_after_vblank,
++		 "Unpin a retired scanout framebuffer only after the next vblank (default: on)");
++
+ void msm_framebuffer_cleanup(struct drm_framebuffer *fb, struct drm_crtc *crtc,
+ 			     bool needed_dirtyfb)
+ {
+@@ -151,7 +163,8 @@ void msm_framebuffer_cleanup(struct drm_framebuffer *fb, struct drm_crtc *crtc,
+ 	if (needed_dirtyfb)
+ 		refcount_dec(&msm_fb->dirtyfb);
+ 
+-	if (crtc && msm_crtc_queue_fb_unpin(crtc, fb))
++	if (crtc && READ_ONCE(fb_unpin_after_vblank) &&
++	    msm_crtc_queue_fb_unpin(crtc, fb))
+ 		return;
+ 
+ 	msm_framebuffer_unpin(fb);

@@ -1,0 +1,115 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Tue, 20 Oct 2026 21:31:00 +0300
+Subject: [PATCH 6/8] drm/msm/dpu: GLITCHFIX display-on bandwidth floor and
+ clock margin switch
+
+Test kernel q89z (OnePlus Pad 4 display glitch bundle), not for upstream.
+
+msm.dpu_bw_floor_pct keeps the DPU's average interconnect vote at or
+above a percentage of one full-screen 32 bpp layer at the refresh rate
+of every enabled CRTC's mode, so the vote cannot drop between commits
+that use fewer or smaller planes. 0 (default) keeps the computed vote.
+The floor is added in the normal perf mode only; the debugfs MINIMUM and
+FIXED modes are unchanged.
+
+msm.dpu_clk_inefficiency overrides the catalog's core clock margin
+(kaanapali: 100 = none since "kaanapali: no clock inefficiency factor");
+-1 (default) keeps the catalog's value. Above 100 the 144 Hz mode of the
+OnePlus Pad 4 is pruned by the mode checks.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_core_perf.c | 50 +++++++++++++++++++
+ 1 file changed, 50 insertions(+)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_core_perf.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_core_perf.c
+index 4f5c70229f63..c2cfc127552b 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_core_perf.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_core_perf.c
+@@ -11,6 +11,7 @@
+ #include <linux/sort.h>
+ #include <linux/clk.h>
+ #include <linux/bitmap.h>
++#include <linux/moduleparam.h>
+ 
+ #include "dpu_kms.h"
+ #include "dpu_trace.h"
+@@ -31,6 +32,28 @@ enum dpu_perf_mode {
+ 	DPU_PERF_MODE_MAX
+ };
+ 
++/*
++ * Display-on floor of the DPU's average bus bandwidth vote, in percent of one
++ * full-screen 32 bpp layer at the refresh rate of each enabled CRTC's mode
++ * (0 = off, default). The vote then does not fall below that between
++ * commits with fewer or smaller planes. Read at every bus vote update.
++ */
++static unsigned int dpu_bw_floor_pct;
++module_param(dpu_bw_floor_pct, uint, 0644);
++MODULE_PARM_DESC(dpu_bw_floor_pct,
++		 "Floor of the DPU average bandwidth vote while a CRTC is on, in % of one full-screen 32 bpp layer at the mode rate (0 = off, default)");
++
++/*
++ * The core clock margin in percent (100 = none) instead of the catalog's
++ * clk_inefficiency_factor (-1, default; kaanapali: 100). Read wherever the
++ * factor is used, also by the mode checks at connector probe: a factor above
++ * 100 prunes the 144 Hz mode of the OnePlus Pad 4.
++ */
++static int dpu_clk_inefficiency = -1;
++module_param(dpu_clk_inefficiency, int, 0644);
++MODULE_PARM_DESC(dpu_clk_inefficiency,
++		 "DPU core clock margin in % (100 = none), -1 = the catalog's factor (default)");
++
+ /**
+  * dpu_core_perf_adjusted_mode_clk - Adjust given mode clock rate according to
+  *   the perf clock factor.
+@@ -43,6 +66,8 @@ u64 dpu_core_perf_adjusted_mode_clk(u64 mode_clk_rate,
+ 	u32 clk_factor;
+ 
+ 	clk_factor = perf_cfg->clk_inefficiency_factor;
++	if (READ_ONCE(dpu_clk_inefficiency) >= 100)
++		clk_factor = READ_ONCE(dpu_clk_inefficiency);
+ 	if (clk_factor) {
+ 		mode_clk_rate *= clk_factor;
+ 		do_div(mode_clk_rate, 100);
+@@ -206,6 +231,29 @@ int dpu_core_perf_crtc_check(struct drm_crtc *crtc,
+ 	return 0;
+ }
+ 
++/* the dpu_bw_floor_pct floor in kB/s (icc units) over the enabled CRTCs */
++static u64 _dpu_core_perf_bw_floor(struct drm_device *dev)
++{
++	unsigned int pct = READ_ONCE(dpu_bw_floor_pct);
++	struct drm_crtc *crtc;
++	u64 floor = 0;
++
++	if (!pct)
++		return 0;
++
++	drm_for_each_crtc(crtc, dev) {
++		const struct drm_display_mode *m;
++
++		if (!crtc->enabled || !crtc->state)
++			continue;
++		m = &crtc->state->adjusted_mode;
++		floor += div_u64((u64)m->hdisplay * m->vdisplay * 4 *
++				 drm_mode_vrefresh(m) * pct, 100 * 1000);
++	}
++
++	return floor;
++}
++
+ static int _dpu_core_perf_crtc_update_bus(struct dpu_kms *kms,
+ 					  struct drm_crtc *crtc)
+ {
+@@ -228,6 +276,8 @@ static int _dpu_core_perf_crtc_update_bus(struct dpu_kms *kms,
+ 
+ 		avg_bw = div_u64(perf.bw_ctl, 1000); /*Bps_to_icc*/
+ 		peak_bw = perf.max_per_pipe_ib;
++		avg_bw = max_t(u64, avg_bw,
++			       min_t(u64, _dpu_core_perf_bw_floor(crtc->dev), U32_MAX));
+ 	}
+ 
+ 	avg_bw /= kms->num_paths;
