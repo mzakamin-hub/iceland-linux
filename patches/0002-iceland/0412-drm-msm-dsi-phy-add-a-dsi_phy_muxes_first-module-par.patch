@@ -1,0 +1,70 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Tue, 20 Oct 2026 08:30:00 +0300
+Subject: [PATCH] drm/msm/dsi/phy: add a dsi_phy_muxes_first module parameter
+
+Queue 0404 (Xu Qianhui's "program PLL_SYSTEM_MUXES on the first PHY
+enable", posted 19 Oct, no review yet) writes PLL_SYSTEM_MUXES = 0xc0 in
+dsi_7nm_phy_enable(), because the pll_enable_cnt pre-seed there makes
+dsi_pll_enable_pll_bias() return before its own write. Our panel lights
+up without it, so the change has to be compared on the tablet first.
+
+Add msm.dsi_phy_muxes_first: Y, the default, keeps 0404's write; N leaves
+it out, which is the code before 0404. It is read at every PHY enable, so
+the kernel command line picks the arm for a whole boot and a sysfs write
+applies from the next display enable on. One kernel then serves both arms
+of the A/B; the test reads PLL_SYSTEM_MUXES of both PHYs (one gated 32-bit
+read each) after boot, after DPMS cycles and after refresh changes.
+
+A debugging aid for the iceland kernel, not meant for upstream.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c | 17 +++++++++++++++--
+ 1 file changed, 15 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
+index 8c21834c04d3..fe15fa45075d 100644
+--- a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
++++ b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
+@@ -8,11 +8,23 @@
+ #include <linux/clk.h>
+ #include <linux/clk-provider.h>
+ #include <linux/iopoll.h>
++#include <linux/moduleparam.h>
+ 
+ #include "dsi_phy.h"
+ #include "dsi.xml.h"
+ #include "dsi_phy_7nm.xml.h"
+ 
++/*
++ * dsi_7nm_phy_enable() writes PLL_SYSTEM_MUXES itself because its
++ * pll_enable_cnt pre-seed makes dsi_pll_enable_pll_bias() skip that write.
++ * N leaves the write out (the code before it) so that one kernel can boot
++ * both arms of an A/B test. Read at every PHY enable.
++ */
++static bool dsi_phy_muxes_first = true;
++module_param(dsi_phy_muxes_first, bool, 0644);
++MODULE_PARM_DESC(dsi_phy_muxes_first,
++		 "Program PLL_SYSTEM_MUXES at every DSI PHY enable, not only in the PLL bias enable (default: on)");
++
+ /*
+  * DSI PLL 7nm - clock diagram (eg: DSI0): TODO: updated CPHY diagram
+  *
+@@ -1113,9 +1125,10 @@ static int dsi_7nm_phy_enable(struct msm_dsi_phy *phy,
+ 	 * path, so on the first (bonded) bring-up PLL_SYSTEM_MUXES would
+ 	 * otherwise never be written and the panel would stay dark.  The bias
+ 	 * function keeps its own write for the warm re-enable path
+-	 * (pll_enable_cnt == 0).
++	 * (pll_enable_cnt == 0). msm.dsi_phy_muxes_first=N leaves it out.
+ 	 */
+-	writel(0xc0, pll->phy->pll_base + REG_DSI_7nm_PHY_PLL_SYSTEM_MUXES);
++	if (READ_ONCE(dsi_phy_muxes_first))
++		writel(0xc0, pll->phy->pll_base + REG_DSI_7nm_PHY_PLL_SYSTEM_MUXES);
+ 	spin_unlock_irqrestore(&pll->pll_enable_lock, flags);
+ 
+ 	/* Assert PLL core reset */
+-- 
+2.43.0
+
