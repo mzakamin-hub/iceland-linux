@@ -1,0 +1,88 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Thu, 22 Oct 2026 01:16:37 +0300
+Subject: [PATCH] drm/msm/a8xx: Make the crash state capture opt-in
+
+On the OnePlus Pad 4 (Kaanapali, A840) a GPU fault from a client
+(Chromium's GPU process) ended in a synchronous external abort in
+a8xx_gpu_state_get(): the recovery worker's crash state capture read the
+snapshot's GMU CX register list (adreno_snapshot_registers_v2() ->
+reg_read() -> gmu_read()), the CPU took the abort, and the GPU recovery
+never ran; the system hung until the watchdog restarted it. Before the
+A8xx devcoredump series there was no gpu_state_get for A8xx and the same
+faults recovered.
+
+Capture the crash state only with msm.a8xx_crashstate=1 (default off).
+The check comes before any register access, and returns -EOPNOTSUPP so
+both the recovery worker and the debugfs "gpu" file skip it cleanly.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/adreno/a8xx_gpu_state.c | 19 ++++++++++++++++---
+ drivers/gpu/drm/msm/adreno/adreno_device.c  |  5 +++++
+ drivers/gpu/drm/msm/adreno/adreno_gpu.h     |  1 +
+ 3 files changed, 22 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/adreno/a8xx_gpu_state.c b/drivers/gpu/drm/msm/adreno/a8xx_gpu_state.c
+index e4eb2f335a89..22b0d0a4ee1e 100644
+--- a/drivers/gpu/drm/msm/adreno/a8xx_gpu_state.c
++++ b/drivers/gpu/drm/msm/adreno/a8xx_gpu_state.c
+@@ -1062,13 +1062,26 @@ struct msm_gpu_state *a8xx_gpu_state_get(struct msm_gpu *gpu)
+ 	struct adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
+ 	struct a6xx_gpu *a6xx_gpu = to_a6xx_gpu(adreno_gpu);
+ 	struct adreno_gpu_state *state;
+-	// TODO need to get status from SMMU on some gen8..
+-	bool stalled = !!(gpu_read(gpu, REG_A8XX_RBBM_MISC_STATUS) &
+-			A8XX_RBBM_MISC_STATUS_SMMU_STALLED_ON_FAULT);
++	bool stalled;
++
++	/*
++	 * On Kaanapali (A840) the snapshot's GMU CX register list raised a
++	 * synchronous external abort when read from the recovery worker, and
++	 * the GPU recovery never ran. Capture only when asked for.
++	 */
++	if (!READ_ONCE(a8xx_crashstate)) {
++		dev_info_once(&gpu->pdev->dev,
++			      "GPU crash state capture off (msm.a8xx_crashstate=1 enables it)\n");
++		return ERR_PTR(-EOPNOTSUPP);
++	}
+ 
+ 	if (!b)
+ 		return NULL;
+ 
++	// TODO need to get status from SMMU on some gen8..
++	stalled = !!(gpu_read(gpu, REG_A8XX_RBBM_MISC_STATUS) &
++		     A8XX_RBBM_MISC_STATUS_SMMU_STALLED_ON_FAULT);
++
+ 	state = kzalloc_obj(*state);
+ 	if (!state)
+ 		return ERR_PTR(-ENOMEM);
+diff --git a/drivers/gpu/drm/msm/adreno/adreno_device.c b/drivers/gpu/drm/msm/adreno/adreno_device.c
+index 4699f2a93a2c..ff1b65652204 100644
+--- a/drivers/gpu/drm/msm/adreno/adreno_device.c
++++ b/drivers/gpu/drm/msm/adreno/adreno_device.c
+@@ -28,6 +28,11 @@ bool disable_acd;
+ MODULE_PARM_DESC(disable_acd, "Forcefully disable GPU ACD");
+ module_param_unsafe(disable_acd, bool, 0400);
+ 
++bool a8xx_crashstate;
++MODULE_PARM_DESC(a8xx_crashstate,
++		 "A8xx: capture the GPU crash state (devcoredump) at a GPU fault / hang (0=off (default), 1=on)");
++module_param(a8xx_crashstate, bool, 0600);
++
+ bool enable_clx;
+ MODULE_PARM_DESC(enable_clx, "Enable the GPU current limiter (CLX) on GPUs with a CLX table (0=off (default), 1=on)");
+ module_param(enable_clx, bool, 0400);
+diff --git a/drivers/gpu/drm/msm/adreno/adreno_gpu.h b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
+index 05beb80e4ed0..d3bcdf180d4c 100644
+--- a/drivers/gpu/drm/msm/adreno/adreno_gpu.h
++++ b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
+@@ -21,6 +21,7 @@
+ 
+ extern bool snapshot_debugbus;
+ extern bool enable_clx;
++extern bool a8xx_crashstate;
+ 
+ enum {
+ 	ADRENO_FW_PM4 = 0,

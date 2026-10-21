@@ -52,3 +52,6 @@ TREE_AFTER_0005_q90c=9b899e5d1dc9efeb7c7f19be6a76eb8fd08ce06b
 # Kaanapali (the display glitch fix; dwc3_qcom.keep_icc_runtime=0 = upstream), rpmhpd.kaanapali_mmcx_cx_parent (opt-in,
 # default off), serial: qcom-geni: Clear pending IRQs while suspended (pw 1190182). docs/DISPLAY-CX-VOTE-FIX-2026-10-21.md.
 TREE_AFTER_0006_q90d=e68f3558489de193ec7e2091b9b8c87caabe4050
+# q90e (TRIAL, 22 Oct 2026) = q90d + 0007-q90e: drm/msm/a8xx crash state capture opt-in (msm.a8xx_crashstate, default
+# off): the capture's GMU CX register read raised a synchronous external abort and GPU recovery never ran.
+TREE_AFTER_0007_q90e=1e12b26b8ae75adf9ba353eb24ca3488778674a9
