@@ -45,3 +45,6 @@ TREE_AFTER_0001_infiniti=f2bf8ad883fe41773f3860b7c8a3a63ca0e548d2
 TREE_AFTER_0002_iceland=c1eab20ba31b01d5d2cc1c8f6f58c7ec240ebc19
 TREE_AFTER_0003_glitchfix=5b84f7f688155bb3b1a10583df8bcbde2bc9f8d6
 TREE_AFTER_0004_q90b=1f26e549db103a558bab8efbd3be0791b7e4b500
+# q90c (TRIAL, 21 Oct 2026) = q90b + 0005-q90c: the display clock controller's own MX vote (dt-bindings + kaanapali.dtsi;
+# docs/DISPLAY-CX-VOTE-FIX-2026-10-21.md). No C change: q90b's Image and modules, new device trees only.
+TREE_AFTER_0005_q90c=9b899e5d1dc9efeb7c7f19be6a76eb8fd08ce06b

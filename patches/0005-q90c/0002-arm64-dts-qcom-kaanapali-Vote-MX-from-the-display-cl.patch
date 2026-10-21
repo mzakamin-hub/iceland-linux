@@ -1,0 +1,46 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Wed, 21 Oct 2026 21:05:09 +0300
+Subject: [PATCH 2/2] arm64: dts: qcom: kaanapali: Vote MX from the display
+ clock controller
+
+The display clock controller voted MMCX only. Its PLLs run on MX
+(vendor tree: dispcc vdd_mm + vdd_mx), and nothing else on the display
+path votes MX once the MDSS driver has taken over from the boot splash.
+MX then follows only the other voters: on the OnePlus Pad 4 the USB
+controller's CX vote (required-opps nom, which the RPMh dependency rule
+carries to MX) held it while the controller was active. When the
+controller runtime-suspends, MX follows the ADSP's changing votes (sensor
+hub streaming), and the panel shows torn / ghost frames while the MDP PLL
+runs at up to 1.95 GHz.
+
+Give dispcc its MX vote: power-domains MMCX + MX, required-opps
+low_svs + nom. qcom_cc_really_probe() attaches both domains and sets
+each required-opps, and the display GDSCs keep the controller runtime
+active while they are on, so the vote is held exactly while the display
+is powered and dropped when it is off. NOM covers the MDP PLL at 650 MHz
+MDP (taycan_eko_t at 1.95 GHz).
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali.dtsi | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
+index 68a0f953efb7..f39f3dac2a08 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
++++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
+@@ -4967,8 +4967,10 @@
+ 				 <&mdss_dsi1_phy DSI_BYTE_PLL_CLK>,
+ 				 <&mdss_dsi1_phy DSI_PIXEL_PLL_CLK>;
+ 
+-			power-domains = <&rpmhpd RPMHPD_MMCX>;
+-			required-opps = <&rpmhpd_opp_low_svs>;
++			power-domains = <&rpmhpd RPMHPD_MMCX>,
++					<&rpmhpd RPMHPD_MX>;
++			required-opps = <&rpmhpd_opp_low_svs>,
++					<&rpmhpd_opp_nom>;
+ 
+ 			#clock-cells = <1>;
+ 			#power-domain-cells = <1>;

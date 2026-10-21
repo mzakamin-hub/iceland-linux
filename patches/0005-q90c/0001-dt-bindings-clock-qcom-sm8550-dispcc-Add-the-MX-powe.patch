@@ -1,0 +1,67 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Wed, 21 Oct 2026 21:05:08 +0300
+Subject: [PATCH 1/2] dt-bindings: clock: qcom,sm8550-dispcc: Add the MX power
+ domain on Kaanapali
+
+The display clock controller of Kaanapali (SM8850) has its PLLs on the MX
+rail, as the vendor tree describes it (dispcc: vdd_mm and vdd_mx). The PLL
+that feeds the MDP core clock runs at three times the MDP rate, up to
+1.95 GHz for 650 MHz, and needs MX at its corner while it runs.
+
+Allow a second power domain and performance point (MX) for
+qcom,kaanapali-dispcc, as the multi-domain camera and video clock
+controllers do (MMCX + MXC). The other compatibles keep exactly one.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../bindings/clock/qcom,sm8550-dispcc.yaml    | 26 ++++++++++++++-----
+ 1 file changed, 20 insertions(+), 6 deletions(-)
+
+diff --git a/Documentation/devicetree/bindings/clock/qcom,sm8550-dispcc.yaml b/Documentation/devicetree/bindings/clock/qcom,sm8550-dispcc.yaml
+index 61f58fbd5bd2..7b0def2fc970 100644
+--- a/Documentation/devicetree/bindings/clock/qcom,sm8550-dispcc.yaml
++++ b/Documentation/devicetree/bindings/clock/qcom,sm8550-dispcc.yaml
+@@ -54,14 +54,16 @@ properties:
+       - description: VCO DIV clock from DP PHY3
+ 
+   power-domains:
+-    description:
+-      A phandle and PM domain specifier for the MMCX power domain.
+-    maxItems: 1
++    minItems: 1
++    items:
++      - description: MMCX power domain
++      - description: MX power domain
+ 
+   required-opps:
+-    description:
+-      A phandle to an OPP node describing required MMCX performance point.
+-    maxItems: 1
++    minItems: 1
++    items:
++      - description: MMCX performance point
++      - description: MX performance point
+ 
+ required:
+   - compatible
+@@ -70,6 +72,18 @@ required:
+ 
+ allOf:
+   - $ref: qcom,gcc.yaml#
++  - if:
++      not:
++        properties:
++          compatible:
++            contains:
++              const: qcom,kaanapali-dispcc
++    then:
++      properties:
++        power-domains:
++          maxItems: 1
++        required-opps:
++          maxItems: 1
+ 
+ unevaluatedProperties: false
+ 
