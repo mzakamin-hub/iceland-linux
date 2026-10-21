@@ -38,6 +38,3 @@ index f603bddef9a8..409666da1902 100644
  
  /* Modem thermal mitigation device id */
  #define QCOM_TMD_PA	0
--- 
-2.43.0
-

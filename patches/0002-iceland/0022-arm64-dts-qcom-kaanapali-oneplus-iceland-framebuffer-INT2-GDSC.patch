@@ -18,7 +18,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 081fff201964..541be2ed09c2 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -82,7 +82,10 @@ framebuffer: framebuffer@fc800000 {
+@@ -82,7 +82,10 @@
  			power-domains = <&rpmhpd RPMHPD_MMCX>,
  					<&rpmhpd RPMHPD_MX>,
  					<&rpmhpd RPMHPD_MXC>,
@@ -30,6 +30,3 @@ index 081fff201964..541be2ed09c2 100644
  			required-opps = <&rpmhpd_opp_turbo>,
  					<&rpmhpd_opp_turbo>,
  					<&rpmhpd_opp_turbo>;
--- 
-2.43.0
-

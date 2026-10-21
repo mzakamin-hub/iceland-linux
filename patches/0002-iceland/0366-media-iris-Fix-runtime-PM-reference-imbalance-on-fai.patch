@@ -36,6 +36,3 @@ index bf6db23b53e2..545bbe75e174 100644
  
  	mutex_lock(&core->lock);
  	ret = iris_hfi_queue_cmd_write_locked(core, pkt, pkt_size);
--- 
-2.43.0
-

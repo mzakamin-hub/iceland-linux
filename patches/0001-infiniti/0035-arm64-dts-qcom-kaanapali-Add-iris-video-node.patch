@@ -17,10 +17,10 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 138 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index f85cf94d451e..205b1711bb94 100644
+index e48a179d0722..46533565eac3 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -2663,6 +2663,144 @@ tcsr: clock-controller@1fc0000 {
+@@ -2665,6 +2665,144 @@
  			#reset-cells = <1>;
  		};
  
@@ -165,6 +165,3 @@ index f85cf94d451e..205b1711bb94 100644
  		videocc: clock-controller@20f0000 {
  			compatible = "qcom,kaanapali-videocc";
  			reg = <0x0 0x020f0000 0x0 0x10000>;
--- 
-2.43.0
-

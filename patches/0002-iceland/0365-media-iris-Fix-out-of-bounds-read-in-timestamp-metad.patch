@@ -50,6 +50,3 @@ index eb8de60c1177..31cba99a665c 100644
  }
  
  int iris_vb2_buffer_done(struct iris_inst *inst, struct iris_buffer *buf)
--- 
-2.43.0
-

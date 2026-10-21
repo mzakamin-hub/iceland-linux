@@ -15,7 +15,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 13 insertions(+)
 
 diff --git a/drivers/regulator/qcom-rpmh-regulator.c b/drivers/regulator/qcom-rpmh-regulator.c
-index 67a3fe5e2e46..a4d3b74d5803 100644
+index 42bd7f1a6293..8a5be8287f10 100644
 --- a/drivers/regulator/qcom-rpmh-regulator.c
 +++ b/drivers/regulator/qcom-rpmh-regulator.c
 @@ -39,6 +39,7 @@ enum rpmh_regulator_type {
@@ -55,7 +55,7 @@ index 67a3fe5e2e46..a4d3b74d5803 100644
  static const struct rpmh_vreg_hw_data pmic5_pldo = {
  	.regulator_type = VRM,
  	.ops = &rpmh_regulator_vrm_drms_ops,
-@@ -1656,6 +1665,10 @@ static const struct rpmh_vreg_init_data pmh0101_vreg_data[] = {
+@@ -1659,6 +1668,10 @@ static const struct rpmh_vreg_init_data pmh0101_vreg_data[] = {
  	RPMH_VREG("ldo18",  LDO, 18, &pmic5_nldo530,      "vdd-l18"),
  	RPMH_VREG("bob1",   BOB, 1,  &pmic5_bob,          "vdd-bob1"),
  	RPMH_VREG("bob2",   BOB, 2,  &pmic5_bob,          "vdd-bob2"),
@@ -66,6 +66,3 @@ index 67a3fe5e2e46..a4d3b74d5803 100644
  	{}
  };
  
--- 
-2.43.0
-

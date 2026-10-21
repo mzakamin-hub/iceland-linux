@@ -41,7 +41,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index de61a1a76ffa..1355c4cfe97f 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -2493,12 +2493,13 @@ chg-cp-thermal {
+@@ -2493,12 +2493,13 @@
  	};
  
  	/*
@@ -61,7 +61,7 @@ index de61a1a76ffa..1355c4cfe97f 100644
  	 * Cooling states: cpufreq-cpu0 22 = 998400 kHz, cpufreq-cpu6 27 = 883200 kHz, GPU 13 = 342 MHz.
  	 */
  	skin-thermal {
-@@ -2508,13 +2509,13 @@ skin-thermal {
+@@ -2508,13 +2509,13 @@
  
  		trips {
  			skin_alert0: skin-alert0 {
@@ -77,6 +77,3 @@ index de61a1a76ffa..1355c4cfe97f 100644
  				hysteresis = <2000>;
  				type = "passive";
  			};
--- 
-2.43.0
-

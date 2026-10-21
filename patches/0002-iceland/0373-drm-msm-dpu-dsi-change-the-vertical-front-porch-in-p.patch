@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Joonhoe Kim <26rote@gmail.com>
 Date: Mon, 19 Oct 2026 00:05:16 +0300
-Subject: [PATCH 373/394] drm/msm/dpu+dsi: change the vertical front porch in
- place
+Subject: [PATCH] drm/msm/dpu+dsi: change the vertical front porch in place
 
 A mode that differs from the running one only in the vertical front porch
 (same pixel clock, horizontal timing, active height, vsync width and back
@@ -62,7 +61,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  9 files changed, 288 insertions(+), 28 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
-index d1c6a8ea4318..14decd9869a1 100644
+index 3430eb4ffbb1..729042b5fa41 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 @@ -1567,6 +1567,41 @@ int dpu_crtc_check_mode_changed(struct drm_crtc_state *old_crtc_state,
@@ -487,10 +486,10 @@ index 7af6113b6ad5..483ac7f5e11b 100644
  	void (*prepare_wb_job)(struct dpu_encoder_phys *phys_enc,
  			struct drm_writeback_job *job);
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
-index 064348b51d48..3d4cd6d9c36e 100644
+index 69f78e4ef7f0..261254ebac47 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
-@@ -279,19 +279,21 @@ static void dpu_encoder_phys_vid_intf_mode(struct dpu_encoder_phys *phys_enc,
+@@ -277,19 +277,21 @@ static void dpu_encoder_phys_vid_intf_mode(struct dpu_encoder_phys *phys_enc,
   * The vertical front porch can change while the timing engine runs (only the
   * vsync period moves) as long as the programmable fetch is off: its start is
   * counted back from the end of the frame and is not part of the change.
@@ -517,10 +516,10 @@ index 064348b51d48..3d4cd6d9c36e 100644
  	return !programmable_fetch_get_num_lines(phys_enc, &timing);
  }
 diff --git a/drivers/gpu/drm/msm/dsi/dsi.c b/drivers/gpu/drm/msm/dsi/dsi.c
-index 8e367ebdcf81..379716ad298e 100644
+index 67acb41e3e0f..61732caacadf 100644
 --- a/drivers/gpu/drm/msm/dsi/dsi.c
 +++ b/drivers/gpu/drm/msm/dsi/dsi.c
-@@ -36,6 +36,15 @@ int msm_dsi_set_vtotal(struct msm_dsi *msm_dsi, u32 vtotal)
+@@ -38,6 +38,15 @@ int msm_dsi_set_vtotal(struct msm_dsi *msm_dsi, u32 vtotal)
  	return msm_dsi_host_set_vtotal(msm_dsi->host, vtotal);
  }
  
@@ -598,7 +597,7 @@ index e09afae16756..b233ad47e565 100644
  				  const struct drm_display_mode *mode)
  {
 diff --git a/drivers/gpu/drm/msm/msm_drv.h b/drivers/gpu/drm/msm/msm_drv.h
-index d4197dd58821..33e5c48b64d9 100644
+index e6c4f32cb88d..3cef7aae2440 100644
 --- a/drivers/gpu/drm/msm/msm_drv.h
 +++ b/drivers/gpu/drm/msm/msm_drv.h
 @@ -303,6 +303,8 @@ bool msm_dsi_is_master_dsi(struct msm_dsi *msm_dsi);
@@ -623,6 +622,3 @@ index d4197dd58821..33e5c48b64d9 100644
  static inline struct drm_dsc_config *msm_dsi_get_dsc_config(struct msm_dsi *msm_dsi)
  {
  	return NULL;
--- 
-2.43.0
-

@@ -69,7 +69,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  2 files changed, 115 insertions(+), 9 deletions(-)
 
 diff --git a/drivers/usb/typec/ucsi/ucsi.c b/drivers/usb/typec/ucsi/ucsi.c
-index 276d02e0a2b7..635644187629 100644
+index 3368bd59da58..244792e809a9 100644
 --- a/drivers/usb/typec/ucsi/ucsi.c
 +++ b/drivers/usb/typec/ucsi/ucsi.c
 @@ -274,6 +274,37 @@ int ucsi_send_command(struct ucsi *ucsi, u64 command,
@@ -214,7 +214,7 @@ index 276d02e0a2b7..635644187629 100644
  
  	if (con->partner && (change & UCSI_CONSTAT_PARTNER_CHANGE)) {
  		ucsi_partner_change(con);
-@@ -1685,13 +1786,10 @@ static int ucsi_role_cmd(struct ucsi_connector *con, u64 command)
+@@ -1686,13 +1787,10 @@ static int ucsi_role_cmd(struct ucsi_connector *con, u64 command)
  
  	ret = ucsi_send_command(con->ucsi, command, NULL, 0);
  	if (ret == -ETIMEDOUT) {
@@ -229,7 +229,7 @@ index 276d02e0a2b7..635644187629 100644
  
  		ucsi_reset_connector(con, true);
  	}
-@@ -2171,12 +2269,10 @@ static void ucsi_resume_work(struct work_struct *work)
+@@ -2172,12 +2270,10 @@ static void ucsi_resume_work(struct work_struct *work)
  {
  	struct ucsi *ucsi = container_of(to_delayed_work(work), struct ucsi, resume_work);
  	struct ucsi_connector *con;
@@ -243,7 +243,7 @@ index 276d02e0a2b7..635644187629 100644
  	if (ret < 0) {
  		if (++ucsi->resume_retries < 5) {
  			queue_delayed_work(system_dfl_long_wq, &ucsi->resume_work,
-@@ -2373,6 +2469,8 @@ int ucsi_register(struct ucsi *ucsi)
+@@ -2374,6 +2470,8 @@ int ucsi_register(struct ucsi *ucsi)
  	if (!ucsi->version)
  		return -ENODEV;
  
@@ -252,7 +252,7 @@ index 276d02e0a2b7..635644187629 100644
  	/*
  	 * Version format is JJ.M.N (JJ = Major version, M = Minor version,
  	 * N = sub-minor version).
-@@ -2406,7 +2504,10 @@ void ucsi_unregister(struct ucsi *ucsi)
+@@ -2407,7 +2505,10 @@ void ucsi_unregister(struct ucsi *ucsi)
  
  	ucsi_debugfs_unregister(ucsi);
  
@@ -287,6 +287,3 @@ index 1996f04ed5e6..c873192d1905 100644
  	u32 src_pdos[PDO_MAX_OBJECTS];
  	int num_pdos;
  
--- 
-2.43.0
-

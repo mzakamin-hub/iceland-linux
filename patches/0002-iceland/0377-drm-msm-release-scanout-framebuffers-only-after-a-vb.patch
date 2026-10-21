@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
 Date: Sat, 3 Oct 2026 03:30:18 +0300
-Subject: [PATCH 377/394] drm/msm: release scanout framebuffers only after a
- vblank
+Subject: [PATCH] drm/msm: release scanout framebuffers only after a vblank
 
 msm_framebuffer_cleanup() releases a framebuffer as soon as
 drm_atomic_helper_cleanup_planes() runs.  msm_atomic_commit_tail() waits
@@ -61,7 +60,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  11 files changed, 190 insertions(+), 15 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
-index 14decd9869a1..e9f352c473a0 100644
+index 729042b5fa41..53b72867f275 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 @@ -1224,7 +1224,7 @@ static void dpu_crtc_disable(struct drm_crtc *crtc,
@@ -96,7 +95,7 @@ index 22433bfbea1e..5db33e49c345 100644
  	wb_enc->wb_conn = NULL;
  }
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_plane.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_plane.c
-index 7b92082d35a6..0e986b533bf0 100644
+index 1a471cdf767b..6b44ea303f82 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_plane.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_plane.c
 @@ -684,7 +684,8 @@ static void dpu_plane_cleanup_fb(struct drm_plane *plane,
@@ -110,7 +109,7 @@ index 7b92082d35a6..0e986b533bf0 100644
  
  static int dpu_plane_check_inline_rotation(struct dpu_plane *pdpu,
 diff --git a/drivers/gpu/drm/msm/disp/mdp4/mdp4_crtc.c b/drivers/gpu/drm/msm/disp/mdp4/mdp4_crtc.c
-index 57dfce58450b..2d73ac3d85f2 100644
+index 93050b3c3548..f638ee7cbcea 100644
 --- a/drivers/gpu/drm/msm/disp/mdp4/mdp4_crtc.c
 +++ b/drivers/gpu/drm/msm/disp/mdp4/mdp4_crtc.c
 @@ -267,7 +267,7 @@ static void mdp4_crtc_atomic_disable(struct drm_crtc *crtc,
@@ -132,7 +131,7 @@ index 57dfce58450b..2d73ac3d85f2 100644
  	mdp_irq_register(&mdp4_kms->base, &mdp4_crtc->err);
  
 diff --git a/drivers/gpu/drm/msm/disp/mdp4/mdp4_plane.c b/drivers/gpu/drm/msm/disp/mdp4/mdp4_plane.c
-index 9459f70ce0ba..5f669a02d798 100644
+index f9067e508f4c..4134fe78e59c 100644
 --- a/drivers/gpu/drm/msm/disp/mdp4/mdp4_plane.c
 +++ b/drivers/gpu/drm/msm/disp/mdp4/mdp4_plane.c
 @@ -97,7 +97,7 @@ static void mdp4_plane_cleanup_fb(struct drm_plane *plane,
@@ -145,7 +144,7 @@ index 9459f70ce0ba..5f669a02d798 100644
  
  
 diff --git a/drivers/gpu/drm/msm/disp/mdp5/mdp5_crtc.c b/drivers/gpu/drm/msm/disp/mdp5/mdp5_crtc.c
-index 4c4a897fc1ee..e9e55927655e 100644
+index 1e1fff37380c..f595cbbc1277 100644
 --- a/drivers/gpu/drm/msm/disp/mdp5/mdp5_crtc.c
 +++ b/drivers/gpu/drm/msm/disp/mdp5/mdp5_crtc.c
 @@ -499,7 +499,7 @@ static void mdp5_crtc_atomic_disable(struct drm_crtc *crtc,
@@ -167,10 +166,10 @@ index 4c4a897fc1ee..e9e55927655e 100644
  
  static void mdp5_crtc_atomic_enable(struct drm_crtc *crtc,
 diff --git a/drivers/gpu/drm/msm/disp/mdp5/mdp5_plane.c b/drivers/gpu/drm/msm/disp/mdp5/mdp5_plane.c
-index 841f444a8d68..dacb387d9bb6 100644
+index 7e878c698247..2b74d9c25651 100644
 --- a/drivers/gpu/drm/msm/disp/mdp5/mdp5_plane.c
 +++ b/drivers/gpu/drm/msm/disp/mdp5/mdp5_plane.c
-@@ -155,7 +155,7 @@ static void mdp5_plane_cleanup_fb(struct drm_plane *plane,
+@@ -151,7 +151,7 @@ static void mdp5_plane_cleanup_fb(struct drm_plane *plane,
  		return;
  
  	DBG("%s: cleanup: FB[%u]", plane->name, fb->base.id);
@@ -180,7 +179,7 @@ index 841f444a8d68..dacb387d9bb6 100644
  
  static int mdp5_plane_atomic_check_with_state(struct drm_crtc_state *crtc_state,
 diff --git a/drivers/gpu/drm/msm/msm_drv.h b/drivers/gpu/drm/msm/msm_drv.h
-index 33e5c48b64d9..fab43e39d9c1 100644
+index 3cef7aae2440..1df4fc111509 100644
 --- a/drivers/gpu/drm/msm/msm_drv.h
 +++ b/drivers/gpu/drm/msm/msm_drv.h
 @@ -254,7 +254,9 @@ int msm_gem_prime_pin(struct drm_gem_object *obj);
@@ -195,10 +194,10 @@ index 33e5c48b64d9..fab43e39d9c1 100644
  struct drm_gem_object *msm_framebuffer_bo(struct drm_framebuffer *fb, int plane);
  const struct msm_format *msm_framebuffer_format(struct drm_framebuffer *fb);
 diff --git a/drivers/gpu/drm/msm/msm_fb.c b/drivers/gpu/drm/msm/msm_fb.c
-index 792d47b4acc4..cc71c42d4e12 100644
+index 0a8be26143b4..ba3a08b4b972 100644
 --- a/drivers/gpu/drm/msm/msm_fb.c
 +++ b/drivers/gpu/drm/msm/msm_fb.c
-@@ -130,13 +130,10 @@ int msm_framebuffer_prepare(struct drm_framebuffer *fb, bool needs_dirtyfb)
+@@ -132,13 +132,10 @@ int msm_framebuffer_prepare(struct drm_framebuffer *fb, bool needs_dirtyfb)
  	return 0;
  }
  
@@ -213,7 +212,7 @@ index 792d47b4acc4..cc71c42d4e12 100644
  	guard(mutex)(&msm_fb->lock);
  
  	if (--msm_fb->prepare_count)
-@@ -146,6 +143,20 @@ void msm_framebuffer_cleanup(struct drm_framebuffer *fb, bool needed_dirtyfb)
+@@ -148,6 +145,20 @@ void msm_framebuffer_cleanup(struct drm_framebuffer *fb, bool needed_dirtyfb)
  	msm_framebuffer_unpin_planes(fb, fb->format->num_planes);
  }
  
@@ -442,6 +441,3 @@ index f25b31e502d2..72d1b6e1bce8 100644
  	kms->funcs = funcs;
  
  	kms->wq = alloc_ordered_workqueue("msm", 0);
--- 
-2.43.0
-

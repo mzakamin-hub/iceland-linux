@@ -22,7 +22,7 @@ Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
  1 file changed, 8 insertions(+)
 
 diff --git a/drivers/crypto/qce/aead.c b/drivers/crypto/qce/aead.c
-index a9642c67f476..289af0765edd 100644
+index e0061bfab216..02e1a7684a7e 100644
 --- a/drivers/crypto/qce/aead.c
 +++ b/drivers/crypto/qce/aead.c
 @@ -514,6 +514,14 @@ static int qce_aead_crypt(struct aead_request *req, int encrypt)
@@ -40,6 +40,3 @@ index a9642c67f476..289af0765edd 100644
  	/* If fallback is needed, schedule and exit */
  	if (ctx->need_fallback) {
  		/* Reset need_fallback in case the same ctx is used for another transaction */
--- 
-2.43.0
-

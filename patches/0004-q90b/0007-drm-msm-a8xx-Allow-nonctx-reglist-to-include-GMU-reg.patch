@@ -1,0 +1,40 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Rob Clark <robin.clark@oss.qualcomm.com>
+Date: Tue, 20 Oct 2026 13:46:18 -0700
+Subject: [PATCH] drm/msm/a8xx: Allow nonctx reglist to include GMU regs
+
+From hw PoV, it's all part of the GPU.  But from dt perspective it is
+it's own device with a separate io space.  So we need to detect this and
+direct writes to the correct place.
+
+Signed-off-by: Rob Clark <robin.clark@oss.qualcomm.com>
+Acked-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
+---
+ drivers/gpu/drm/msm/adreno/a8xx_gpu.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
+index 77422d1a9506..4ef8598fc1bd 100644
+--- a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
++++ b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
+@@ -379,6 +379,7 @@ static void a8xx_set_ubwc_config(struct msm_gpu *gpu)
+ static void a8xx_nonctxt_config(struct msm_gpu *gpu, u32 *gmem_protect)
+ {
+ 	struct adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
++	struct a6xx_gmu *gmu = &to_a6xx_gpu(adreno_gpu)->gmu;
+ 	const struct a6xx_info *info = adreno_gpu->info->a6xx;
+ 	const struct adreno_reglist_pipe *regs = info->nonctxt_reglist;
+ 	unsigned int pipe_id, i;
+@@ -398,7 +399,11 @@ static void a8xx_nonctxt_config(struct msm_gpu *gpu, u32 *gmem_protect)
+ 			if (regs[i].offset == REG_A8XX_RB_GC_GMEM_PROTECT)
+ 				*gmem_protect = regs[i].value;
+ 
+-			gpu_write(gpu, regs[i].offset, regs[i].value);
++			if ((regs[i].offset << 2) >= gmu->mmio_offset) {
++				gmu_write(gmu, regs[i].offset, regs[i].value);
++			} else {
++				gpu_write(gpu, regs[i].offset, regs[i].value);
++			}
+ 		}
+ 
+ 		a8xx_aperture_release(gpu, flags);

@@ -23,7 +23,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index c503109a9244..ba601b94e181 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -318,6 +318,15 @@ llcc_lpi_mem: llcc-lpi@ff800000 {
+@@ -318,6 +318,15 @@
  			reg = <0x0 0xff800000 0x0 0x800000>;
  			no-map;
  		};
@@ -39,7 +39,7 @@ index c503109a9244..ba601b94e181 100644
  	};
  
  	sound {
-@@ -2040,6 +2049,14 @@ &remoteproc_adsp {
+@@ -2040,6 +2049,14 @@
  			"qcom/kaanapali/iceland/adsp_dtb.mbn";
  
  	status = "okay";
@@ -54,6 +54,3 @@ index c503109a9244..ba601b94e181 100644
  };
  
  &remoteproc_cdsp {
--- 
-2.43.0
-

@@ -122,6 +122,3 @@ index 465e5d2316a0..7102980c332d 100644
  	device_for_each_child_node(dev, fwnode) {
  		ret = fwnode_property_read_u32(fwnode, "reg", &port);
  		if (ret < 0) {
--- 
-2.43.0
-

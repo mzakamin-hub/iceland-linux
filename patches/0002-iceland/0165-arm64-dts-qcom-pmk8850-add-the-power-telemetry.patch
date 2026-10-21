@@ -18,7 +18,7 @@ diff --git a/arch/arm64/boot/dts/qcom/pmk8850.dtsi b/arch/arm64/boot/dts/qcom/pm
 index 7fd14de84007..e9c567fe7771 100644
 --- a/arch/arm64/boot/dts/qcom/pmk8850.dtsi
 +++ b/arch/arm64/boot/dts/qcom/pmk8850.dtsi
-@@ -101,5 +101,46 @@ reboot_reason: reboot-reason@48 {
+@@ -101,5 +101,46 @@
  				bits = <1 7>;
  			};
  		};
@@ -65,6 +65,3 @@ index 7fd14de84007..e9c567fe7771 100644
 +		};
  	};
  };
--- 
-2.43.0
-

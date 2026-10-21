@@ -51,7 +51,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  4 files changed, 696 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
-index 082c8c7dfc80..c5b26d2b32d1 100644
+index 2744fc6311c4..d7a48d2fa205 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 @@ -295,14 +295,14 @@ static bool dpu_crtc_get_scanout_position(struct drm_crtc *crtc,
@@ -874,6 +874,3 @@ index 1b64f7406157..963e85fabe51 100644
  	_dpu_kms_hw_destroy(dpu_kms);
  
  	msm_kms_destroy(&dpu_kms->base);
--- 
-2.43.0
-

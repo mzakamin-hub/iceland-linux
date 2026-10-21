@@ -30,6 +30,3 @@ index 7ea976df9247..22ae711d7cd3 100644
  	     val += DW9719_CTRL_STEPS) {
  		ret = dw9719_t_focus_abs(dw9719, val);
  		if (ret)
--- 
-2.43.0
-

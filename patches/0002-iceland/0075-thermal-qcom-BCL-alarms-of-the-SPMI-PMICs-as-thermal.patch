@@ -546,6 +546,3 @@ index 000000000000..fe67111bcf18
 +
 +MODULE_DESCRIPTION("Qualcomm SPMI PMIC battery current limiting alarms");
 +MODULE_LICENSE("GPL");
--- 
-2.43.0
-

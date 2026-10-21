@@ -39,10 +39,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
-index 7381d748377e..b4e64e878edb 100644
+index 08c8eb2e6029..b4365193c3d1 100644
 --- a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
 +++ b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
-@@ -4159,7 +4159,8 @@ static int qmp_combo_com_init(struct qmp_combo *qmp, bool force)
+@@ -4271,7 +4271,8 @@ err_assert_reset:
  err_disable_regulators:
  	regulator_bulk_disable(cfg->num_vregs, qmp->vregs);
  err_decrement_count:
@@ -52,6 +52,3 @@ index 7381d748377e..b4e64e878edb 100644
  
  	return ret;
  }
--- 
-2.43.0
-

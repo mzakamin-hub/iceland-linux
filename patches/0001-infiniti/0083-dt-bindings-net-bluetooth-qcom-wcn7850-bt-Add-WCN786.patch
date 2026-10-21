@@ -22,6 +22,3 @@ index 8108ef83e99b..9d0fe088ba7d 100644
  
    enable-gpios:
      maxItems: 1
--- 
-2.43.0
-

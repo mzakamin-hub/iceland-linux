@@ -23,10 +23,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 32 insertions(+)
 
 diff --git a/drivers/remoteproc/qcom_q6v5_pas.c b/drivers/remoteproc/qcom_q6v5_pas.c
-index 0ead7860d77c..caa3d459a932 100644
+index 2e1e39826ffa..ced8fb5fbaad 100644
 --- a/drivers/remoteproc/qcom_q6v5_pas.c
 +++ b/drivers/remoteproc/qcom_q6v5_pas.c
-@@ -1076,6 +1076,13 @@ static const struct tmd_name modem_tmd_name[] = {
+@@ -1095,6 +1095,13 @@ static const struct tmd_name modem_tmd_name[] = {
  	{ .name = "modem", .id = QCOM_TMD_MODEM },
  };
  
@@ -40,7 +40,7 @@ index 0ead7860d77c..caa3d459a932 100644
  static const struct qcom_pas_data adsp_resource_init = {
  	.crash_reason_smem = 423,
  	.firmware_name = "adsp.mdt",
-@@ -1878,6 +1885,30 @@ static const struct qcom_pas_data sm8750_mpss_resource = {
+@@ -1897,6 +1904,30 @@ static const struct qcom_pas_data sm8750_mpss_resource = {
  	.region_assign_vmid = QCOM_SCM_VMID_MSS_MSA,
  };
  
@@ -71,14 +71,11 @@ index 0ead7860d77c..caa3d459a932 100644
  static const struct qcom_pas_data kaanapali_soccp_resource = {
  	.crash_reason_smem = 656,
  	.firmware_name = "soccp.mbn",
-@@ -1942,6 +1973,7 @@ static const struct of_device_id qcom_pas_of_match[] = {
- 	{ .compatible = "qcom,eliza-adsp-pas", .data = &sm8550_adsp_resource },
+@@ -1989,6 +2020,7 @@ static const struct of_device_id qcom_pas_of_match[] = {
  	{ .compatible = "qcom,eliza-cdsp-pas", .data = &eliza_cdsp_resource },
  	{ .compatible = "qcom,glymur-soccp-pas", .data = &glymur_soccp_resource },
+ 	{ .compatible = "qcom,hawi-cdsp-pas", .data = &hawi_cdsp_resource },
 +	{ .compatible = "qcom,kaanapali-cdsp-pas", .data = &kaanapali_cdsp_resource },
  	{ .compatible = "qcom,kaanapali-soccp-pas", .data = &kaanapali_soccp_resource },
  	{ .compatible = "qcom,milos-adsp-pas", .data = &sm8550_adsp_resource },
  	{ .compatible = "qcom,milos-cdsp-pas", .data = &milos_cdsp_resource },
--- 
-2.43.0
-

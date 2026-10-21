@@ -45,7 +45,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 164 insertions(+), 16 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 38f521408437..c39a5d97b19f 100644
+index 48d09bdb1483..0557cc96205b 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -419,6 +419,12 @@ struct qcom_battmgr {
@@ -267,7 +267,7 @@ index 38f521408437..c39a5d97b19f 100644
  		return qcom_battmgr_set_charge_end_threshold(battmgr, pval->intval);
  	case POWER_SUPPLY_PROP_CHARGE_BEHAVIOUR:
  		return qcom_battmgr_oplus_set_charge_behaviour(battmgr, pval->intval);
-@@ -1242,6 +1379,8 @@ static const enum power_supply_property oplus_bat_props[] = {
+@@ -1243,6 +1380,8 @@ static const enum power_supply_property oplus_bat_props[] = {
  	POWER_SUPPLY_PROP_STATE_OF_HEALTH,
  	POWER_SUPPLY_PROP_CHARGE_BEHAVIOUR,
  	POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX,
@@ -276,7 +276,7 @@ index 38f521408437..c39a5d97b19f 100644
  };
  
  static const struct power_supply_desc oplus_bat_psy_desc = {
-@@ -2102,7 +2241,8 @@ static int qcom_battmgr_oplus_set_charge_behaviour(struct qcom_battmgr *battmgr,
+@@ -2126,7 +2265,8 @@ static int qcom_battmgr_oplus_set_charge_behaviour(struct qcom_battmgr *battmgr,
  
  	mutex_lock(&battmgr->lock);
  	battmgr->chg_inhibit = behaviour == POWER_SUPPLY_CHARGE_BEHAVIOUR_INHIBIT_CHARGE;
@@ -286,7 +286,7 @@ index 38f521408437..c39a5d97b19f 100644
  	mutex_unlock(&battmgr->lock);
  
  	return ret;
-@@ -2127,7 +2267,8 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+@@ -2151,7 +2291,8 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
  
  	mutex_lock(&battmgr->lock);
  	/* the host's inhibit is not kept by the firmware across attaches: send it again on every attach */
@@ -296,7 +296,7 @@ index 38f521408437..c39a5d97b19f 100644
  				   "charge enable");
  
  	/* the charger type as the sysfs path reads it on this firmware: USB_ADAP_TYPE, mapped */
-@@ -2184,7 +2325,8 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+@@ -2208,7 +2349,8 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
  
  	dev_info(battmgr->dev, "charger: type %u, input limit %u uA, charge limit %u uA, VBUS after 9 V request %u mV%s\n",
  		 type, icl_ua, qcom_battmgr_oplus_fcc_ua(battmgr, battmgr->chg_fcc_ua), mv,
@@ -306,7 +306,7 @@ index 38f521408437..c39a5d97b19f 100644
  }
  
  static void qcom_battmgr_oplus_setup_charger(struct qcom_battmgr *battmgr)
-@@ -2269,8 +2411,13 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+@@ -2293,8 +2435,13 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
  		}
  
  		/* keep the host's inhibit asserted while a charger is in, whatever the firmware does on its own */
@@ -322,7 +322,7 @@ index 38f521408437..c39a5d97b19f 100644
  
  		setup_charger = battmgr->usb.online && !battmgr->charger_configured;
  		battmgr->charger_configured = battmgr->usb.online;
-@@ -2313,7 +2460,7 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+@@ -2337,7 +2484,7 @@ out_unlock:
  static void qcom_battmgr_oplus_enable(struct qcom_battmgr *battmgr)
  {
  	mutex_lock(&battmgr->lock);
@@ -331,7 +331,7 @@ index 38f521408437..c39a5d97b19f 100644
  	qcom_battmgr_oplus_set(battmgr, OPLUS_USB_OTG_AP_ENABLE, 1);
  	mutex_unlock(&battmgr->lock);
  
-@@ -2412,6 +2559,7 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
+@@ -2436,6 +2583,7 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
  	else
  		battmgr->variant = QCOM_BATTMGR_SM8350;
  
@@ -339,6 +339,3 @@ index 38f521408437..c39a5d97b19f 100644
  	if (battmgr->variant == QCOM_BATTMGR_OPLUS)
  		battmgr->chg_stock_limits = device_is_compatible(dev->parent,
  								 "oneplus,iceland-pmic-glink");
--- 
-2.43.0
-

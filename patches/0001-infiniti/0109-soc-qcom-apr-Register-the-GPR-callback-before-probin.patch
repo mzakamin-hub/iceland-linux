@@ -14,10 +14,10 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/soc/qcom/apr.c b/drivers/soc/qcom/apr.c
-index ea7f83916d8d..39c3a6e6d1f0 100644
+index 2d5645ff9919..af4f5859d80a 100644
 --- a/drivers/soc/qcom/apr.c
 +++ b/drivers/soc/qcom/apr.c
-@@ -367,9 +367,11 @@ static int apr_device_probe(struct device *dev)
+@@ -344,9 +344,11 @@ static int apr_device_probe(struct device *dev)
  	struct apr_driver *adrv = to_apr_driver(dev->driver);
  	int ret;
  
@@ -31,6 +31,3 @@ index ea7f83916d8d..39c3a6e6d1f0 100644
  
  	return ret;
  }
--- 
-2.43.0
-

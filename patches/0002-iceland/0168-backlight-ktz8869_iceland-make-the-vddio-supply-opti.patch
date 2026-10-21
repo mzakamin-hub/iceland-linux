@@ -35,6 +35,3 @@ index f6dd2c61a676..d1196bd0300a 100644
  		return dev_err_probe(&client->dev, ret, "get regulator vddio failed\n");
  
  	if (id->driver_data == 2) {
--- 
-2.43.0
-

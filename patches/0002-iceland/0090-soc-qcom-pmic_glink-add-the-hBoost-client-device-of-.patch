@@ -91,6 +91,3 @@ index cf6a8ffbc219..bdc16c6517c4 100644
  	{ .compatible = "qcom,glymur-pmic-glink", .data = &pmic_glink_soccp_data },
  	{ .compatible = "qcom,kaanapali-pmic-glink", .data = &pmic_glink_soccp_data },
  	{ .compatible = "qcom,pmic-glink", .data = &pmic_glink_adsp_data },
--- 
-2.43.0
-

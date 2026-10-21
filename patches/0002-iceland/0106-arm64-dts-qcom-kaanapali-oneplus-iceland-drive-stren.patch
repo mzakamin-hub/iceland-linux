@@ -25,7 +25,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index df2ac127ba99..a478016d4ac9 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1318,6 +1318,11 @@ cam_rear_out: endpoint {
+@@ -1318,6 +1318,11 @@
  	};
  };
  
@@ -37,7 +37,7 @@ index df2ac127ba99..a478016d4ac9 100644
  &i2c14 {
  	status = "okay";
  
-@@ -2039,7 +2044,7 @@ perst-n-pins {
+@@ -2039,7 +2044,7 @@
  			pins = "gpio102";
  			function = "gpio";
  			drive-strength = <2>;
@@ -46,7 +46,7 @@ index df2ac127ba99..a478016d4ac9 100644
  		};
  
  		clkreq-n-pins {
-@@ -2060,36 +2065,37 @@ wake-n-pins {
+@@ -2060,36 +2065,37 @@
  	wcd_default: wcd-reset-n-active-state {
  		pins = "gpio161";
  		function = "gpio";
@@ -89,6 +89,3 @@ index df2ac127ba99..a478016d4ac9 100644
  			bias-disable;
  		};
  	};
--- 
-2.43.0
-

@@ -40,10 +40,10 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 8 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/dp/dp_display.c b/drivers/gpu/drm/msm/dp/dp_display.c
-index dfff3ac022bc..9d0872ebf3e1 100644
+index a82738e7cb7d..37cd8ba5b079 100644
 --- a/drivers/gpu/drm/msm/dp/dp_display.c
 +++ b/drivers/gpu/drm/msm/dp/dp_display.c
-@@ -925,6 +925,7 @@ enum drm_connector_status msm_dp_bridge_detect(struct drm_bridge *bridge,
+@@ -934,6 +934,7 @@ enum drm_connector_status msm_dp_bridge_detect(struct drm_bridge *bridge,
  	u8 dpcd[DP_RECEIVER_CAP_SIZE];
  	struct drm_dp_desc desc;
  	bool phy_deinit;
@@ -51,7 +51,7 @@ index dfff3ac022bc..9d0872ebf3e1 100644
  	int ret;
  
  	dp = to_dp_bridge(bridge)->msm_dp_display;
-@@ -938,6 +939,7 @@ enum drm_connector_status msm_dp_bridge_detect(struct drm_bridge *bridge,
+@@ -947,6 +948,7 @@ enum drm_connector_status msm_dp_bridge_detect(struct drm_bridge *bridge,
  		return status;
  	}
  
@@ -59,7 +59,7 @@ index dfff3ac022bc..9d0872ebf3e1 100644
  	phy_deinit = msm_dp_display_host_phy_init(priv);
  
  	msm_dp_aux_enable_xfers(priv->aux, true);
-@@ -988,6 +990,12 @@ enum drm_connector_status msm_dp_bridge_detect(struct drm_bridge *bridge,
+@@ -997,6 +999,12 @@ end:
  		}
  
  		pm_runtime_put_sync(&dp->pdev->dev);
@@ -72,6 +72,3 @@ index dfff3ac022bc..9d0872ebf3e1 100644
  	}
  
  	return status;
--- 
-2.43.0
-

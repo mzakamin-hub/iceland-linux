@@ -21,10 +21,10 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  create mode 100644 drivers/media/platform/qcom/iris/iris_platform_kaanapali.h
 
 diff --git a/drivers/media/platform/qcom/iris/iris_platform_common.h b/drivers/media/platform/qcom/iris/iris_platform_common.h
-index 974809509146..58431d1cb2d5 100644
+index cddab9a9c375..d99ea180d79e 100644
 --- a/drivers/media/platform/qcom/iris/iris_platform_common.h
 +++ b/drivers/media/platform/qcom/iris/iris_platform_common.h
-@@ -61,6 +61,7 @@ extern const struct iris_platform_data sm8250_data;
+@@ -70,6 +70,7 @@ extern const struct iris_platform_data sm8250_data;
  extern const struct iris_platform_data sm8550_data;
  extern const struct iris_platform_data sm8650_data;
  extern const struct iris_platform_data sm8750_data;
@@ -102,7 +102,7 @@ index 000000000000..247fb9d7cb63
 +
 +#endif /* __IRIS_PLATFORM_KAANAPALI_H__ */
 diff --git a/drivers/media/platform/qcom/iris/iris_platform_vpu3x.c b/drivers/media/platform/qcom/iris/iris_platform_vpu3x.c
-index 74626b35d9cb..fa39783943c0 100644
+index e963cb116313..016ce234d7ba 100644
 --- a/drivers/media/platform/qcom/iris/iris_platform_vpu3x.c
 +++ b/drivers/media/platform/qcom/iris/iris_platform_vpu3x.c
 @@ -16,6 +16,7 @@
@@ -112,8 +112,8 @@ index 74626b35d9cb..fa39783943c0 100644
 +#include "iris_platform_kaanapali.h"
  #include "iris_platform_x1p42100.h"
  
- static const struct iris_firmware_desc iris_vpu30_p4_s6_gen2_desc = {
-@@ -48,6 +49,12 @@ static const struct iris_firmware_desc iris_vpu35_p4_gen2_desc = {
+ #define WRAPPER_INTR_STATUS_A2HWD_BMSK		BIT(3)
+@@ -50,6 +51,12 @@ static const struct iris_firmware_desc iris_vpu35_p4_gen2_desc = {
  	.fwname = "qcom/vpu/vpu35_p4.mbn",
  };
  
@@ -124,9 +124,9 @@ index 74626b35d9cb..fa39783943c0 100644
 +};
 +
  static const u32 iris_fmts_vpu3x_dec[] = {
- 	[IRIS_FMT_H264] = V4L2_PIX_FMT_H264,
- 	[IRIS_FMT_HEVC] = V4L2_PIX_FMT_HEVC,
-@@ -213,6 +220,35 @@ const struct iris_platform_data sm8750_data = {
+ 	V4L2_PIX_FMT_H264,
+ 	V4L2_PIX_FMT_HEVC,
+@@ -227,6 +234,35 @@ const struct iris_platform_data sm8750_data = {
  	.max_core_mbps = ((7680 * 4320) / 256) * 60,
  };
  
@@ -163,10 +163,10 @@ index 74626b35d9cb..fa39783943c0 100644
   * Shares most of SM8550 data except:
   * - clk_tbl and opp_clk_tbl for x1p42100
 diff --git a/drivers/media/platform/qcom/iris/iris_probe.c b/drivers/media/platform/qcom/iris/iris_probe.c
-index e4acf4a74f94..9e2b7279de39 100644
+index 41dec90f3e2b..1ca8c5efeef3 100644
 --- a/drivers/media/platform/qcom/iris/iris_probe.c
 +++ b/drivers/media/platform/qcom/iris/iris_probe.c
-@@ -384,6 +384,10 @@ static const struct of_device_id iris_dt_match[] = {
+@@ -450,6 +450,10 @@ static const struct of_device_id iris_dt_match[] = {
  		.compatible = "qcom,sm8750-iris",
  		.data = &sm8750_data,
  	},
@@ -177,6 +177,3 @@ index e4acf4a74f94..9e2b7279de39 100644
  	{
  		.compatible = "qcom,x1p42100-iris",
  		.data = &x1p42100_data,
--- 
-2.43.0
-

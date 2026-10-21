@@ -9,10 +9,10 @@ Subject: [PATCH] SM8850: Add DSI1 nodes
  1 file changed, 88 insertions(+), 2 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 5c3b6211630f..9b69120f9505 100644
+index 0e0dc30f6f61..1cd72c084d54 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -4501,6 +4501,7 @@ port@1 {
+@@ -4497,6 +4497,7 @@
  						reg = <1>;
  
  						dpu_intf2_out: endpoint {
@@ -20,7 +20,7 @@ index 5c3b6211630f..9b69120f9505 100644
  						};
  					};
  
-@@ -4742,6 +4743,91 @@ mdss_dp0_out: endpoint {
+@@ -4738,6 +4739,91 @@
  					};
  				};
  			};
@@ -112,7 +112,7 @@ index 5c3b6211630f..9b69120f9505 100644
  		};
  
  		dispcc: clock-controller@9ba2000 {
-@@ -4761,8 +4847,8 @@ dispcc: clock-controller@9ba2000 {
+@@ -4757,8 +4843,8 @@
  				 <0>,
  				 <&mdss_dsi0_phy DSI_BYTE_PLL_CLK>,
  				 <&mdss_dsi0_phy DSI_PIXEL_PLL_CLK>,
@@ -123,6 +123,3 @@ index 5c3b6211630f..9b69120f9505 100644
  
  			power-domains = <&rpmhpd RPMHPD_MMCX>;
  			required-opps = <&rpmhpd_opp_low_svs>;
--- 
-2.43.0
-

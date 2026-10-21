@@ -49,6 +49,3 @@ index 1fd899bde439..4e8fb7a47e1f 100644
  }
  EXPORT_SYMBOL_GPL(wcd_bus_config);
  
--- 
-2.43.0
-

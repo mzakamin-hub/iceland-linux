@@ -65,6 +65,3 @@ index 8c21834c04d3..fe15fa45075d 100644
  	spin_unlock_irqrestore(&pll->pll_enable_lock, flags);
  
  	/* Assert PLL core reset */
--- 
-2.43.0
-

@@ -25,10 +25,10 @@ Assisted-by: Claude
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
-index add93c1fa039..11be50d67171 100644
+index f892731cd3d3..2bc334644402 100644
 --- a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
 +++ b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
-@@ -1138,7 +1138,7 @@ static void a8xx_fault_detect_irq(struct msm_gpu *gpu)
+@@ -1149,7 +1149,7 @@ static void a8xx_fault_detect_irq(struct msm_gpu *gpu)
  	 * collecting information
  	 */
  	if (!adreno_has_gmu_wrapper(adreno_gpu))
@@ -37,6 +37,3 @@ index add93c1fa039..11be50d67171 100644
  
  	DRM_DEV_ERROR(&gpu->pdev->dev,
  		"gpu fault ring %d fence %x status %8.8X gfx_status %8.8X\n",
--- 
-2.43.0
-

@@ -23,6 +23,3 @@ index f589ac137403..2e2dd9d84e0d 100644
  	input_set_capability(input, EV_FF, FF_CUSTOM);
  	input_set_capability(input, EV_FF, FF_GAIN);
  
--- 
-2.43.0
-

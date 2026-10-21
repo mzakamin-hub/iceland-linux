@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Shawn Guo <shengchao.guo@oss.qualcomm.com>
 Date: Thu, 15 Oct 2026 09:38:27 +0800
-Subject: [PATCH 390/394] remoteproc: qcom: pas: Don't fail attach if the
- remote has crashed
+Subject: [PATCH] remoteproc: qcom: pas: Don't fail attach if the remote has
+ crashed
 
 When qcom_pas_attach() finds the fatal SMP2P bit already set, it reports
 a crash and then fails the attach. The core unwinds the attach while the
@@ -114,10 +114,10 @@ index 8991ff090579..a0507860a21c 100644
  
  #endif
 diff --git a/drivers/remoteproc/qcom_q6v5_pas.c b/drivers/remoteproc/qcom_q6v5_pas.c
-index 42135db7b6fb..c50b866d7008 100644
+index 6b25ba72abed..04ee5050faf6 100644
 --- a/drivers/remoteproc/qcom_q6v5_pas.c
 +++ b/drivers/remoteproc/qcom_q6v5_pas.c
-@@ -553,10 +553,13 @@ static int qcom_pas_attach(struct rproc *rproc)
+@@ -562,10 +562,13 @@ static int qcom_pas_attach(struct rproc *rproc)
  		goto disable_running;
  
  	if (crash_state) {
@@ -134,6 +134,3 @@ index 42135db7b6fb..c50b866d7008 100644
  	}
  
  	return 0;
--- 
-2.43.0
-

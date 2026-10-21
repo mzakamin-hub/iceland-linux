@@ -167,6 +167,3 @@ index 0664fdb842a3..3c8d3eef9a14 100644
  
  	qcom->resets = devm_reset_control_array_get_optional_exclusive(dev);
  	if (IS_ERR(qcom->resets)) {
--- 
-2.43.0
-

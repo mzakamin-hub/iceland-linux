@@ -141,6 +141,3 @@ index e624f848c22b..c0cf54534014 100644
  
  	if (rtc_dd->alarm_irq) {
  		rc = devm_request_any_context_irq(&pdev->dev, rtc_dd->alarm_irq,
--- 
-2.43.0
-

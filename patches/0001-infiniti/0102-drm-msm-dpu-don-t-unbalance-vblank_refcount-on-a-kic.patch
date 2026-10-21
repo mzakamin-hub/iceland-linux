@@ -26,7 +26,7 @@ index 45079ee59cf6..5b8010fc370c 100644
  
  	atomic_add_unless(&phys_enc->pending_kickoff_cnt, -1, 0);
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
-index 39aab52658ce..90fc4565f07a 100644
+index 301b9414c4e7..1babf8a8ea1f 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
 @@ -572,8 +572,6 @@ static void dpu_encoder_phys_vid_prepare_for_kickoff(
@@ -38,6 +38,3 @@ index 39aab52658ce..90fc4565f07a 100644
  	}
  }
  
--- 
-2.43.0
-

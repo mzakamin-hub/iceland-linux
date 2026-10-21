@@ -31,7 +31,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 27 insertions(+)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index cf2b0d12a68b..e36679bc9a7f 100644
+index 8027040e46ff..a89c78361d20 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -419,6 +419,9 @@ struct qcom_battmgr {
@@ -44,7 +44,7 @@ index cf2b0d12a68b..e36679bc9a7f 100644
  	/* the charge limit kept by the driver, see qcom_battmgr_oplus_limit_update() */
  	unsigned int chg_limit_end;	/* percent, 100 = no limit */
  	unsigned int chg_limit_start;	/* percent, 0 = CHARGE_CTRL_DELTA_SOC below the end */
-@@ -2167,6 +2170,8 @@ static int qcom_battmgr_oplus_set(struct qcom_battmgr *battmgr, int property, u3
+@@ -2191,6 +2194,8 @@ static int qcom_battmgr_oplus_set(struct qcom_battmgr *battmgr, int property, u3
  #define ICELAND_PD_ICL_MA		2000
  #define ICELAND_PD_MV			9000
  #define ICELAND_PD_9V_VBAT_MAX_UV	4500000
@@ -53,7 +53,7 @@ index cf2b0d12a68b..e36679bc9a7f 100644
  
  static void qcom_battmgr_iceland_type_limits(unsigned int type, unsigned int *power_mw,
  					     unsigned int *fcc_ma)
-@@ -2282,6 +2287,9 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+@@ -2306,6 +2311,9 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
  	/* the charger type as the sysfs path reads it on this firmware: USB_ADAP_TYPE, mapped */
  	ret = qcom_battmgr_request_property(battmgr, BATTMGR_USB_PROPERTY_GET, USB_ADAP_TYPE, 0);
  	type = ret ? POWER_SUPPLY_USB_TYPE_UNKNOWN : battmgr->usb.usb_type;
@@ -63,7 +63,7 @@ index cf2b0d12a68b..e36679bc9a7f 100644
  	qcom_battmgr_iceland_type_limits(type, &power_mw, &fcc_ma);
  	pd = type == POWER_SUPPLY_USB_TYPE_PD || type == POWER_SUPPLY_USB_TYPE_PD_DRP ||
  	     type == POWER_SUPPLY_USB_TYPE_PD_PPS;
-@@ -2429,6 +2437,25 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+@@ -2453,6 +2461,25 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
  
  		setup_charger = battmgr->usb.online && !battmgr->charger_configured;
  		battmgr->charger_configured = battmgr->usb.online;
@@ -89,6 +89,3 @@ index cf2b0d12a68b..e36679bc9a7f 100644
  		next = OPLUS_CID_IDLE_POLL_MS;
  		goto out_unlock;
  	}
--- 
-2.43.0
-

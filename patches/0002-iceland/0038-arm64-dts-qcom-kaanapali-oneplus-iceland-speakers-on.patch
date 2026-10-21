@@ -19,7 +19,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 5055138d8310..e6dab93ef31a 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -319,11 +319,16 @@ sound {
+@@ -319,11 +319,16 @@
  				"TX SWR_INPUT1", "ADC2_OUTPUT",
  				"TX SWR_INPUT2", "ADC3_OUTPUT";
  
@@ -39,6 +39,3 @@ index 5055138d8310..e6dab93ef31a 100644
  			};
  
  			codec {
--- 
-2.43.0
-

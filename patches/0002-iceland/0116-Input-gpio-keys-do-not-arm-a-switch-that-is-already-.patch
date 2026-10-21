@@ -34,10 +34,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 14 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/input/keyboard/gpio_keys.c b/drivers/input/keyboard/gpio_keys.c
-index 129fc4212a5e..5cf141cdea57 100644
+index fbc31c5db3db..8c2a4a752f08 100644
 --- a/drivers/input/keyboard/gpio_keys.c
 +++ b/drivers/input/keyboard/gpio_keys.c
-@@ -946,6 +946,18 @@ gpio_keys_button_enable_wakeup(struct gpio_button_data *bdata)
+@@ -945,6 +945,18 @@ gpio_keys_button_enable_wakeup(struct gpio_button_data *bdata)
  {
  	int error;
  
@@ -56,7 +56,7 @@ index 129fc4212a5e..5cf141cdea57 100644
  	error = enable_irq_wake(bdata->irq);
  	if (error) {
  		dev_err(bdata->input->dev.parent,
-@@ -1025,7 +1037,8 @@ gpio_keys_enable_wakeup(struct gpio_keys_drvdata *ddata)
+@@ -1024,7 +1036,8 @@ gpio_keys_enable_wakeup(struct gpio_keys_drvdata *ddata)
  err_out:
  	while (i--) {
  		bdata = &ddata->data[i];
@@ -66,6 +66,3 @@ index 129fc4212a5e..5cf141cdea57 100644
  			gpio_keys_button_disable_wakeup(bdata);
  		bdata->suspended = false;
  	}
--- 
-2.43.0
-

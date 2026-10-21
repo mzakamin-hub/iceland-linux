@@ -39,10 +39,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 8 insertions(+)
 
 diff --git a/drivers/pci/controller/dwc/pcie-qcom.c b/drivers/pci/controller/dwc/pcie-qcom.c
-index 9d755a3a780f..0e36ac4e3f4a 100644
+index 8d39de9ab3db..877d43358207 100644
 --- a/drivers/pci/controller/dwc/pcie-qcom.c
 +++ b/drivers/pci/controller/dwc/pcie-qcom.c
-@@ -396,6 +396,14 @@ static void qcom_pcie_set_slot_cap(struct dw_pcie *pci)
+@@ -416,6 +416,14 @@ static void qcom_pcie_set_slot_cap(struct dw_pcie *pci)
  	 * Attention Button Present in Slot Capabilities.
  	 */
  	val &= ~PCI_EXP_SLTCAP_ABP;
@@ -57,6 +57,3 @@ index 9d755a3a780f..0e36ac4e3f4a 100644
  	writel(val, pci->dbi_base + offset + PCI_EXP_SLTCAP);
  
  	dw_pcie_dbi_ro_wr_dis(pci);
--- 
-2.43.0
-

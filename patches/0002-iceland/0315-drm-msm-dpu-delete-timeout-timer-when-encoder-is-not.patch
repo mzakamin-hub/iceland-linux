@@ -59,6 +59,3 @@ index 0f51c8e02bd3..cdb33b9a371a 100644
  			/**
  			 * suppress frame_done without waiter,
  			 * likely autorefresh
--- 
-2.43.0
-

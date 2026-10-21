@@ -48,7 +48,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 17 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
-index c5b26d2b32d1..9da81f77430b 100644
+index d7a48d2fa205..7b8d6c962dfe 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 @@ -1037,6 +1037,19 @@ static int _dpu_crtc_wait_for_frame_done(struct drm_crtc *crtc)
@@ -102,6 +102,3 @@ index c5b26d2b32d1..9da81f77430b 100644
  	dpu_crtc->play_count++;
  
  	reinit_completion(&dpu_crtc->frame_done_comp);
--- 
-2.43.0
-

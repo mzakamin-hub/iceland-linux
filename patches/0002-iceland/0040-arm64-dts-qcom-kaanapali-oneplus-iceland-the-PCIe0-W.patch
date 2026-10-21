@@ -19,7 +19,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 16066d23d8f3..bd4fc183fbc6 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1225,7 +1225,7 @@ &pcie0_phy {
+@@ -1225,7 +1225,7 @@
  };
  
  &pcie_port0 {
@@ -28,6 +28,3 @@ index 16066d23d8f3..bd4fc183fbc6 100644
  	reset-gpios = <&tlmm 102 GPIO_ACTIVE_LOW>;
  
  	wifi@0 {
--- 
-2.43.0
-

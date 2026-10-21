@@ -9,10 +9,10 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1 insertion(+)
 
 diff --git a/Documentation/devicetree/bindings/arm/qcom.yaml b/Documentation/devicetree/bindings/arm/qcom.yaml
-index ff8a35df7862..a3f5a3e8eadb 100644
+index 121ca557ce1e..661899e73915 100644
 --- a/Documentation/devicetree/bindings/arm/qcom.yaml
 +++ b/Documentation/devicetree/bindings/arm/qcom.yaml
-@@ -171,6 +171,7 @@ properties:
+@@ -175,6 +175,7 @@ properties:
  
        - items:
            - enum:
@@ -20,6 +20,3 @@ index ff8a35df7862..a3f5a3e8eadb 100644
                - qcom,kaanapali-mtp
                - qcom,kaanapali-qrd
            - const: qcom,kaanapali
--- 
-2.43.0
-

@@ -31,6 +31,3 @@ index 44d1d1957f8a..7fd14de84007 100644
  &spmi_bus0 {
  	pmic@0 {
  		compatible = "qcom,pmk8850", "qcom,spmi-pmic";
--- 
-2.43.0
-

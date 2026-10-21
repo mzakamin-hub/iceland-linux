@@ -19,7 +19,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index f2c3acb8be5d..df2ac127ba99 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1939,7 +1939,8 @@ wcd_tx: codec@0,3 {
+@@ -1939,7 +1939,8 @@
  };
  
  &tlmm {
@@ -29,6 +29,3 @@ index f2c3acb8be5d..df2ac127ba99 100644
  
  	/* the pogo data line as a GPIO: low = a dock is attached and unpowered or asleep (stock uart_wake_gpio) */
  	pogo_detect_default: pogo-detect-default-state {
--- 
-2.43.0
-

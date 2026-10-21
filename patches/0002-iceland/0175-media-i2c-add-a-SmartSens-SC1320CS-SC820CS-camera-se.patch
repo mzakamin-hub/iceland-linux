@@ -24,19 +24,19 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  drivers/media/i2c/Makefile        |   1 +
  drivers/media/i2c/sc-modes-regs.h | 191 +++++++++
  drivers/media/i2c/sc1320cs-regs.h | 192 +++++++++
- drivers/media/i2c/sc1320cs.c      | 637 ++++++++++++++++++++++++++++++
+ drivers/media/i2c/sc1320cs.c      | 639 ++++++++++++++++++++++++++++++
  drivers/media/i2c/sc820cs-regs.h  | 363 +++++++++++++++++
- 6 files changed, 1394 insertions(+)
+ 6 files changed, 1396 insertions(+)
  create mode 100644 drivers/media/i2c/sc-modes-regs.h
  create mode 100644 drivers/media/i2c/sc1320cs-regs.h
  create mode 100644 drivers/media/i2c/sc1320cs.c
  create mode 100644 drivers/media/i2c/sc820cs-regs.h
 
 diff --git a/drivers/media/i2c/Kconfig b/drivers/media/i2c/Kconfig
-index 3383f1936336..9d04826c0025 100644
+index a6b87d7433ee..623429aabb1e 100644
 --- a/drivers/media/i2c/Kconfig
 +++ b/drivers/media/i2c/Kconfig
-@@ -870,6 +870,16 @@ config VIDEO_S5KJN5
+@@ -912,6 +912,16 @@ config VIDEO_S5KJN5
  	  To compile this driver as a module, choose M here: the
  	  module will be called s5kjn5.
  
@@ -54,10 +54,10 @@ index 3383f1936336..9d04826c0025 100644
  	tristate "Toshiba T4KA3 sensor support"
  	depends on ACPI || COMPILE_TEST
 diff --git a/drivers/media/i2c/Makefile b/drivers/media/i2c/Makefile
-index 05da409a997c..93651a599a1c 100644
+index 1ca99223a064..204f6cd38cf9 100644
 --- a/drivers/media/i2c/Makefile
 +++ b/drivers/media/i2c/Makefile
-@@ -134,6 +134,7 @@ obj-$(CONFIG_VIDEO_RJ54N1) += rj54n1cb0c.o
+@@ -138,6 +138,7 @@ obj-$(CONFIG_VIDEO_RJ54N1) += rj54n1cb0c.o
  obj-$(CONFIG_VIDEO_S5C73M3) += s5c73m3/
  obj-$(CONFIG_VIDEO_S5K3M5) += s5k3m5.o
  obj-$(CONFIG_VIDEO_S5K5BAF) += s5k5baf.o
@@ -462,10 +462,10 @@ index 000000000000..b01cd68323e3
 +
 diff --git a/drivers/media/i2c/sc1320cs.c b/drivers/media/i2c/sc1320cs.c
 new file mode 100644
-index 000000000000..086031d6375e
+index 000000000000..8beabb6131d1
 --- /dev/null
 +++ b/drivers/media/i2c/sc1320cs.c
-@@ -0,0 +1,637 @@
+@@ -0,0 +1,639 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * SmartSens SC1320CS (13 MP) and SC820CS (8 MP) raw Bayer image sensors, as used on the OnePlus Pad 4.
@@ -862,7 +862,8 @@ index 000000000000..086031d6375e
 +	fmt->xfer_func = V4L2_XFER_FUNC_NONE;
 +}
 +
-+static int sc_set_fmt(struct v4l2_subdev *sd, struct v4l2_subdev_state *state, struct v4l2_subdev_format *f)
++static int sc_set_fmt(struct v4l2_subdev *sd, const struct v4l2_subdev_client_info *ci,
++		      struct v4l2_subdev_state *state, struct v4l2_subdev_format *f)
 +{
 +	struct sc_sensor *s = to_sc(sd);
 +	const struct sc_mode *mode;
@@ -902,7 +903,8 @@ index 000000000000..086031d6375e
 +	return 0;
 +}
 +
-+static int sc_get_selection(struct v4l2_subdev *sd, struct v4l2_subdev_state *state, struct v4l2_subdev_selection *sel)
++static int sc_get_selection(struct v4l2_subdev *sd, const struct v4l2_subdev_client_info *ci,
++			    struct v4l2_subdev_state *state, struct v4l2_subdev_selection *sel)
 +{
 +	const struct sc_model *m = to_sc(sd)->model;
 +
@@ -928,7 +930,7 @@ index 000000000000..086031d6375e
 +
 +	f.format.width = mode->width;
 +	f.format.height = mode->height;
-+	return sc_set_fmt(sd, state, &f);
++	return sc_set_fmt(sd, NULL, state, &f);
 +}
 +
 +static const struct v4l2_subdev_video_ops sc_video_ops = {
@@ -1472,6 +1474,3 @@ index 000000000000..f6b1e961adc5
 +	{ CCI_REG8(0x5901), 0x04 },
 +};
 +
--- 
-2.43.0
-

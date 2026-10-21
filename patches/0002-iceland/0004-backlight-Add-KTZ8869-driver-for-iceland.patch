@@ -259,6 +259,3 @@ index 000000000000..52532a3034cc
 +MODULE_DESCRIPTION("Kinetic KTZ8869 Backlight Driver");
 +MODULE_AUTHOR("map220v <map220v300@gmail.com>");
 +MODULE_LICENSE("GPL");
--- 
-2.43.0
-

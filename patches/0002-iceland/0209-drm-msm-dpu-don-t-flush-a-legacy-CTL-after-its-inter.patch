@@ -69,6 +69,3 @@ index d2d754e3f571..8df7f41811a3 100644
  	ctl->ops.clear_pending_flush(ctl);
  }
  
--- 
-2.43.0
-

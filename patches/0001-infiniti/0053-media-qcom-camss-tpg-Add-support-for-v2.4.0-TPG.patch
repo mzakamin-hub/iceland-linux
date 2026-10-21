@@ -112,10 +112,10 @@ index d29de5f93c18..770a9e5d5ba5 100644
  	return 0;
  }
 diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
-index c6b610c0cd08..b862f067936c 100644
+index 44fd039d73f2..12b4207f42f8 100644
 --- a/drivers/media/platform/qcom/camss/camss.c
 +++ b/drivers/media/platform/qcom/camss/camss.c
-@@ -5889,11 +5889,13 @@ static const struct camss_resources kaanapali_resources = {
+@@ -5869,11 +5869,13 @@ static const struct camss_resources kaanapali_resources = {
  	.version = CAMSS_KAANAPALI,
  	.pd_name = "top",
  	.csiphy_res = csiphy_res_kaanapali,
@@ -129,6 +129,3 @@ index c6b610c0cd08..b862f067936c 100644
  	.csid_num = ARRAY_SIZE(csid_res_kaanapali),
  	.vfe_num = ARRAY_SIZE(vfe_res_kaanapali),
  };
--- 
-2.43.0
-

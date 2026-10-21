@@ -28,7 +28,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
-index 828187f46eae..57f50a3cd9cf 100644
+index 5144483da7b1..a7bf8d50c4c7 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 @@ -1469,7 +1469,7 @@ static int dpu_crtc_assign_resources(struct drm_crtc *crtc,
@@ -40,6 +40,3 @@ index 828187f46eae..57f50a3cd9cf 100644
  
  		cstate->mixers[i].hw_lm = to_dpu_hw_mixer(hw_lm[i]);
  		cstate->mixers[i].lm_ctl = to_dpu_hw_ctl(hw_ctl[ctl_idx]);
--- 
-2.43.0
-

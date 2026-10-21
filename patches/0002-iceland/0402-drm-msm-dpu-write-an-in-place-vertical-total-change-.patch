@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 19 Oct 2026 06:56:20 +0300
-Subject: [PATCH 402/402] drm/msm/dpu: write an in-place vertical total change
- in the front porch
+Subject: [PATCH] drm/msm/dpu: write an in-place vertical total change in the
+ front porch
 
 An in-place front porch change (msm.dpu_vfp_inplace) and the idle refresh
 rate write the new vertical total to both DSI hosts (V_TOTAL through the
@@ -571,6 +571,3 @@ index 805d117493da..43c42fc4e533 100644
  DECLARE_EVENT_CLASS(dpu_id_event_template,
  	TP_PROTO(uint32_t drm_id, u32 event),
  	TP_ARGS(drm_id, event),
--- 
-2.43.0
-

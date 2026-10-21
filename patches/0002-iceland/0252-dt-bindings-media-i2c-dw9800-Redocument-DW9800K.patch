@@ -138,6 +138,3 @@ index 000000000000..046c0a88bcef
 +            dongwoon,timing-control = <16>;
 +        };
 +    };
--- 
-2.43.0
-

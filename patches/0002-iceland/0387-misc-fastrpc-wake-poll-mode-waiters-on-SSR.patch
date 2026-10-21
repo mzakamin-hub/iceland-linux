@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jianping Li <jianping.li@oss.qualcomm.com>
 Date: Wed, 7 Oct 2026 16:44:46 +0800
-Subject: [PATCH 387/394] misc: fastrpc: wake poll-mode waiters on SSR
+Subject: [PATCH] misc: fastrpc: wake poll-mode waiters on SSR
 
 fastrpc_notify_users() sets ctx->retval to -EPIPE and completes
 ctx->work for every pending and interrupted context, which is enough to
@@ -36,10 +36,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/misc/fastrpc.c b/drivers/misc/fastrpc.c
-index cf81bde56427..374eff6aff48 100644
+index 3b8e69464877..49aa1ce14b4c 100644
 --- a/drivers/misc/fastrpc.c
 +++ b/drivers/misc/fastrpc.c
-@@ -2670,6 +2670,7 @@ static void fastrpc_notify_users(struct fastrpc_user *user)
+@@ -2667,6 +2667,7 @@ static void fastrpc_notify_users(struct fastrpc_user *user)
  	spin_lock(&user->lock);
  	list_for_each_entry(ctx, &user->pending, node) {
  		ctx->retval = -EPIPE;
@@ -47,6 +47,3 @@ index cf81bde56427..374eff6aff48 100644
  		complete(&ctx->work);
  	}
  	spin_unlock(&user->lock);
--- 
-2.43.0
-

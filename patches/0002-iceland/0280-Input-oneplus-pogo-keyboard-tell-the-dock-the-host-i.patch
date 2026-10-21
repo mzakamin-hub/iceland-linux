@@ -118,6 +118,3 @@ index b5fdbebf9636..1fe56c886472 100644
  			pogo_send_sleep(pogo, false);
  			schedule_work(&pogo->led_work);
  		}
--- 
-2.43.0
-

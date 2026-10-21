@@ -13,10 +13,10 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/sound/soc/codecs/wcd939x.c b/sound/soc/codecs/wcd939x.c
-index 26fe0b6313cd..847cb80ad5d5 100644
+index 2d463f062e6d..aea27dc48e2e 100644
 --- a/sound/soc/codecs/wcd939x.c
 +++ b/sound/soc/codecs/wcd939x.c
-@@ -3135,7 +3135,7 @@ static int wcd939x_typec_mux_set(struct typec_mux_dev *mux,
+@@ -3139,7 +3139,7 @@ static int wcd939x_typec_mux_set(struct typec_mux_dev *mux,
  	unsigned int previous_mode = wcd939x->typec_mode;
  
  	if (!wcd939x->wcd_mbhc)
@@ -25,6 +25,3 @@ index 26fe0b6313cd..847cb80ad5d5 100644
  
  	if (wcd939x->typec_mode != state->mode) {
  		wcd939x->typec_mode = state->mode;
--- 
-2.43.0
-

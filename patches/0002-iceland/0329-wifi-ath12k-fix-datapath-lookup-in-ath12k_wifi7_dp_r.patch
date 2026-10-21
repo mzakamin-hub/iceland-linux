@@ -33,10 +33,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c b/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
-index 92663531963f..44f1cc3fbb14 100644
+index 7687295b5b30..4846f56ff512 100644
 --- a/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
 +++ b/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
-@@ -1532,7 +1532,7 @@ int ath12k_wifi7_dp_rx_process_err(struct ath12k_dp *dp, struct napi_struct *nap
+@@ -1544,7 +1544,7 @@ int ath12k_wifi7_dp_rx_process_err(struct ath12k_dp *dp, struct napi_struct *nap
  
  		rcu_read_lock();
  
@@ -45,6 +45,3 @@ index 92663531963f..44f1cc3fbb14 100644
  		if (!dp_pdev) {
  			rcu_read_unlock();
  			continue;
--- 
-2.43.0
-

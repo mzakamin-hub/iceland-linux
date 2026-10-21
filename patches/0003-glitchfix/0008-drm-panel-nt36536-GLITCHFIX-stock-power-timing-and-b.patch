@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Tue, 20 Oct 2026 21:33:00 +0300
-Subject: [PATCH 8/8] drm/panel: nt36536: GLITCHFIX stock power timing and
+Subject: [PATCH] drm/panel: nt36536: GLITCHFIX stock power timing and
  backlight switches
 
 Test kernel q89z (OnePlus Pad 4 display glitch bundle), not for upstream.

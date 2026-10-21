@@ -1,0 +1,34 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Rob Clark <robin.clark@oss.qualcomm.com>
+Date: Tue, 20 Oct 2026 13:46:20 -0700
+Subject: [PATCH] drm/msm/adreno: Fix PROTECT span length
+
+Don't let the length bleed into b31.
+
+Signed-off-by: Rob Clark <robin.clark@oss.qualcomm.com>
+---
+ drivers/gpu/drm/msm/adreno/a6xx_gpu.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
+index 4511b7112bd8..e10fa401bf25 100644
+--- a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
++++ b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
+@@ -244,7 +244,7 @@ struct a7xx_cp_smmu_info {
+  */
+ #define A6XX_PROTECT_NORDWR(_reg, _len) \
+ 	((1 << 31) | \
+-	(((_len) & 0x3FFF) << 18) | ((_reg) & 0x3FFFF))
++	(((_len) & 0x1FFF) << 18) | ((_reg) & 0x3FFFF))
+ 
+ /*
+  * Same as above, but allow reads over the range. For areas of mixed use (such
+@@ -252,7 +252,7 @@ struct a7xx_cp_smmu_info {
+  * single register
+  */
+ #define A6XX_PROTECT_RDONLY(_reg, _len) \
+-	((((_len) & 0x3FFF) << 18) | ((_reg) & 0x3FFFF))
++	((((_len) & 0x1FFF) << 18) | ((_reg) & 0x3FFFF))
+ 
+ extern const struct adreno_gpu_funcs a6xx_gpu_funcs;
+ extern const struct adreno_gpu_funcs a6xx_gmuwrapper_funcs;

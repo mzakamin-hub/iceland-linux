@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 19 Oct 2026 06:45:11 +0300
-Subject: [PATCH 400/402] drm/msm/dp: ask userspace for another mode when the
- link cannot carry it
+Subject: [PATCH] drm/msm/dp: ask userspace for another mode when the link
+ cannot carry it
 
 Link training falls back to a lower rate and then fewer lanes until the
 link trains, without regard to the bandwidth of the mode it was started
@@ -47,10 +47,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 166 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/dp/dp_display.c b/drivers/gpu/drm/msm/dp/dp_display.c
-index e64575314a7c..8b2b30b6b63f 100644
+index c5997a9cf577..f1a75a4b2238 100644
 --- a/drivers/gpu/drm/msm/dp/dp_display.c
 +++ b/drivers/gpu/drm/msm/dp/dp_display.c
-@@ -12,9 +12,11 @@
+@@ -12,10 +12,12 @@
  #include <linux/phy/phy.h>
  #include <linux/delay.h>
  #include <linux/string_choices.h>
@@ -58,11 +58,12 @@ index e64575314a7c..8b2b30b6b63f 100644
  #include <drm/display/drm_dp_aux_bus.h>
  #include <drm/display/drm_hdmi_audio_helper.h>
  #include <drm/drm_edid.h>
+ #include <drm/drm_panel.h>
 +#include <drm/drm_probe_helper.h>
  
  #include "msm_drv.h"
  #include "msm_kms.h"
-@@ -57,6 +59,17 @@ struct msm_dp_display_private {
+@@ -58,6 +60,17 @@ struct msm_dp_display_private {
  	bool plugged;
  	/* unplugged while the stream was on: retrain on the next plug */
  	bool link_lost;
@@ -80,7 +81,7 @@ index e64575314a7c..8b2b30b6b63f 100644
  
  	struct drm_device *drm_dev;
  
-@@ -210,6 +223,71 @@ void msm_dp_display_signal_audio_complete(struct msm_dp *msm_dp_display)
+@@ -217,6 +230,71 @@ void msm_dp_display_signal_audio_complete(struct msm_dp *msm_dp_display)
  	complete_all(&dp->audio_comp);
  }
  
@@ -152,7 +153,7 @@ index e64575314a7c..8b2b30b6b63f 100644
  static int msm_dp_display_bind(struct device *dev, struct device *master,
  			   void *data)
  {
-@@ -240,6 +318,7 @@ static void msm_dp_display_unbind(struct device *dev, struct device *master,
+@@ -247,6 +325,7 @@ static void msm_dp_display_unbind(struct device *dev, struct device *master,
  	struct msm_dp_display_private *dp = dev_get_dp_display_private(dev);
  	struct msm_drm_private *priv = dev_get_drvdata(master);
  
@@ -160,7 +161,7 @@ index e64575314a7c..8b2b30b6b63f 100644
  	of_dp_aux_depopulate_bus(dp->aux);
  
  	msm_dp_aux_unregister(dp->aux);
-@@ -288,6 +367,16 @@ static int msm_dp_display_process_hpd_high(struct msm_dp_display_private *dp)
+@@ -295,6 +374,16 @@ static int msm_dp_display_process_hpd_high(struct msm_dp_display_private *dp)
  	if (rc)
  		goto end;
  
@@ -177,7 +178,7 @@ index e64575314a7c..8b2b30b6b63f 100644
  	drm_edid = drm_edid_read_ddc(connector, &dp->aux->ddc);
  	drm_edid_connector_update(connector, drm_edid);
  
-@@ -430,7 +519,14 @@ static int msm_dp_hpd_plug_handle(struct msm_dp_display_private *dp)
+@@ -437,7 +526,14 @@ static int msm_dp_hpd_plug_handle(struct msm_dp_display_private *dp)
  
  		msm_dp_display_host_phy_init(dp);
  
@@ -193,7 +194,7 @@ index e64575314a7c..8b2b30b6b63f 100644
  	}
  
  	ret = pm_runtime_resume_and_get(&pdev->dev);
-@@ -439,6 +535,8 @@ static int msm_dp_hpd_plug_handle(struct msm_dp_display_private *dp)
+@@ -446,6 +542,8 @@ static int msm_dp_hpd_plug_handle(struct msm_dp_display_private *dp)
  		return ret;
  	}
  
@@ -202,7 +203,7 @@ index e64575314a7c..8b2b30b6b63f 100644
  	msm_dp_aux_enable_xfers(dp->aux, true);
  
  	msm_dp_display_host_phy_init(dp);
-@@ -447,12 +545,20 @@ static int msm_dp_hpd_plug_handle(struct msm_dp_display_private *dp)
+@@ -454,12 +552,20 @@ static int msm_dp_hpd_plug_handle(struct msm_dp_display_private *dp)
  
  	/*
  	 * A quick replug can come back with the CRTC still enabled and no
@@ -226,7 +227,7 @@ index e64575314a7c..8b2b30b6b63f 100644
  	}
  	dp->link_lost = false;
  
-@@ -495,6 +601,8 @@ static int msm_dp_hpd_unplug_handle(struct msm_dp_display_private *dp)
+@@ -503,6 +609,8 @@ static int msm_dp_hpd_unplug_handle(struct msm_dp_display_private *dp)
  	if (!dp->plugged)
  		return 0;
  
@@ -235,7 +236,7 @@ index e64575314a7c..8b2b30b6b63f 100644
  	if (dp->msm_dp_display.power_on)
  		dp->link_lost = true;
  
-@@ -686,7 +794,8 @@ static int msm_dp_display_prepare_link(struct msm_dp_display_private *dp)
+@@ -698,7 +806,8 @@ static int msm_dp_display_prepare_link(struct msm_dp_display_private *dp)
  	rc = msm_dp_ctrl_on_link(dp->ctrl, dp->panel);
  	if (rc) {
  		DRM_ERROR("Failed link training (rc=%d)\n", rc);
@@ -245,7 +246,7 @@ index e64575314a7c..8b2b30b6b63f 100644
  		return rc;
  	}
  
-@@ -712,6 +821,55 @@ static int msm_dp_display_enable(struct msm_dp_display_private *dp,
+@@ -724,6 +833,55 @@ static int msm_dp_display_enable(struct msm_dp_display_private *dp,
  	return rc;
  }
  
@@ -301,7 +302,7 @@ index e64575314a7c..8b2b30b6b63f 100644
  static int msm_dp_display_post_enable(struct msm_dp *msm_dp_display)
  {
  	struct msm_dp_display_private *dp;
-@@ -1302,6 +1460,7 @@ static int msm_dp_display_probe(struct platform_device *pdev)
+@@ -1348,6 +1506,7 @@ static int msm_dp_display_probe(struct platform_device *pdev)
  	dp->hpd_isr_status = 0;
  
  	mutex_init(&dp->plugged_lock);
@@ -309,7 +310,7 @@ index e64575314a7c..8b2b30b6b63f 100644
  
  	rc = msm_dp_display_get_io(dp);
  	if (rc)
-@@ -1528,6 +1687,8 @@ void msm_dp_display_atomic_enable(struct msm_dp *msm_dp_display,
+@@ -1574,6 +1733,8 @@ void msm_dp_display_atomic_enable(struct msm_dp *msm_dp_display,
  	rc = msm_dp_display_enable(dp, dp->panel);
  	if (rc)
  		DRM_ERROR("DP display enable failed, rc=%d\n", rc);
@@ -318,6 +319,3 @@ index e64575314a7c..8b2b30b6b63f 100644
  
  	rc = msm_dp_display_post_enable(msm_dp_display);
  	if (rc) {
--- 
-2.43.0
-

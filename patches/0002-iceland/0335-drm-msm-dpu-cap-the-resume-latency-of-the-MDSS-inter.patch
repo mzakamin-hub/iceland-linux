@@ -43,7 +43,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  3 files changed, 128 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
-index 9da81f77430b..d1c6a8ea4318 100644
+index 7b8d6c962dfe..3430eb4ffbb1 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 @@ -1274,6 +1274,7 @@ static void dpu_crtc_disable(struct drm_crtc *crtc,
@@ -248,6 +248,3 @@ index e39831a397b1..32e81dd561af 100644
  #define to_dpu_global_state(x) container_of(x, struct dpu_global_state, base)
  
  /* Global private object state for tracking resources that are shared across
--- 
-2.43.0
-

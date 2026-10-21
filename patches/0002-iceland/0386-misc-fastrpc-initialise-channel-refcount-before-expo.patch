@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jianping Li <jianping.li@oss.qualcomm.com>
 Date: Wed, 7 Oct 2026 16:44:45 +0800
-Subject: [PATCH 386/394] misc: fastrpc: initialise channel refcount before
- exposing the misc device
+Subject: [PATCH] misc: fastrpc: initialise channel refcount before exposing
+ the misc device
 
 fastrpc_device_register() calls misc_register(), which immediately makes
 /dev/fastrpc-<domain> visible to userspace. However, kref_init() on the
@@ -49,10 +49,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/misc/fastrpc.c b/drivers/misc/fastrpc.c
-index 1b90ef4f640b..cf81bde56427 100644
+index 021f7b62b747..3b8e69464877 100644
 --- a/drivers/misc/fastrpc.c
 +++ b/drivers/misc/fastrpc.c
-@@ -2606,6 +2606,7 @@ static int fastrpc_rpmsg_probe(struct rpmsg_device *rpdev)
+@@ -2603,6 +2603,7 @@ static int fastrpc_rpmsg_probe(struct rpmsg_device *rpdev)
  	data->poll_mode_supported = soc_data->poll_mode_supported ||
  		of_machine_get_match(fastrpc_poll_supported_machines);
  
@@ -60,7 +60,7 @@ index 1b90ef4f640b..cf81bde56427 100644
  	switch (domain_id) {
  	case ADSP_DOMAIN_ID:
  	case MDSP_DOMAIN_ID:
-@@ -2633,7 +2634,6 @@ static int fastrpc_rpmsg_probe(struct rpmsg_device *rpdev)
+@@ -2630,7 +2631,6 @@ static int fastrpc_rpmsg_probe(struct rpmsg_device *rpdev)
  		goto err_free_data;
  	}
  
@@ -68,6 +68,3 @@ index 1b90ef4f640b..cf81bde56427 100644
  	atomic_set(&data->ctx_seq, 0);
  
  	rdev->dma_mask = &data->dma_mask;
--- 
-2.43.0
-

@@ -51,6 +51,3 @@ index 9016e974582f..1fd899bde439 100644
  	} while (sts1 || sts2 || sts3);
  
  	return IRQ_HANDLED;
--- 
-2.43.0
-

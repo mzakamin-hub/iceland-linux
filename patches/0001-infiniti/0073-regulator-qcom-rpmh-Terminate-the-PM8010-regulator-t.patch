@@ -11,7 +11,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/regulator/qcom-rpmh-regulator.c b/drivers/regulator/qcom-rpmh-regulator.c
-index 25c14de3cd8b..67a3fe5e2e46 100644
+index 4c90d206e63b..42bd7f1a6293 100644
 --- a/drivers/regulator/qcom-rpmh-regulator.c
 +++ b/drivers/regulator/qcom-rpmh-regulator.c
 @@ -1534,6 +1534,7 @@ static const struct rpmh_vreg_init_data pm8010_vreg_data[] = {
@@ -22,6 +22,3 @@ index 25c14de3cd8b..67a3fe5e2e46 100644
  };
  
  static const struct rpmh_vreg_init_data pm6150_vreg_data[] = {
--- 
-2.43.0
-

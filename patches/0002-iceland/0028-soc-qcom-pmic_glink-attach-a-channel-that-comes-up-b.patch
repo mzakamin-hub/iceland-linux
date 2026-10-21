@@ -25,11 +25,11 @@ Seen on the OnePlus Pad 4 (PC relay kits pc-010 D and pc-011 A).
 Signed-off-by: mzak <mzak.amin@gmail.com>
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 ---
- drivers/soc/qcom/pmic_glink.c | 41 ++++++++++++++++++++++++++++-------
- 1 file changed, 33 insertions(+), 8 deletions(-)
+ drivers/soc/qcom/pmic_glink.c | 42 +++++++++++++++++++++++++++--------
+ 1 file changed, 33 insertions(+), 9 deletions(-)
 
 diff --git a/drivers/soc/qcom/pmic_glink.c b/drivers/soc/qcom/pmic_glink.c
-index 3042261578aa..cf6a8ffbc219 100644
+index 84fd0c82c0c4..cf6a8ffbc219 100644
 --- a/drivers/soc/qcom/pmic_glink.c
 +++ b/drivers/soc/qcom/pmic_glink.c
 @@ -53,6 +53,8 @@ struct pmic_glink {
@@ -52,7 +52,7 @@ index 3042261578aa..cf6a8ffbc219 100644
  	if (len < sizeof(*hdr)) {
  		dev_warn(pg->dev, "ignoring truncated message\n");
  		return 0;
-@@ -243,15 +249,9 @@ static void pmic_glink_pdr_callback(int state, char *svc_path, void *priv)
+@@ -243,16 +249,9 @@ static void pmic_glink_pdr_callback(int state, char *svc_path, void *priv)
  	pmic_glink_state_notify_clients(pg);
  }
  
@@ -65,12 +65,13 @@ index 3042261578aa..cf6a8ffbc219 100644
 -	guard(mutex)(&__pmic_glink_lock);
 -	pg = __pmic_glink;
 -	if (!pg)
--		return dev_err_probe(&rpdev->dev, -ENODEV, "no pmic_glink device to attach to\n");
+-		return dev_err_probe(&rpdev->dev, -EPROBE_DEFER,
+-				     "no pmic_glink device to attach to\n");
 -
  	dev_set_drvdata(&rpdev->dev, pg);
  	pg->pdr_available = rpdev->id.driver_data;
  
-@@ -260,6 +260,25 @@ static int pmic_glink_rpmsg_probe(struct rpmsg_device *rpdev)
+@@ -261,6 +260,25 @@ static int pmic_glink_rpmsg_probe(struct rpmsg_device *rpdev)
  	if (!pg->pdr_available)
  		pg->pdr_state = SERVREG_SERVICE_STATE_UP;
  	pmic_glink_state_notify_clients(pg);
@@ -96,7 +97,7 @@ index 3042261578aa..cf6a8ffbc219 100644
  
  	return 0;
  }
-@@ -269,6 +288,8 @@ static void pmic_glink_rpmsg_remove(struct rpmsg_device *rpdev)
+@@ -270,6 +288,8 @@ static void pmic_glink_rpmsg_remove(struct rpmsg_device *rpdev)
  	struct pmic_glink *pg;
  
  	guard(mutex)(&__pmic_glink_lock);
@@ -105,7 +106,7 @@ index 3042261578aa..cf6a8ffbc219 100644
  	pg = __pmic_glink;
  	if (!pg)
  		return;
-@@ -353,6 +374,10 @@ static int pmic_glink_probe(struct platform_device *pdev)
+@@ -354,6 +374,10 @@ static int pmic_glink_probe(struct platform_device *pdev)
  
  	mutex_lock(&__pmic_glink_lock);
  	__pmic_glink = pg;
@@ -116,6 +117,3 @@ index 3042261578aa..cf6a8ffbc219 100644
  	mutex_unlock(&__pmic_glink_lock);
  
  	return 0;
--- 
-2.43.0
-

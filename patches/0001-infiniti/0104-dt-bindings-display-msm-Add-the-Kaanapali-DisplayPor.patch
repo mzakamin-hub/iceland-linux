@@ -43,6 +43,3 @@ index 9f935defd6b1..ccaaee8bdc74 100644
    "^dsi@[0-9a-f]+$":
      type: object
      additionalProperties: true
--- 
-2.43.0
-

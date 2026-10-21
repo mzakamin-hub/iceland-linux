@@ -31,7 +31,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 99 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 86de9567970a..7719ab5798a6 100644
+index f06f8d2c7e34..0d8e883b226d 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -402,6 +402,8 @@ struct qcom_battmgr {
@@ -76,7 +76,7 @@ index 86de9567970a..7719ab5798a6 100644
  	if (battmgr->variant == QCOM_BATTMGR_SC8280XP ||
  	    battmgr->variant == QCOM_BATTMGR_X1E80100)
  		ret = qcom_battmgr_bat_sc8280xp_update(battmgr, psp);
-@@ -1454,6 +1482,40 @@ static const struct power_supply_desc oplus_bat_psy_desc = {
+@@ -1455,6 +1483,40 @@ static const struct power_supply_desc oplus_bat_psy_desc = {
  			     BIT(POWER_SUPPLY_CHARGE_BEHAVIOUR_INHIBIT_CHARGE),
  };
  
@@ -117,7 +117,7 @@ index 86de9567970a..7719ab5798a6 100644
  static int qcom_battmgr_ac_get_property(struct power_supply *psy,
  					enum power_supply_property psp,
  					union power_supply_propval *val)
-@@ -3142,6 +3204,36 @@ static void qcom_battmgr_dt_battery_info(struct qcom_battmgr *battmgr)
+@@ -3166,6 +3228,36 @@ static void qcom_battmgr_dt_battery_info(struct qcom_battmgr *battmgr)
  	power_supply_put_battery_info(battmgr->bat_psy, info);
  }
  
@@ -154,7 +154,7 @@ index 86de9567970a..7719ab5798a6 100644
  static int qcom_battmgr_probe(struct auxiliary_device *adev,
  			      const struct auxiliary_device_id *id)
  {
-@@ -3215,12 +3307,15 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
+@@ -3239,12 +3331,15 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
  			return dev_err_probe(dev, PTR_ERR(battmgr->wls_psy),
  					     "failed to register wireless charing power supply\n");
  	} else {
@@ -174,6 +174,3 @@ index 86de9567970a..7719ab5798a6 100644
  
  		battmgr->bat_psy = devm_power_supply_register(dev, psy_desc, &psy_cfg);
  		if (IS_ERR(battmgr->bat_psy))
--- 
-2.43.0
-

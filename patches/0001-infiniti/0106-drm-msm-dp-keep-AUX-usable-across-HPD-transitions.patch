@@ -12,10 +12,10 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 7 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/dp/dp_display.c b/drivers/gpu/drm/msm/dp/dp_display.c
-index 162e10d88a81..e7ae8d05208a 100644
+index 348eb6967abf..5b3934674b15 100644
 --- a/drivers/gpu/drm/msm/dp/dp_display.c
 +++ b/drivers/gpu/drm/msm/dp/dp_display.c
-@@ -416,6 +416,8 @@ static int msm_dp_hpd_plug_handle(struct msm_dp_display_private *dp)
+@@ -423,6 +423,8 @@ static int msm_dp_hpd_plug_handle(struct msm_dp_display_private *dp)
  			dp->link->sink_count);
  
  	guard(mutex)(&dp->plugged_lock);
@@ -24,7 +24,7 @@ index 162e10d88a81..e7ae8d05208a 100644
  
  	ret = pm_runtime_resume_and_get(&pdev->dev);
  	if (ret) {
-@@ -643,6 +645,11 @@ static int msm_dp_display_prepare_link(struct msm_dp_display_private *dp)
+@@ -655,6 +657,11 @@ static int msm_dp_display_prepare_link(struct msm_dp_display_private *dp)
  	if (dp->link->sink_count == 0)
  		return -ENOTCONN;
  
@@ -36,6 +36,3 @@ index 162e10d88a81..e7ae8d05208a 100644
  	if (!msm_dp_display->power_on) {
  		msm_dp_display_host_phy_init(dp);
  		force_link_train = true;
--- 
-2.43.0
-

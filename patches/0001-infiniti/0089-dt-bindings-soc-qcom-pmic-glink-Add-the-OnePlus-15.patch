@@ -26,6 +26,3 @@ index 16ad4f5698fc..f905df373721 100644
        - items:
            - enum:
                - qcom,sm7325-pmic-glink
--- 
-2.43.0
-

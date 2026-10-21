@@ -21,7 +21,7 @@ Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
  1 file changed, 5 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/crypto/qce/skcipher.c b/drivers/crypto/qce/skcipher.c
-index 4931b064f10e..32b438e1eea1 100644
+index 03a3cec2bb90..f177062eb735 100644
 --- a/drivers/crypto/qce/skcipher.c
 +++ b/drivers/crypto/qce/skcipher.c
 @@ -222,8 +222,12 @@ static int qce_skcipher_crypt(struct skcipher_request *req, int encrypt)
@@ -38,6 +38,3 @@ index 4931b064f10e..32b438e1eea1 100644
  
  	/*
  	 * ECB and CBC algorithms require message lengths to be
--- 
-2.43.0
-

@@ -28,6 +28,3 @@ index 444e7d8648d4..4304e861c563 100644
  }
  
  static int clk_branch_enable(struct clk_hw *hw)
--- 
-2.43.0
-

@@ -17,7 +17,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 0848c8adddf0..9dbdda18889f 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1031,7 +1031,7 @@ &mdss_dsi0 {
+@@ -1031,7 +1031,7 @@
  	status = "okay";
  
  	display_panel: panel@0 {
@@ -26,7 +26,7 @@ index 0848c8adddf0..9dbdda18889f 100644
  		reg = <0>;
  
  		//Reset GPIO, TE GPIO, Paired Master TE, Paired Slave TE, Paired Reset
-@@ -1046,8 +1046,8 @@ &fte_sout_1p2_active &fte_sin_1p8_active
+@@ -1046,8 +1046,8 @@
  		pinctrl-names = "default", "sleep";
  
  		vddio-supply = <&vreg_l12b_1p9>;
@@ -37,6 +37,3 @@ index 0848c8adddf0..9dbdda18889f 100644
  
  		reset-gpios = <&tlmm 171 GPIO_ACTIVE_LOW>;
  		backlight = <&backlight>;
--- 
-2.43.0
-

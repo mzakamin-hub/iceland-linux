@@ -19,7 +19,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 1383901e3d26..afd7a2fd9145 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -215,6 +215,11 @@ tz_merged_mem: tz-merged@d8000000 {
+@@ -215,6 +215,11 @@
  			reg = <0x0 0xd8000000 0x0 0x800000>;
  			no-map;
  		};
@@ -31,6 +31,3 @@ index 1383901e3d26..afd7a2fd9145 100644
  	};
  
  	sound {
--- 
-2.43.0
-

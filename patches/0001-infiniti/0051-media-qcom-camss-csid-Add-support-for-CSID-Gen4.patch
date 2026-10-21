@@ -450,10 +450,10 @@ index 5296b10f6bac..4f31ad303c4e 100644
  /*
   * csid_is_lite - Check if CSID is CSID lite.
 diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
-index d2faa390872e..cd085a7cfd18 100644
+index 9bd0dc7a7f9e..a5fad2023a36 100644
 --- a/drivers/media/platform/qcom/camss/camss.c
 +++ b/drivers/media/platform/qcom/camss/camss.c
-@@ -85,6 +85,79 @@ static const struct camss_subdev_resources csiphy_res_kaanapali[] = {
+@@ -89,6 +89,79 @@ static const struct camss_subdev_resources csiphy_res_kaanapali[] = {
  	},
  };
  
@@ -533,7 +533,7 @@ index d2faa390872e..cd085a7cfd18 100644
  static const struct resources_icc icc_res_kaanapali[] = {
  	{
  		.name = "ahb",
-@@ -5665,9 +5738,11 @@ static const struct camss_resources kaanapali_resources = {
+@@ -5645,9 +5718,11 @@ static const struct camss_resources kaanapali_resources = {
  	.version = CAMSS_KAANAPALI,
  	.pd_name = "top",
  	.csiphy_res = csiphy_res_kaanapali,
@@ -545,6 +545,3 @@ index d2faa390872e..cd085a7cfd18 100644
  };
  
  static const struct camss_resources msm8916_resources = {
--- 
-2.43.0
-

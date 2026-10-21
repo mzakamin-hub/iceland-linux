@@ -40,10 +40,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 20 insertions(+), 4 deletions(-)
 
 diff --git a/sound/soc/qcom/qdsp6/q6apm.c b/sound/soc/qcom/qdsp6/q6apm.c
-index 26c073612781..dd7b3161794e 100644
+index a27ee571ea4d..894302dcd108 100644
 --- a/sound/soc/qcom/qdsp6/q6apm.c
 +++ b/sound/soc/qcom/qdsp6/q6apm.c
-@@ -323,11 +323,10 @@ int q6apm_alloc_fragments(struct q6apm_graph *graph, unsigned int dir, phys_addr
+@@ -324,11 +324,10 @@ int q6apm_alloc_fragments(struct q6apm_graph *graph, unsigned int dir, phys_addr
  }
  EXPORT_SYMBOL_GPL(q6apm_alloc_fragments);
  
@@ -56,7 +56,7 @@ index 26c073612781..dd7b3161794e 100644
  	struct audioreach_graph_info *info;
  	uint32_t mem_map_handle;
  	uint32_t pos_mask = is_pos_buf ? APM_MMAP_TOKEN_MAP_TYPE_POS_BUF : 0;
-@@ -359,13 +358,15 @@ static int __q6apm_unmap_memory_fixed_region(struct device *dev, unsigned int gr
+@@ -360,13 +359,15 @@ static int __q6apm_unmap_memory_fixed_region(struct device *dev, unsigned int gr
  
  int q6apm_unmap_memory_fixed_region(struct device *dev, unsigned int graph_id)
  {
@@ -74,7 +74,7 @@ index 26c073612781..dd7b3161794e 100644
  }
  EXPORT_SYMBOL_GPL(q6apm_unmap_pos_buffer);
  
-@@ -848,6 +849,21 @@ static int q6apm_audio_probe(struct snd_soc_component *component)
+@@ -853,6 +854,21 @@ static int q6apm_audio_probe(struct snd_soc_component *component)
  
  static void q6apm_audio_remove(struct snd_soc_component *component)
  {
@@ -96,6 +96,3 @@ index 26c073612781..dd7b3161794e 100644
  	/* remove topology */
  	snd_soc_tplg_component_remove(component);
  }
--- 
-2.43.0
-

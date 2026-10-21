@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Joonhoe Kim <26rote@gmail.com>
 Date: Wed, 7 Oct 2026 21:39:45 +0900
-Subject: [PATCH 371/394] drm/msm/dpu: add the SSPP rec0/rec1 blocks to the
- snapshot
+Subject: [PATCH] drm/msm/dpu: add the SSPP rec0/rec1 blocks to the snapshot
 
 On DPU 13 the SSPP block is only 0x84 long and the fetch registers
 (source address, size, format, multirect) live in the rec0/rec1
@@ -52,6 +51,3 @@ index 2951984edffa..8d01ac5be62c 100644
  	}
  
  	/* dump LM sub-blocks HW regs info */
--- 
-2.43.0
-

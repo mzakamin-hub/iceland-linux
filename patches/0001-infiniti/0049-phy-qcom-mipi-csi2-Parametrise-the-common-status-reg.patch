@@ -81,6 +81,3 @@ index 7e55ae007370..d6366f809e51 100644
  };
  
  struct mipi_csi2_genpd {
--- 
-2.43.0
-

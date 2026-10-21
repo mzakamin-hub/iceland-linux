@@ -16,24 +16,20 @@ Reviewed-by: Abel Vesa <abel.vesa@oss.qualcomm.com>
 Signed-off-by: mzak <mzak.amin@gmail.com>
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 ---
- drivers/phy/qualcomm/phy-qcom-eusb2-repeater.c | 3 +++
- 1 file changed, 3 insertions(+)
+ drivers/phy/qualcomm/phy-qcom-eusb2-repeater.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
 diff --git a/drivers/phy/qualcomm/phy-qcom-eusb2-repeater.c b/drivers/phy/qualcomm/phy-qcom-eusb2-repeater.c
-index 29a31816edef..15c9dbc9bda9 100644
+index d056f0f8dd93..724b64d5f192 100644
 --- a/drivers/phy/qualcomm/phy-qcom-eusb2-repeater.c
 +++ b/drivers/phy/qualcomm/phy-qcom-eusb2-repeater.c
-@@ -232,7 +232,10 @@ static int eusb2_repeater_set_mode(struct phy *phy,
+@@ -230,7 +230,9 @@ static int eusb2_repeater_set_mode(struct phy *phy,
  static int eusb2_repeater_exit(struct phy *phy)
  {
  	struct eusb2_repeater *rptr = phy_get_drvdata(phy);
 +	struct regmap *regmap = rptr->regmap;
-+	u32 base = rptr->base;
  
-+	regmap_write(regmap, base + EUSB2_EN_CTL1, 0);
++	regmap_write(regmap, EUSB2_EN_CTL1, 0);
  	return regulator_bulk_disable(rptr->cfg->num_vregs, rptr->vregs);
  }
  
--- 
-2.43.0
-

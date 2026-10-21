@@ -27,7 +27,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 541be2ed09c2..6495b96afe22 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1553,3 +1553,931 @@ &usb_dp_qmpphy {
+@@ -1553,3 +1553,931 @@
  
  	status = "okay";
  };
@@ -959,6 +959,3 @@ index 541be2ed09c2..6495b96afe22 100644
 +		};
 +	};
 +};
--- 
-2.43.0
-

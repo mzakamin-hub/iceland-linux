@@ -81,6 +81,3 @@ index 149f4af8f4b8..e79ddc2acca0 100644
  required:
    - compatible
    - reg
--- 
-2.43.0
-

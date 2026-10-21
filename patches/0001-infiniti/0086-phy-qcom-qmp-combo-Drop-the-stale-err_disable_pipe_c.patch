@@ -15,10 +15,10 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1 insertion(+), 6 deletions(-)
 
 diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
-index c39ced168d03..e99b0a410035 100644
+index 187f0cd11f6c..b2e87041462b 100644
 --- a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
 +++ b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
-@@ -4260,15 +4260,10 @@ static int qmp_combo_usb_power_on(struct phy *phy)
+@@ -4407,15 +4407,10 @@ static int qmp_combo_usb_power_on(struct phy *phy)
  			PHY_INIT_COMPLETE_TIMEOUT);
  	if (ret) {
  		dev_err(qmp->dev, "phy initialization timed-out\n");
@@ -35,6 +35,3 @@ index c39ced168d03..e99b0a410035 100644
  }
  
  static int qmp_combo_usb_power_off(struct phy *phy)
--- 
-2.43.0
-

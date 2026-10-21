@@ -30,7 +30,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 1355c4cfe97f..c6a36259d083 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1309,7 +1309,8 @@ camera@10 {
+@@ -1309,7 +1309,8 @@
  		avdd-supply = <&vreg_l14b_2p8>;
  
  		orientation = <0>;
@@ -40,7 +40,7 @@ index 1355c4cfe97f..c6a36259d083 100644
  
  		port {
  			cam_front_out: endpoint {
-@@ -1349,7 +1350,8 @@ camera@36 {
+@@ -1349,7 +1350,8 @@
  		avdd-supply = <&vreg_l14b_2p8>;
  
  		orientation = <1>;
@@ -50,6 +50,3 @@ index 1355c4cfe97f..c6a36259d083 100644
  
  		lens-focus = <&vcm>;
  
--- 
-2.43.0
-

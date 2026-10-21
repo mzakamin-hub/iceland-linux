@@ -48,7 +48,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 237 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 25cd1b932c00..2b30436404b5 100644
+index 5410a0e38355..c0231bc866cd 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -398,6 +398,11 @@ struct qcom_battmgr {
@@ -63,7 +63,7 @@ index 25cd1b932c00..2b30436404b5 100644
  	unsigned long gauge_time;
  
  	/*
-@@ -628,6 +633,14 @@ static int qcom_battmgr_bat_sc8280xp_update(struct qcom_battmgr *battmgr,
+@@ -628,6 +633,14 @@ out_unlock:
  	return ret;
  }
  
@@ -130,7 +130,7 @@ index 25cd1b932c00..2b30436404b5 100644
  	default:
  		return -EINVAL;
  	}
-@@ -1073,6 +1110,8 @@ static const enum power_supply_property oplus_bat_props[] = {
+@@ -1074,6 +1111,8 @@ static const enum power_supply_property oplus_bat_props[] = {
  	POWER_SUPPLY_PROP_CHARGE_NOW,
  	POWER_SUPPLY_PROP_CYCLE_COUNT,
  	POWER_SUPPLY_PROP_STATE_OF_HEALTH,
@@ -139,7 +139,7 @@ index 25cd1b932c00..2b30436404b5 100644
  };
  
  static const struct power_supply_desc oplus_bat_psy_desc = {
-@@ -1081,6 +1120,10 @@ static const struct power_supply_desc oplus_bat_psy_desc = {
+@@ -1082,6 +1121,10 @@ static const struct power_supply_desc oplus_bat_psy_desc = {
  	.properties = oplus_bat_props,
  	.num_properties = ARRAY_SIZE(oplus_bat_props),
  	.get_property = qcom_battmgr_bat_get_property,
@@ -150,7 +150,7 @@ index 25cd1b932c00..2b30436404b5 100644
  };
  
  static int qcom_battmgr_ac_get_property(struct power_supply *psy,
-@@ -1830,20 +1873,204 @@ static int qcom_battmgr_oplus_set(struct qcom_battmgr *battmgr, int property, u3
+@@ -1854,20 +1897,204 @@ static int qcom_battmgr_oplus_set(struct qcom_battmgr *battmgr, int property, u3
  	return qcom_battmgr_request_property(battmgr, OPLUS_PROPERTY_SET, property, value);
  }
  
@@ -356,7 +356,7 @@ index 25cd1b932c00..2b30436404b5 100644
  	mutex_unlock(&battmgr->lock);
  
  	for (i = 0; i < ARRAY_SIZE(pdo_mv); i++) {
-@@ -1907,6 +2134,10 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+@@ -1931,6 +2158,10 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
  			battmgr->otg_released = true;
  		}
  
@@ -367,7 +367,7 @@ index 25cd1b932c00..2b30436404b5 100644
  		setup_charger = battmgr->usb.online && !battmgr->charger_configured;
  		battmgr->charger_configured = battmgr->usb.online;
  		next = OPLUS_CID_IDLE_POLL_MS;
-@@ -1945,7 +2176,7 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+@@ -1969,7 +2200,7 @@ out_unlock:
  static void qcom_battmgr_oplus_enable(struct qcom_battmgr *battmgr)
  {
  	mutex_lock(&battmgr->lock);
@@ -376,7 +376,7 @@ index 25cd1b932c00..2b30436404b5 100644
  	qcom_battmgr_oplus_set(battmgr, OPLUS_USB_OTG_AP_ENABLE, 1);
  	mutex_unlock(&battmgr->lock);
  
-@@ -2044,6 +2275,10 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
+@@ -2068,6 +2299,10 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
  	else
  		battmgr->variant = QCOM_BATTMGR_SM8350;
  
@@ -387,6 +387,3 @@ index 25cd1b932c00..2b30436404b5 100644
  	ret = qcom_battmgr_charge_control_thresholds_init(battmgr);
  	if (ret < 0)
  		return dev_err_probe(dev, ret,
--- 
-2.43.0
-

@@ -52,10 +52,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  create mode 100644 drivers/power/supply/mt5806_pen_charger.c
 
 diff --git a/drivers/power/supply/Kconfig b/drivers/power/supply/Kconfig
-index b89ef40df7f8..e93dfe881843 100644
+index ee7dc5f2617a..4679a32e6f2f 100644
 --- a/drivers/power/supply/Kconfig
 +++ b/drivers/power/supply/Kconfig
-@@ -1191,6 +1191,19 @@ config FUEL_GAUGE_MM8013
+@@ -1192,6 +1192,19 @@ config FUEL_GAUGE_MM8013
  	  the state of charge, temperature, cycle count, actual and design
  	  capacity, etc.
  
@@ -1727,6 +1727,3 @@ index 000000000000..f450871bce4a
 +
 +MODULE_DESCRIPTION("Maxic MT5806 pen charger of the OnePlus Pad 4");
 +MODULE_LICENSE("GPL");
--- 
-2.43.0
-

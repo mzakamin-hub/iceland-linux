@@ -82,6 +82,3 @@ index 5862db05297a..1215b388cb40 100644
  	ring = gpu->rb[queue->ring_nr];
  
  	if (args->flags & MSM_SUBMIT_FENCE_FD_OUT) {
--- 
-2.43.0
-

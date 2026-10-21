@@ -34,7 +34,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  3 files changed, 22 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/core.c b/drivers/net/wireless/ath/ath12k/core.c
-index b0107cde99ff..9a5c45191fd7 100644
+index 25987bc58556..59222182b36f 100644
 --- a/drivers/net/wireless/ath/ath12k/core.c
 +++ b/drivers/net/wireless/ath/ath12k/core.c
 @@ -35,6 +35,11 @@ module_param_named(ftm_mode, ath12k_ftm_mode, bool, 0444);
@@ -62,10 +62,10 @@ index 658b8083c9c3..57e3ff2182c3 100644
  #ifdef CONFIG_ATH12K_DEBUG
  __printf(3, 4) void __ath12k_dbg(struct ath12k_base *ab,
 diff --git a/drivers/net/wireless/ath/ath12k/mac.c b/drivers/net/wireless/ath/ath12k/mac.c
-index 92a46597028e..0a2c7f1e5034 100644
+index a4c4cb515025..34c50074bee9 100644
 --- a/drivers/net/wireless/ath/ath12k/mac.c
 +++ b/drivers/net/wireless/ath/ath12k/mac.c
-@@ -10296,6 +10296,19 @@ static bool ath12k_mac_vif_ap_active_any(struct ath12k_base *ab)
+@@ -10308,6 +10308,19 @@ static bool ath12k_mac_vif_ap_active_any(struct ath12k_base *ab)
  	return false;
  }
  
@@ -85,7 +85,7 @@ index 92a46597028e..0a2c7f1e5034 100644
  void ath12k_mac_11d_scan_start(struct ath12k *ar, u32 vdev_id)
  {
  	struct wmi_11d_scan_start_arg arg;
-@@ -10309,7 +10322,7 @@ void ath12k_mac_11d_scan_start(struct ath12k *ar, u32 vdev_id)
+@@ -10321,7 +10334,7 @@ void ath12k_mac_11d_scan_start(struct ath12k *ar, u32 vdev_id)
  	if (ar->vdev_id_11d_scan != ATH12K_11D_INVALID_VDEV_ID)
  		goto fin;
  
@@ -94,7 +94,7 @@ index 92a46597028e..0a2c7f1e5034 100644
  		goto fin;
  
  	if (ath12k_mac_vif_ap_active_any(ar->ab))
-@@ -10622,7 +10635,7 @@ int ath12k_mac_vdev_create(struct ath12k *ar, struct ath12k_link_vif *arvif)
+@@ -10634,7 +10647,7 @@ int ath12k_mac_vdev_create(struct ath12k *ar, struct ath12k_link_vif *arvif)
  			arvif->set_wds_vdev_param = true;
  		}
  
@@ -103,7 +103,7 @@ index 92a46597028e..0a2c7f1e5034 100644
  		    ahvif->vdev_type == WMI_VDEV_TYPE_STA &&
  		    ahvif->vdev_subtype == WMI_VDEV_SUBTYPE_NONE) {
  			reinit_completion(&ar->completed_11d_scan);
-@@ -12460,7 +12473,7 @@ ath12k_mac_op_unassign_vif_chanctx(struct ieee80211_hw *hw,
+@@ -12471,7 +12484,7 @@ ath12k_mac_op_unassign_vif_chanctx(struct ieee80211_hw *hw,
  	}
  	arvif->is_started = false;
  
@@ -112,6 +112,3 @@ index 92a46597028e..0a2c7f1e5034 100644
  	    ahvif->vdev_type == WMI_VDEV_TYPE_STA &&
  	    ahvif->vdev_subtype == WMI_VDEV_SUBTYPE_NONE &&
  	    ar->state_11d != ATH12K_11D_PREPARING) {
--- 
-2.43.0
-

@@ -20,7 +20,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index a99d97ee07be..28283c08ff73 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -977,6 +977,29 @@ vreg_s4j_0p7: smps4 {
+@@ -977,6 +977,29 @@
  	};
  };
  
@@ -50,6 +50,3 @@ index a99d97ee07be..28283c08ff73 100644
  &gpu_zap_shader {
  	firmware-name = "qcom/kaanapali/iceland/gen80200_zap.mbn";
  };
--- 
-2.43.0
-

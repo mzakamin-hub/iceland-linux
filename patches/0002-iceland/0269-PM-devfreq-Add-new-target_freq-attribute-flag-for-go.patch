@@ -54,10 +54,10 @@ index df8ba88b9f6a..5be9940a5853 100644
  Date:		October 2012
  Contact:	MyungJoo Ham <myungjoo.ham@samsung.com>
 diff --git a/drivers/devfreq/devfreq.c b/drivers/devfreq/devfreq.c
-index 82dd9a43dc62..398cbf2a6fb3 100644
+index f08fc6966eae..2f27a239e34a 100644
 --- a/drivers/devfreq/devfreq.c
 +++ b/drivers/devfreq/devfreq.c
-@@ -1562,6 +1562,12 @@ static ssize_t target_freq_show(struct device *dev,
+@@ -1530,6 +1530,12 @@ static ssize_t target_freq_show(struct device *dev,
  {
  	struct devfreq *df = to_devfreq(dev);
  
@@ -173,6 +173,3 @@ index dfdd0160a29f..2853f571dfdf 100644
  
  /**
   * struct devfreq_governor - Devfreq policy governor
--- 
-2.43.0
-

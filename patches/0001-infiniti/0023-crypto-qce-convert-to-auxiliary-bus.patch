@@ -38,7 +38,7 @@ index adcbe1585189..b3fa1f6135bc 100644
  	  This driver supports Qualcomm crypto engine offloader hardware. To
  	  compile this driver as a module, choose M here. The module will be
 diff --git a/drivers/crypto/qce/aead.c b/drivers/crypto/qce/aead.c
-index 46ae10cf005d..ac207375595e 100644
+index 37199cb50744..a7bb2b7b2139 100644
 --- a/drivers/crypto/qce/aead.c
 +++ b/drivers/crypto/qce/aead.c
 @@ -44,9 +44,9 @@ static void qce_aead_done(void *data)
@@ -70,7 +70,7 @@ index 46ae10cf005d..ac207375595e 100644
  		if (src_nents < 0) {
  			ret = src_nents;
  			goto error_unmap_dst;
-@@ -478,9 +478,9 @@ qce_aead_async_req_handle(struct crypto_async_request *async_req)
+@@ -478,9 +478,9 @@ error_terminate:
  	qce_dma_terminate_all(&qce->dma);
  error_unmap_src:
  	if (diff_dst)
@@ -264,7 +264,7 @@ index 5b1bf7a50f88..31f1ad8938ab 100644
  
  	ret = clk_prepare_enable(qce->iface);
  	if (ret)
-@@ -325,8 +320,7 @@ static int qce_runtime_resume(struct device *dev)
+@@ -325,8 +320,7 @@ err_bus:
  	clk_disable_unprepare(qce->iface);
  err_iface:
  	clk_disable_unprepare(qce->core);
@@ -332,7 +332,7 @@ index eb6fa7a8b64a..6eda6e617b81 100644
  	int burst_size;
  	unsigned int pipe_pair_id;
 diff --git a/drivers/crypto/qce/sha.c b/drivers/crypto/qce/sha.c
-index 586efed68d36..f62f7296a04a 100644
+index 8c12c072f4a9..58114d06e60c 100644
 --- a/drivers/crypto/qce/sha.c
 +++ b/drivers/crypto/qce/sha.c
 @@ -47,8 +47,8 @@ static void qce_ahash_done(void *data)
@@ -375,7 +375,7 @@ index 586efed68d36..f62f7296a04a 100644
  }
  
 diff --git a/drivers/crypto/qce/skcipher.c b/drivers/crypto/qce/skcipher.c
-index b80e579df621..fcbc5cb87966 100644
+index 7abc1d7b1cf0..37c16fbfe245 100644
 --- a/drivers/crypto/qce/skcipher.c
 +++ b/drivers/crypto/qce/skcipher.c
 @@ -49,8 +49,8 @@ static void qce_skcipher_done(void *data)
@@ -406,7 +406,7 @@ index b80e579df621..fcbc5cb87966 100644
  		if (!src_nents) {
  			ret = -EIO;
  			goto error_unmap_dst;
-@@ -175,9 +175,9 @@ qce_skcipher_async_req_handle(struct crypto_async_request *async_req)
+@@ -175,9 +175,9 @@ error_terminate:
  	qce_dma_terminate_all(&qce->dma);
  error_unmap_src:
  	if (diff_dst)
@@ -418,6 +418,3 @@ index b80e579df621..fcbc5cb87966 100644
  error_free:
  	sg_free_table(&rctx->dst_tbl);
  	return ret;
--- 
-2.43.0
-

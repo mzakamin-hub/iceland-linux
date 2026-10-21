@@ -202,6 +202,3 @@ index 3f1eee784387..84ef7c166d93 100644
  	debugfs_create_file("cmd-db", 0400, NULL, NULL, &cmd_db_debugfs_ops);
  
  	device_set_pm_not_required(&pdev->dev);
--- 
-2.43.0
-

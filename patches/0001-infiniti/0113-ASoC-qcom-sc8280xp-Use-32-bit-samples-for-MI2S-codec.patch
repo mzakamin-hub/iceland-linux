@@ -10,10 +10,10 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 7 insertions(+)
 
 diff --git a/sound/soc/qcom/sc8280xp.c b/sound/soc/qcom/sc8280xp.c
-index bd7b98568e39..c7d90f4a3616 100644
+index a3916c57a6da..33488f940486 100644
 --- a/sound/soc/qcom/sc8280xp.c
 +++ b/sound/soc/qcom/sc8280xp.c
-@@ -219,6 +219,7 @@ static int sc8280xp_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
+@@ -292,6 +292,7 @@ static int sc8280xp_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
  				     struct snd_pcm_hw_params *params)
  {
  	struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
@@ -21,7 +21,7 @@ index bd7b98568e39..c7d90f4a3616 100644
  	struct snd_interval *rate = hw_param_interval(params,
  					SNDRV_PCM_HW_PARAM_RATE);
  	struct snd_interval *channels = hw_param_interval(params,
-@@ -236,6 +237,12 @@ static int sc8280xp_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
+@@ -309,6 +310,12 @@ static int sc8280xp_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
  	case TX_CODEC_DMA_TX_3:
  		channels->min = 1;
  		break;
@@ -34,6 +34,3 @@ index bd7b98568e39..c7d90f4a3616 100644
  	default:
  		break;
  	}
--- 
-2.43.0
-

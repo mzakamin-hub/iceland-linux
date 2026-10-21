@@ -47,6 +47,3 @@ index 16279b9ab486..f6dd2c61a676 100644
  	{ PWM_RAMP_TIME, 0xF8 }, { BL_EN, 0x77 },
  };
  
--- 
-2.43.0
-

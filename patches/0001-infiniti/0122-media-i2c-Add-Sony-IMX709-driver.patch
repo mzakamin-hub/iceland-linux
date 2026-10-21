@@ -15,12 +15,12 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  create mode 100644 drivers/media/i2c/imx709.c
 
 diff --git a/drivers/media/i2c/Kconfig b/drivers/media/i2c/Kconfig
-index be20324cc2be..690c148a8601 100644
+index 7de2d095c969..cdd533eccbeb 100644
 --- a/drivers/media/i2c/Kconfig
 +++ b/drivers/media/i2c/Kconfig
-@@ -299,6 +299,17 @@ config VIDEO_IMX471
- 	  To compile this driver as a module, choose M here: the
- 	  module will be called imx471.
+@@ -321,6 +321,17 @@ config VIDEO_IMX576
+           To compile this driver as a module, choose M here: the
+           module will be called imx576.
  
 +config VIDEO_IMX709
 +	tristate "Sony IMX709 sensor support"
@@ -37,17 +37,17 @@ index be20324cc2be..690c148a8601 100644
  	tristate "Sony IMX678 sensor support"
  	depends on GPIOLIB
 diff --git a/drivers/media/i2c/Makefile b/drivers/media/i2c/Makefile
-index 45019ce20a6c..38f4153e082f 100644
+index 59e31af457cd..9bc5a257d628 100644
 --- a/drivers/media/i2c/Makefile
 +++ b/drivers/media/i2c/Makefile
-@@ -63,6 +63,7 @@ obj-$(CONFIG_VIDEO_IMX412) += imx412.o
- obj-$(CONFIG_VIDEO_IMX415) += imx415.o
- obj-$(CONFIG_VIDEO_IMX678) += imx678.o
+@@ -65,6 +65,7 @@ obj-$(CONFIG_VIDEO_IMX415) += imx415.o
  obj-$(CONFIG_VIDEO_IMX471) += imx471.o
+ obj-$(CONFIG_VIDEO_IMX576) += imx576.o
+ obj-$(CONFIG_VIDEO_IMX678) += imx678.o
 +obj-$(CONFIG_VIDEO_IMX709) += imx709.o
  obj-$(CONFIG_VIDEO_IR_I2C) += ir-kbd-i2c.o
  obj-$(CONFIG_VIDEO_ISL7998X) += isl7998x.o
- obj-$(CONFIG_VIDEO_KS0127) += ks0127.o
+ obj-$(CONFIG_VIDEO_IT6625) += it6625.o
 diff --git a/drivers/media/i2c/imx709.c b/drivers/media/i2c/imx709.c
 new file mode 100644
 index 000000000000..d0ccc468bd1e
@@ -1384,6 +1384,3 @@ index 000000000000..d0ccc468bd1e
 +
 +MODULE_DESCRIPTION("Sony IMX709 camera sensor driver");
 +MODULE_LICENSE("GPL");
--- 
-2.43.0
-

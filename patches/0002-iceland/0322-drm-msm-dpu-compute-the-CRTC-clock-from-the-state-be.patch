@@ -73,6 +73,3 @@ index 9fa55904dba1..4f5c70229f63 100644
  	DRM_DEBUG_ATOMIC(
  		"crtc=%d clk_rate=%llu core_ib=%u core_ab=%u\n",
  			crtc->base.id, perf->core_clk_rate,
--- 
-2.43.0
-

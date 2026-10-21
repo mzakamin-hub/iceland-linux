@@ -22,7 +22,7 @@ Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
  1 file changed, 3 insertions(+)
 
 diff --git a/drivers/crypto/qce/skcipher.c b/drivers/crypto/qce/skcipher.c
-index ef59e4e04e73..2f4ecfcd16c7 100644
+index ec2f21446cee..27ce87be2029 100644
 --- a/drivers/crypto/qce/skcipher.c
 +++ b/drivers/crypto/qce/skcipher.c
 @@ -259,9 +259,12 @@ static int qce_skcipher_crypt(struct skcipher_request *req, int encrypt)
@@ -38,6 +38,3 @@ index ef59e4e04e73..2f4ecfcd16c7 100644
  	    (IS_XTS(rctx->flags) && ((req->cryptlen <= aes_sw_max_len) ||
  	    (req->cryptlen > QCE_SECTOR_SIZE &&
  	    req->cryptlen % QCE_SECTOR_SIZE))))) {
--- 
-2.43.0
-

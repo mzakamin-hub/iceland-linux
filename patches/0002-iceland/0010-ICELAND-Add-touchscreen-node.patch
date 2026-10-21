@@ -12,7 +12,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index ede368bc7ed1..1ae707d30164 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1103,6 +1103,24 @@ &remoteproc_soccp {
+@@ -1103,6 +1103,24 @@
  	status = "okay";
  };
  
@@ -37,6 +37,3 @@ index ede368bc7ed1..1ae707d30164 100644
  &swr1 {
  	status = "okay";
  
--- 
-2.43.0
-

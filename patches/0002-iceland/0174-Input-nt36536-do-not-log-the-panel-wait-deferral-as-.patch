@@ -30,6 +30,3 @@ index e1850fc15fe8..d557d0e2e5a6 100644
  			goto err_panelwait_failed;
  		}
  		NVT_LOG("panel is off, retry=%d\n", retry_count);
--- 
-2.43.0
-

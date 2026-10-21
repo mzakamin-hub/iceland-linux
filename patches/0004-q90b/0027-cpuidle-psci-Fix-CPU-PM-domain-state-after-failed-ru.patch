@@ -1,0 +1,113 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Kaiqian Zhu <zhukaiqian@xiaomi.com>
+Date: Wed, 21 Oct 2026 11:17:08 +0800
+Subject: [PATCH] cpuidle: psci: Fix CPU PM domain state after failed runtime
+ PM resume
+
+In PSCI OSI mode with the hierarchical CPU topology, a CPU can come
+out of idle after dpm_suspend_late() has already disabled runtime PM
+for its device. The idle exit then restores the cluster PM domain through
+the runtime PM path, however, since the runtime PM is disabled, it
+becomes a no-op and the domain stays powered off in software while
+the CPU is running. The CPU then silently stops requesting the cluster/
+system power level in CPU_SUSPEND.
+
+The Race:
+dpm_suspend_late() wakes all idle CPUs first and only then walks the
+device list, disabling runtime PM per device as it goes:
+
+  dpm_suspend_late()
+    wake_up_all_idle_cpus()               <-- asynchronous cpu wakeup
+      device_suspend_late(dev, ...)
+        __pm_runtime_disable(dev,false)    <-- disable_depth++
+
+wake_up_all_idle_cpus() only requests that the idle CPUs leave idle; it
+does not wait for them. A CPU parked in a deep PSCI state can take a long
+time to come back that its idle exit lands after the runtime disable:
+
+  CPU0: dpm_suspend_late()             CPUx: parked in idle
+  ------------------------------       ----------------------------
+  wake_up_all_idle_cpus()
+                                       powering ON
+  device_suspend_late(pd_dev)
+    __pm_runtime_disable(pd_dev)
+      disable_depth++
+                                       powered ON
+                                       __psci_enter_domain_idle_state()
+                                       pm_runtime_get_sync(pd_dev)
+                                       no-op: disable_depth > 0
+
+genpd_runtime_resume() never runs and the domain stays OFF. The next
+idle entry skips the genpd suspend as the state is already OFF.
+
+Fix this by using the genpd interface when the runtime PM is disabled.
+If the runtime resume failed to restore the domain, force it on by
+calling the genpd suspend/resume pair directly.
+
+Signed-off-by: Kaiqian Zhu <zhukaiqian@xiaomi.com>
+Link: https://patchwork.kernel.org/project/linux-pm/list/?series=1190173
+[ hand-applied for the iceland kernel q90b: the posted mail has its tabs
+  turned into spaces, so it does not apply; the code is the posted one,
+  unchanged, on next-20261020's cpuidle-psci.c (identical context) ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/cpuidle/cpuidle-psci.c | 28 +++++++++++++++++++++++++---
+ 1 file changed, 25 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/cpuidle/cpuidle-psci.c b/drivers/cpuidle/cpuidle-psci.c
+index 0187d6a9096a..9332f001d8cf 100644
+--- a/drivers/cpuidle/cpuidle-psci.c
++++ b/drivers/cpuidle/cpuidle-psci.c
+@@ -70,14 +70,23 @@ static __cpuidle int __psci_enter_domain_idle_state(struct cpuidle_device *dev,
+ 	struct device *pd_dev = data->dev;
+ 	struct psci_cpuidle_domain_state *ds;
+ 	u32 state = states[idx];
++	bool use_genpd;
+ 	int ret;
+ 
+ 	ret = cpu_pm_enter();
+ 	if (ret)
+ 		return -1;
+ 
++	/*
++	 * The PM core disables runtime PM during a system-wide suspend, which
++	 * makes the pm_runtime_*() calls below no-ops.  The resume can then
++	 * no longer set the PM domains back ON, while the CPU is running.
++	 * Use the genpd interface directly whenever runtime PM is unavailable.
++	 */
++	use_genpd = s2idle || !pm_runtime_enabled(pd_dev);
++
+ 	/* Do runtime PM to manage a hierarchical CPU toplogy. */
+-	if (s2idle)
++	if (use_genpd)
+ 		dev_pm_genpd_suspend(pd_dev);
+ 	else
+ 		pm_runtime_put_sync_suspend(pd_dev);
+@@ -90,11 +99,24 @@ static __cpuidle int __psci_enter_domain_idle_state(struct cpuidle_device *dev,
+ 	ret = psci_cpu_suspend_enter(state) ? -1 : idx;
+ 	trace_psci_domain_idle_exit(dev->cpu, state, s2idle);
+ 
+-	if (s2idle)
++	if (use_genpd) {
+ 		dev_pm_genpd_resume(pd_dev);
+-	else
++	} else {
+ 		pm_runtime_get_sync(pd_dev);
+ 
++		/*
++		 * Whenever runtime PM is disabled while a CPU was idle (in
++		 * the system-wide suspend progress), the resume above became
++		 * a no-op and the domain is still OFF.
++		 * Force the genpd to update power state to ON, so that the next
++		 * suspend can see the correct state.
++		 */
++		if (!dev_pm_genpd_is_on(pd_dev)) {
++			dev_pm_genpd_suspend(pd_dev);
++			dev_pm_genpd_resume(pd_dev);
++		}
++	}
++
+ 	cpu_pm_exit();
+ 
+ 	/* Correct domain-idlestate statistics if we failed to enter. */

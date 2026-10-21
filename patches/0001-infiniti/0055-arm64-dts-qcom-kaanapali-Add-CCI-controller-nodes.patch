@@ -35,10 +35,10 @@ Signed-off-by: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
  1 file changed, 303 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 7b85cb42881d..40d756126eca 100644
+index 7db0a375de3d..c070a35c4209 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -3933,6 +3933,117 @@ port@5 {
+@@ -3935,6 +3935,117 @@
  			};
  		};
  
@@ -156,7 +156,7 @@ index 7b85cb42881d..40d756126eca 100644
  		csiphy0: phy@9523000 {
  			compatible = "qcom,kaanapali-csi2-phy";
  			reg = <0x0 0x09523000 0x0 0x2000>;
-@@ -4643,6 +4754,198 @@ tlmm: pinctrl@f100000 {
+@@ -4645,6 +4756,198 @@
  			#interrupt-cells = <2>;
  			wakeup-parent = <&pdc>;
  
@@ -355,6 +355,3 @@ index 7b85cb42881d..40d756126eca 100644
  			hub_i2c0_data_clk: hub-i2c0-data-clk-state {
  				/* SDA, SCL */
  				pins = "gpio66", "gpio67";
--- 
-2.43.0
-

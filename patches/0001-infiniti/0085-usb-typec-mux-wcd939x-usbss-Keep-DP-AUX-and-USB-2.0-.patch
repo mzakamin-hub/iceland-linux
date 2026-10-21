@@ -49,6 +49,3 @@ index 73db3aa3cec4..53bcd9eddb81 100644
  	if (usbss->mode != state->mode) {
  		usbss->mode = state->mode;
  
--- 
-2.43.0
-

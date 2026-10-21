@@ -38,7 +38,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  7 files changed, 49 insertions(+), 44 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
-index 57f50a3cd9cf..0e4f2fd0a8f3 100644
+index a7bf8d50c4c7..97ba700319ac 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 @@ -200,7 +200,7 @@ static int dpu_crtc_get_lm_crc(struct drm_crtc *crtc,
@@ -268,6 +268,3 @@ index 0e65bf5ddc4a..fd1f3e798206 100644
  #define PIPES_PER_STAGE			2
  #define PIPES_PER_PLANE			(PIPES_PER_STAGE * STAGES_PER_PLANE)
  #ifndef DPU_MAX_DE_CURVES
--- 
-2.43.0
-

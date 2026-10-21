@@ -16,7 +16,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  4 files changed, 118 insertions(+)
 
 diff --git a/drivers/net/wireless/ath/ath12k/core.h b/drivers/net/wireless/ath/ath12k/core.h
-index 93fd227b4d19..a326f1553359 100644
+index 99d71dab7c04..53954886ff43 100644
 --- a/drivers/net/wireless/ath/ath12k/core.h
 +++ b/drivers/net/wireless/ath/ath12k/core.h
 @@ -156,6 +156,7 @@ enum ath12k_hw_rev {
@@ -46,12 +46,12 @@ index a0a1902fb491..744ac7b06b62 100644
  		.hal_ops = &hal_qcc2072_ops,
  		.hal_desc_sz = sizeof(struct hal_rx_desc_qcc2072),
 diff --git a/drivers/net/wireless/ath/ath12k/wifi7/hw.c b/drivers/net/wireless/ath/ath12k/wifi7/hw.c
-index 7b86f324b2e6..d4155335f130 100644
+index b1c17cc197df..3bd3a233308a 100644
 --- a/drivers/net/wireless/ath/ath12k/wifi7/hw.c
 +++ b/drivers/net/wireless/ath/ath12k/wifi7/hw.c
-@@ -713,6 +713,94 @@ static const struct ath12k_hw_params ath12k_wifi7_hw_params[] = {
- 
+@@ -723,6 +723,94 @@ static const struct ath12k_hw_params ath12k_wifi7_hw_params[] = {
  		.host_alloc_ml_id = true,
+ 		.advertise_iface_mac_pool = false,
  	},
 +	{
 +		.name = "wcn7860 hw2.0",
@@ -191,6 +191,3 @@ index 6c96b52dec13..893474de488d 100644
  	case QCC2072_DEVICE_ID:
  		ab->id.bdf_search = ATH12K_BDF_SEARCH_BUS_AND_BOARD;
  		ab_pci->msi_config = &ath12k_wifi7_msi_config[0];
--- 
-2.43.0
-

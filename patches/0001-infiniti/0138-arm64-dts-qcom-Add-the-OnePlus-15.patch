@@ -11,10 +11,10 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  create mode 100644 arch/arm64/boot/dts/qcom/kaanapali-oneplus-infiniti.dts
 
 diff --git a/arch/arm64/boot/dts/qcom/Makefile b/arch/arm64/boot/dts/qcom/Makefile
-index 1c86e7e98f55..41d716bb5b71 100644
+index 88230c4e00ea..5c15b817aee3 100644
 --- a/arch/arm64/boot/dts/qcom/Makefile
 +++ b/arch/arm64/boot/dts/qcom/Makefile
-@@ -43,6 +43,7 @@ dtb-$(CONFIG_ARCH_QCOM)	+= ipq9574-rdp453.dtb
+@@ -49,6 +49,7 @@ dtb-$(CONFIG_ARCH_QCOM)	+= ipq9574-rdp453.dtb
  dtb-$(CONFIG_ARCH_QCOM)	+= ipq9574-rdp454.dtb
  dtb-$(CONFIG_ARCH_QCOM)	+= ipq9650-rdp488.dtb
  dtb-$(CONFIG_ARCH_QCOM)	+= kaanapali-mtp.dtb
@@ -1852,6 +1852,3 @@ index 000000000000..57a77e42b861
 +
 +	status = "okay";
 +};
--- 
-2.43.0
-

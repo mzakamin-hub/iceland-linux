@@ -11,10 +11,10 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 49 insertions(+)
 
 diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
-index e99b0a410035..30da0ee55f0d 100644
+index b2e87041462b..0cf9caaaa030 100644
 --- a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
 +++ b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
-@@ -3304,6 +3304,51 @@ static const struct qmp_phy_cfg sm8650_usb3dpphy_cfg = {
+@@ -3341,6 +3341,51 @@ static const struct qmp_phy_cfg sm8650_usb3dpphy_cfg = {
  	.num_vregs		= ARRAY_SIZE(qmp_phy_vreg_l),
  };
  
@@ -66,9 +66,9 @@ index e99b0a410035..30da0ee55f0d 100644
  static const struct qmp_phy_cfg sm8750_usb3dpphy_cfg = {
  	.offsets		= &qmp_combo_offsets_v8,
  
-@@ -5354,6 +5399,10 @@ static const struct of_device_id qmp_combo_of_match_table[] = {
- 		.compatible = "qcom,hawi-qmp-usb3-dp-phy",
- 		.data = &hawi_usb3dpphy_cfg,
+@@ -5672,6 +5717,10 @@ static const struct of_device_id qmp_combo_of_match_table[] = {
+ 		.compatible = "qcom,nord-qmp-usb3-dp-phy",
+ 		.data = &nord_usb3dpphy_cfg,
  	},
 +	{
 +		.compatible = "qcom,kaanapali-qmp-usb3-dp-phy",
@@ -77,6 +77,3 @@ index e99b0a410035..30da0ee55f0d 100644
  	{
  		.compatible = "qcom,sar2130p-qmp-usb3-dp-phy",
  		.data = &sar2130p_usb3dpphy_cfg,
--- 
-2.43.0
-

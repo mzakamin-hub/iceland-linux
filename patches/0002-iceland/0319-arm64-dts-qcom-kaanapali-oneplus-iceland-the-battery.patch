@@ -27,7 +27,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 31851f4f22fa..64589cbb4dfc 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -56,6 +56,8 @@ aliases {
+@@ -56,6 +56,8 @@
  	battery: battery {
  		compatible = "simple-battery";
  		charge-full-design-microamp-hours = <13380000>;
@@ -36,6 +36,3 @@ index 31851f4f22fa..64589cbb4dfc 100644
  		/* stock oplus,comm: vbat_uv_thr_mv 3300 (power off) and fv-mv 4500 (float, normal temperature) */
  		voltage-min-design-microvolt = <3300000>;
  		voltage-max-design-microvolt = <4500000>;
--- 
-2.43.0
-

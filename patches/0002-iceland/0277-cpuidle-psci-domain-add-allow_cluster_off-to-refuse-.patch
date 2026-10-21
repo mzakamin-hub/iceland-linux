@@ -98,6 +98,3 @@ index 5722365b943e..da036930934c 100644
  	if (!state->data)
  		return 0;
  
--- 
-2.43.0
-

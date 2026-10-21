@@ -26,7 +26,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 9b71548cb0e4..086b7136f82e 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -44,6 +44,7 @@ / {
+@@ -44,6 +44,7 @@
  	aliases {
  		serial0 = &uart7;
  		serial1 = &uart18;
@@ -34,7 +34,7 @@ index 9b71548cb0e4..086b7136f82e 100644
  	};
  
  	battery: battery {
-@@ -388,6 +389,18 @@ platform {
+@@ -388,6 +389,18 @@
  		};
  	};
  
@@ -53,7 +53,7 @@ index 9b71548cb0e4..086b7136f82e 100644
  	vph_pwr: vph-pwr-regulator {
  		compatible = "regulator-fixed";
  
-@@ -1561,6 +1574,16 @@ bt_default: bt-default-state {
+@@ -1561,6 +1574,16 @@
  };
  
  &pmh0110_d_e0_gpios {
@@ -70,7 +70,7 @@ index 9b71548cb0e4..086b7136f82e 100644
  	fte_mout_1p2_active: fte_mout_1p2_active {
  		pins = "gpio7";
  		function = "paired";
-@@ -1595,6 +1618,16 @@ fte_sin_1p8_active: fte_sin_1p8_active {
+@@ -1595,6 +1618,16 @@
  };
  
  &pmh0110_f_e0_gpios {
@@ -87,7 +87,7 @@ index 9b71548cb0e4..086b7136f82e 100644
  	sde_disp0_rst_1p2_active: sde-disp0-rst-1p2-active-state {
  		pins = "gpio9";
  		function = "paired";
-@@ -1900,6 +1933,36 @@ wcd_tx: codec@0,3 {
+@@ -1900,6 +1933,36 @@
  &tlmm {
  	gpio-reserved-ranges = <36 4>;
  
@@ -124,7 +124,7 @@ index 9b71548cb0e4..086b7136f82e 100644
  	lid_default: lid-default-state {
  		pins = "gpio98";
  		function = "gpio";
-@@ -2027,6 +2090,28 @@ &uart7 {
+@@ -2027,6 +2090,28 @@
  	status = "okay";
  };
  
@@ -153,6 +153,3 @@ index 9b71548cb0e4..086b7136f82e 100644
  &uart18 {
  	status = "okay";
  
--- 
-2.43.0
-

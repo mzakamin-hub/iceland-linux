@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 19 Oct 2026 02:10:00 +0300
-Subject: [PATCH 394/394] arm64: dts: qcom: kaanapali: let the CPU bandwidth
- monitors vote for LLCC
+Subject: [PATCH] arm64: dts: qcom: kaanapali: let the CPU bandwidth monitors
+ vote for LLCC
 
 The two CPU bandwidth monitors (cluster 0 at 0x310b3400, cluster 1 at
 0x310b7400) count the CPU clusters' traffic into the GEM NoC, LLCC hits
@@ -28,10 +28,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 11 insertions(+), 19 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 82283a7842a5..a8d71df8577c 100644
+index 18c7c815d765..3ef7aed55926 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -7884,7 +7884,7 @@ pmu@310b3400 {
+@@ -7878,7 +7878,7 @@
  			interrupts = <GIC_SPI 581 IRQ_TYPE_LEVEL_HIGH>;
  
  			interconnects = <&gem_noc MASTER_APPSS_PROC QCOM_ICC_TAG_ACTIVE_ONLY
@@ -40,7 +40,7 @@ index 82283a7842a5..a8d71df8577c 100644
  
  			operating-points-v2 = <&cpu_bwmon_opp_table>;
  
-@@ -7892,47 +7892,39 @@ cpu_bwmon_opp_table: opp-table {
+@@ -7886,47 +7886,39 @@
  				compatible = "operating-points-v2";
  
  				opp-0 {
@@ -97,7 +97,7 @@ index 82283a7842a5..a8d71df8577c 100644
  				};
  			};
  		};
-@@ -7945,7 +7937,7 @@ pmu@310b7400 {
+@@ -7939,7 +7931,7 @@
  			interrupts = <GIC_SPI 581 IRQ_TYPE_LEVEL_HIGH>;
  
  			interconnects = <&gem_noc MASTER_APPSS_PROC QCOM_ICC_TAG_ACTIVE_ONLY
@@ -106,6 +106,3 @@ index 82283a7842a5..a8d71df8577c 100644
  
  			operating-points-v2 = <&cpu_bwmon_opp_table>;
  		};
--- 
-2.43.0
-

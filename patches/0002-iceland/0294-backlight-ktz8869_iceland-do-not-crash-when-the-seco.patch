@@ -24,7 +24,7 @@ diff --git a/drivers/video/backlight/ktz8869_iceland.c b/drivers/video/backlight
 index 9d6dde311e58..8930f570fc68 100644
 --- a/drivers/video/backlight/ktz8869_iceland.c
 +++ b/drivers/video/backlight/ktz8869_iceland.c
-@@ -315,6 +315,17 @@ static int ktz8869_probe(struct i2c_client *client)
+@@ -315,6 +315,17 @@ end:
  static void ktz8869_remove(struct i2c_client *client)
  {
  	struct backlight_device *backlight_dev = i2c_get_clientdata(client);
@@ -42,6 +42,3 @@ index 9d6dde311e58..8930f570fc68 100644
  	backlight_dev->props.brightness = 0;
  	backlight_update_status(backlight_dev);
  }
--- 
-2.43.0
-

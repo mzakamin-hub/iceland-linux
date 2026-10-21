@@ -63,7 +63,7 @@ Signed-off-by: Mohammed AlHashim <eng.m7mdhashim.1@gmail.com>
  2 files changed, 8 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_device.c b/drivers/gpu/drm/msm/adreno/adreno_device.c
-index 934b5450bdfa..ba6671ec1d37 100644
+index 3d2b47682eef..d15c29918aec 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_device.c
 +++ b/drivers/gpu/drm/msm/adreno/adreno_device.c
 @@ -247,6 +247,14 @@ static int adreno_bind(struct device *dev, struct device *master, void *data)
@@ -94,6 +94,3 @@ index 0c2c35636251..452da9272773 100644
  	gpu->vm = gpu->funcs->create_vm(gpu, pdev);
  	if (IS_ERR(gpu->vm)) {
  		ret = PTR_ERR(gpu->vm);
--- 
-2.43.0
-

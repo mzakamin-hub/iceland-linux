@@ -37,11 +37,11 @@ Link: https://lore.kernel.org/r/20261016124608.46-1-26rote@gmail.com
 Signed-off-by: mzak <mzak.amin@gmail.com>
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 ---
-  drivers/ufs/core/ufshcd.c | 12 ++++++------
-  1 file changed, 6 insertions(+), 6 deletions(-)
+ drivers/ufs/core/ufshcd.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/ufs/core/ufshcd.c b/drivers/ufs/core/ufshcd.c
-index ca8329052cbc..23bc075f10a3 100644
+index cc75384c6502..87f78ffc8cbd 100644
 --- a/drivers/ufs/core/ufshcd.c
 +++ b/drivers/ufs/core/ufshcd.c
 @@ -1360,13 +1360,13 @@ int ufshcd_pause_command_processing(struct ufs_hba *hba, u64 timeout_us)
@@ -100,6 +100,3 @@ index ca8329052cbc..23bc075f10a3 100644
  	mutex_unlock(&hba->host->scan_mutex);
  
  	/* Enable Write Booster if current gear requires it else disable it */
--- 
-2.43.0
-

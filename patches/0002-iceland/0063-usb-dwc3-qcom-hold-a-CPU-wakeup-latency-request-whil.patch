@@ -99,6 +99,3 @@ index ac68b4218b56..0664fdb842a3 100644
  
  	pm_runtime_put_noidle(qcom->dev);
  }
--- 
-2.43.0
-

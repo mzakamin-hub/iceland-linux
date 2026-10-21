@@ -114,6 +114,3 @@ index 97d1db2e7a44..76a31369f420 100644
  	}
  
  	return devm_snd_soc_register_component(tfa9865->dev, &tfa9865_component,
--- 
-2.43.0
-

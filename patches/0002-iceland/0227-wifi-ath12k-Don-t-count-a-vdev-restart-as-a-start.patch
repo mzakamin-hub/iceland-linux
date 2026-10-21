@@ -18,10 +18,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/mac.c b/drivers/net/wireless/ath/ath12k/mac.c
-index 994a42f6cf90..f764462168aa 100644
+index 34c50074bee9..ae40430b73f8 100644
 --- a/drivers/net/wireless/ath/ath12k/mac.c
 +++ b/drivers/net/wireless/ath/ath12k/mac.c
-@@ -11491,7 +11491,8 @@ ath12k_mac_vdev_start_restart(struct ath12k_link_vif *arvif,
+@@ -11502,7 +11502,8 @@ ath12k_mac_vdev_start_restart(struct ath12k_link_vif *arvif,
  						   &arvif->reg_tpc_info);
  	}
  
@@ -31,6 +31,3 @@ index 994a42f6cf90..f764462168aa 100644
  	ath12k_dbg(ab, ATH12K_DBG_MAC,  "vdev %pM started, vdev_id %d\n",
  		   ahvif->vif->addr, arvif->vdev_id);
  
--- 
-2.43.0
-

@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Joonhoe Kim <26rote@gmail.com>
 Date: Wed, 30 Sep 2026 12:19:57 +0000
-Subject: [PATCH 385/394] media: iris: vpu4x: size the decoder OPB line buffer
- for 10-bit output
+Subject: [PATCH] media: iris: vpu4x: size the decoder OPB line buffer for
+ 10-bit output
 
 On Kaanapali (vpu4x), HEVC Main10 decode into P010 fails at the capture
 STREAMON: the firmware rejects HFI_CMD_START on the raw port with
@@ -46,11 +46,11 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 17 insertions(+), 10 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
-index 0cf779cc9da7..1248e3c0ebdd 100644
+index ca4951421e2b..56bac2d60c80 100644
 --- a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
 +++ b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
-@@ -1752,16 +1752,21 @@ static u32 iris_vpu_enc_vpss_size(struct iris_inst *inst)
- 	return hfi_buffer_vpss_enc(width, height, ds_enable, 0, 0);
+@@ -2072,16 +2072,21 @@ static u32 iris_vpu_ar50lt_enc_vpss_size(struct iris_inst *inst)
+ 	return hfi_buffer_vpss_enc_ar50lt(width, height, ds_enable, 0, 0);
  }
  
 -static inline u32 size_dpb_opb(u32 height, u32 lcu_size)
@@ -73,7 +73,7 @@ index 0cf779cc9da7..1248e3c0ebdd 100644
  {
  	u32 vp9_top_lb, vp9_fe_left_lb, vp9_se_left_lb, dpb_opb, vp9d_qp, num_lcu_per_pipe;
  	u32 lcu_size = 64;
-@@ -1795,7 +1800,7 @@ static u32 hfi_vpu4x_vp9d_lb_size(u32 frame_width, u32 frame_height, u32 num_vpp
+@@ -2115,7 +2120,7 @@ static u32 hfi_vpu4x_vp9d_lb_size(u32 frame_width, u32 frame_height, u32 num_vpp
  
  	vp9_se_left_lb = ALIGN(size_vpxd_lb_se_left_ctrl(frame_width, frame_height),
  			       DMA_ALIGNMENT);
@@ -82,7 +82,7 @@ index 0cf779cc9da7..1248e3c0ebdd 100644
  	vp9d_qp = ALIGN(size_vp9d_qp(frame_width, frame_height), DMA_ALIGNMENT);
  
  	return vp9_top_lb + vp9_fe_left_lb + (vp9_se_left_lb * num_vpp_pipes) +
-@@ -1803,19 +1808,19 @@ static u32 hfi_vpu4x_vp9d_lb_size(u32 frame_width, u32 frame_height, u32 num_vpp
+@@ -2123,19 +2128,19 @@ static u32 hfi_vpu4x_vp9d_lb_size(u32 frame_width, u32 frame_height, u32 num_vpp
  }
  
  static u32 hfi_vpu4x_buffer_line_vp9d(u32 frame_width, u32 frame_height, u32 _yuv_bufcount_min,
@@ -106,7 +106,7 @@ index 0cf779cc9da7..1248e3c0ebdd 100644
  {
  	u32 num_lcu_per_pipe, fe_left_lb, se_left_lb, vsp_left_lb, top_lb, qp_size,
  	    dpb_obp = 0, lcu_size = 16;
-@@ -1833,7 +1838,7 @@ static u32 hfi_vpu4x_buffer_line_h265d(u32 frame_width, u32 frame_height, bool i
+@@ -2153,7 +2158,7 @@ static u32 hfi_vpu4x_buffer_line_h265d(u32 frame_width, u32 frame_height, bool i
  				FE_LFT_LR_DATA_LINE_NUMBERS;
  
  	if (is_opb)
@@ -115,7 +115,7 @@ index 0cf779cc9da7..1248e3c0ebdd 100644
  
  	se_left_lb = max_t(u32, (ALIGN(frame_height, BUFFER_ALIGNMENT_16_BYTES) >> 3) *
  				MAX_SE_NBR_CTRL_LCU16_LINE_BUFFER_SIZE,
-@@ -1870,6 +1875,7 @@ static u32 iris_vpu4x_dec_line_size(struct iris_inst *inst)
+@@ -2190,6 +2195,7 @@ static u32 iris_vpu4x_dec_line_size(struct iris_inst *inst)
  	struct v4l2_format *f = inst->fmt_src;
  	u32 height = f->fmt.pix_mp.height;
  	u32 width = f->fmt.pix_mp.width;
@@ -123,7 +123,7 @@ index 0cf779cc9da7..1248e3c0ebdd 100644
  	bool is_opb = false;
  
  	if (iris_split_mode_enabled(inst))
-@@ -1878,10 +1884,11 @@ static u32 iris_vpu4x_dec_line_size(struct iris_inst *inst)
+@@ -2198,10 +2204,11 @@ static u32 iris_vpu4x_dec_line_size(struct iris_inst *inst)
  	if (inst->codec == V4L2_PIX_FMT_H264)
  		return hfi_buffer_line_h264d(width, height, is_opb, num_vpp_pipes);
  	else if (inst->codec == V4L2_PIX_FMT_HEVC)
@@ -137,6 +137,3 @@ index 0cf779cc9da7..1248e3c0ebdd 100644
  	else if (inst->codec == V4L2_PIX_FMT_AV1)
  		return hfi_buffer_line_av1d(width, height, is_opb, num_vpp_pipes);
  
--- 
-2.43.0
-

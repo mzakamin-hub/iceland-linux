@@ -48,10 +48,10 @@ Signed-off-by: François Roux <franzelfranzel@gmail.com>
  1 file changed, 12 insertions(+), 13 deletions(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/mac.c b/drivers/net/wireless/ath/ath12k/mac.c
-index f764462168aa..9d6ad5c4d817 100644
+index ae40430b73f8..63a57145e41e 100644
 --- a/drivers/net/wireless/ath/ath12k/mac.c
 +++ b/drivers/net/wireless/ath/ath12k/mac.c
-@@ -15062,6 +15062,18 @@ static int ath12k_mac_hw_register(struct ath12k_hw *ah)
+@@ -15125,6 +15125,18 @@ static int ath12k_mac_hw_register(struct ath12k_hw *ah)
  	for_each_ar(ah, ar, i)
  		complete_all(&ar->regd_update_completed);
  
@@ -70,7 +70,7 @@ index f764462168aa..9d6ad5c4d817 100644
  	ret = ieee80211_register_hw(hw);
  	if (ret) {
  		ath12k_err(ab, "ieee80211 registration failed: %d\n", ret);
-@@ -15079,13 +15091,6 @@ static int ath12k_mac_hw_register(struct ath12k_hw *ah)
+@@ -15142,13 +15154,6 @@ static int ath12k_mac_hw_register(struct ath12k_hw *ah)
  	for_each_ar(ah, ar, i) {
  		struct ath12k_base *this_ab = ar->ab;
  
@@ -84,7 +84,7 @@ index f764462168aa..9d6ad5c4d817 100644
  		if (this_ab->hw_params->current_cc_support) {
  			struct wmi_set_current_country_arg current_cc = {};
  			struct ieee80211_regdomain *default_regd;
-@@ -15126,12 +15131,6 @@ static int ath12k_mac_hw_register(struct ath12k_hw *ah)
+@@ -15189,12 +15194,6 @@ fw_stats_init:
  
  	return 0;
  
@@ -97,6 +97,3 @@ index f764462168aa..9d6ad5c4d817 100644
  err_cleanup_if_combs:
  	ath12k_mac_cleanup_iface_combinations(ah);
  
--- 
-2.43.0
-

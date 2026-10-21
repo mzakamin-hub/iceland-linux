@@ -20,6 +20,3 @@ index 795e8ec7e8fa..0ee9a9cfdf8e 100644
  	{ .compatible = "qcom,mdp4" },
  	{ .compatible = "qcom,mdss" },
  	{ .compatible = "qcom,qcm2290-mdss" },
--- 
-2.43.0
-

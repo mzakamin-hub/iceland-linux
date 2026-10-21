@@ -27,7 +27,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  2 files changed, 26 insertions(+)
 
 diff --git a/drivers/devfreq/devfreq.c b/drivers/devfreq/devfreq.c
-index 398cbf2a6fb3..216c126004d2 100644
+index 2f27a239e34a..71c6ced9e4e1 100644
 --- a/drivers/devfreq/devfreq.c
 +++ b/drivers/devfreq/devfreq.c
 @@ -348,6 +348,26 @@ static int devfreq_set_target(struct devfreq *devfreq, unsigned long new_freq,
@@ -84,6 +84,3 @@ index 2853f571dfdf..e4f7b6cb07bc 100644
  
  /*
   * Definition of governor attribute flags except for common sysfs attributes
--- 
-2.43.0
-

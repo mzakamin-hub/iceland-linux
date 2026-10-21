@@ -31,10 +31,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 9 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
-index d919c6213ffc..74246be6a428 100644
+index aaff4e9c876f..d2d754e3f571 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
-@@ -2344,7 +2344,15 @@ void dpu_encoder_helper_phys_cleanup(struct dpu_encoder_phys *phys_enc)
+@@ -2342,7 +2342,15 @@ void dpu_encoder_helper_phys_cleanup(struct dpu_encoder_phys *phys_enc)
  		ctl->ops.reset_intf_cfg(ctl, &intf_cfg);
  
  	ctl->ops.trigger_flush(ctl);
@@ -51,6 +51,3 @@ index d919c6213ffc..74246be6a428 100644
  	ctl->ops.clear_pending_flush(ctl);
  }
  
--- 
-2.43.0
-

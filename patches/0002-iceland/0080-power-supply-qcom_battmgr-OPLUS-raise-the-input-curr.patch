@@ -35,10 +35,10 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 101 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index e36679bc9a7f..e8ade86f4329 100644
+index a89c78361d20..37837f9820a2 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
-@@ -2272,9 +2272,102 @@ static void qcom_battmgr_iceland_check(struct qcom_battmgr *battmgr, int ret, co
+@@ -2296,9 +2296,102 @@ static void qcom_battmgr_iceland_check(struct qcom_battmgr *battmgr, int ret, co
  		dev_warn(battmgr->dev, "charger setup: %s failed: %d\n", what, ret);
  }
  
@@ -141,7 +141,7 @@ index e36679bc9a7f..e8ade86f4329 100644
  	bool pd;
  	int ret;
  
-@@ -2295,21 +2388,22 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+@@ -2319,21 +2412,22 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
  	     type == POWER_SUPPLY_USB_TYPE_PD_PPS;
  
  	battmgr->chg_fcc_ua = fcc_ma * 1000;
@@ -168,7 +168,7 @@ index e36679bc9a7f..e8ade86f4329 100644
  		ret = qcom_battmgr_oplus_set(battmgr, OPLUS_USB_INPUT_CURR_LIMIT, icl_ua);
  		qcom_battmgr_iceland_check(battmgr, ret, "9 V input current limit");
  		/* no 9 V request unless the lower current is in place */
-@@ -2330,7 +2424,7 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+@@ -2354,7 +2448,7 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
  		 * 9 V current (fail low: VBUS may be 9 V).
  		 */
  		if (!ret && mv <= ICELAND_PD_MV - 2000) {
@@ -177,7 +177,7 @@ index e36679bc9a7f..e8ade86f4329 100644
  			qcom_battmgr_iceland_check(battmgr,
  						   qcom_battmgr_oplus_set(battmgr, OPLUS_USB_INPUT_CURR_LIMIT,
  									  icl_ua),
-@@ -2339,8 +2433,9 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+@@ -2363,8 +2457,9 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
  	}
  	mutex_unlock(&battmgr->lock);
  
@@ -188,6 +188,3 @@ index e36679bc9a7f..e8ade86f4329 100644
  		 battmgr->chg_inhibit ? ", charging inhibited" :
  		 battmgr->chg_limit_hold ? ", charging held by the charge limit" : "");
  }
--- 
-2.43.0
-

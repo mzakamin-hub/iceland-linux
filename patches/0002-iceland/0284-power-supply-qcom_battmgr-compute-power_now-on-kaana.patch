@@ -31,7 +31,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 29 insertions(+)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 6be2375134df..3fb8302226a4 100644
+index 3b168f43758d..5e53b1795a6b 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -1006,6 +1006,35 @@ static int qcom_battmgr_bat_get_property(struct power_supply *psy,
@@ -70,6 +70,3 @@ index 6be2375134df..3fb8302226a4 100644
  		val->intval = battmgr->status.power_now;
  		break;
  	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
--- 
-2.43.0
-

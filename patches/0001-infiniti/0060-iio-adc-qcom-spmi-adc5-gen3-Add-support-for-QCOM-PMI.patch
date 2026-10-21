@@ -387,7 +387,7 @@ index b03cf584b165..cb23d0d178c7 100644
  				const struct u32_fract *prescale,
  				const struct adc5_data *data,
 diff --git a/include/linux/iio/adc/qcom-adc5-gen3-common.h b/include/linux/iio/adc/qcom-adc5-gen3-common.h
-index 39cbfcbdb101..5d8e38350827 100644
+index b3e2c2f50e8f..6b15f8c97529 100644
 --- a/include/linux/iio/adc/qcom-adc5-gen3-common.h
 +++ b/include/linux/iio/adc/qcom-adc5-gen3-common.h
 @@ -40,7 +40,8 @@
@@ -505,6 +505,3 @@ index 3bf4c49726a7..4be682083843 100644
  	/* private: */
  	SCALE_HW_CALIB_INVALID,
  };
--- 
-2.43.0
-

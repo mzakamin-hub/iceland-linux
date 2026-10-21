@@ -58,6 +58,3 @@ index bf3c1bc3ba7b..5b1bf7a50f88 100644
  
  	/* Configure autosuspend after successful init */
  	pm_runtime_set_autosuspend_delay(dev, 100);
--- 
-2.43.0
-

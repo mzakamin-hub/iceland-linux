@@ -12,7 +12,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 219c4b25dd3c..1383901e3d26 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1452,8 +1452,6 @@ &ufs_mem_phy {
+@@ -1452,8 +1452,6 @@
  };
  
  &usb {
@@ -21,6 +21,3 @@ index 219c4b25dd3c..1383901e3d26 100644
  	status = "okay";
  };
  
--- 
-2.43.0
-

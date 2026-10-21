@@ -9,10 +9,10 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 85 insertions(+), 2 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index f94f5d5ffdc5..6ae5837e49ef 100644
+index 3e47df2079fe..d9874f8d08f3 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -3825,6 +3825,7 @@ port@2 {
+@@ -3821,6 +3821,7 @@
  					reg = <2>;
  
  					usb_dp_qmpphy_dp_in: endpoint {
@@ -20,7 +20,7 @@ index f94f5d5ffdc5..6ae5837e49ef 100644
  					};
  				};
  			};
-@@ -4392,6 +4393,7 @@ port@2 {
+@@ -4388,6 +4389,7 @@
  						reg = <2>;
  
  						dpu_intf0_out: endpoint {
@@ -28,7 +28,7 @@ index f94f5d5ffdc5..6ae5837e49ef 100644
  						};
  					};
  				};
-@@ -4544,6 +4546,87 @@ mdss_dsi0_phy: phy@9ac1000 {
+@@ -4540,6 +4542,87 @@
  
  				status = "disabled";
  			};
@@ -116,7 +116,7 @@ index f94f5d5ffdc5..6ae5837e49ef 100644
  		};
  
  		dispcc: clock-controller@9ba2000 {
-@@ -4553,8 +4636,8 @@ dispcc: clock-controller@9ba2000 {
+@@ -4549,8 +4632,8 @@
  				 <&bi_tcxo_ao_div2>,
  				 <&gcc GCC_DISP_AHB_CLK>,
  				 <&sleep_clk>,
@@ -127,6 +127,3 @@ index f94f5d5ffdc5..6ae5837e49ef 100644
  				 <0>,
  				 <0>,
  				 <0>,
--- 
-2.43.0
-

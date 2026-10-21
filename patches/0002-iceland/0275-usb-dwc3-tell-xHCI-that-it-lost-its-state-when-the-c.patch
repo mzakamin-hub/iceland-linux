@@ -121,6 +121,3 @@ index c5674161b2b0..bc2951a4f750 100644
  	.plat_start = dwc3_xhci_plat_start,
  };
  
--- 
-2.43.0
-

@@ -18,10 +18,10 @@ Signed-off-by: Wangao Wang <wangao.wang@oss.qualcomm.com>
  2 files changed, 32 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
-index faebb5472866..bb8135bd238b 100644
+index a8170e5fa9e6..fd5c3e47a15f 100644
 --- a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
 +++ b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
-@@ -1833,6 +1833,8 @@ static u32 iris_vpu4x_dec_line_size(struct iris_inst *inst)
+@@ -2153,6 +2153,8 @@ static u32 iris_vpu4x_dec_line_size(struct iris_inst *inst)
  	else if (inst->codec == V4L2_PIX_FMT_VP9)
  		return hfi_vpu4x_buffer_line_vp9d(width, height, out_min_count, is_opb,
  						  num_vpp_pipes);
@@ -30,7 +30,7 @@ index faebb5472866..bb8135bd238b 100644
  
  	return 0;
  }
-@@ -1856,14 +1858,39 @@ static u32 hfi_vpu4x_buffer_persist_vp9d(void)
+@@ -2176,14 +2178,39 @@ static u32 hfi_vpu4x_buffer_persist_vp9d(void)
  		HDR10_HIST_EXTRADATA_SIZE;
  }
  
@@ -73,7 +73,7 @@ index faebb5472866..bb8135bd238b 100644
  
  	return 0;
  }
-@@ -2163,6 +2190,7 @@ u32 iris_vpu4x_buf_size(struct iris_inst *inst, enum iris_buffer_type buffer_typ
+@@ -2483,6 +2510,7 @@ u32 iris_vpu4x_buf_size(struct iris_inst *inst, enum iris_buffer_type buffer_typ
  		{BUF_PERSIST,     iris_vpu4x_dec_persist_size   },
  		{BUF_DPB,         iris_vpu_dec_dpb_size         },
  		{BUF_SCRATCH_1,   iris_vpu_dec_scratch1_size    },
@@ -82,10 +82,10 @@ index faebb5472866..bb8135bd238b 100644
  
  	static const struct iris_vpu_buf_type_handle enc_internal_buf_type_handle[] = {
 diff --git a/drivers/media/platform/qcom/iris/iris_vpu_buffer.h b/drivers/media/platform/qcom/iris/iris_vpu_buffer.h
-index 8c0d6b7b5de8..c7020931a642 100644
+index 2085e316a6bd..9a1011a91cb6 100644
 --- a/drivers/media/platform/qcom/iris/iris_vpu_buffer.h
 +++ b/drivers/media/platform/qcom/iris/iris_vpu_buffer.h
-@@ -116,6 +116,7 @@ struct iris_inst;
+@@ -127,6 +127,7 @@ struct iris_inst;
  #define SIZE_AV1D_TILE_OFFSET     65536
  #define SIZE_AV1D_QM              3328
  #define SIZE_AV1D_PROB_TABLE      22784
@@ -93,6 +93,3 @@ index 8c0d6b7b5de8..c7020931a642 100644
  
  #define SIZE_SLICE_CMD_BUFFER (ALIGN(20480, 256))
  #define SIZE_SPS_PPS_SLICE_HDR (2048 + 4096)
--- 
-2.43.0
-

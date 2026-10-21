@@ -9,10 +9,10 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 6 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/dp/dp_display.c b/drivers/gpu/drm/msm/dp/dp_display.c
-index 4dcbd9b99d06..162e10d88a81 100644
+index 9299ce616fdb..348eb6967abf 100644
 --- a/drivers/gpu/drm/msm/dp/dp_display.c
 +++ b/drivers/gpu/drm/msm/dp/dp_display.c
-@@ -151,6 +151,11 @@ static const struct msm_dp_desc msm_dp_desc_sm8650[] = {
+@@ -158,6 +158,11 @@ static const struct msm_dp_desc msm_dp_desc_sm8650[] = {
  	{}
  };
  
@@ -24,7 +24,7 @@ index 4dcbd9b99d06..162e10d88a81 100644
  static const struct msm_dp_desc msm_dp_desc_x1e80100[] = {
  	{ .io_start = 0x0ae90000, .id = MSM_DP_CONTROLLER_0, .wide_bus_supported = true },
  	{ .io_start = 0x0ae98000, .id = MSM_DP_CONTROLLER_1, .wide_bus_supported = true },
-@@ -161,6 +166,7 @@ static const struct msm_dp_desc msm_dp_desc_x1e80100[] = {
+@@ -168,6 +173,7 @@ static const struct msm_dp_desc msm_dp_desc_x1e80100[] = {
  
  static const struct of_device_id msm_dp_dt_match[] = {
  	{ .compatible = "qcom,glymur-dp", .data = &msm_dp_desc_glymur },
@@ -32,6 +32,3 @@ index 4dcbd9b99d06..162e10d88a81 100644
  	{ .compatible = "qcom,sa8775p-dp", .data = &msm_dp_desc_sa8775p },
  	{ .compatible = "qcom,sc7180-dp", .data = &msm_dp_desc_sc7180 },
  	{ .compatible = "qcom,sc7280-dp", .data = &msm_dp_desc_sc7280 },
--- 
-2.43.0
-

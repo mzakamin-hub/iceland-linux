@@ -56,10 +56,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  7 files changed, 108 insertions(+), 21 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
-index da66b5f2bfc0..04a8aa1955ab 100644
+index 848bcba5a84a..975b819bcd2e 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
-@@ -288,6 +288,38 @@ int a6xx_gmu_wait_for_idle(struct a6xx_gmu *gmu)
+@@ -301,6 +301,38 @@ int a6xx_gmu_wait_for_idle(struct a6xx_gmu *gmu)
  	return spin_until(a6xx_gmu_check_idle_level(gmu));
  }
  
@@ -99,7 +99,7 @@ index da66b5f2bfc0..04a8aa1955ab 100644
  {
  	struct a6xx_gpu *a6xx_gpu = container_of(gmu, struct a6xx_gpu, gmu);
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.h b/drivers/gpu/drm/msm/adreno/a6xx_gmu.h
-index 3f96b10b5f61..1fee461cfd9e 100644
+index d3f6cd8b9741..1a2f82df6642 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.h
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.h
 @@ -60,6 +60,13 @@ struct a6xx_bcm {
@@ -117,7 +117,7 @@ index 3f96b10b5f61..1fee461cfd9e 100644
  	struct device *dev;
  
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gpu.c b/drivers/gpu/drm/msm/adreno/a6xx_gpu.c
-index 1f04503f718c..aba82ad12f6b 100644
+index 92e8c8abb86d..f7273914f28f 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gpu.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gpu.c
 @@ -84,12 +84,14 @@ static int fenced_write(struct a6xx_gpu *a6xx_gpu, u32 offset, u32 value, u32 ma
@@ -141,10 +141,10 @@ index 1f04503f718c..aba82ad12f6b 100644
  	}
  
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
-index b50c57f427b4..8dd753259b58 100644
+index 79912a33e17c..8091106390f4 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
-@@ -272,6 +272,7 @@ int a6xx_gmu_resume(struct a6xx_gpu *gpu);
+@@ -289,6 +289,7 @@ int a6xx_gmu_resume(struct a6xx_gpu *gpu);
  int a6xx_gmu_stop(struct a6xx_gpu *gpu);
  
  int a6xx_gmu_wait_for_idle(struct a6xx_gmu *gmu);
@@ -286,6 +286,3 @@ index 6cb53a071801..91e095dfef52 100644
 +		preempt_trigger_fault(gpu, PREEMPT_TRIGGERED, ret);
  }
  
--- 
-2.43.0
-

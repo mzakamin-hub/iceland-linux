@@ -1,0 +1,50 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Stanley Jhu <stanleyjhu@google.com>
+Date: Wed, 21 Oct 2026 12:06:14 +0800
+Subject: [PATCH] scsi: ufs: core: Fix double release in ufshcd_abort()
+
+In SDB mode, a timed-out command whose completion interrupt has not
+been handled yet can be released twice:
+
+1. The command times out and scsi_timeout() schedules ufshcd_abort().
+2. The command finishes in hardware. Its doorbell bit is clear, but the
+   completion interrupt has not been handled, so BIT(tag) is still set
+   in hba->outstanding_reqs.
+3. ufshcd_abort() sees the doorbell bit clear and calls
+   __ufshcd_transfer_req_compl(). That releases the command but leaves
+   BIT(tag) set in hba->outstanding_reqs. ufshcd_abort() returns
+   FAILED.
+4. The next ufshcd_poll() call, or the logical unit reset that follows
+   the FAILED, sees BIT(tag) set in hba->outstanding_reqs and releases
+   the same command again.
+
+Claim BIT(tag) in hba->outstanding_reqs with
+ufshcd_clear_outstanding_reqs(), release the command if it is a SCSI
+command, and return SUCCESS when ufshcd_abort() claims the bit.
+
+Fixes: 169f5eb28869 ("scsi: ufs: Optimize SCSI command processing")
+Cc: stable@vger.kernel.org
+Link: https://lore.kernel.org/r/2e042211ca0ebc974ad5ec4c0de9f3f93b3c75c0.camel@iokpp.de
+Suggested-by: Bean Huo <beanhuo@micron.com>
+Signed-off-by: Stanley Jhu <stanleyjhu@google.com>
+---
+ drivers/ufs/core/ufshcd.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/ufs/core/ufshcd.c b/drivers/ufs/core/ufshcd.c
+index 603312f68e1a..822f40ed41f5 100644
+--- a/drivers/ufs/core/ufshcd.c
++++ b/drivers/ufs/core/ufshcd.c
+@@ -8189,7 +8189,11 @@ static int ufshcd_abort(struct scsi_cmnd *cmd)
+ 		dev_err(hba->dev,
+ 		"%s: cmd was completed, but without a notifying intr, tag = %d",
+ 		__func__, tag);
+-		__ufshcd_transfer_req_compl(hba, 1UL << tag);
++		if (ufshcd_clear_outstanding_reqs(hba, BIT(tag))) {
++			if (ufshcd_is_scsi_cmd(cmd))
++				ufshcd_release_scsi_cmd(hba, cmd);
++			err = SUCCESS;
++		}
+ 		goto release;
+ 	}
+ 

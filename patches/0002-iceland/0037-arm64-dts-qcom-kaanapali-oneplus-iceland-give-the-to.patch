@@ -18,7 +18,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 792664acc9dd..5055138d8310 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1396,6 +1396,10 @@ touchscreen@0 {
+@@ -1396,6 +1396,10 @@
  
  		novatek,pen-support;
  
@@ -29,6 +29,3 @@ index 792664acc9dd..5055138d8310 100644
  		panel = <&display_panel>;
  
  		firmware-name = "novatek/novatek_nt36536_fw.bin";
--- 
-2.43.0
-

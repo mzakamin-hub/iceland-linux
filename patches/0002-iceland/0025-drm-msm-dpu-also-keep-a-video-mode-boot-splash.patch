@@ -49,6 +49,3 @@ index 9be9dd1c2cde..1b64f7406157 100644
  bool dpu_boot_splash(struct device *mdss, bool stop)
  {
  	const struct of_device_id *match = NULL;
--- 
-2.43.0
-

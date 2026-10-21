@@ -29,7 +29,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 151 insertions(+), 14 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 4546a9e86fc4..38f521408437 100644
+index 00058cbe9444..48d09bdb1483 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -8,6 +8,8 @@
@@ -229,7 +229,7 @@ index 4546a9e86fc4..38f521408437 100644
  		break;
  	case POWER_SUPPLY_PROP_POWER_NOW:
  		val->intval = battmgr->status.power_now;
-@@ -1841,11 +1971,13 @@ static void qcom_battmgr_oplus_gauge_callback(struct qcom_battmgr *battmgr,
+@@ -1865,11 +1995,13 @@ static void qcom_battmgr_oplus_gauge_callback(struct qcom_battmgr *battmgr,
  	battmgr->info.cycle_count = le32_to_cpu(data[OPLUS_GAUGE_CYCLE_COUNT]);
  	battmgr->info.last_full_capacity = le32_to_cpu(data[OPLUS_GAUGE_FCC]) * 1000;
  	/*
@@ -247,7 +247,7 @@ index 4546a9e86fc4..38f521408437 100644
  
  out_complete:
  	complete(&battmgr->ack);
-@@ -2101,7 +2233,7 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+@@ -2125,7 +2257,7 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
  	struct qcom_battmgr *battmgr = container_of(to_delayed_work(work),
  						    struct qcom_battmgr, cid_work);
  	unsigned int next = OPLUS_CID_POLL_MS;
@@ -256,7 +256,7 @@ index 4546a9e86fc4..38f521408437 100644
  	int ret;
  
  	if (!battmgr->service_up)
-@@ -2119,6 +2251,8 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+@@ -2143,6 +2275,8 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
  	if (ret)
  		goto out_unlock;
  
@@ -265,7 +265,7 @@ index 4546a9e86fc4..38f521408437 100644
  	if (!attached || battmgr->usb.online) {
  		if (battmgr->otg_boost_on) {
  			qcom_battmgr_oplus_set(battmgr, OPLUS_USB_OTG_VBUS_ENABLE, 0);
-@@ -2167,6 +2301,9 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+@@ -2191,6 +2325,9 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
  out_unlock:
  	mutex_unlock(&battmgr->lock);
  
@@ -275,6 +275,3 @@ index 4546a9e86fc4..38f521408437 100644
  	if (setup_charger)
  		qcom_battmgr_oplus_setup_charger(battmgr);
  
--- 
-2.43.0
-

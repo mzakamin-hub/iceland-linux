@@ -9,10 +9,10 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 90 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 835e95ec2caa..f94f5d5ffdc5 100644
+index 46bda86df4dd..3e47df2079fe 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -513,6 +513,43 @@ smp2p_cdsp_in: slave-kernel {
+@@ -507,6 +507,43 @@
  		};
  	};
  
@@ -56,7 +56,7 @@ index 835e95ec2caa..f94f5d5ffdc5 100644
  	smp2p-soccp {
  		compatible = "qcom,smp2p";
  
-@@ -3128,6 +3165,59 @@ adreno_smmu: iommu@3da0000 {
+@@ -3124,6 +3161,59 @@
  			dma-coherent;
  		};
  
@@ -116,6 +116,3 @@ index 835e95ec2caa..f94f5d5ffdc5 100644
  		remoteproc_adsp: remoteproc@6800000 {
  			compatible = "qcom,kaanapali-adsp-pas", "qcom,sm8550-adsp-pas";
  			reg = <0x0 0x06800000 0x0 0x10000>;
--- 
-2.43.0
-

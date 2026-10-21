@@ -27,7 +27,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 816ca3b822ef..40492d32edc0 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -538,6 +538,12 @@ vreg_bob2: bob2 {
+@@ -538,6 +538,12 @@
  			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
  		};
  
@@ -40,7 +40,7 @@ index 816ca3b822ef..40492d32edc0 100644
  		vreg_l1b_1p8: ldo1 {
  			regulator-name = "vreg_l1b_1p8";
  			regulator-min-microvolt = <1800000>;
-@@ -546,6 +552,7 @@ vreg_l1b_1p8: ldo1 {
+@@ -546,6 +552,7 @@
  			regulator-allow-set-load;
  			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
  						   RPMH_REGULATOR_MODE_AUTO>;
@@ -48,6 +48,3 @@ index 816ca3b822ef..40492d32edc0 100644
  		};
  
  		vreg_l2b_3p0: ldo2 {
--- 
-2.43.0
-

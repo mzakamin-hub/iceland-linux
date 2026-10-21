@@ -129,6 +129,3 @@ index 772c4d9fa651..24d3dd0eebe1 100644
  }
  
  static const struct dev_pm_ops at24_pm_ops = {
--- 
-2.43.0
-

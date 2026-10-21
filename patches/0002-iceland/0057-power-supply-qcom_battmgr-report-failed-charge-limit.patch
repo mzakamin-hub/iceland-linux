@@ -16,7 +16,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 2b30436404b5..4546a9e86fc4 100644
+index c0231bc866cd..00058cbe9444 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -862,7 +862,7 @@ static int qcom_battmgr_set_charge_start_threshold(struct qcom_battmgr *battmgr,
@@ -37,6 +37,3 @@ index 2b30436404b5..4546a9e86fc4 100644
  }
  
  static int qcom_battmgr_charge_control_thresholds_init(struct qcom_battmgr *battmgr)
--- 
-2.43.0
-

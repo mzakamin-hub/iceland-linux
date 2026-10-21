@@ -53,6 +53,3 @@ index 5d805a797abd..5750066a645d 100644
  	/*
  	 * To avoid any stray glitches while abruptly powering down the PLL
  	 * make sure to gate the clock using the clock enable bit before
--- 
-2.43.0
-

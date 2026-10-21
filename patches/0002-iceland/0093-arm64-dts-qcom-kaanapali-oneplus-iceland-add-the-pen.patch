@@ -28,7 +28,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 57b9a314cfc1..9b71548cb0e4 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -710,6 +710,21 @@ vreg_ls2b: ls2 {
+@@ -710,6 +710,21 @@
  			regulator-name = "vreg_ls2b";
  			regulator-always-on;
  		};
@@ -50,7 +50,7 @@ index 57b9a314cfc1..9b71548cb0e4 100644
  	};
  
  	regulators-1 {
-@@ -1305,6 +1320,44 @@ backlight@11 {
+@@ -1305,6 +1320,44 @@
  	};
  };
  
@@ -95,7 +95,7 @@ index 57b9a314cfc1..9b71548cb0e4 100644
  &mdss {
  	/*
  	 * The display needs both core GDSCs, as in the stock kernel (canoe-sde: "core_gdsc", "core_int2_gdsc").
-@@ -1486,6 +1539,13 @@ key_vol_down_default: key-vol-down-default-state {
+@@ -1486,6 +1539,13 @@
  		bias-pull-up;
  		power-source = <1>;
  	};
@@ -109,7 +109,7 @@ index 57b9a314cfc1..9b71548cb0e4 100644
  };
  
  &pmh0104_j_e1_gpios {
-@@ -1707,6 +1767,35 @@ chg_cp_therm_default: chg-cp-therm-default-state {
+@@ -1707,6 +1767,35 @@
  		bias-high-impedance;
  		bias-disable;
  	};
@@ -145,7 +145,7 @@ index 57b9a314cfc1..9b71548cb0e4 100644
  };
  
  &pon_resin {
-@@ -1818,6 +1907,14 @@ lid_default: lid-default-state {
+@@ -1818,6 +1907,14 @@
  		bias-disable;
  	};
  
@@ -160,6 +160,3 @@ index 57b9a314cfc1..9b71548cb0e4 100644
  	wlan_en: wlan-en-state {
  		pins = "gpio16";
  		function = "gpio";
--- 
-2.43.0
-

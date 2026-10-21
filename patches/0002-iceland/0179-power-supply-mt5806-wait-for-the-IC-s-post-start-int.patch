@@ -128,6 +128,3 @@ index f450871bce4a..78523bc9a7f1 100644
  
  	disable_irq(chip->irq);
  
--- 
-2.43.0
-

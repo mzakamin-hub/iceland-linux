@@ -65,10 +65,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  create mode 100644 drivers/hwmon/qcom-qpt-hwmon.c
 
 diff --git a/Documentation/hwmon/index.rst b/Documentation/hwmon/index.rst
-index 9955a525436a..bba26dfd9898 100644
+index 199ca79621e9..b50f52dfbb59 100644
 --- a/Documentation/hwmon/index.rst
 +++ b/Documentation/hwmon/index.rst
-@@ -233,6 +233,7 @@ Hardware Monitoring Kernel Drivers
+@@ -238,6 +238,7 @@ Hardware Monitoring Kernel Drivers
     pxe1610
     pwm-fan
     q54sj108a2
@@ -141,10 +141,10 @@ index 000000000000..9e445c5f8889
 +the control and time stamp bytes, the raw accumulators and the driver's
 +counters (overflows, re-reads, rejected reads).
 diff --git a/drivers/hwmon/Kconfig b/drivers/hwmon/Kconfig
-index fecff8610ea8..fbbf9f5a1eb1 100644
+index 18c682e1a475..13c860b5e512 100644
 --- a/drivers/hwmon/Kconfig
 +++ b/drivers/hwmon/Kconfig
-@@ -1960,6 +1960,21 @@ config SENSORS_PWM_FAN
+@@ -1999,6 +1999,21 @@ config SENSORS_PWM_FAN
  	  This driver can also be built as a module. If so, the module
  	  will be called pwm-fan.
  
@@ -167,10 +167,10 @@ index fecff8610ea8..fbbf9f5a1eb1 100644
  	tristate "QNAP MCU hardware monitoring"
  	depends on MFD_QNAP_MCU
 diff --git a/drivers/hwmon/Makefile b/drivers/hwmon/Makefile
-index 1229b6b3996d..c277b905fc7c 100644
+index d4c345ed7261..a962d78ccc93 100644
 --- a/drivers/hwmon/Makefile
 +++ b/drivers/hwmon/Makefile
-@@ -205,6 +205,7 @@ obj-$(CONFIG_SENSORS_POWR1220)  += powr1220.o
+@@ -209,6 +209,7 @@ obj-$(CONFIG_SENSORS_POWR1220)  += powr1220.o
  obj-$(CONFIG_SENSORS_PROM21_XHCI)	+= prom21-xhci.o
  obj-$(CONFIG_SENSORS_PT5161L)	+= pt5161l.o
  obj-$(CONFIG_SENSORS_PWM_FAN)	+= pwm-fan.o
@@ -997,6 +997,3 @@ index 000000000000..c8ae7cac87c3
 +
 +MODULE_DESCRIPTION("Qualcomm PMIC power telemetry hardware monitor");
 +MODULE_LICENSE("GPL");
--- 
-2.43.0
-

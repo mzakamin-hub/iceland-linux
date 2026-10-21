@@ -15,7 +15,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 16 insertions(+)
 
 diff --git a/sound/soc/qcom/qdsp6/audioreach.c b/sound/soc/qcom/qdsp6/audioreach.c
-index f4deb977dc8b..75b344b5182a 100644
+index 4bb6ffbbf18a..bb4b753436bc 100644
 --- a/sound/soc/qcom/qdsp6/audioreach.c
 +++ b/sound/soc/qcom/qdsp6/audioreach.c
 @@ -325,6 +325,22 @@ void audioreach_set_default_channel_mapping(u8 *ch_map, int num_channels)
@@ -41,6 +41,3 @@ index f4deb977dc8b..75b344b5182a 100644
  	}
  }
  EXPORT_SYMBOL_GPL(audioreach_set_default_channel_mapping);
--- 
-2.43.0
-

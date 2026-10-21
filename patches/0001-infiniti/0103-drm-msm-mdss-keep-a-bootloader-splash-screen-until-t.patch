@@ -117,10 +117,10 @@ index da3556eb6ecc..9be9dd1c2cde 100644
  	.probe = dpu_dev_probe,
  	.remove = dpu_dev_remove,
 diff --git a/drivers/gpu/drm/msm/msm_drv.h b/drivers/gpu/drm/msm/msm_drv.h
-index eb4bbae8557b..2264bd65ebbb 100644
+index 2840e8a5052d..2e5403847156 100644
 --- a/drivers/gpu/drm/msm/msm_drv.h
 +++ b/drivers/gpu/drm/msm/msm_drv.h
-@@ -410,17 +410,24 @@ static inline void msm_mdp_unregister(void) {}
+@@ -412,19 +412,26 @@ static inline void msm_mdp_unregister(void) {}
  #ifdef CONFIG_DRM_MSM_DPU
  void msm_dpu_register(void);
  void msm_dpu_unregister(void);
@@ -137,10 +137,12 @@ index eb4bbae8557b..2264bd65ebbb 100644
  #ifdef CONFIG_DRM_MSM_MDSS
  void msm_mdss_register(void);
  void msm_mdss_unregister(void);
+ int msm_count_mdss(void);
 +void msm_mdss_take_over_splash(struct device *dev);
  #else
  static inline void msm_mdss_register(void) {}
  static inline void msm_mdss_unregister(void) {}
+ static inline int msm_count_mdss(void) { return 0; }
 +static inline void msm_mdss_take_over_splash(struct device *dev) {}
  #endif
  
@@ -160,7 +162,7 @@ index e5d0ea629448..54f42aa62ae3 100644
  	ret = aperture_remove_all_conflicting_devices(drv->name);
  	if (ret)
 diff --git a/drivers/gpu/drm/msm/msm_mdss.c b/drivers/gpu/drm/msm/msm_mdss.c
-index 9087c4b290db..15d2893c4a34 100644
+index e69b122f2687..1bc80e4ddb2e 100644
 --- a/drivers/gpu/drm/msm/msm_mdss.c
 +++ b/drivers/gpu/drm/msm/msm_mdss.c
 @@ -44,6 +44,7 @@ struct msm_mdss {
@@ -171,7 +173,7 @@ index 9087c4b290db..15d2893c4a34 100644
  };
  
  static int msm_mdss_parse_data_bus_icc_path(struct device *dev,
-@@ -228,10 +229,31 @@ static void msm_mdss_6x_setup_ubwc(struct msm_mdss *msm_mdss)
+@@ -243,10 +244,31 @@ static void msm_mdss_6x_setup_ubwc(struct msm_mdss *msm_mdss)
  	 (((minor) & 0xfff) << 16) |	\
  	 ((step) & 0xffff))
  
@@ -204,7 +206,7 @@ index 9087c4b290db..15d2893c4a34 100644
  
  	/*
  	 * Several components have AXI clocks that can only be turned on if
-@@ -258,24 +280,9 @@ static int msm_mdss_enable(struct msm_mdss *msm_mdss)
+@@ -273,24 +295,9 @@ static int msm_mdss_enable(struct msm_mdss *msm_mdss)
  		return ret;
  	}
  
@@ -231,7 +233,7 @@ index 9087c4b290db..15d2893c4a34 100644
  }
  
  static int msm_mdss_disable(struct msm_mdss *msm_mdss)
-@@ -300,15 +307,18 @@ static void msm_mdss_destroy(struct msm_mdss *msm_mdss)
+@@ -315,15 +322,18 @@ static void msm_mdss_destroy(struct msm_mdss *msm_mdss)
  
  	pm_runtime_suspend(msm_mdss->dev);
  	pm_runtime_disable(msm_mdss->dev);
@@ -251,7 +253,7 @@ index 9087c4b290db..15d2893c4a34 100644
  
  	reset = reset_control_get_optional_exclusive(dev, NULL);
  	if (!reset) {
-@@ -319,6 +329,25 @@ static int msm_mdss_reset(struct device *dev)
+@@ -334,6 +344,25 @@ static int msm_mdss_reset(struct device *dev)
  				     "failed to acquire mdss reset\n");
  	}
  
@@ -277,7 +279,7 @@ index 9087c4b290db..15d2893c4a34 100644
  	reset_control_assert(reset);
  	/*
  	 * Tests indicate that reset has to be held for some period of time,
-@@ -332,6 +361,37 @@ static int msm_mdss_reset(struct device *dev)
+@@ -347,6 +376,37 @@ static int msm_mdss_reset(struct device *dev)
  	return 0;
  }
  
@@ -315,7 +317,7 @@ index 9087c4b290db..15d2893c4a34 100644
  /*
   * MDP5 MDSS uses at most three specified clocks.
   */
-@@ -369,10 +429,6 @@ static struct msm_mdss *msm_mdss_init(struct platform_device *pdev, bool is_mdp5
+@@ -384,10 +444,6 @@ static struct msm_mdss *msm_mdss_init(struct platform_device *pdev, bool is_mdp5
  	int ret;
  	int irq;
  
@@ -326,7 +328,7 @@ index 9087c4b290db..15d2893c4a34 100644
  	msm_mdss = devm_kzalloc(&pdev->dev, sizeof(*msm_mdss), GFP_KERNEL);
  	if (!msm_mdss)
  		return ERR_PTR(-ENOMEM);
-@@ -410,6 +466,10 @@ static struct msm_mdss *msm_mdss_init(struct platform_device *pdev, bool is_mdp5
+@@ -425,6 +481,10 @@ static struct msm_mdss *msm_mdss_init(struct platform_device *pdev, bool is_mdp5
  
  	msm_mdss->dev = &pdev->dev;
  
@@ -337,6 +339,3 @@ index 9087c4b290db..15d2893c4a34 100644
  	irq = platform_get_irq(pdev, 0);
  	if (irq < 0)
  		return ERR_PTR(irq);
--- 
-2.43.0
-

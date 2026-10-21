@@ -27,7 +27,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 0fd09849969d..a20feecdedab 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1950,6 +1950,47 @@ &usb_dp_qmpphy {
+@@ -1950,6 +1950,47 @@
  	status = "okay";
  };
  
@@ -75,7 +75,7 @@ index 0fd09849969d..a20feecdedab 100644
  &{/thermal-zones} {
  	/* stock trips both at 125 C (passive, no cooling map) */
  	board-thermal {
-@@ -2078,6 +2119,166 @@ map1 {
+@@ -2078,6 +2119,166 @@
  		};
  	};
  
@@ -242,6 +242,3 @@ index 0fd09849969d..a20feecdedab 100644
  	/*
  	 * USB-C connector. Stock's connector protection stops charging at 57 C (69 C with the battery above
  	 * 50 C) on the L/R thermistors; that is done by iceland-battery-guard in userspace, which reads all three
--- 
-2.43.0
-

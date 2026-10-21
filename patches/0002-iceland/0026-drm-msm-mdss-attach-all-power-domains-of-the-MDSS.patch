@@ -21,7 +21,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 19 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/msm_mdss.c b/drivers/gpu/drm/msm/msm_mdss.c
-index 15d2893c4a34..bb2e0a7d37df 100644
+index 1bc80e4ddb2e..ee5a710f7e9a 100644
 --- a/drivers/gpu/drm/msm/msm_mdss.c
 +++ b/drivers/gpu/drm/msm/msm_mdss.c
 @@ -13,6 +13,7 @@
@@ -32,7 +32,7 @@ index 15d2893c4a34..bb2e0a7d37df 100644
  #include <linux/pm_runtime.h>
  #include <linux/reset.h>
  
-@@ -422,9 +423,14 @@ static int mdp5_mdss_parse_clock(struct platform_device *pdev, struct clk_bulk_d
+@@ -437,9 +438,14 @@ static int mdp5_mdss_parse_clock(struct platform_device *pdev, struct clk_bulk_d
  	return num_clocks;
  }
  
@@ -47,7 +47,7 @@ index 15d2893c4a34..bb2e0a7d37df 100644
  	struct msm_mdss *msm_mdss;
  	int ret;
  	int irq;
-@@ -466,6 +472,19 @@ static struct msm_mdss *msm_mdss_init(struct platform_device *pdev, bool is_mdp5
+@@ -481,6 +487,19 @@ static struct msm_mdss *msm_mdss_init(struct platform_device *pdev, bool is_mdp5
  
  	msm_mdss->dev = &pdev->dev;
  
@@ -67,6 +67,3 @@ index 15d2893c4a34..bb2e0a7d37df 100644
  	ret = msm_mdss_reset(msm_mdss);
  	if (ret)
  		return ERR_PTR(ret);
--- 
-2.43.0
-

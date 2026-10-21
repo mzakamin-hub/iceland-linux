@@ -15,10 +15,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 30 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index d3d30e44260f..b1cccec413b3 100644
+index 451e9f2ca1d0..903df4793533 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -2221,6 +2221,28 @@ &clk_virt SLAVE_QUP_CORE_3 QCOM_ICC_TAG_ALWAYS>,
+@@ -2217,6 +2217,28 @@
  				status = "disabled";
  			};
  
@@ -47,8 +47,8 @@ index d3d30e44260f..b1cccec413b3 100644
  			uart18: serial@1994000 {
  				compatible = "qcom,geni-uart";
  				reg = <0x0 0x01994000 0x0 0x4000>;
-@@ -5952,6 +5974,14 @@ qup_uart7_default: qup-uart7-state {
- 				 bias-disable;
+@@ -5948,6 +5970,14 @@
+ 				bias-disable;
  			};
  
 +			qup_uart17_default: qup-uart17-default-state {
@@ -62,6 +62,3 @@ index d3d30e44260f..b1cccec413b3 100644
  			qup_uart18_default: qup-uart18-default-state {
  				/* TX, RX */
  				pins = "gpio26", "gpio27";
--- 
-2.43.0
-

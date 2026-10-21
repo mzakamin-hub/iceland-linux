@@ -27,6 +27,3 @@ index 61e1038328e8..54a6b25201f0 100644
  		return false;
  
  	ret = irq_get_irqchip_state(sysmon->shutdown_irq,
--- 
-2.43.0
-

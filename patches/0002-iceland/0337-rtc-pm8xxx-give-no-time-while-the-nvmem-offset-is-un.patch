@@ -24,8 +24,8 @@ bare counter; only a successful read of 0 can.
 Signed-off-by: mzak <mzak.amin@gmail.com>
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 ---
-  drivers/rtc/rtc-pm8xxx.c |   32 +++++++++++++++++++++++++++++---
-  1 file changed, 29 insertions(+), 3 deletions(-)
+ drivers/rtc/rtc-pm8xxx.c | 32 +++++++++++++++++++++++++++++---
+ 1 file changed, 29 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/rtc/rtc-pm8xxx.c b/drivers/rtc/rtc-pm8xxx.c
 index c0cf54534014..d01ddf0a3a20 100644
@@ -137,6 +137,3 @@ index c0cf54534014..d01ddf0a3a20 100644
  	if (!rtc_dd->allow_set_time) {
  		rc = pm8xxx_rtc_probe_offset(rtc_dd);
  		if (rc)
--- 
-2.43.0
-

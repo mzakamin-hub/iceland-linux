@@ -12,7 +12,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index c8d9673808fb..ede368bc7ed1 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -865,6 +865,104 @@ backlight@11 {
+@@ -865,6 +865,104 @@
  	};
  };
  
@@ -117,6 +117,3 @@ index c8d9673808fb..ede368bc7ed1 100644
  &pcie0 {
  	pinctrl-0 = <&pcie0_default_state>;
  	pinctrl-names = "default";
--- 
-2.43.0
-

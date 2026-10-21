@@ -62,13 +62,13 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  drivers/net/wireless/ath/ath12k/debugfs.c     |  31 ++++-
  drivers/net/wireless/ath/ath12k/dp.c          |   3 +
  drivers/net/wireless/ath/ath12k/dp.h          |  23 ++++
- drivers/net/wireless/ath/ath12k/dp_rx.c       | 116 +++++++++++++++++-
+ drivers/net/wireless/ath/ath12k/dp_rx.c       | 117 +++++++++++++++++-
  drivers/net/wireless/ath/ath12k/dp_rx.h       |   1 +
  drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c |  14 ++-
- 6 files changed, 181 insertions(+), 7 deletions(-)
+ 6 files changed, 182 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/debugfs.c b/drivers/net/wireless/ath/ath12k/debugfs.c
-index d54995b7adb2..12603f05f6cc 100644
+index 12791e267d1a..69f546420bd4 100644
 --- a/drivers/net/wireless/ath/ath12k/debugfs.c
 +++ b/drivers/net/wireless/ath/ath12k/debugfs.c
 @@ -1032,7 +1032,11 @@ static ssize_t ath12k_debugfs_dump_device_dp_stats(struct file *file,
@@ -84,7 +84,7 @@ index d54995b7adb2..12603f05f6cc 100644
  	static const char *rxdma_err[HAL_REO_ENTR_RING_RXDMA_ECODE_MAX] = {
  		[HAL_REO_ENTR_RING_RXDMA_ECODE_OVERFLOW_ERR] = "Overflow",
  		[HAL_REO_ENTR_RING_RXDMA_ECODE_MPDU_LEN_ERR] = "MPDU len",
-@@ -1210,6 +1214,31 @@ static ssize_t ath12k_debugfs_dump_device_dp_stats(struct file *file,
+@@ -1248,6 +1252,31 @@ static ssize_t ath12k_debugfs_dump_device_dp_stats(struct file *file,
  		len += scnprintf(buf + len, size - len, "\n");
  	}
  
@@ -117,10 +117,10 @@ index d54995b7adb2..12603f05f6cc 100644
  
  	return ret;
 diff --git a/drivers/net/wireless/ath/ath12k/dp.c b/drivers/net/wireless/ath/ath12k/dp.c
-index f9b37d75956d..afb31d941f6e 100644
+index 83f9edfabf69..35a9047c770d 100644
 --- a/drivers/net/wireless/ath/ath12k/dp.c
 +++ b/drivers/net/wireless/ath/ath12k/dp.c
-@@ -1121,6 +1121,9 @@ static void ath12k_dp_cleanup(struct ath12k_base *ab)
+@@ -1127,6 +1127,9 @@ static void ath12k_dp_cleanup(struct ath12k_base *ab)
  	if (!dp->ab)
  		return;
  
@@ -131,13 +131,13 @@ index f9b37d75956d..afb31d941f6e 100644
  				    HAL_WBM_IDLE_LINK, &dp->wbm_idle_ring);
  
 diff --git a/drivers/net/wireless/ath/ath12k/dp.h b/drivers/net/wireless/ath/ath12k/dp.h
-index bef0f2ba0560..dc800134536f 100644
+index 108e27dd5797..efe3b7d182bf 100644
 --- a/drivers/net/wireless/ath/ath12k/dp.h
 +++ b/drivers/net/wireless/ath/ath12k/dp.h
-@@ -450,6 +450,15 @@ struct ath12k_device_dp_stats {
- 	u32 tx_enqueued[DP_TCL_NUM_RING_MAX];
+@@ -440,6 +440,15 @@ struct ath12k_device_dp_stats {
  	u32 tx_completed[DP_TCL_NUM_RING_MAX];
  	u32 reo_excep_msdu_buf_type;
+ 	u32 sent_to_stack[DP_REO_DST_RING_MAX][ATH12K_MAX_DEVICES];
 +	/* RX refill ring accounting */
 +	u32 rx_replenish_alloc_fail;
 +	u32 rx_replenish_map_fail;
@@ -150,7 +150,7 @@ index bef0f2ba0560..dc800134536f 100644
  };
  
  struct ath12k_dp {
-@@ -507,6 +516,20 @@ struct ath12k_dp {
+@@ -497,6 +506,20 @@ struct ath12k_dp {
  	spinlock_t tx_desc_lock[ATH12K_HW_MAX_QUEUES];
  
  	struct dp_rxdma_ring rx_refill_buf_ring;
@@ -172,7 +172,7 @@ index bef0f2ba0560..dc800134536f 100644
  	struct dp_srng rxdma_err_dst_ring[MAX_RXDMA_PER_PDEV];
  	struct dp_rxdma_mon_ring rxdma_mon_buf_ring;
 diff --git a/drivers/net/wireless/ath/ath12k/dp_rx.c b/drivers/net/wireless/ath/ath12k/dp_rx.c
-index 8fa0e90b4531..f220c950d6a2 100644
+index 36be543b7c50..b6b9440da07d 100644
 --- a/drivers/net/wireless/ath/ath12k/dp_rx.c
 +++ b/drivers/net/wireless/ath/ath12k/dp_rx.c
 @@ -7,6 +7,7 @@
@@ -236,7 +236,7 @@ index 8fa0e90b4531..f220c950d6a2 100644
  
  		rx_desc->skb = skb;
  		cookie = rx_desc->cookie;
-@@ -163,6 +185,7 @@ int ath12k_dp_rx_bufs_replenish(struct ath12k_dp *dp,
+@@ -163,6 +185,7 @@ fail_free_skb:
  	dev_kfree_skb_any(skb);
  out:
  	ath12k_hal_srng_access_end(ab, srng);
@@ -244,7 +244,7 @@ index 8fa0e90b4531..f220c950d6a2 100644
  
  	if (!list_empty(used_list))
  		ath12k_dp_rx_enqueue_free(dp, used_list);
-@@ -173,6 +196,83 @@ int ath12k_dp_rx_bufs_replenish(struct ath12k_dp *dp,
+@@ -173,6 +196,83 @@ out:
  }
  EXPORT_SYMBOL(ath12k_dp_rx_bufs_replenish);
  
@@ -328,7 +328,7 @@ index 8fa0e90b4531..f220c950d6a2 100644
  static int ath12k_dp_rxdma_mon_buf_ring_free(struct ath12k_base *ab,
  					     struct dp_rxdma_mon_ring *rx_ring)
  {
-@@ -1592,6 +1692,7 @@ void ath12k_dp_rx_free(struct ath12k_base *ab)
+@@ -1587,6 +1687,7 @@ void ath12k_dp_rx_free(struct ath12k_base *ab)
  	struct dp_srng *srng;
  	int i;
  
@@ -336,11 +336,12 @@ index 8fa0e90b4531..f220c950d6a2 100644
  	ath12k_dp_srng_cleanup(ab, &dp->rx_refill_buf_ring.refill_buf_ring);
  
  	for (i = 0; i < ab->hw_params->num_rxdma_per_pdev; i++) {
-@@ -1760,12 +1861,21 @@ int ath12k_dp_rx_alloc(struct ath12k_base *ab)
+@@ -1757,12 +1858,22 @@ int ath12k_dp_rx_alloc(struct ath12k_base *ab)
  		}
  	}
  
-+	dp->rx_refill_fill_end = dp->rx_refill_posted + ATH12K_RX_DESC_COUNT(ab);
++	dp->rx_refill_fill_end = dp->rx_refill_posted +
++				 ath12k_dp_rx_desc_count(&ab->profile_param->dp_params);
  	ret = ath12k_dp_rxdma_buf_setup(ab);
  	if (ret) {
  		ath12k_warn(ab, "failed to setup rxdma ring\n");
@@ -359,7 +360,7 @@ index 8fa0e90b4531..f220c950d6a2 100644
  }
  
 diff --git a/drivers/net/wireless/ath/ath12k/dp_rx.h b/drivers/net/wireless/ath/ath12k/dp_rx.h
-index 0660db070e92..aac28d4c5db6 100644
+index 82700474548a..bc465a68b624 100644
 --- a/drivers/net/wireless/ath/ath12k/dp_rx.h
 +++ b/drivers/net/wireless/ath/ath12k/dp_rx.h
 @@ -225,6 +225,7 @@ void ath12k_dp_rx_pdev_reo_cleanup(struct ath12k_base *ab);
@@ -371,10 +372,10 @@ index 0660db070e92..aac28d4c5db6 100644
  void ath12k_dp_rx_pdev_free(struct ath12k_base *ab, int pdev_idx);
  void ath12k_dp_rx_reo_cmd_list_cleanup(struct ath12k_base *ab);
 diff --git a/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c b/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
-index 95d87dd67872..92663531963f 100644
+index a32c804403e8..7687295b5b30 100644
 --- a/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
 +++ b/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
-@@ -789,9 +789,9 @@ int ath12k_wifi7_dp_rx_process(struct ath12k_dp *dp, int ring_id,
+@@ -801,9 +801,9 @@ try_again:
  
  	spin_unlock_bh(&srng->lock);
  
@@ -387,7 +388,7 @@ index 95d87dd67872..92663531963f 100644
  	for (device_id = 0; device_id < ATH12K_MAX_DEVICES; device_id++) {
  		if (!num_buffs_reaped[device_id])
  			continue;
-@@ -802,6 +802,14 @@ int ath12k_wifi7_dp_rx_process(struct ath12k_dp *dp, int ring_id,
+@@ -814,6 +814,14 @@ try_again:
  		ath12k_dp_rx_bufs_replenish(partner_dp, rx_ring,
  					    &rx_desc_used_list[device_id],
  					    num_buffs_reaped[device_id]);
@@ -402,6 +403,3 @@ index 95d87dd67872..92663531963f 100644
  	}
  
  	ath12k_wifi7_dp_rx_process_received_packets(dp, napi, &msdu_list,
--- 
-2.43.0
-

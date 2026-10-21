@@ -249,7 +249,7 @@ index 000000000000..d73d70898710
 +	.vfe_wm_update = vfe_wm_update,
 +};
 diff --git a/drivers/media/platform/qcom/camss/camss-vfe.c b/drivers/media/platform/qcom/camss/camss-vfe.c
-index 319d19158988..826ab85a44a1 100644
+index 2680a9914765..3acef6ba97dc 100644
 --- a/drivers/media/platform/qcom/camss/camss-vfe.c
 +++ b/drivers/media/platform/qcom/camss/camss-vfe.c
 @@ -353,6 +353,7 @@ static u32 vfe_src_pad_code(struct vfe_line *line, u32 sink_code,
@@ -310,10 +310,10 @@ index ae9dad353a37..c402ef170c81 100644
  int vfe_get(struct vfe_device *vfe);
  void vfe_put(struct vfe_device *vfe);
 diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
-index cd085a7cfd18..c6b610c0cd08 100644
+index a5fad2023a36..44fd039d73f2 100644
 --- a/drivers/media/platform/qcom/camss/camss.c
 +++ b/drivers/media/platform/qcom/camss/camss.c
-@@ -158,6 +158,157 @@ static const struct camss_subdev_resources csid_res_kaanapali[] = {
+@@ -162,6 +162,157 @@ static const struct camss_subdev_resources csid_res_kaanapali[] = {
  	}
  };
  
@@ -471,7 +471,7 @@ index cd085a7cfd18..c6b610c0cd08 100644
  static const struct resources_icc icc_res_kaanapali[] = {
  	{
  		.name = "ahb",
-@@ -5739,10 +5890,12 @@ static const struct camss_resources kaanapali_resources = {
+@@ -5719,10 +5870,12 @@ static const struct camss_resources kaanapali_resources = {
  	.pd_name = "top",
  	.csiphy_res = csiphy_res_kaanapali,
  	.csid_res = csid_res_kaanapali,
@@ -484,6 +484,3 @@ index cd085a7cfd18..c6b610c0cd08 100644
  };
  
  static const struct camss_resources msm8916_resources = {
--- 
-2.43.0
-

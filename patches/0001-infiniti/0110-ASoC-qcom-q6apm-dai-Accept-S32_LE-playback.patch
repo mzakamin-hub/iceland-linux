@@ -11,10 +11,10 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 5 insertions(+), 1 deletion(-)
 
 diff --git a/sound/soc/qcom/qdsp6/q6apm-dai.c b/sound/soc/qcom/qdsp6/q6apm-dai.c
-index 033197bdd870..346b16bc63f4 100644
+index 58beaf906b9f..e01d82ca718b 100644
 --- a/sound/soc/qcom/qdsp6/q6apm-dai.c
 +++ b/sound/soc/qcom/qdsp6/q6apm-dai.c
-@@ -113,7 +113,8 @@ static const struct snd_pcm_hardware q6apm_dai_hardware_playback = {
+@@ -222,7 +222,8 @@ static const struct snd_pcm_hardware q6apm_dai_hardware_playback = {
  				 SNDRV_PCM_INFO_PAUSE | SNDRV_PCM_INFO_RESUME |
  				 SNDRV_PCM_INFO_NO_REWINDS | SNDRV_PCM_INFO_SYNC_APPLPTR |
  				 SNDRV_PCM_INFO_BATCH),
@@ -24,7 +24,7 @@ index 033197bdd870..346b16bc63f4 100644
  	.rates =                SNDRV_PCM_RATE_8000_192000,
  	.rate_min =             8000,
  	.rate_max =             192000,
-@@ -522,6 +523,9 @@ static int q6apm_dai_hw_params(struct snd_soc_component *component,
+@@ -641,6 +642,9 @@ static int q6apm_dai_hw_params(struct snd_soc_component *component,
  	case SNDRV_PCM_FORMAT_S24_LE:
  		prtd->bits_per_sample = 24;
  		break;
@@ -34,6 +34,3 @@ index 033197bdd870..346b16bc63f4 100644
  	default:
  		return -EINVAL;
  	}
--- 
-2.43.0
-

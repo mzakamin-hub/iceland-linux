@@ -47,7 +47,7 @@ Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
  1 file changed, 16 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/crypto/qce/skcipher.c b/drivers/crypto/qce/skcipher.c
-index 32b438e1eea1..ef59e4e04e73 100644
+index f177062eb735..ec2f21446cee 100644
 --- a/drivers/crypto/qce/skcipher.c
 +++ b/drivers/crypto/qce/skcipher.c
 @@ -33,6 +33,7 @@ static void qce_skcipher_done(void *data)
@@ -81,6 +81,3 @@ index 32b438e1eea1..ef59e4e04e73 100644
  	qce->async_req_done(tmpl->qce, error);
  }
  
--- 
-2.43.0
-

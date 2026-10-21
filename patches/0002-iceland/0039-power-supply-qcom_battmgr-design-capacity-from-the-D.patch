@@ -20,7 +20,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index e6dab93ef31a..16066d23d8f3 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -44,6 +44,11 @@ aliases {
+@@ -44,6 +44,11 @@
  		serial1 = &uart18;
  	};
  
@@ -32,7 +32,7 @@ index e6dab93ef31a..16066d23d8f3 100644
  	chosen {
  		#address-cells = <2>;
  		#size-cells = <2>;
-@@ -184,6 +189,9 @@ switch-lid {
+@@ -184,6 +189,9 @@
  	pmic-glink {
  		compatible = "oneplus,iceland-pmic-glink", "qcom,kaanapali-pmic-glink",
  			     "qcom,pmic-glink";
@@ -43,7 +43,7 @@ index e6dab93ef31a..16066d23d8f3 100644
  		#size-cells = <0>;
  		orientation-gpios = <&tlmm 60 GPIO_ACTIVE_HIGH>;
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index ec2b607895f1..25cd1b932c00 100644
+index 1044bd165a96..5410a0e38355 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -373,6 +373,9 @@ struct qcom_battmgr {
@@ -76,7 +76,7 @@ index ec2b607895f1..25cd1b932c00 100644
  			return -ENODATA;
  		val->intval = battmgr->status.capacity;
  		break;
-@@ -1792,6 +1797,12 @@ static void qcom_battmgr_oplus_gauge_callback(struct qcom_battmgr *battmgr,
+@@ -1816,6 +1821,12 @@ static void qcom_battmgr_oplus_gauge_callback(struct qcom_battmgr *battmgr,
  	battmgr->status.soh_percent = le32_to_cpu(data[OPLUS_GAUGE_SOH]);
  	battmgr->info.cycle_count = le32_to_cpu(data[OPLUS_GAUGE_CYCLE_COUNT]);
  	battmgr->info.last_full_capacity = le32_to_cpu(data[OPLUS_GAUGE_FCC]) * 1000;
@@ -89,7 +89,7 @@ index ec2b607895f1..25cd1b932c00 100644
  
  out_complete:
  	complete(&battmgr->ack);
-@@ -1987,6 +1998,18 @@ static const struct of_device_id qcom_battmgr_of_variants[] = {
+@@ -2011,6 +2022,18 @@ static const struct of_device_id qcom_battmgr_of_variants[] = {
  
  static char *qcom_battmgr_battery[] = { "battery" };
  
@@ -108,7 +108,7 @@ index ec2b607895f1..25cd1b932c00 100644
  static int qcom_battmgr_probe(struct auxiliary_device *adev,
  			      const struct auxiliary_device_id *id)
  {
-@@ -2037,6 +2060,7 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
+@@ -2061,6 +2084,7 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
  		if (IS_ERR(battmgr->bat_psy))
  			return dev_err_probe(dev, PTR_ERR(battmgr->bat_psy),
  					     "failed to register battery power supply\n");
@@ -116,7 +116,7 @@ index ec2b607895f1..25cd1b932c00 100644
  
  		battmgr->ac_psy = devm_power_supply_register(dev, &sc8280xp_ac_psy_desc, &psy_cfg_supply);
  		if (IS_ERR(battmgr->ac_psy))
-@@ -2064,6 +2088,7 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
+@@ -2088,6 +2112,7 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
  		if (IS_ERR(battmgr->bat_psy))
  			return dev_err_probe(dev, PTR_ERR(battmgr->bat_psy),
  					     "failed to register battery power supply\n");
@@ -124,6 +124,3 @@ index ec2b607895f1..25cd1b932c00 100644
  
  		battmgr->usb_psy = devm_power_supply_register(dev, &sm8350_usb_psy_desc, &psy_cfg_supply);
  		if (IS_ERR(battmgr->usb_psy))
--- 
-2.43.0
-

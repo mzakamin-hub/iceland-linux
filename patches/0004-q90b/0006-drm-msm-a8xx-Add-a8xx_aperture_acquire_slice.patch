@@ -1,0 +1,84 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Rob Clark <robin.clark@oss.qualcomm.com>
+Date: Tue, 20 Oct 2026 13:46:17 -0700
+Subject: [PATCH] drm/msm/a8xx: Add a8xx_aperture_acquire_slice()
+
+The gen8 snapshot code will need a bit more control.
+
+Signed-off-by: Rob Clark <robin.clark@oss.qualcomm.com>
+---
+ drivers/gpu/drm/msm/adreno/a6xx_gpu.h |  3 +++
+ drivers/gpu/drm/msm/adreno/a8xx_gpu.c | 19 +++++++++++++++----
+ 2 files changed, 18 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
+index 00cbed64cf56..4511b7112bd8 100644
+--- a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
++++ b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
+@@ -348,6 +348,9 @@ void a6xx_flush(struct msm_gpu *gpu, struct msm_ringbuffer *ring);
+ void a6xx_flush_yield(struct msm_gpu *gpu, struct msm_ringbuffer *ring);
+ int a6xx_zap_shader_init(struct msm_gpu *gpu);
+ 
++void a8xx_aperture_acquire_slice(struct msm_gpu *gpu, enum adreno_pipe pipe,
++				 u32 slice, bool use_slice,
++				 unsigned long *flags);
+ void a8xx_aperture_acquire(struct msm_gpu *gpu, enum adreno_pipe pipe, unsigned long *flags);
+ void a8xx_aperture_release(struct msm_gpu *gpu, unsigned long flags);
+ void a8xx_aperture_clear(struct msm_gpu *gpu);
+diff --git a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
+index 52cbf239bc86..77422d1a9506 100644
+--- a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
++++ b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
+@@ -16,7 +16,8 @@
+ 
+ #define GPU_PAS_ID 13
+ 
+-static void a8xx_aperture_slice_set(struct msm_gpu *gpu, enum adreno_pipe pipe, u32 slice)
++static void a8xx_aperture_slice_set(struct msm_gpu *gpu, enum adreno_pipe pipe,
++				    u32 slice, bool use_slice)
+ {
+ 	struct adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
+ 	struct a6xx_gpu *a6xx_gpu = to_a6xx_gpu(adreno_gpu);
+@@ -24,6 +25,9 @@ static void a8xx_aperture_slice_set(struct msm_gpu *gpu, enum adreno_pipe pipe,
+ 
+ 	val = A8XX_CP_APERTURE_CNTL_HOST_PIPEID(pipe) | A8XX_CP_APERTURE_CNTL_HOST_SLICEID(slice);
+ 
++	if (use_slice)
++		val |= A8XX_CP_APERTURE_CNTL_HOST_USESLICEID;
++
+ 	if (a6xx_gpu->cached_aperture == val)
+ 		return;
+ 
+@@ -32,14 +36,21 @@ static void a8xx_aperture_slice_set(struct msm_gpu *gpu, enum adreno_pipe pipe,
+ 	a6xx_gpu->cached_aperture = val;
+ }
+ 
+-void a8xx_aperture_acquire(struct msm_gpu *gpu, enum adreno_pipe pipe, unsigned long *flags)
++void a8xx_aperture_acquire_slice(struct msm_gpu *gpu, enum adreno_pipe pipe,
++				 u32 slice, bool use_slice,
++				 unsigned long *flags)
+ {
+ 	struct adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
+ 	struct a6xx_gpu *a6xx_gpu = to_a6xx_gpu(adreno_gpu);
+ 
+ 	spin_lock_irqsave(&a6xx_gpu->aperture_lock, *flags);
+ 
+-	a8xx_aperture_slice_set(gpu, pipe, 0);
++	a8xx_aperture_slice_set(gpu, pipe, slice, use_slice);
++}
++
++void a8xx_aperture_acquire(struct msm_gpu *gpu, enum adreno_pipe pipe, unsigned long *flags)
++{
++	a8xx_aperture_acquire_slice(gpu, pipe, 0, false, flags);
+ }
+ 
+ void a8xx_aperture_release(struct msm_gpu *gpu, unsigned long flags)
+@@ -75,7 +86,7 @@ static u32 a8xx_read_pipe_slice(struct msm_gpu *gpu, enum adreno_pipe pipe, u32
+ 	u32 val;
+ 
+ 	spin_lock_irqsave(&a6xx_gpu->aperture_lock, flags);
+-	a8xx_aperture_slice_set(gpu, pipe, slice);
++	a8xx_aperture_slice_set(gpu, pipe, slice, false);
+ 	val = gpu_read(gpu, offset);
+ 	spin_unlock_irqrestore(&a6xx_gpu->aperture_lock, flags);
+ 

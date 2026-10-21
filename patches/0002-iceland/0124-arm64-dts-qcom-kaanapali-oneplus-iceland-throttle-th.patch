@@ -36,7 +36,7 @@ index 40492d32edc0..3ff002f3c54c 100644
  #include "kaanapali.dtsi"
  
  #include "pmh0101.dtsi"              /* SPMI0: SID-1       */
-@@ -2368,9 +2369,9 @@ map1 {
+@@ -2368,9 +2369,9 @@
  
  	/*
  	 * XO / board: stock sys-therm-0 = pmk8850_xo_therm. At 78 C (hysteresis 8) stock limits the GPU from
@@ -49,7 +49,7 @@ index 40492d32edc0..3ff002f3c54c 100644
  	 */
  	xo-thermal {
  		polling-delay-passive = <1000>;
-@@ -2401,6 +2402,7 @@ cooling-maps {
+@@ -2401,6 +2402,7 @@
  			map0 {
  				trip = <&xo_alert0>;
  				cooling-device = <&gpu 5 THERMAL_NO_LIMIT>,
@@ -57,7 +57,7 @@ index 40492d32edc0..3ff002f3c54c 100644
  						 <&cpu0 27 27>,
  						 <&cpu6 28 28>;
  			};
-@@ -2548,7 +2550,7 @@ map0 {
+@@ -2548,7 +2550,7 @@
  	/*
  	 * Nearly empty. Stock's "socd" zone reads 100 - capacity; from 95 (5 % left) it limits the CPUs one state
  	 * per second down to state 11 (2227200 kHz) on the small cluster and state 15 (2438400 kHz) on the big
@@ -66,7 +66,7 @@ index 40492d32edc0..3ff002f3c54c 100644
  	 */
  	socd-thermal {
  		polling-delay-passive = <1000>;
-@@ -2568,7 +2570,8 @@ map0 {
+@@ -2568,7 +2570,8 @@
  				trip = <&socd_trip>;
  				cooling-device = <&cpu0 THERMAL_NO_LIMIT 11>,
  						 <&cpu6 THERMAL_NO_LIMIT 15>,
@@ -76,7 +76,7 @@ index 40492d32edc0..3ff002f3c54c 100644
  			};
  		};
  	};
-@@ -2622,10 +2625,19 @@ usb-temp-r-hot {
+@@ -2622,10 +2625,19 @@
  };
  
  /*
@@ -99,6 +99,3 @@ index 40492d32edc0..3ff002f3c54c 100644
  &{/thermal-zones/pmh0110-f-thermal} {
  	cooling-maps {
  		map0 {
--- 
-2.43.0
-

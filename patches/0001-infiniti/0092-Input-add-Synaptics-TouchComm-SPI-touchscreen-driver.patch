@@ -491,6 +491,3 @@ index 000000000000..d530278b24bf
 +
 +MODULE_DESCRIPTION("Synaptics TouchComm SPI touchscreen driver");
 +MODULE_LICENSE("GPL");
--- 
-2.43.0
-

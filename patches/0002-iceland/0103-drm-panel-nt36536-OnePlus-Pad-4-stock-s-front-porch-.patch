@@ -39,6 +39,3 @@ index 8d0ac3bc6397..0d9b7ec4e228 100644
  		.vdisplay = 2400,
  		.vsync_start = 2400 + 26,
  		.vsync_end = 2400 + 26 + 2,
--- 
-2.43.0
-

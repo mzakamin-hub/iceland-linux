@@ -29,7 +29,7 @@ Signed-off-by: Birk Skyum <birk.skyum@pm.me>
  1 file changed, 5 insertions(+)
 
 diff --git a/sound/soc/qcom/qdsp6/q6apm-lpass-dais.c b/sound/soc/qcom/qdsp6/q6apm-lpass-dais.c
-index 3298a7b2b51c..d20d9c75d208 100644
+index 7aac6b1c4169..1b83601c2c26 100644
 --- a/sound/soc/qcom/qdsp6/q6apm-lpass-dais.c
 +++ b/sound/soc/qcom/qdsp6/q6apm-lpass-dais.c
 @@ -187,11 +187,16 @@ static int q6dma_hw_params(struct snd_pcm_substream *substream,
@@ -49,6 +49,3 @@ index 3298a7b2b51c..d20d9c75d208 100644
  
  	return 0;
  }
--- 
-2.43.0
-

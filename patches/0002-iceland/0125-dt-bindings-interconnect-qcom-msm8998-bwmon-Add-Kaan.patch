@@ -14,7 +14,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/Documentation/devicetree/bindings/interconnect/qcom,msm8998-bwmon.yaml b/Documentation/devicetree/bindings/interconnect/qcom,msm8998-bwmon.yaml
-index 21b4e04727de..455ec9f97614 100644
+index f6969910bded..f31d1869ad5e 100644
 --- a/Documentation/devicetree/bindings/interconnect/qcom,msm8998-bwmon.yaml
 +++ b/Documentation/devicetree/bindings/interconnect/qcom,msm8998-bwmon.yaml
 @@ -50,6 +50,7 @@ properties:
@@ -22,9 +22,6 @@ index 21b4e04727de..455ec9f97614 100644
                - qcom,eliza-llcc-bwmon
                - qcom,hawi-llcc-bwmon
 +              - qcom,kaanapali-llcc-bwmon
+               - qcom,milos-cpu-bwmon
                - qcom,qcs615-llcc-bwmon
                - qcom,qcs8300-llcc-bwmon
-               - qcom,sa8775p-llcc-bwmon
--- 
-2.43.0
-

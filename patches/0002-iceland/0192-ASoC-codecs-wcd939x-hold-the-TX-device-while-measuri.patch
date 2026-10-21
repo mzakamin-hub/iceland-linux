@@ -23,10 +23,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 65 insertions(+), 11 deletions(-)
 
 diff --git a/sound/soc/codecs/wcd939x.c b/sound/soc/codecs/wcd939x.c
-index 29fda5a7838b..b8bdd8c413d0 100644
+index 3bffd5abd09d..69078dc25a38 100644
 --- a/sound/soc/codecs/wcd939x.c
 +++ b/sound/soc/codecs/wcd939x.c
-@@ -2029,26 +2029,49 @@ static const struct zdet_param wcd939x_mbhc_zdet_param = {
+@@ -2033,26 +2033,49 @@ static const struct zdet_param wcd939x_mbhc_zdet_param = {
  	.btn7 = 0x78,
  };
  
@@ -81,7 +81,7 @@ index 29fda5a7838b..b8bdd8c413d0 100644
  	snd_soc_component_write_field(component, WCD939X_ANA_MBHC_ZDET,
  				      WCD939X_MBHC_ZDET_ZDET_CHG_EN, false);
  	x1 = WCD939X_MBHC_GET_X1(val);
-@@ -2077,15 +2100,22 @@ static void wcd939x_mbhc_get_result_params(struct snd_soc_component *component,
+@@ -2081,15 +2104,22 @@ static void wcd939x_mbhc_get_result_params(struct snd_soc_component *component,
  ramp_down:
  	i = 0;
  	while (x1) {
@@ -108,7 +108,7 @@ index 29fda5a7838b..b8bdd8c413d0 100644
  }
  
  static void wcd939x_mbhc_zdet_ramp(struct snd_soc_component *component,
-@@ -2155,8 +2185,8 @@ static void wcd939x_wcd_mbhc_qfuse_cal(struct snd_soc_component *component,
+@@ -2159,8 +2189,8 @@ static void wcd939x_wcd_mbhc_qfuse_cal(struct snd_soc_component *component,
  		*z_val = ((*z_val) * 10000) / q1_cal;
  }
  
@@ -119,7 +119,7 @@ index 29fda5a7838b..b8bdd8c413d0 100644
  {
  	struct wcd939x_priv *wcd939x = dev_get_drvdata(component->dev);
  	unsigned int reg0, reg1, reg2, reg3, reg4;
-@@ -2307,6 +2337,30 @@ static void wcd939x_wcd_mbhc_calc_impedance(struct snd_soc_component *component,
+@@ -2311,6 +2341,30 @@ zdet_complete:
  					      WCD939X_MBHC_ELECT_FSM_EN, true);
  }
  
@@ -150,6 +150,3 @@ index 29fda5a7838b..b8bdd8c413d0 100644
  static void wcd939x_mbhc_gnd_det_ctrl(struct snd_soc_component *component,
  				      bool enable)
  {
--- 
-2.43.0
-

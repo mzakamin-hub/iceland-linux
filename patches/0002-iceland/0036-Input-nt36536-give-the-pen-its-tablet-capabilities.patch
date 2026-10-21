@@ -48,7 +48,7 @@ index 1ec7fd9e239d..e1850fc15fe8 100644
  		}
  
  		input_sync(ts->pen_input_dev);
-@@ -1210,6 +1216,21 @@ static void nvt_resume_work(struct work_struct *work)
+@@ -1210,6 +1216,21 @@ Description:
  return:
  	Executive outcomes. 0---succeed. negative---failed
  *******************************************************/
@@ -115,6 +115,3 @@ index 0d7b4375f88d..97cf0972d218 100644
  #include <linux/spi/spi.h>
  #include <linux/uaccess.h>
  #include <linux/version.h>
--- 
-2.43.0
-

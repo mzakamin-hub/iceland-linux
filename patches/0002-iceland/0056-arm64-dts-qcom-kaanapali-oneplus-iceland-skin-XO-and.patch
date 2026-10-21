@@ -45,7 +45,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 28283c08ff73..a03027e4dbe0 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1375,6 +1375,9 @@ &pmih0108_e1_eusb2_repeater {
+@@ -1375,6 +1375,9 @@
  };
  
  &pmk8850_vadc {
@@ -55,7 +55,7 @@ index 28283c08ff73..a03027e4dbe0 100644
  	/* PMH0101 (SID 1) thermistors, 100k pull-up (stock: pmh0101_board_therm, pmh0101_flash_therm) */
  	channel@148 {
  		reg = <ADC5_GEN4_AMUX5_THM_100K_PU(0, 1)>;
-@@ -1391,6 +1394,64 @@ channel@14a {
+@@ -1391,6 +1394,64 @@
  		qcom,hw-settle-time = <200>;
  		qcom,adc-tm;
  	};
@@ -120,7 +120,7 @@ index 28283c08ff73..a03027e4dbe0 100644
  };
  
  &pon_resin {
-@@ -1709,6 +1770,151 @@ flash-hot {
+@@ -1709,6 +1770,151 @@
  			};
  		};
  	};
@@ -272,6 +272,3 @@ index 28283c08ff73..a03027e4dbe0 100644
  };
  
  /* CPU thermal trips mirroring stock 11.A.38 */
--- 
-2.43.0
-

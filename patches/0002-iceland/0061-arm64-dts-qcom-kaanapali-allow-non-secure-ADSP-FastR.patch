@@ -16,10 +16,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 5d75118364ec..d3d30e44260f 100644
+index 9dc5f932abc5..451e9f2ca1d0 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -3456,6 +3456,7 @@ fastrpc {
+@@ -3452,6 +3452,7 @@
  					compatible = "qcom,kaanapali-fastrpc";
  					qcom,glink-channels = "fastrpcglink-apps-dsp";
  					label = "adsp";
@@ -27,6 +27,3 @@ index 5d75118364ec..d3d30e44260f 100644
  					#address-cells = <1>;
  					#size-cells = <0>;
  
--- 
-2.43.0
-

@@ -1,7 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Wed, 14 Oct 2026 13:41:24 +0000
-Subject: [PATCH] power: supply: qcom_battmgr: OPLUS PD 9 V up to 20 W, 5 V at 4.5 V and in cool-down
+Subject: [PATCH] power: supply: qcom_battmgr: OPLUS PD 9 V up to 20 W, 5 V at
+ 4.5 V and in cool-down
 
 The Pad 4 charger setup asks a USB-PD charger for 9 V within stock's
 PD row: 13.5 W, so 1500 mA at 9 V, and only at the attach.
@@ -57,7 +58,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 213 insertions(+), 23 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 63aa980d5724282107e6b93bc6b1e5b82629c67b..86de9567970a899a5e759581ebe212a45db7cac6 100644
+index 4f8d0b2f6826..f06f8d2c7e34 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -443,6 +443,11 @@ struct qcom_battmgr {
@@ -72,7 +73,7 @@ index 63aa980d5724282107e6b93bc6b1e5b82629c67b..86de9567970a899a5e759581ebe212a4
  	/* the charge limit kept by the driver, see qcom_battmgr_oplus_limit_update() */
  	unsigned int chg_limit_end;	/* percent, 100 = no limit */
  	unsigned int chg_limit_start;	/* percent, 0 = CHARGE_CTRL_DELTA_SOC below the end */
-@@ -2340,13 +2345,37 @@ static int qcom_battmgr_oplus_set(struct qcom_battmgr *battmgr, int property, u3
+@@ -2364,13 +2369,37 @@ static int qcom_battmgr_oplus_set(struct qcom_battmgr *battmgr, int property, u3
   * - fccmax-ma groups [unknown SDP CDP DCP VOOC QC PD ...] = 2200 600 1600 2200 3300 3300 3300 mA in the normal
   *   temperature regions (iceland-battery-guard lowers it per temperature region through
   *   constant_charge_current_max);
@@ -113,7 +114,7 @@ index 63aa980d5724282107e6b93bc6b1e5b82629c67b..86de9567970a899a5e759581ebe212a4
  /* type changes followed during one attach; one more puts the "unknown" limits in force until the unplug */
  #define ICELAND_TYPE_CHANGES_MAX	5
  
-@@ -2369,7 +2398,7 @@ static void qcom_battmgr_iceland_type_limits(unsigned int type, unsigned int *po
+@@ -2393,7 +2422,7 @@ static void qcom_battmgr_iceland_type_limits(unsigned int type, unsigned int *po
  	case POWER_SUPPLY_USB_TYPE_PD:
  	case POWER_SUPPLY_USB_TYPE_PD_DRP:
  	case POWER_SUPPLY_USB_TYPE_PD_PPS:
@@ -122,7 +123,7 @@ index 63aa980d5724282107e6b93bc6b1e5b82629c67b..86de9567970a899a5e759581ebe212a4
  		*fcc_ma = 3300;
  		break;
  	default:	/* unknown, Type-C current, ACA, Apple brick: the stock "unknown" limits */
-@@ -2379,18 +2408,36 @@ static void qcom_battmgr_iceland_type_limits(unsigned int type, unsigned int *po
+@@ -2403,18 +2432,36 @@ static void qcom_battmgr_iceland_type_limits(unsigned int type, unsigned int *po
  	}
  }
  
@@ -162,7 +163,7 @@ index 63aa980d5724282107e6b93bc6b1e5b82629c67b..86de9567970a899a5e759581ebe212a4
  /*
   * constant_charge_current_max: the host can lower the charge current (never raise it above the attach value).
   * 0 is refused rather than read as "no cap": use charge_behaviour to stop charging.
-@@ -2611,11 +2658,44 @@ static unsigned int qcom_battmgr_iceland_aicl(struct qcom_battmgr *battmgr, unsi
+@@ -2635,11 +2682,44 @@ static unsigned int qcom_battmgr_iceland_aicl(struct qcom_battmgr *battmgr, unsi
  	return held * 1000;
  }
  
@@ -208,7 +209,7 @@ index 63aa980d5724282107e6b93bc6b1e5b82629c67b..86de9567970a899a5e759581ebe212a4
  	int ret;
  
  	mutex_lock(&battmgr->lock);
-@@ -2627,11 +2707,16 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+@@ -2651,11 +2731,16 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
  	/*
  	 * The input current ask is computed at the VBUS in force. A setup that runs while a PD charger already
  	 * holds 9 V (a type change after the 9 V request, the release of a host input suspend) would otherwise ask
@@ -227,7 +228,7 @@ index 63aa980d5724282107e6b93bc6b1e5b82629c67b..86de9567970a899a5e759581ebe212a4
  
  	/* the charger type as the sysfs path reads it on this firmware: USB_ADAP_TYPE, mapped */
  	ret = qcom_battmgr_request_property(battmgr, BATTMGR_USB_PROPERTY_GET, USB_ADAP_TYPE, 0);
-@@ -2640,8 +2725,7 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+@@ -2664,8 +2749,7 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
  		type = POWER_SUPPLY_USB_TYPE_UNKNOWN;
  	battmgr->chg_type = type;
  	qcom_battmgr_iceland_type_limits(type, &power_mw, &fcc_ma);
@@ -237,7 +238,7 @@ index 63aa980d5724282107e6b93bc6b1e5b82629c67b..86de9567970a899a5e759581ebe212a4
  
  	battmgr->chg_fcc_ua = fcc_ma * 1000;
  	qcom_battmgr_iceland_check(battmgr,
-@@ -2677,21 +2761,32 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+@@ -2701,21 +2785,32 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
  	icl_5v_ua = qcom_battmgr_iceland_aicl(battmgr, type, icl_ask_ua, &aicl_mv);
  	icl_ua = icl_5v_ua;
  	mv = 0;		/* VBUS is only read after a 9 V request */
@@ -279,7 +280,7 @@ index 63aa980d5724282107e6b93bc6b1e5b82629c67b..86de9567970a899a5e759581ebe212a4
  		mutex_unlock(&battmgr->lock);
  
  		msleep(OPLUS_PDO_SETTLE_MS);
-@@ -2704,12 +2799,20 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+@@ -2728,12 +2823,20 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
  		 * The charger stayed at 5 V: the 5 V input current again. If VBUS could not be read, keep the lower
  		 * 9 V current (fail low: VBUS may be 9 V).
  		 */
@@ -301,7 +302,7 @@ index 63aa980d5724282107e6b93bc6b1e5b82629c67b..86de9567970a899a5e759581ebe212a4
  		}
  	}
  	mutex_unlock(&battmgr->lock);
-@@ -2721,6 +2824,87 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+@@ -2745,6 +2848,87 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
  		 battmgr->chg_limit_hold ? ", charging held by the charge limit" : "");
  }
  
@@ -389,7 +390,7 @@ index 63aa980d5724282107e6b93bc6b1e5b82629c67b..86de9567970a899a5e759581ebe212a4
  static void qcom_battmgr_oplus_setup_charger(struct qcom_battmgr *battmgr)
  {
  	static const unsigned int pdo_mv[] = { 12000, 9000 };
-@@ -2772,7 +2956,7 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+@@ -2796,7 +2980,7 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
  	struct qcom_battmgr *battmgr = container_of(to_delayed_work(work),
  						    struct qcom_battmgr, cid_work);
  	unsigned int next = OPLUS_CID_POLL_MS;
@@ -398,7 +399,7 @@ index 63aa980d5724282107e6b93bc6b1e5b82629c67b..86de9567970a899a5e759581ebe212a4
  	int ret;
  
  	if (!battmgr->service_up)
-@@ -2834,6 +3018,9 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+@@ -2858,6 +3042,9 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
  		 */
  		if (!battmgr->usb.online) {
  			battmgr->chg_type_changes = 0;
@@ -408,7 +409,7 @@ index 63aa980d5724282107e6b93bc6b1e5b82629c67b..86de9567970a899a5e759581ebe212a4
  		} else if (battmgr->chg_stock_limits && !setup_charger &&
  			   battmgr->chg_type_changes <= ICELAND_TYPE_CHANGES_MAX &&
  			   !qcom_battmgr_request_property(battmgr, BATTMGR_USB_PROPERTY_GET,
-@@ -2846,6 +3033,7 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+@@ -2870,6 +3057,7 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
  				 ": too many, the unknown-type limits until the unplug" : "");
  			setup_charger = true;
  		}
@@ -416,7 +417,7 @@ index 63aa980d5724282107e6b93bc6b1e5b82629c67b..86de9567970a899a5e759581ebe212a4
  		next = OPLUS_CID_IDLE_POLL_MS;
  		goto out_unlock;
  	}
-@@ -2878,6 +3066,8 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+@@ -2902,6 +3090,8 @@ out_unlock:
  
  	if (setup_charger)
  		qcom_battmgr_oplus_setup_charger(battmgr);
@@ -425,6 +426,3 @@ index 63aa980d5724282107e6b93bc6b1e5b82629c67b..86de9567970a899a5e759581ebe212a4
  
  	queue_delayed_work(system_dfl_long_wq, &battmgr->cid_work, msecs_to_jiffies(next));
  }
--- 
-2.43.0
-

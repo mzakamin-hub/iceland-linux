@@ -42,6 +42,3 @@ index cdb33b9a371a..93ad4248930c 100644
  	ctl->ops.reset(ctl);
  
  	dpu_encoder_helper_reset_mixers(phys_enc);
--- 
-2.43.0
-

@@ -15,10 +15,10 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  2 files changed, 2 insertions(+)
 
 diff --git a/drivers/soc/qcom/socinfo.c b/drivers/soc/qcom/socinfo.c
-index 1836e226a294..f44cd0acbfcd 100644
+index 38efc5db7fa8..722a5f511fe7 100644
 --- a/drivers/soc/qcom/socinfo.c
 +++ b/drivers/soc/qcom/socinfo.c
-@@ -534,6 +534,7 @@ static const struct soc_id soc_id[] = {
+@@ -535,6 +535,7 @@ static const struct soc_id soc_id[] = {
  	{ qcom_board_id(QCS6690) },
  	{ qcom_board_id(SM7750) },
  	{ qcom_board_id(SM8850) },
@@ -27,10 +27,10 @@ index 1836e226a294..f44cd0acbfcd 100644
  	{ qcom_board_id(QCS9100) },
  	{ qcom_board_id(QCS8300) },
 diff --git a/include/dt-bindings/arm/qcom,ids.h b/include/dt-bindings/arm/qcom,ids.h
-index 2cf433f61d5e..6964c947c265 100644
+index 135297027580..a23cbedf62e2 100644
 --- a/include/dt-bindings/arm/qcom,ids.h
 +++ b/include/dt-bindings/arm/qcom,ids.h
-@@ -293,6 +293,7 @@
+@@ -294,6 +294,7 @@
  #define QCOM_ID_QCS6690			658
  #define QCOM_ID_SM7750			659
  #define QCOM_ID_SM8850			660
@@ -38,6 +38,3 @@ index 2cf433f61d5e..6964c947c265 100644
  #define QCOM_ID_IPQ5404			671
  #define QCOM_ID_QCS9100			667
  #define QCOM_ID_QCS8300			674
--- 
-2.43.0
-

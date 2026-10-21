@@ -359,6 +359,3 @@ index 8bd125650168..8d0ac3bc6397 100644
  	{ /* sentinel */ }
  };
  MODULE_DEVICE_TABLE(of, novatek_of_match);
--- 
-2.43.0
-

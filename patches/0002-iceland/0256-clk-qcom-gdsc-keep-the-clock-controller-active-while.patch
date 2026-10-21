@@ -121,6 +121,3 @@ index 2f9665b664e6..fc167fbf7234 100644
  	bool				needs_icc;
  	unsigned int			icc_path_index;
  	struct icc_path			*icc_path;
--- 
-2.43.0
-

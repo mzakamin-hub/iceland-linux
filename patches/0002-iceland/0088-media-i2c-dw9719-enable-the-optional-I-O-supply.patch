@@ -78,6 +78,3 @@ index 3b7ba88fd67c..7ea976df9247 100644
  	v4l2_i2c_subdev_init(&dw9719->sd, client, &dw9719_ops);
  	dw9719->sd.flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
  	dw9719->sd.internal_ops = &dw9719_internal_ops;
--- 
-2.43.0
-

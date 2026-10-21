@@ -69,6 +69,3 @@ index 76a31369f420..906dfc2d40e1 100644
  };
  
  static const struct snd_soc_dapm_route tfa9865_dapm_routes[] = {
--- 
-2.43.0
-

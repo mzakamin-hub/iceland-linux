@@ -141,10 +141,10 @@ index 000000000000..8ac5f39f5fd2
 +    };
 +...
 diff --git a/Documentation/devicetree/bindings/mfd/qcom,spmi-pmic.yaml b/Documentation/devicetree/bindings/mfd/qcom,spmi-pmic.yaml
-index 5e0ed30a9a46..a04605f41526 100644
+index 7a889d888383..9f0644372ee7 100644
 --- a/Documentation/devicetree/bindings/mfd/qcom,spmi-pmic.yaml
 +++ b/Documentation/devicetree/bindings/mfd/qcom,spmi-pmic.yaml
-@@ -128,6 +128,10 @@ properties:
+@@ -129,6 +129,10 @@ properties:
      type: object
      $ref: /schemas/regulator/qcom,spmi-regulator.yaml#
  
@@ -155,6 +155,3 @@ index 5e0ed30a9a46..a04605f41526 100644
    pwm:
      type: object
      $ref: /schemas/leds/leds-qcom-lpg.yaml#
--- 
-2.43.0
-

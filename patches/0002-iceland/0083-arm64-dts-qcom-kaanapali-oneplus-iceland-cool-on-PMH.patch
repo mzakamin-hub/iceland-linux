@@ -27,7 +27,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 64a38d2ff3c6..4b48032187c9 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -2379,6 +2379,38 @@ usb-temp-r-hot {
+@@ -2379,6 +2379,38 @@
  	};
  };
  
@@ -66,6 +66,3 @@ index 64a38d2ff3c6..4b48032187c9 100644
  /* CPU thermal trips mirroring stock 11.A.38 */
  /*
   * kaanapali.dtsi only has hot (120 C) and critical (125 C) CPU trips. Stock throttles from 105 C (thermal
--- 
-2.43.0
-

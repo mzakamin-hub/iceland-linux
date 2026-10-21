@@ -17,7 +17,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 601b47203660..816ca3b822ef 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1697,6 +1697,8 @@ &pmih0108_e1_eusb2_repeater {
+@@ -1697,6 +1697,8 @@
  	qcom,tune-usb2-disc-thres = /bits/ 8 <7>;
  	qcom,squelch-detector-bp = <(-2000)>;
  	qcom,tune-usb2-preem = /bits/ 8 <3>;
@@ -26,6 +26,3 @@ index 601b47203660..816ca3b822ef 100644
  };
  
  &pmk8850_gpios {
--- 
-2.43.0
-

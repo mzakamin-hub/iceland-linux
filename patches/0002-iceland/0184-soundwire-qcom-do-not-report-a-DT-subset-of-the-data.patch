@@ -24,10 +24,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 13 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/soundwire/qcom.c b/drivers/soundwire/qcom.c
-index 55678a30cd4a..0034a0889498 100644
+index 6e0c5fb10efa..bc7fcd6b905f 100644
 --- a/drivers/soundwire/qcom.c
 +++ b/drivers/soundwire/qcom.c
-@@ -1441,22 +1441,31 @@ static int qcom_swrm_get_port_config(struct qcom_swrm_ctrl *ctrl)
+@@ -1507,22 +1507,31 @@ static int qcom_swrm_get_port_config(struct qcom_swrm_ctrl *ctrl)
  	ctrl->num_dout_ports = FIELD_GET(SWRM_COMP_PARAMS_DOUT_PORTS_MASK, val);
  	ctrl->num_din_ports = FIELD_GET(SWRM_COMP_PARAMS_DIN_PORTS_MASK, val);
  
@@ -63,6 +63,3 @@ index 55678a30cd4a..0034a0889498 100644
  
  		ctrl->num_dout_ports = val;
  	}
--- 
-2.43.0
-

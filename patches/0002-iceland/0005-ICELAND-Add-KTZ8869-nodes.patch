@@ -12,7 +12,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index f9a56dad62e0..c8d9673808fb 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -39,6 +39,32 @@ aliases {
+@@ -39,6 +39,32 @@
  
  	chosen { };
  
@@ -45,7 +45,7 @@ index f9a56dad62e0..c8d9673808fb 100644
  	clocks {
  		xo_board: xo-board {
  			compatible = "fixed-clock";
-@@ -816,6 +842,29 @@ wcd_usbss_sbu_mux: endpoint {
+@@ -816,6 +842,29 @@
  	};
  };
  
@@ -75,6 +75,3 @@ index f9a56dad62e0..c8d9673808fb 100644
  &pcie0 {
  	pinctrl-0 = <&pcie0_default_state>;
  	pinctrl-names = "default";
--- 
-2.43.0
-

@@ -20,10 +20,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 28 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index ceaecc76440a..db153bd11024 100644
+index 0a9b22cbf500..c7de330bf586 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
-@@ -1497,6 +1497,20 @@ static int qcom_battmgr_usb_get_property(struct power_supply *psy,
+@@ -1498,6 +1498,20 @@ static int qcom_battmgr_usb_get_property(struct power_supply *psy,
  	if (!battmgr->service_up)
  		return -EAGAIN;
  
@@ -44,7 +44,7 @@ index ceaecc76440a..db153bd11024 100644
  	if (battmgr->variant == QCOM_BATTMGR_SC8280XP ||
  	    battmgr->variant == QCOM_BATTMGR_X1E80100)
  		ret = qcom_battmgr_bat_sc8280xp_update(battmgr, psp);
-@@ -1570,6 +1584,18 @@ static const enum power_supply_property sm8350_usb_props[] = {
+@@ -1571,6 +1585,18 @@ static const enum power_supply_property sm8350_usb_props[] = {
  	POWER_SUPPLY_PROP_USB_TYPE,
  };
  
@@ -63,7 +63,7 @@ index ceaecc76440a..db153bd11024 100644
  static const struct power_supply_desc sm8350_usb_psy_desc = {
  	.name = "qcom-battmgr-usb",
  	.type = POWER_SUPPLY_TYPE_USB,
-@@ -1615,8 +1641,8 @@ static int qcom_battmgr_usb_set_property(struct power_supply *psy,
+@@ -1616,8 +1642,8 @@ static int qcom_battmgr_usb_set_property(struct power_supply *psy,
  static const struct power_supply_desc oplus_usb_psy_desc = {
  	.name = "qcom-battmgr-usb",
  	.type = POWER_SUPPLY_TYPE_USB,
@@ -74,6 +74,3 @@ index ceaecc76440a..db153bd11024 100644
  	.get_property = qcom_battmgr_usb_get_property,
  	.set_property = qcom_battmgr_usb_set_property,
  	.property_is_writeable = qcom_battmgr_usb_is_writeable,
--- 
-2.43.0
-

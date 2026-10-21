@@ -41,10 +41,10 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  create mode 100644 drivers/devfreq/scmi-qcom-memlat-devfreq.c
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 0c2e39e5f35f..97eb7c777d98 100644
+index 5bc9614ea131..de36f1b5ea9c 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -22644,6 +22644,14 @@ F:	Documentation/networking/device_drivers/cellular/qualcomm/rmnet.rst
+@@ -23155,6 +23155,14 @@ F:	Documentation/networking/device_drivers/cellular/qualcomm/rmnet.rst
  F:	drivers/net/ethernet/qualcomm/rmnet/
  F:	include/linux/if_rmnet.h
  
@@ -56,9 +56,9 @@ index 0c2e39e5f35f..97eb7c777d98 100644
 +S:	Maintained
 +F:	drivers/devfreq/scmi-qcom-memlat-devfreq.c
 +
- QUALCOMM TEE (QCOMTEE) DRIVER
- M:	Amirreza Zarrabi <amirreza.zarrabi@oss.qualcomm.com>
- L:	linux-arm-msm@vger.kernel.org
+ QUALCOMM SPMI CONTROLLER (PMIC ARBITER) DRIVER
+ M:	Abel Vesa <abelvesa@kernel.org>
+ M:	David Collins <david.collins@oss.qualcomm.com>
 diff --git a/drivers/devfreq/Kconfig b/drivers/devfreq/Kconfig
 index 2caa87554914..fdf6484fc72c 100644
 --- a/drivers/devfreq/Kconfig
@@ -1434,6 +1434,3 @@ index 000000000000..9ca85b2f4c1a
 +MODULE_AUTHOR("Sibi Sankar <sibi.sankar@oss.qualcomm.com>");
 +MODULE_DESCRIPTION("Qualcomm SCMI memlat devfreq driver");
 +MODULE_LICENSE("GPL");
--- 
-2.43.0
-

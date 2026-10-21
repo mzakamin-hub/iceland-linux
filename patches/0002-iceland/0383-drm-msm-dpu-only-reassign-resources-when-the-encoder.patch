@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
 Date: Sat, 3 Oct 2026 03:30:24 +0300
-Subject: [PATCH 383/394] drm/msm/dpu: only reassign resources when the encoder
- is reprogrammed
+Subject: [PATCH] drm/msm/dpu: only reassign resources when the encoder is
+ reprogrammed
 
 Running kms_plane@pixel-format-source-clamping causes SMMU faults
 (fsr=0x402, iova=0x0001fb00): it sets a CTM, after which the display stops
@@ -51,7 +51,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  2 files changed, 22 insertions(+), 28 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
-index 2b07720c3d7a..55343a16c362 100644
+index 75328d6ee33b..7ac2b133f9bb 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 @@ -1527,6 +1527,21 @@ static bool dpu_crtc_needs_dspp(const struct drm_crtc_state *state)
@@ -143,6 +143,3 @@ index a8babf1dbe0d..7b480981becc 100644
  
  	if (kms && kms->funcs && kms->funcs->check_mode_changed)
  		ret = kms->funcs->check_mode_changed(kms, state);
--- 
-2.43.0
-

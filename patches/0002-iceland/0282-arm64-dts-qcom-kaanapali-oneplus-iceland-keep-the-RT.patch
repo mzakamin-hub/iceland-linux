@@ -30,7 +30,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 9b7dc78dfd02..a47dbae0c661 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1505,6 +1505,25 @@ &mdss_dp0_out {
+@@ -1505,6 +1505,25 @@
  	link-frequencies = /bits/ 64 <1620000000 2700000000 5400000000 8100000000>;
  };
  
@@ -56,6 +56,3 @@ index 9b7dc78dfd02..a47dbae0c661 100644
  &mdss_dsi0 {
  	vdda-supply = <&vreg_l1d_1p2>;
  	qcom,dual-dsi-mode;
--- 
-2.43.0
-

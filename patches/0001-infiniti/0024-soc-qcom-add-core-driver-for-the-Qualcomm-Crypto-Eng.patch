@@ -16,10 +16,10 @@ Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
  create mode 100644 drivers/soc/qcom/qce-core.c
 
 diff --git a/drivers/soc/qcom/Kconfig b/drivers/soc/qcom/Kconfig
-index 2b524154d9fb..859835a3dd1d 100644
+index 535c8619197b..67d54d5211ff 100644
 --- a/drivers/soc/qcom/Kconfig
 +++ b/drivers/soc/qcom/Kconfig
-@@ -122,6 +122,17 @@ config QCOM_PMIC_GLINK
+@@ -121,6 +121,17 @@ config QCOM_PMIC_GLINK
  	  Say yes here to support USB-C and battery status on modern Qualcomm
  	  platforms.
  
@@ -38,13 +38,13 @@ index 2b524154d9fb..859835a3dd1d 100644
  	tristate "Qualcomm Ramp Controller driver"
  	help
 diff --git a/drivers/soc/qcom/Makefile b/drivers/soc/qcom/Makefile
-index 798643be3590..33dfef07e7db 100644
+index bddd6f0a5836..9ef0f11d0158 100644
 --- a/drivers/soc/qcom/Makefile
 +++ b/drivers/soc/qcom/Makefile
-@@ -14,6 +14,7 @@ obj-$(CONFIG_QCOM_PMIC_GLINK)	+= pmic_glink.o
- obj-$(CONFIG_QCOM_PMIC_GLINK)	+= pmic_glink_altmode.o
+@@ -15,6 +15,7 @@ obj-$(CONFIG_QCOM_PMIC_GLINK)	+= pmic_glink_altmode.o
  obj-$(CONFIG_QCOM_PMIC_PDCHARGER_ULOG)	+= pmic_pdcharger_ulog.o
  CFLAGS_pmic_pdcharger_ulog.o	:=  -I$(src)
+ obj-$(CONFIG_QCOM_QMI_TMD) += qmi_tmd.o
 +obj-$(CONFIG_QCOM_CRYPTO_CORE)	+= qce-core.o
  obj-$(CONFIG_QCOM_QMI_HELPERS)	+= qmi_helpers.o
  qmi_helpers-y	+= qmi_encdec.o qmi_interface.o
@@ -147,6 +147,3 @@ index 000000000000..8a9d070935cc
 +MODULE_DESCRIPTION("Qualcomm crypto engine core driver");
 +MODULE_ALIAS("platform:" KBUILD_MODNAME);
 +MODULE_AUTHOR("Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>");
--- 
-2.43.0
-

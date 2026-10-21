@@ -1311,6 +1311,3 @@ index 000000000000..f589ac137403
 +
 +MODULE_DESCRIPTION("Qualcomm SPMI PMIC Haptics driver");
 +MODULE_LICENSE("GPL");
--- 
-2.43.0
-

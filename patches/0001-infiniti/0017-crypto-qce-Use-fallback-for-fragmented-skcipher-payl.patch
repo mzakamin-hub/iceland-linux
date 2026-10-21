@@ -23,7 +23,7 @@ Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
  1 file changed, 5 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/crypto/qce/skcipher.c b/drivers/crypto/qce/skcipher.c
-index 2f4ecfcd16c7..690b0eb57445 100644
+index 27ce87be2029..dcf2c6ebd588 100644
 --- a/drivers/crypto/qce/skcipher.c
 +++ b/drivers/crypto/qce/skcipher.c
 @@ -261,13 +261,17 @@ static int qce_skcipher_crypt(struct skcipher_request *req, int encrypt)
@@ -45,6 +45,3 @@ index 2f4ecfcd16c7..690b0eb57445 100644
  		skcipher_request_set_tfm(&rctx->fallback_req, ctx->fallback);
  		skcipher_request_set_callback(&rctx->fallback_req,
  					      req->base.flags,
--- 
-2.43.0
-

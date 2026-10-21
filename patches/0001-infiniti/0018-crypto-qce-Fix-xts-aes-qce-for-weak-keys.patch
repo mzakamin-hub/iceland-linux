@@ -51,7 +51,7 @@ index 850f257d00f3..daea07551118 100644
  };
  
 diff --git a/drivers/crypto/qce/skcipher.c b/drivers/crypto/qce/skcipher.c
-index 690b0eb57445..b80e579df621 100644
+index dcf2c6ebd588..7abc1d7b1cf0 100644
 --- a/drivers/crypto/qce/skcipher.c
 +++ b/drivers/crypto/qce/skcipher.c
 @@ -12,6 +12,7 @@
@@ -102,6 +102,3 @@ index 690b0eb57445..b80e579df621 100644
  	    sg_nents_for_len(req->src, req->cryptlen) > 1 ||
  	    sg_nents_for_len(req->dst, req->cryptlen) > 1)) {
  		skcipher_request_set_tfm(&rctx->fallback_req, ctx->fallback);
--- 
-2.43.0
-

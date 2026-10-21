@@ -26,6 +26,3 @@ index c5ced87944b6..17fbf29effff 100644
  	{ }
  };
  MODULE_DEVICE_TABLE(of, pwrseq_pwrctrl_of_match);
--- 
-2.43.0
-

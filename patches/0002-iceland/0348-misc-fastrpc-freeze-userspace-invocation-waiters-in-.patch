@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: slwyts <slwyts@foxmail.com>
 Date: Thu, 15 Oct 2026 09:13:16 +0800
-Subject: [PATCH 348/349] misc: fastrpc: freeze userspace invocation waiters in
- place
+Subject: [PATCH] misc: fastrpc: freeze userspace invocation waiters in place
 
 The sensor daemon can wait indefinitely for an inbound DSP listener call.
 Its interruptible completion wait is woken by the process freezer and
@@ -31,10 +30,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 5 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/misc/fastrpc.c b/drivers/misc/fastrpc.c
-index b35751212095..1b90ef4f640b 100644
+index af18ff1992ee..021f7b62b747 100644
 --- a/drivers/misc/fastrpc.c
 +++ b/drivers/misc/fastrpc.c
-@@ -1326,7 +1326,11 @@ static inline int fastrpc_wait_for_response(struct fastrpc_invoke_ctx *ctx,
+@@ -1328,7 +1328,11 @@ static inline int fastrpc_wait_for_response(struct fastrpc_invoke_ctx *ctx,
  		if (!wait_for_completion_timeout(&ctx->work, 10 * HZ))
  			err = -ETIMEDOUT;
  	} else {
@@ -47,6 +46,3 @@ index b35751212095..1b90ef4f640b 100644
  	}
  
  	return err;
--- 
-2.43.0
-

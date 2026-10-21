@@ -58,6 +58,3 @@ index cf619ef6561a..4aae7bd1af18 100644
  /* Clock ID for Secondary I2S IBIT */
  #define Q6PRM_LPASS_CLK_ID_SEC_MI2S_IBIT                          0x102
  /* Clock ID for Secondary I2S EBIT */
--- 
-2.43.0
-

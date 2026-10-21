@@ -27,7 +27,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/clk/qcom/gcc-kaanapali.c b/drivers/clk/qcom/gcc-kaanapali.c
-index 1ea5bd246326..4255ca169806 100644
+index 98e6a216b4d7..f4a0eaa1f6fc 100644
 --- a/drivers/clk/qcom/gcc-kaanapali.c
 +++ b/drivers/clk/qcom/gcc-kaanapali.c
 @@ -3484,6 +3484,7 @@ static void clk_kaanapali_regs_configure(struct device *dev, struct regmap *regm
@@ -38,6 +38,3 @@ index 1ea5bd246326..4255ca169806 100644
  
  	qcom_branch_set_force_mem_core(regmap, gcc_pcie_0_pipe_clk, true);
  	qcom_branch_set_force_periph_on(regmap, gcc_pcie_0_pipe_clk, true);
--- 
-2.43.0
-

@@ -43,10 +43,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  create mode 100644 drivers/soc/qcom/smp2p_sleepstate.c
 
 diff --git a/drivers/soc/qcom/Kconfig b/drivers/soc/qcom/Kconfig
-index f307a0c96375..e0da598b9e34 100644
+index 67d54d5211ff..cf44ab92ae57 100644
 --- a/drivers/soc/qcom/Kconfig
 +++ b/drivers/soc/qcom/Kconfig
-@@ -213,6 +213,18 @@ config QCOM_SMP2P
+@@ -212,6 +212,18 @@ config QCOM_SMP2P
  	  Say yes here to support the Qualcomm Shared Memory Point to Point
  	  protocol.
  
@@ -66,7 +66,7 @@ index f307a0c96375..e0da598b9e34 100644
  	tristate "Qualcomm Shared Memory State Machine"
  	depends on MAILBOX
 diff --git a/drivers/soc/qcom/Makefile b/drivers/soc/qcom/Makefile
-index fafc3d2bba8e..7c56d92565dd 100644
+index 9ef0f11d0158..de9789ace0df 100644
 --- a/drivers/soc/qcom/Makefile
 +++ b/drivers/soc/qcom/Makefile
 @@ -30,6 +30,7 @@ obj-$(CONFIG_QCOM_SMEM) +=	qcom_smem.o
@@ -218,6 +218,3 @@ index 000000000000..70f1a4e6e866
 +
 +MODULE_DESCRIPTION("Qualcomm SMP2P sleep-state notifier");
 +MODULE_LICENSE("GPL");
--- 
-2.43.0
-

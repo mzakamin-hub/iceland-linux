@@ -26,7 +26,7 @@ index 96d01ebbae32..d12c3da1e48c 100644
  #include <dt-bindings/input/linux-event-codes.h>
  #include <dt-bindings/leds/common.h>
  #include <dt-bindings/regulator/qcom,rpmh-regulator.h>
-@@ -155,7 +156,7 @@ bi_tcxo_ao_div2: bi-tcxo-ao-div2-clk {
+@@ -155,7 +156,7 @@
  	gpio-keys {
  		compatible = "gpio-keys";
  
@@ -35,7 +35,7 @@ index 96d01ebbae32..d12c3da1e48c 100644
  		pinctrl-names = "default";
  
  		key-volume-down {
-@@ -166,6 +167,16 @@ key-volume-down {
+@@ -166,6 +167,16 @@
  			linux,can-disable;
  			wakeup-source;
  		};
@@ -52,7 +52,7 @@ index 96d01ebbae32..d12c3da1e48c 100644
  	};
  
  	pmic-glink {
-@@ -1383,6 +1394,13 @@ wcd_tx: codec@0,3 {
+@@ -1383,6 +1394,13 @@
  &tlmm {
  	gpio-reserved-ranges = <36 4>;
  
@@ -66,6 +66,3 @@ index 96d01ebbae32..d12c3da1e48c 100644
  	wlan_en: wlan-en-state {
  		pins = "gpio16";
  		function = "gpio";
--- 
-2.43.0
-

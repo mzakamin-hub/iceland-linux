@@ -21,10 +21,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 3 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
-index 80d47b302881..22d8c95c34af 100644
+index dfbbf0dc158e..447ef905b7b3 100644
 --- a/drivers/media/platform/qcom/camss/camss.c
 +++ b/drivers/media/platform/qcom/camss/camss.c
-@@ -5215,11 +5215,9 @@ static int camss_init_subdevices(struct camss *camss)
+@@ -5143,11 +5143,9 @@ static int camss_init_subdevices(struct camss *camss)
  							    res->csiphy_res[i].csiphy.id);
  		}
  
@@ -39,6 +39,3 @@ index 80d47b302881..22d8c95c34af 100644
  	}
  
  	if (camss->tpg) {
--- 
-2.43.0
-

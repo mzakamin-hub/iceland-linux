@@ -49,7 +49,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 173 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 8b910a0d9185..ceaecc76440a 100644
+index cd8c0154d45e..0a9b22cbf500 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -122,6 +122,15 @@ enum qcom_battmgr_variant {
@@ -78,7 +78,7 @@ index 8b910a0d9185..ceaecc76440a 100644
  	/* the charger type the limits were last set for, and its changes during this attach */
  	unsigned int chg_type;
  	unsigned int chg_type_changes;
-@@ -1510,7 +1522,11 @@ static int qcom_battmgr_usb_get_property(struct power_supply *psy,
+@@ -1511,7 +1523,11 @@ static int qcom_battmgr_usb_get_property(struct power_supply *psy,
  		val->intval = battmgr->usb.current_max;
  		break;
  	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
@@ -91,7 +91,7 @@ index 8b910a0d9185..ceaecc76440a 100644
  		break;
  	case POWER_SUPPLY_PROP_USB_TYPE:
  		val->intval = battmgr->usb.usb_type;
-@@ -1572,6 +1588,50 @@ static const struct power_supply_desc sm8350_usb_psy_desc = {
+@@ -1573,6 +1589,50 @@ static const struct power_supply_desc sm8350_usb_psy_desc = {
  		     BIT(POWER_SUPPLY_USB_TYPE_APPLE_BRICK_ID),
  };
  
@@ -142,7 +142,7 @@ index 8b910a0d9185..ceaecc76440a 100644
  static const u8 sm8350_wls_prop_map[] = {
  	[POWER_SUPPLY_PROP_ONLINE] = WLS_ONLINE,
  	[POWER_SUPPLY_PROP_VOLTAGE_NOW] = WLS_VOLT_NOW,
-@@ -2322,6 +2382,76 @@ static int qcom_battmgr_oplus_set_charge_behaviour(struct qcom_battmgr *battmgr,
+@@ -2346,6 +2406,76 @@ static int qcom_battmgr_oplus_set_charge_behaviour(struct qcom_battmgr *battmgr,
  	return ret;
  }
  
@@ -219,7 +219,7 @@ index 8b910a0d9185..ceaecc76440a 100644
  /*
   * The firmware starts every charger attach at 5 V and 2 A and leaves it to
   * the host to ask for more.
-@@ -2455,6 +2585,28 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+@@ -2479,6 +2609,28 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
  								 qcom_battmgr_oplus_fcc_ua(battmgr,
  											   battmgr->chg_fcc_ua)),
  				   "charge current limit");
@@ -248,7 +248,7 @@ index 8b910a0d9185..ceaecc76440a 100644
  	/* the input current in stock's steps: up to the type's limit, or the last step the source holds */
  	icl_ask_ua = qcom_battmgr_iceland_icl_ua(type, power_mw, 5000);
  	icl_5v_ua = qcom_battmgr_iceland_aicl(battmgr, type, icl_ask_ua, &aicl_mv);
-@@ -2514,11 +2666,16 @@ static void qcom_battmgr_oplus_setup_charger(struct qcom_battmgr *battmgr)
+@@ -2538,11 +2690,16 @@ static void qcom_battmgr_oplus_setup_charger(struct qcom_battmgr *battmgr)
  
  	mutex_lock(&battmgr->lock);
  	battmgr->chg_fcc_ua = OPLUS_CHARGER_FCC_UA;
@@ -266,7 +266,7 @@ index 8b910a0d9185..ceaecc76440a 100644
  	for (i = 0; i < ARRAY_SIZE(pdo_mv); i++) {
  		mutex_lock(&battmgr->lock);
  		qcom_battmgr_oplus_set(battmgr, OPLUS_SET_PDO, pdo_mv[i]);
-@@ -2569,7 +2726,11 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+@@ -2593,7 +2750,11 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
  
  	status_changed = qcom_battmgr_oplus_sample(battmgr);
  
@@ -279,7 +279,7 @@ index 8b910a0d9185..ceaecc76440a 100644
  		if (battmgr->otg_boost_on) {
  			qcom_battmgr_oplus_set(battmgr, OPLUS_USB_OTG_VBUS_ENABLE, 0);
  			battmgr->otg_boost_on = false;
-@@ -2592,6 +2753,9 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+@@ -2616,6 +2777,9 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
  			   !qcom_battmgr_oplus_set(battmgr, OPLUS_CHG_EN, 1)) {
  			battmgr->chg_en_retry = false;
  		}
@@ -289,7 +289,7 @@ index 8b910a0d9185..ceaecc76440a 100644
  
  		setup_charger = battmgr->usb.online && !battmgr->charger_configured;
  		battmgr->charger_configured = battmgr->usb.online;
-@@ -2653,6 +2817,8 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
+@@ -2677,6 +2841,8 @@ out_unlock:
  static void qcom_battmgr_oplus_enable(struct qcom_battmgr *battmgr)
  {
  	mutex_lock(&battmgr->lock);
@@ -298,7 +298,7 @@ index 8b910a0d9185..ceaecc76440a 100644
  	qcom_battmgr_oplus_set(battmgr, OPLUS_CHG_EN, !qcom_battmgr_oplus_inhibited(battmgr));
  	qcom_battmgr_oplus_set(battmgr, OPLUS_USB_OTG_AP_ENABLE, 1);
  	mutex_unlock(&battmgr->lock);
-@@ -2804,7 +2970,10 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
+@@ -2828,7 +2994,10 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
  					     "failed to register battery power supply\n");
  		qcom_battmgr_dt_battery_info(battmgr);
  
@@ -310,6 +310,3 @@ index 8b910a0d9185..ceaecc76440a 100644
  		if (IS_ERR(battmgr->usb_psy))
  			return dev_err_probe(dev, PTR_ERR(battmgr->usb_psy),
  					     "failed to register USB power supply\n");
--- 
-2.43.0
-

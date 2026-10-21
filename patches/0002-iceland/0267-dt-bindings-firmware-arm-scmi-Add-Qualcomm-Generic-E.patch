@@ -62,6 +62,3 @@ index 000000000000..a50e5e8fdccc
 +        const: 0x80
 +
 +additionalProperties: true
--- 
-2.43.0
-

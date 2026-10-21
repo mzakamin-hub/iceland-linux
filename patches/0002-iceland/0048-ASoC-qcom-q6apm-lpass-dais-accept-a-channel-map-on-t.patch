@@ -16,7 +16,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 15 insertions(+)
 
 diff --git a/sound/soc/qcom/qdsp6/q6apm-lpass-dais.c b/sound/soc/qcom/qdsp6/q6apm-lpass-dais.c
-index e204fd59e512..3298a7b2b51c 100644
+index 83f2711bceea..7aac6b1c4169 100644
 --- a/sound/soc/qcom/qdsp6/q6apm-lpass-dais.c
 +++ b/sound/soc/qcom/qdsp6/q6apm-lpass-dais.c
 @@ -126,6 +126,20 @@ static int q6dma_set_channel_map(struct snd_soc_dai *dai,
@@ -40,7 +40,7 @@ index e204fd59e512..3298a7b2b51c 100644
  		break;
  	default:
  		dev_err(dai->dev, "%s: invalid dai id 0x%x\n",
-@@ -439,6 +453,7 @@ static const struct snd_soc_dai_ops q6tdm_ops = {
+@@ -440,6 +454,7 @@ static const struct snd_soc_dai_ops q6tdm_ops = {
  	.startup	= q6apm_lpass_dai_startup,
  	.shutdown	= q6i2s_lpass_dai_shutdown,
  	.set_tdm_slot	= q6tdm_set_tdm_slot,
@@ -48,6 +48,3 @@ index e204fd59e512..3298a7b2b51c 100644
  	.hw_params	= q6dma_hw_params,
  	.set_fmt	= q6i2s_set_fmt,
  	.set_sysclk	= q6i2s_set_sysclk,
--- 
-2.43.0
-

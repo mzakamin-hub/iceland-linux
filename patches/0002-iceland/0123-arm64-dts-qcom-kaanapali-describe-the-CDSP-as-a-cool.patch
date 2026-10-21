@@ -15,10 +15,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index b1cccec413b3..7ad84e4a5442 100644
+index 903df4793533..ad1e43b42926 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -7639,6 +7639,8 @@ remoteproc_cdsp: remoteproc@26300000 {
+@@ -7635,6 +7635,8 @@
  			qcom,smem-states = <&smp2p_cdsp_out 0>;
  			qcom,smem-state-names = "stop";
  
@@ -27,6 +27,3 @@ index b1cccec413b3..7ad84e4a5442 100644
  			status = "disabled";
  
  			glink-edge {
--- 
-2.43.0
-

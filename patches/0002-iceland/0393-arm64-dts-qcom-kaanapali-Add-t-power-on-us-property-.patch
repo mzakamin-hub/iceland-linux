@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Krishna Chaitanya Chundru <krishna.chundru@oss.qualcomm.com>
 Date: Fri, 11 Sep 2026 12:20:09 +0530
-Subject: [PATCH 393/394] arm64: dts: qcom: kaanapali: Add t-power-on-us
- property for PCIe root port
+Subject: [PATCH] arm64: dts: qcom: kaanapali: Add t-power-on-us property for
+ PCIe root port
 
 Currently the PCIe controller is not programming the T_POWER_ON value,
 which can result in improper L1.2 exit behavior. Add the
@@ -22,10 +22,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index cd17a037eb3d..82283a7842a5 100644
+index d0197736ecec..18c7c815d765 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -2724,6 +2724,8 @@ pcie_port0: pcie@0 {
+@@ -2718,6 +2718,8 @@
  				#size-cells = <2>;
  				ranges;
  				phys = <&pcie0_phy>;
@@ -34,6 +34,3 @@ index cd17a037eb3d..82283a7842a5 100644
  			};
  		};
  
--- 
-2.43.0
-

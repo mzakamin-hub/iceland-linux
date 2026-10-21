@@ -22,7 +22,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 7 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/pci/pwrctrl/Kconfig b/drivers/pci/pwrctrl/Kconfig
-index 9eec767cda86..df7232890dd5 100644
+index 38aab596aa04..f10b23a2eee2 100644
 --- a/drivers/pci/pwrctrl/Kconfig
 +++ b/drivers/pci/pwrctrl/Kconfig
 @@ -7,9 +7,15 @@ config PCI_PWRCTRL
@@ -42,6 +42,3 @@ index 9eec767cda86..df7232890dd5 100644
  
  config PCI_PWRCTRL_GENERIC
  	tristate "Generic PCI Power Control driver for PCI slots and endpoints"
--- 
-2.43.0
-

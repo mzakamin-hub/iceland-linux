@@ -32,7 +32,7 @@ Assisted-by: Claude
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_device.c b/drivers/gpu/drm/msm/adreno/adreno_device.c
-index 05c77fe27e62..35b2c0db0ee8 100644
+index 7108d4aa59b5..bf86b6cacf0e 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_device.c
 +++ b/drivers/gpu/drm/msm/adreno/adreno_device.c
 @@ -16,8 +16,8 @@ bool snapshot_debugbus = false;
@@ -46,6 +46,3 @@ index 05c77fe27e62..35b2c0db0ee8 100644
  module_param(enable_preemption, int, 0600);
  
  bool disable_acd;
--- 
-2.43.0
-

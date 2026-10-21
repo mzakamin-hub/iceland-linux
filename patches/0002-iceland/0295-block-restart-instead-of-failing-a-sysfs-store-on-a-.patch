@@ -112,7 +112,7 @@ index 520972676ab4..a317fa2e3045 100644
  	if (nr == q->nr_requests)
  		goto unlock;
 diff --git a/block/blk.h b/block/blk.h
-index 50abfd932886..075d593007bc 100644
+index 2cc03aa54c53..5bd2814990f5 100644
 --- a/block/blk.h
 +++ b/block/blk.h
 @@ -362,6 +362,7 @@ void elv_update_nr_hw_queues(struct request_queue *q,
@@ -155,6 +155,3 @@ index 2161b6eea680..fbfd3f969c99 100644
  	if (!blk_queue_no_elv_switch(q)) {
  		ret = elevator_change(q, &ctx);
  		if (!ret)
--- 
-2.43.0
-

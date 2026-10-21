@@ -116,6 +116,3 @@ index 000000000000..cf94e3185e21
 +#define ADC5_GEN4_ICHG_FB(bus_id, sid)		ADC5_GEN4_VIRT_CHAN(bus_id, sid, 0xa1)
 +
 +#endif /* __DTS_ARM64_QCOM_ADC5_GEN4_H__ */
--- 
-2.43.0
-

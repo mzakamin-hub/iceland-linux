@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 19 Oct 2026 02:00:00 +0300
-Subject: [PATCH 392/394] media: i2c: dw9719: configure the DW9800K only once
- it is ready
+Subject: [PATCH] media: i2c: dw9719: configure the DW9800K only once it is
+ ready
 
 The OnePlus Pad 4's rear focus actuator (the dongwoon,dw9800k entry: IC
 INFO reads 0xfe, a DW9714V in its register-mapped mode) gets its ringing
@@ -135,7 +135,7 @@ index 7be9b8524f48..ef1a53fe54e9 100644
  static int dw9719_power_up(struct dw9719_device *dw9719, bool detect)
  {
  	u32 reg_pwr = dw9719->model == DW9718S ? DW9718S_PD : DW9719_CONTROL;
-@@ -212,10 +287,8 @@ static int dw9719_power_up(struct dw9719_device *dw9719, bool detect)
+@@ -212,10 +287,8 @@ props:
  
  	switch (dw9719->model) {
  	case DW9800K:
@@ -148,6 +148,3 @@ index 7be9b8524f48..ef1a53fe54e9 100644
  		break;
  	case DW9718S:
  		/* Datasheet says [OCP/UVLO] should be disabled below 2.5V */
--- 
-2.43.0
-

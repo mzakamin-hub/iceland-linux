@@ -32,6 +32,3 @@ index 27947f1d64bc..37c431772c9c 100644
    vddaon-supply:
      description: VDD_AON supply regulator handle
  
--- 
-2.43.0
-

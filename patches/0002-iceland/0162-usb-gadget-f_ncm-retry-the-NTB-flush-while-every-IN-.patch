@@ -101,6 +101,3 @@ index 500c9c19c78b..75dae32a2bde 100644
  	}
  	return HRTIMER_NORESTART;
  }
--- 
-2.43.0
-

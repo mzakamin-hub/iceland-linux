@@ -111,6 +111,3 @@ index f5d3e806f8fd..e658dd283be8 100644
  
  	struct msm_dsi_dphy_timing timing;
  	const struct msm_dsi_phy_cfg *cfg;
--- 
-2.43.0
-

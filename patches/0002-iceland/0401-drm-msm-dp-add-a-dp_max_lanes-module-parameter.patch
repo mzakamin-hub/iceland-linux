@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 19 Oct 2026 06:46:26 +0300
-Subject: [PATCH 401/402] drm/msm/dp: add a dp_max_lanes module parameter
+Subject: [PATCH] drm/msm/dp: add a dp_max_lanes module parameter
 
 A test of the two-lane case should not need a pin assignment D sink or
 a new DTB. Add msm.dp_max_lanes: 1, 2 or 4 limits DisplayPort to that
@@ -19,7 +19,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 17 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/dp/dp_panel.c b/drivers/gpu/drm/msm/dp/dp_panel.c
-index 221d26e4b51c..36951865da0f 100644
+index 82641b9494de..6accf441a03a 100644
 --- a/drivers/gpu/drm/msm/dp/dp_panel.c
 +++ b/drivers/gpu/drm/msm/dp/dp_panel.c
 @@ -13,12 +13,18 @@
@@ -41,7 +41,7 @@ index 221d26e4b51c..36951865da0f 100644
  struct msm_dp_panel_private {
  	struct device *dev;
  	struct drm_device *drm_dev;
-@@ -41,7 +47,14 @@ struct msm_dp_panel_private {
+@@ -108,7 +114,14 @@ u32 msm_dp_stream_reg(enum msm_dp_stream_id id, u32 reg)
   */
  static int msm_dp_panel_routed_lanes(struct msm_dp_panel_private *panel)
  {
@@ -57,7 +57,7 @@ index 221d26e4b51c..36951865da0f 100644
  }
  
  /**
-@@ -299,11 +312,12 @@ int msm_dp_panel_read_link_caps(struct msm_dp_panel *msm_dp_panel,
+@@ -393,11 +406,12 @@ int msm_dp_panel_read_link_caps(struct msm_dp_panel *msm_dp_panel,
  	}
  
  	drm_info(connector->dev,
@@ -72,6 +72,3 @@ index 221d26e4b51c..36951865da0f 100644
  		 msm_dp_panel->link_info.num_lanes, msm_dp_panel->link_info.rate);
  
  	if (drm_dp_is_branch(msm_dp_panel->dpcd)) {
--- 
-2.43.0
-

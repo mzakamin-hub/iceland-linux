@@ -57,6 +57,3 @@ index 0d9b7ec4e228..5fb58b1fbeb1 100644
  	.init_sends_pps = true,
  	.is_dual_dsi = true,
  	.has_dcs_backlight = false,
--- 
-2.43.0
-

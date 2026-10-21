@@ -30,6 +30,3 @@ index 8e8d62436e0d..7290628354d1 100644
    dongwoon,sac-mode:
      description: |
        Slew Rate Control mode to use: direct, LSC (Linear Slope Control) or
--- 
-2.43.0
-

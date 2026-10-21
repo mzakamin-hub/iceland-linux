@@ -66,6 +66,3 @@ index 893474de488d..2c2ba8184217 100644
  	return mhi_device_get_sync(ab_pci->mhi_ctrl->mhi_dev);
  }
  
--- 
-2.43.0
-

@@ -31,7 +31,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 64589cbb4dfc..226050e78304 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -2428,7 +2428,14 @@ &uart18 {
+@@ -2428,7 +2428,14 @@
  	bluetooth {
  		compatible = "qcom,wcn7860-bt";
  
@@ -47,6 +47,3 @@ index 64589cbb4dfc..226050e78304 100644
  
  		vddrfacmn-supply = <&vreg_pmu_rfa_cmn>;
  		vddaon-supply = <&vreg_pmu_aon_0p59>;
--- 
-2.43.0
-

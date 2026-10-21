@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jean-Francois Bobier <jean-francois.bobier@laposte.net>
 Date: Mon, 5 Oct 2026 15:14:30 +0200
-Subject: [PATCH 397/402] drm/msm/dp: don't gate link-training fallback on the
+Subject: [PATCH] drm/msm/dp: don't gate link-training fallback on the
  controller's HPD block
 
 msm_dp_ctrl_setup_main_link()'s retry loop is what implements DP link
@@ -67,10 +67,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 16 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/dp/dp_ctrl.c b/drivers/gpu/drm/msm/dp/dp_ctrl.c
-index 155d38795588..a5743ec0a278 100644
+index a3510ce4b0ba..18b83a8ca190 100644
 --- a/drivers/gpu/drm/msm/dp/dp_ctrl.c
 +++ b/drivers/gpu/drm/msm/dp/dp_ctrl.c
-@@ -2394,12 +2394,22 @@ int msm_dp_ctrl_on_link(struct msm_dp_ctrl *msm_dp_ctrl,
+@@ -2442,12 +2442,22 @@ int msm_dp_ctrl_on_link(struct msm_dp_ctrl *msm_dp_ctrl,
  			/* training completed successfully */
  			break;
  		} else if (training_step == DP_TRAINING_1) {
@@ -97,7 +97,7 @@ index 155d38795588..a5743ec0a278 100644
  			rc = msm_dp_ctrl_link_rate_down_shift(ctrl);
  			if (rc < 0) { /* already in RBR = 1.6G */
  				if (msm_dp_ctrl_clock_recovery_any_ok(link_status,
-@@ -2419,12 +2429,10 @@ int msm_dp_ctrl_on_link(struct msm_dp_ctrl *msm_dp_ctrl,
+@@ -2467,12 +2477,10 @@ int msm_dp_ctrl_on_link(struct msm_dp_ctrl *msm_dp_ctrl,
  				}
  			}
  		} else if (training_step == DP_TRAINING_2) {
@@ -112,6 +112,3 @@ index 155d38795588..a5743ec0a278 100644
  			if (!drm_dp_clock_recovery_ok(link_status,
  					ctrl->link->link_params.num_lanes))
  				rc = msm_dp_ctrl_link_rate_down_shift(ctrl);
--- 
-2.43.0
-

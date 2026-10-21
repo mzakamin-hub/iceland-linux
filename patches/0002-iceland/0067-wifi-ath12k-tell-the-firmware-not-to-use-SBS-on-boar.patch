@@ -26,7 +26,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  3 files changed, 67 insertions(+)
 
 diff --git a/drivers/net/wireless/ath/ath12k/mac.c b/drivers/net/wireless/ath/ath12k/mac.c
-index 99bf5cf79d10..a3b986099155 100644
+index 01f8c6572f65..a4c4cb515025 100644
 --- a/drivers/net/wireless/ath/ath12k/mac.c
 +++ b/drivers/net/wireless/ath/ath12k/mac.c
 @@ -7,6 +7,7 @@
@@ -37,7 +37,7 @@ index 99bf5cf79d10..a3b986099155 100644
  
  #include "mac.h"
  #include "core.h"
-@@ -9800,6 +9801,22 @@ static int ath12k_mac_start(struct ath12k *ar)
+@@ -9812,6 +9813,22 @@ static int ath12k_mac_start(struct ath12k *ar)
  
  	__ath12k_set_antenna(ar, ar->cfg_tx_chainmask, ar->cfg_rx_chainmask);
  
@@ -61,7 +61,7 @@ index 99bf5cf79d10..a3b986099155 100644
  
  	ret = ath12k_reg_update_chan_list(ar, false);
 diff --git a/drivers/net/wireless/ath/ath12k/wmi.c b/drivers/net/wireless/ath/ath12k/wmi.c
-index d5160af60e00..b8768e7e8b72 100644
+index 75b259990c79..d267d12e6ccc 100644
 --- a/drivers/net/wireless/ath/ath12k/wmi.c
 +++ b/drivers/net/wireless/ath/ath12k/wmi.c
 @@ -2827,6 +2827,38 @@ int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
@@ -103,7 +103,7 @@ index d5160af60e00..b8768e7e8b72 100644
  int ath12k_wmi_send_scan_stop_cmd(struct ath12k *ar,
  				  struct ath12k_wmi_scan_cancel_arg *arg)
  {
-@@ -5062,6 +5094,10 @@ static int ath12k_wmi_svc_rdy_ext_parse(struct ath12k_base *ab,
+@@ -5063,6 +5095,10 @@ static int ath12k_wmi_svc_rdy_ext_parse(struct ath12k_base *ab,
  			ath12k_warn(ab, "unable to extract ext params\n");
  			return ret;
  		}
@@ -153,6 +153,3 @@ index b508aa759bd8..13d063659977 100644
  int ath12k_wmi_send_scan_stop_cmd(struct ath12k *ar,
  				  struct ath12k_wmi_scan_cancel_arg *arg);
  int ath12k_wmi_send_wmm_update_cmd(struct ath12k *ar, u32 vdev_id,
--- 
-2.43.0
-

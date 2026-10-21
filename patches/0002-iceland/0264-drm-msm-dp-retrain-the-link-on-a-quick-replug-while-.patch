@@ -32,10 +32,10 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  3 files changed, 27 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/dp/dp_ctrl.c b/drivers/gpu/drm/msm/dp/dp_ctrl.c
-index 940000958b3f..155d38795588 100644
+index 656316650c3e..a3510ce4b0ba 100644
 --- a/drivers/gpu/drm/msm/dp/dp_ctrl.c
 +++ b/drivers/gpu/drm/msm/dp/dp_ctrl.c
-@@ -2059,6 +2059,15 @@ static int msm_dp_ctrl_link_maintenance(struct msm_dp_ctrl_private *ctrl,
+@@ -2106,6 +2106,15 @@ end:
  	return ret;
  }
  
@@ -52,7 +52,7 @@ index 940000958b3f..155d38795588 100644
  
  static void msm_dp_ctrl_send_phy_pattern(struct msm_dp_ctrl_private *ctrl,
 diff --git a/drivers/gpu/drm/msm/dp/dp_ctrl.h b/drivers/gpu/drm/msm/dp/dp_ctrl.h
-index 5902cf7e746a..9f5bf4c8f98e 100644
+index 80d9258501b4..64ce27ba6bac 100644
 --- a/drivers/gpu/drm/msm/dp/dp_ctrl.h
 +++ b/drivers/gpu/drm/msm/dp/dp_ctrl.h
 @@ -30,6 +30,8 @@ irqreturn_t msm_dp_ctrl_isr(struct msm_dp_ctrl *msm_dp_ctrl,
@@ -65,10 +65,10 @@ index 5902cf7e746a..9f5bf4c8f98e 100644
  				    struct msm_dp_link *link,
  				    struct drm_dp_aux *aux,
 diff --git a/drivers/gpu/drm/msm/dp/dp_display.c b/drivers/gpu/drm/msm/dp/dp_display.c
-index e7ae8d05208a..dfff3ac022bc 100644
+index 5b3934674b15..a82738e7cb7d 100644
 --- a/drivers/gpu/drm/msm/dp/dp_display.c
 +++ b/drivers/gpu/drm/msm/dp/dp_display.c
-@@ -55,6 +55,8 @@ struct msm_dp_display_private {
+@@ -56,6 +56,8 @@ struct msm_dp_display_private {
  
  	struct mutex plugged_lock;
  	bool plugged;
@@ -77,7 +77,7 @@ index e7ae8d05208a..dfff3ac022bc 100644
  
  	struct drm_device *drm_dev;
  
-@@ -431,6 +433,17 @@ static int msm_dp_hpd_plug_handle(struct msm_dp_display_private *dp)
+@@ -438,6 +440,17 @@ static int msm_dp_hpd_plug_handle(struct msm_dp_display_private *dp)
  
  	ret = msm_dp_display_process_hpd_high(dp);
  
@@ -95,7 +95,7 @@ index e7ae8d05208a..dfff3ac022bc 100644
  	drm_dbg_dp(dp->drm_dev, "After, type=%d sink_count=%d\n",
  			dp->msm_dp_display.connector_type,
  			dp->link->sink_count);
-@@ -470,6 +483,9 @@ static int msm_dp_hpd_unplug_handle(struct msm_dp_display_private *dp)
+@@ -478,6 +491,9 @@ static int msm_dp_hpd_unplug_handle(struct msm_dp_display_private *dp)
  	if (!dp->plugged)
  		return 0;
  
@@ -105,6 +105,3 @@ index e7ae8d05208a..dfff3ac022bc 100644
  	/* Don't forget modes for eDP */
  	if (!dp->msm_dp_display.is_edp)
  		drm_edid_connector_update(dp->msm_dp_display.connector, NULL);
--- 
-2.43.0
-

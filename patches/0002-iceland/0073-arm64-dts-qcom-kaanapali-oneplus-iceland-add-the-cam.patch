@@ -36,7 +36,7 @@ index 3b0def8eb726..0fd09849969d 100644
  #include <dt-bindings/gpio/gpio.h>
  #include <dt-bindings/input/gpio-keys.h>
  #include <dt-bindings/input/linux-event-codes.h>
-@@ -980,6 +982,86 @@ vreg_s4j_0p7: smps4 {
+@@ -980,6 +982,86 @@
  	};
  };
  
@@ -123,7 +123,7 @@ index 3b0def8eb726..0fd09849969d 100644
  &gpu_opp_table {
  	/*
  	 * The Pad 4's stock GPU levels (qcom,gpu-pwrlevels for speed bin 0xfc):
-@@ -1108,6 +1190,80 @@ wcd_usbss_sbu_mux: endpoint {
+@@ -1108,6 +1190,80 @@
  	};
  };
  
@@ -204,7 +204,7 @@ index 3b0def8eb726..0fd09849969d 100644
  &i2c14 {
  	status = "okay";
  
-@@ -1378,6 +1534,30 @@ sde_disp0_rst_1p8_active: sde-disp0-rst-1p8-active-state {
+@@ -1378,6 +1534,30 @@
  	};
  };
  
@@ -235,7 +235,7 @@ index 3b0def8eb726..0fd09849969d 100644
  &pmih0108_e1_eusb2_repeater {
  	vdd18-supply = <&vreg_l15b_1p8>;
  	vdd3-supply = <&vreg_l5b_3p1>;
-@@ -1386,6 +1566,23 @@ &pmih0108_e1_eusb2_repeater {
+@@ -1386,6 +1566,23 @@
  	qcom,tune-usb2-preem = /bits/ 8 <3>;
  };
  
@@ -259,6 +259,3 @@ index 3b0def8eb726..0fd09849969d 100644
  &pmk8850_vadc {
  	pinctrl-0 = <&usbtemp_l_default>, <&usbtemp_r_default>;
  	pinctrl-names = "default";
--- 
-2.43.0
-

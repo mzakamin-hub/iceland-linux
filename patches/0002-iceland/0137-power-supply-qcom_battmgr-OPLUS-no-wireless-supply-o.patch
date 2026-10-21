@@ -22,7 +22,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 12 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 535d23fa1768..8b910a0d9185 100644
+index 13b6bdc8ea3f..cd8c0154d45e 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -423,6 +423,8 @@ struct qcom_battmgr {
@@ -34,7 +34,7 @@ index 535d23fa1768..8b910a0d9185 100644
  	unsigned int chg_fcc_ua;	/* the charge current set at the last attach */
  	unsigned int chg_fcc_host_ua;	/* the host's cap (constant_charge_current_max), 0 = none */
  	bool chg_inhibit;
-@@ -1766,7 +1768,8 @@ static void qcom_battmgr_notification(struct qcom_battmgr *battmgr,
+@@ -1767,7 +1769,8 @@ static void qcom_battmgr_notification(struct qcom_battmgr *battmgr,
  			queue_work(system_dfl_long_wq, &battmgr->plug_work);
  		break;
  	case NOTIF_WLS_PROPERTY:
@@ -44,7 +44,7 @@ index 535d23fa1768..8b910a0d9185 100644
  		break;
  	default:
  		if (battmgr->variant == QCOM_BATTMGR_OPLUS)
-@@ -2753,6 +2756,7 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
+@@ -2777,6 +2780,7 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
  	if (battmgr->variant == QCOM_BATTMGR_OPLUS)
  		battmgr->chg_stock_limits = device_is_compatible(dev->parent,
  								 "oneplus,iceland-pmic-glink");
@@ -52,7 +52,7 @@ index 535d23fa1768..8b910a0d9185 100644
  
  	ret = qcom_battmgr_charge_control_thresholds_init(battmgr);
  	if (ret < 0)
-@@ -2805,10 +2809,13 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
+@@ -2829,10 +2833,13 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
  			return dev_err_probe(dev, PTR_ERR(battmgr->usb_psy),
  					     "failed to register USB power supply\n");
  
@@ -70,6 +70,3 @@ index 535d23fa1768..8b910a0d9185 100644
  	}
  
  	ret = devm_work_autocancel(dev, &battmgr->enable_work,
--- 
-2.43.0
-

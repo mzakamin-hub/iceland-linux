@@ -129,6 +129,3 @@ index 4be682083843..55efad27ed73 100644
  int qcom_adc5_prescaling_from_dt(u32 num, u32 den);
  
  int qcom_adc5_hw_settle_time_from_dt(u32 value, const unsigned int *hw_settle);
--- 
-2.43.0
-

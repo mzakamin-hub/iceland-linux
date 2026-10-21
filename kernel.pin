@@ -1,8 +1,8 @@
 # Upstream base the patch queue applies to (sourced by scripts/prepare.sh).
-UPSTREAM_URL=https://github.com/torvalds/linux
-UPSTREAM_TAG=v7.3-rc7
-UPSTREAM_COMMIT=24a19b953e2a3d0ea5a8c4951a0ab8f32720c907
-UPSTREAM_TREE=35e4248213006b8c37f54118790a99b673c84fd9
+UPSTREAM_URL=https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git
+UPSTREAM_TAG=next-20261020
+UPSTREAM_COMMIT=8f7df005a7564bd7ffa75da9c3085d5b996f1e16
+UPSTREAM_TREE=ecf74a2e66593fa7e1465ac3c2cbe0fdbbf5f6e2
 
 # Tree hash expected after each series (proves the queue reproduces the source exactly).
 # 0001-infiniti = infiniti-mainline/linux master (OnePlus 15, same SoC) at this commit, rebased onto v7.3-rc6, then onto v7.3-rc7 (q89e: 132 of 135 kept)
@@ -10,7 +10,9 @@ UPSTREAM_TREE=35e4248213006b8c37f54118790a99b673c84fd9
 INFINITI_URL=https://github.com/infiniti-mainline/linux
 INFINITI_COMMIT=10650ae7bef447d04eb820bfc0c2d5a98d83e4e2
 # q89y (TRIAL) drops 0132 (split cluster power domain): 131 of the 132 kept; q89x's 0001 tree was b0efb1679372
-TREE_AFTER_0001_infiniti=ac624feca4ae398dba937657af9787d3208751be
+# q90b (TRIAL, 21 Oct 2026): the q89z queue rebased onto linux-next next-20261020 (7.4 content before 7.4-rc1;
+# 88 + 19 patches upstream there dropped, numbers kept with gaps) + 0004-q90b (the 21 Oct scan additions):
+TREE_AFTER_0001_infiniti=f2bf8ad883fe41773f3860b7c8a3a63ca0e548d2
 # 0002-iceland = OnePlus Pad 4 series (map220v/sm8850-mainline iceland-7.2 ported + our fixes + upstream picks),
 # kernel q89b = 7.3.0-rc6-iceland-00377-g8e90101870e4 (see docs/Q89B-QUEUE.md) had f1c7fa5d8607;
 # kernel q89c-tb = q89b + 0255-0265 (tb323fu-linux), 7.3.0-rc6-iceland-00388-g9093690257a0 (docs/Q89C-TB-QUEUE.md) had 71601a654760;
@@ -40,4 +42,6 @@ TREE_AFTER_0001_infiniti=ac624feca4ae398dba937657af9787d3208751be
 # kernel q89w (TRIAL) = q89v + 0395-0402 (DP lanes from the Type-C pin assignment, link-training fallback, modes vs the trained link, link-status BAD, msm.dp_max_lanes; vtotal write window; + the USB-C device fragment section), 7.3.0-rc7-iceland-00519-gec0a0e306dd9 had f755e421b3f5;
 # kernel q89x (TRIAL) = q89w - 0349 (Gen2 limit) - 0357 (UFS v1) + 0404 0406-0412 (DSI PLL_SYSTEM_MUXES at PHY enable + msm.dsi_phy_muxes_first, codec DMA channel map reset, devfreq after the GPU init, UFS outstanding_reqs v2), 7.3.0-rc7-iceland-00529-g2968dd8b437e had ea9fec590a90;
 # kernel q89y (TRIAL) = q89x - 0001-infiniti 0132 (one cluster power domain for all 8 CPUs, the upstream / SuperTurtleDev topology), 7.3.0-rc7-iceland-00530-g242d83c86fe0:
-TREE_AFTER_0002_iceland=75b4c8bb637c636302d3ae63e1efd8e3f39da3a0
+TREE_AFTER_0002_iceland=c1eab20ba31b01d5d2cc1c8f6f58c7ec240ebc19
+TREE_AFTER_0003_glitchfix=5b84f7f688155bb3b1a10583df8bcbde2bc9f8d6
+TREE_AFTER_0004_q90b=1f26e549db103a558bab8efbd3be0791b7e4b500

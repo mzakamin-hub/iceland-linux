@@ -200,6 +200,3 @@ index 61be8443e46e..abe982faeb2b 100644
  }
  
  int ath12k_hal_srng_create_config_wcn7850(struct ath12k_hal *hal)
--- 
-2.43.0
-

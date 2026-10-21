@@ -18,7 +18,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 6495b96afe22..96d01ebbae32 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1080,6 +1080,13 @@ backlight@11 {
+@@ -1080,6 +1080,13 @@
  };
  
  &mdss {
@@ -32,6 +32,3 @@ index 6495b96afe22..96d01ebbae32 100644
  	status = "okay";
  };
  
--- 
-2.43.0
-

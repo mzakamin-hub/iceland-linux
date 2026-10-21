@@ -34,10 +34,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 6 insertions(+), 7 deletions(-)
 
 diff --git a/sound/soc/qcom/qdsp6/q6apm.c b/sound/soc/qcom/qdsp6/q6apm.c
-index bfb35aca96cb..72beea4164db 100644
+index 640157dcc45a..56785a8aab98 100644
 --- a/sound/soc/qcom/qdsp6/q6apm.c
 +++ b/sound/soc/qcom/qdsp6/q6apm.c
-@@ -957,16 +957,15 @@ static int apm_callback(const struct gpr_resp_pkt *data, void *priv, int op)
+@@ -962,16 +962,15 @@ static int apm_callback(const struct gpr_resp_pkt *data, void *priv, int op)
  			wake_up(&apm->wait);
  			break;
  		case APM_CMD_SHARED_MEM_UNMAP_REGIONS:
@@ -60,6 +60,3 @@ index bfb35aca96cb..72beea4164db 100644
  
  			wake_up(&apm->wait);
  			break;
--- 
-2.43.0
-

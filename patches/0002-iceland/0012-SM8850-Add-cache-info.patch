@@ -9,10 +9,10 @@ Subject: [PATCH] SM8850: Add cache info
  1 file changed, 54 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 1c27220c07bb..f682fa185776 100644
+index 47d3fd46b245..de622f1c1e17 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -46,6 +46,12 @@ cpu0: cpu@0 {
+@@ -46,6 +46,12 @@
  			compatible = "qcom,oryon";
  			reg = <0x0 0x0>;
  			enable-method = "psci";
@@ -25,7 +25,7 @@ index 1c27220c07bb..f682fa185776 100644
  			next-level-cache = <&l2_0>;
  			power-domains = <&cpu_pd0>, <&scmi_perf 0>;
  			power-domain-names = "psci", "perf";
-@@ -55,6 +61,9 @@ l2_0: l2-cache {
+@@ -55,6 +61,9 @@
  				compatible = "cache";
  				cache-level = <2>;
  				cache-unified;
@@ -35,7 +35,7 @@ index 1c27220c07bb..f682fa185776 100644
  			};
  		};
  
-@@ -63,6 +72,12 @@ cpu1: cpu@100 {
+@@ -63,6 +72,12 @@
  			compatible = "qcom,oryon";
  			reg = <0x0 0x100>;
  			enable-method = "psci";
@@ -48,7 +48,7 @@ index 1c27220c07bb..f682fa185776 100644
  			next-level-cache = <&l2_0>;
  			power-domains = <&cpu_pd1>, <&scmi_perf 0>;
  			power-domain-names = "psci", "perf";
-@@ -74,6 +89,12 @@ cpu2: cpu@200 {
+@@ -74,6 +89,12 @@
  			compatible = "qcom,oryon";
  			reg = <0x0 0x200>;
  			enable-method = "psci";
@@ -61,7 +61,7 @@ index 1c27220c07bb..f682fa185776 100644
  			next-level-cache = <&l2_0>;
  			power-domains = <&cpu_pd2>, <&scmi_perf 0>;
  			power-domain-names = "psci", "perf";
-@@ -85,6 +106,12 @@ cpu3: cpu@300 {
+@@ -85,6 +106,12 @@
  			compatible = "qcom,oryon";
  			reg = <0x0 0x300>;
  			enable-method = "psci";
@@ -74,7 +74,7 @@ index 1c27220c07bb..f682fa185776 100644
  			next-level-cache = <&l2_0>;
  			power-domains = <&cpu_pd3>, <&scmi_perf 0>;
  			power-domain-names = "psci", "perf";
-@@ -96,6 +123,12 @@ cpu4: cpu@400 {
+@@ -96,6 +123,12 @@
  			compatible = "qcom,oryon";
  			reg = <0x0 0x400>;
  			enable-method = "psci";
@@ -87,7 +87,7 @@ index 1c27220c07bb..f682fa185776 100644
  			next-level-cache = <&l2_0>;
  			power-domains = <&cpu_pd4>, <&scmi_perf 0>;
  			power-domain-names = "psci", "perf";
-@@ -107,6 +140,12 @@ cpu5: cpu@500 {
+@@ -107,6 +140,12 @@
  			compatible = "qcom,oryon";
  			reg = <0x0 0x500>;
  			enable-method = "psci";
@@ -100,7 +100,7 @@ index 1c27220c07bb..f682fa185776 100644
  			next-level-cache = <&l2_0>;
  			power-domains = <&cpu_pd5>, <&scmi_perf 0>;
  			power-domain-names = "psci", "perf";
-@@ -118,6 +157,12 @@ cpu6: cpu@10000 {
+@@ -118,6 +157,12 @@
  			compatible = "qcom,oryon";
  			reg = <0x0 0x10000>;
  			enable-method = "psci";
@@ -113,7 +113,7 @@ index 1c27220c07bb..f682fa185776 100644
  			next-level-cache = <&l2_1>;
  			power-domains = <&cpu_pd6>, <&scmi_perf 1>;
  			power-domain-names = "psci", "perf";
-@@ -127,6 +172,9 @@ l2_1: l2-cache {
+@@ -127,6 +172,9 @@
  				compatible = "cache";
  				cache-level = <2>;
  				cache-unified;
@@ -123,7 +123,7 @@ index 1c27220c07bb..f682fa185776 100644
  			};
  		};
  
-@@ -135,6 +183,12 @@ cpu7: cpu@10100 {
+@@ -135,6 +183,12 @@
  			compatible = "qcom,oryon";
  			reg = <0x0 0x10100>;
  			enable-method = "psci";
@@ -136,6 +136,3 @@ index 1c27220c07bb..f682fa185776 100644
  			next-level-cache = <&l2_1>;
  			power-domains = <&cpu_pd7>, <&scmi_perf 1>;
  			power-domain-names = "psci", "perf";
--- 
-2.43.0
-

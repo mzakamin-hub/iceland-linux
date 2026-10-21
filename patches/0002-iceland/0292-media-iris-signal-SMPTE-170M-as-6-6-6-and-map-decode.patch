@@ -39,7 +39,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  2 files changed, 34 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_hfi_common.c b/drivers/media/platform/qcom/iris/iris_hfi_common.c
-index 42fc854d4c05..e87d16717e32 100644
+index dad906d03fdc..de4d53f31983 100644
 --- a/drivers/media/platform/qcom/iris/iris_hfi_common.c
 +++ b/drivers/media/platform/qcom/iris/iris_hfi_common.c
 @@ -27,8 +27,8 @@ u32 iris_hfi_get_v4l2_color_primaries(u32 hfi_primaries)
@@ -117,6 +117,3 @@ index 388a36ff2b07..57ccdbf5dc33 100644
  	}
  
  	if (pixmp->quantization != V4L2_QUANTIZATION_DEFAULT) {
--- 
-2.43.0
-

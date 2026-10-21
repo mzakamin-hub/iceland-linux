@@ -18,7 +18,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 7455dda42ece..71d2e65c0627 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -388,6 +388,22 @@ platform {
+@@ -388,6 +388,22 @@
  				sound-dai = <&q6apm>;
  			};
  		};
@@ -41,6 +41,3 @@ index 7455dda42ece..71d2e65c0627 100644
  	};
  
  	pogo_vcc: pogo-vcc-regulator {
--- 
-2.43.0
-

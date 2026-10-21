@@ -14,7 +14,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/clk/qcom/gcc-kaanapali.c b/drivers/clk/qcom/gcc-kaanapali.c
-index 7cda196a2bd0..1087967a1f28 100644
+index 452c72c0049f..98e6a216b4d7 100644
 --- a/drivers/clk/qcom/gcc-kaanapali.c
 +++ b/drivers/clk/qcom/gcc-kaanapali.c
 @@ -3153,7 +3153,7 @@ static struct gdsc gcc_pcie_0_phy_gdsc = {
@@ -26,6 +26,3 @@ index 7cda196a2bd0..1087967a1f28 100644
  	.flags = POLL_CFG_GDSCR | RETAIN_FF_ENABLE | VOTABLE,
  };
  
--- 
-2.43.0
-

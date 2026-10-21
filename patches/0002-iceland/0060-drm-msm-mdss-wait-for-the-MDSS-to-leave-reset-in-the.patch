@@ -27,7 +27,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 13 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/msm_mdss.c b/drivers/gpu/drm/msm/msm_mdss.c
-index bb2e0a7d37df..b1335fe37da5 100644
+index ee5a710f7e9a..797868e3ab5c 100644
 --- a/drivers/gpu/drm/msm/msm_mdss.c
 +++ b/drivers/gpu/drm/msm/msm_mdss.c
 @@ -11,6 +11,7 @@
@@ -38,7 +38,7 @@ index bb2e0a7d37df..b1335fe37da5 100644
  #include <linux/of_platform.h>
  #include <linux/platform_device.h>
  #include <linux/pm_domain.h>
-@@ -368,6 +369,7 @@ void msm_mdss_take_over_splash(struct device *dev)
+@@ -383,6 +384,7 @@ void msm_mdss_take_over_splash(struct device *dev)
  {
  	struct msm_mdss *msm_mdss;
  	struct reset_control *reset;
@@ -46,7 +46,7 @@ index bb2e0a7d37df..b1335fe37da5 100644
  
  	if (!dev || dev->driver != &mdss_platform_driver.driver)
  		return;
-@@ -388,6 +390,17 @@ void msm_mdss_take_over_splash(struct device *dev)
+@@ -403,6 +405,17 @@ void msm_mdss_take_over_splash(struct device *dev)
  	reset_control_deassert(reset);
  	reset_control_put(reset);
  
@@ -64,6 +64,3 @@ index bb2e0a7d37df..b1335fe37da5 100644
  	msm_mdss_setup_ubwc(msm_mdss);
  
  	pm_runtime_put_sync(dev);
--- 
-2.43.0
-

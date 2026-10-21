@@ -89,6 +89,3 @@ index b4bf9178370e..7be9b8524f48 100644
  	return 0;
  
  err_power_down:
--- 
-2.43.0
-

@@ -90,6 +90,3 @@ index b67909ef3f46..a89ecc85295c 100644
  	tee_dyn_shm_free_helper(shm, qcomtee_shm_unregister);
  }
  
--- 
-2.43.0
-

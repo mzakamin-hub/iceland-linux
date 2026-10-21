@@ -54,6 +54,3 @@ index aba442d9e852..a8834cdd0bc7 100644
  	skb = __hci_cmd_sync(hdev, HCI_OP_READ_BD_ADDR, 0, NULL,
  			     HCI_INIT_TIMEOUT);
  	if (IS_ERR(skb)) {
--- 
-2.43.0
-

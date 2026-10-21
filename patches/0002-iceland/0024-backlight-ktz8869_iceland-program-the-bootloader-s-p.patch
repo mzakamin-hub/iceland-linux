@@ -105,6 +105,3 @@ index 52532a3034cc..16279b9ab486 100644
  }
  
  static int ktz8869_probe(struct i2c_client *client)
--- 
-2.43.0
-

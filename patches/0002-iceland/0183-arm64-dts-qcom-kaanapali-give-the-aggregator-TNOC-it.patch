@@ -22,10 +22,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 987157ba0155..a371d037d7cc 100644
+index e37e59f88bdf..f188ba29c392 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -6753,6 +6753,8 @@ tpdm_pcie_rscc_out: endpoint {
+@@ -6749,6 +6749,8 @@
  		tn@111b8000 {
  			compatible = "qcom,coresight-tnoc", "arm,primecell";
  			reg = <0x0 0x111b8000 0x0 0x4200>;
@@ -34,6 +34,3 @@ index 987157ba0155..a371d037d7cc 100644
  
  			clocks = <&aoss_qmp>;
  			clock-names = "apb_pclk";
--- 
-2.43.0
-

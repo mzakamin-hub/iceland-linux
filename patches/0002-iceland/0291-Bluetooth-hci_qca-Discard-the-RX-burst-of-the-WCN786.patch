@@ -71,7 +71,7 @@ index 042f9df6ce4d..b36387322d28 100644
  		default:
  			break;
  		}
-@@ -1586,6 +1606,11 @@ static int qca_set_speed(struct hci_uart *hu, enum qca_speed_type speed_type)
+@@ -1586,6 +1606,11 @@ error:
  			break;
  		}
  
@@ -83,6 +83,3 @@ index 042f9df6ce4d..b36387322d28 100644
  		switch (soc_type) {
  		case QCA_WCN3990:
  			/* Wait for the controller to send the vendor event
--- 
-2.43.0
-

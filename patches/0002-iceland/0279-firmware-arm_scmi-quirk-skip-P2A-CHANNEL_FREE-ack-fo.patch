@@ -38,10 +38,10 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  3 files changed, 12 insertions(+)
 
 diff --git a/drivers/firmware/arm_scmi/driver.c b/drivers/firmware/arm_scmi/driver.c
-index a666ad39acdf..b155571edc9d 100644
+index 1e6f69b14321..5034674a45d1 100644
 --- a/drivers/firmware/arm_scmi/driver.c
 +++ b/drivers/firmware/arm_scmi/driver.c
-@@ -1072,6 +1072,9 @@ static inline void scmi_clear_channel(struct scmi_info *info,
+@@ -1099,6 +1099,9 @@ static inline void scmi_clear_channel(struct scmi_info *info,
  		return;
  	}
  
@@ -88,6 +88,3 @@ index d8ba60b95652..2330aed495bf 100644
 +DECLARE_SCMI_QUIRK(p2a_no_channel_free_ack);
  
  #endif /* _SCMI_QUIRKS_H */
--- 
-2.43.0
-

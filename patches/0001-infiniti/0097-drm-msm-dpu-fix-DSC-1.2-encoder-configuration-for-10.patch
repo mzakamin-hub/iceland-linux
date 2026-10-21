@@ -36,6 +36,3 @@ index b3395e9c34a1..7228ed31c8e1 100644
  
  	DPU_REG_WRITE(hw, sblk->ctl.base + DSC_CFG, data);
  }
--- 
-2.43.0
-

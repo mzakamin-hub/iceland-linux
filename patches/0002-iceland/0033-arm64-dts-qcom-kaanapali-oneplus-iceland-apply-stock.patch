@@ -17,7 +17,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 9da2d9733e5c..32300636767a 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1332,6 +1332,9 @@ sde_disp0_rst_1p8_active: sde-disp0-rst-1p8-active-state {
+@@ -1332,6 +1332,9 @@
  &pmih0108_e1_eusb2_repeater {
  	vdd18-supply = <&vreg_l15b_1p8>;
  	vdd3-supply = <&vreg_l5b_3p1>;
@@ -27,6 +27,3 @@ index 9da2d9733e5c..32300636767a 100644
  };
  
  &pmk8850_vadc {
--- 
-2.43.0
-

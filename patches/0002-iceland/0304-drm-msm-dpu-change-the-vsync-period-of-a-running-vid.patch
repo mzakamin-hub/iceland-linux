@@ -52,10 +52,10 @@ index 0bfbce317575..7af6113b6ad5 100644
  			struct drm_writeback_job *job);
  	void (*cleanup_wb_job)(struct dpu_encoder_phys *phys_enc,
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
-index 76e9e2a26406..dc39f9806da5 100644
+index 1babf8a8ea1f..9ddae7581d0d 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
-@@ -256,6 +256,62 @@ static void programmable_fetch_config(struct dpu_encoder_phys *phys_enc,
+@@ -254,6 +254,62 @@ static void programmable_fetch_config(struct dpu_encoder_phys *phys_enc,
  	spin_unlock_irqrestore(phys_enc->enc_spinlock, lock_flags);
  }
  
@@ -118,7 +118,7 @@ index 76e9e2a26406..dc39f9806da5 100644
  static void dpu_encoder_phys_vid_setup_timing_engine(
  		struct dpu_encoder_phys *phys_enc)
  {
-@@ -266,8 +322,6 @@ static void dpu_encoder_phys_vid_setup_timing_engine(
+@@ -264,8 +320,6 @@ static void dpu_encoder_phys_vid_setup_timing_engine(
  	unsigned long lock_flags;
  	struct dpu_hw_intf_cfg intf_cfg = { 0 };
  
@@ -127,7 +127,7 @@ index 76e9e2a26406..dc39f9806da5 100644
  	if (!phys_enc->hw_ctl->ops.setup_intf_cfg) {
  		DPU_ERROR("invalid encoder %d\n", phys_enc != NULL);
  		return;
-@@ -279,24 +333,14 @@ static void dpu_encoder_phys_vid_setup_timing_engine(
+@@ -277,24 +331,14 @@ static void dpu_encoder_phys_vid_setup_timing_engine(
  	}
  
  	DPU_DEBUG_VIDENC(phys_enc, "enabling mode:\n");
@@ -157,7 +157,7 @@ index 76e9e2a26406..dc39f9806da5 100644
  
  	drm_mode_to_intf_timing_params(phys_enc, &mode, &timing_params);
  
-@@ -753,6 +797,8 @@ static void dpu_encoder_phys_vid_init_ops(struct dpu_encoder_phys_ops *ops)
+@@ -751,6 +795,8 @@ static void dpu_encoder_phys_vid_init_ops(struct dpu_encoder_phys_ops *ops)
  	ops->needs_single_flush = dpu_encoder_phys_vid_needs_single_flush;
  	ops->get_line_count = dpu_encoder_phys_vid_get_line_count;
  	ops->get_frame_count = dpu_encoder_phys_vid_get_frame_count;
@@ -224,6 +224,3 @@ index 4d135ae80b55..6b6510647db4 100644
  	void (*enable_timing)(struct dpu_hw_intf *intf,
  			u8 enable);
  
--- 
-2.43.0
-

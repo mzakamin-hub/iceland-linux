@@ -27,10 +27,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 19 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index db153bd11024..6be2375134df 100644
+index c7de330bf586..3b168f43758d 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
-@@ -2584,7 +2584,7 @@ static unsigned int qcom_battmgr_iceland_aicl(struct qcom_battmgr *battmgr, unsi
+@@ -2608,7 +2608,7 @@ static unsigned int qcom_battmgr_iceland_aicl(struct qcom_battmgr *battmgr, unsi
  static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
  {
  	unsigned int type, power_mw, fcc_ma, icl_ua, mv;
@@ -39,7 +39,7 @@ index db153bd11024..6be2375134df 100644
  	bool pd;
  	int ret;
  
-@@ -2594,6 +2594,15 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+@@ -2618,6 +2618,15 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
  								   !qcom_battmgr_oplus_inhibited(battmgr)),
  				   "charge enable");
  
@@ -55,7 +55,7 @@ index db153bd11024..6be2375134df 100644
  	/* the charger type as the sysfs path reads it on this firmware: USB_ADAP_TYPE, mapped */
  	ret = qcom_battmgr_request_property(battmgr, BATTMGR_USB_PROPERTY_GET, USB_ADAP_TYPE, 0);
  	type = ret ? POWER_SUPPLY_USB_TYPE_UNKNOWN : battmgr->usb.usb_type;
-@@ -2633,14 +2642,17 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+@@ -2657,14 +2666,17 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
  			 type, qcom_battmgr_oplus_fcc_ua(battmgr, battmgr->chg_fcc_ua));
  		return;
  	}
@@ -77,7 +77,7 @@ index db153bd11024..6be2375134df 100644
  	    battmgr->status.voltage_now < ICELAND_PD_9V_VBAT_MAX_UV) {
  		icl_ua = min(qcom_battmgr_iceland_icl_ua(type, power_mw, ICELAND_PD_MV), icl_5v_ua);
  		ret = qcom_battmgr_oplus_set(battmgr, OPLUS_USB_INPUT_CURR_LIMIT, icl_ua);
-@@ -2672,9 +2684,9 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+@@ -2696,9 +2708,9 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
  	}
  	mutex_unlock(&battmgr->lock);
  
@@ -89,6 +89,3 @@ index db153bd11024..6be2375134df 100644
  		 battmgr->chg_inhibit ? ", charging inhibited" :
  		 battmgr->chg_limit_hold ? ", charging held by the charge limit" : "");
  }
--- 
-2.43.0
-

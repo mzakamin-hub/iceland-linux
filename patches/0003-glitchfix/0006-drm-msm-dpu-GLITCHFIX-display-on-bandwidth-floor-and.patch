@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Tue, 20 Oct 2026 21:31:00 +0300
-Subject: [PATCH 6/8] drm/msm/dpu: GLITCHFIX display-on bandwidth floor and
- clock margin switch
+Subject: [PATCH] drm/msm/dpu: GLITCHFIX display-on bandwidth floor and clock
+ margin switch
 
 Test kernel q89z (OnePlus Pad 4 display glitch bundle), not for upstream.
 

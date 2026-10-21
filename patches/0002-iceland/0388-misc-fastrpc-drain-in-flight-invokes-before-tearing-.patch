@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jianping Li <jianping.li@oss.qualcomm.com>
 Date: Wed, 7 Oct 2026 16:44:47 +0800
-Subject: [PATCH 388/394] misc: fastrpc: drain in-flight invokes before tearing
- down context banks
+Subject: [PATCH] misc: fastrpc: drain in-flight invokes before tearing down
+ context banks
 
 fastrpc_rpmsg_remove() clears cctx->rpdev, wakes every pending invoke
 with -EPIPE through fastrpc_notify_users(), and then goes straight on to
@@ -68,10 +68,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 56 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/misc/fastrpc.c b/drivers/misc/fastrpc.c
-index 374eff6aff48..ac4494d47926 100644
+index 49aa1ce14b4c..da60d1d16093 100644
 --- a/drivers/misc/fastrpc.c
 +++ b/drivers/misc/fastrpc.c
-@@ -326,6 +326,15 @@ struct fastrpc_channel_ctx {
+@@ -328,6 +328,15 @@ struct fastrpc_channel_ctx {
  	atomic_t ctx_seq;
  	u64 dma_mask;
  	const struct fastrpc_soc_data *soc_data;
@@ -87,7 +87,7 @@ index 374eff6aff48..ac4494d47926 100644
  };
  
  struct fastrpc_device {
-@@ -1352,12 +1361,23 @@ static int fastrpc_wait_for_completion(struct fastrpc_invoke_ctx *ctx,
+@@ -1354,12 +1363,23 @@ static int fastrpc_wait_for_completion(struct fastrpc_invoke_ctx *ctx,
  	return fastrpc_wait_for_response(ctx, kernel);
  }
  
@@ -111,7 +111,7 @@ index 374eff6aff48..ac4494d47926 100644
  
  	int err = 0;
  
-@@ -1367,14 +1387,25 @@ static int fastrpc_internal_invoke(struct fastrpc_user *fl,  u32 kernel,
+@@ -1369,14 +1389,25 @@ static int fastrpc_internal_invoke(struct fastrpc_user *fl,  u32 kernel,
  	if (!fl->cctx->rpdev)
  		return -EPIPE;
  
@@ -140,7 +140,7 @@ index 374eff6aff48..ac4494d47926 100644
  
  	err = fastrpc_get_args(kernel, ctx);
  	if (err)
-@@ -1430,6 +1461,10 @@ static int fastrpc_internal_invoke(struct fastrpc_user *fl,  u32 kernel,
+@@ -1432,6 +1463,10 @@ bail:
  
  	if (err)
  		dev_dbg(fl->sctx->dev, "Error: Invoke Failed %d\n", err);
@@ -151,7 +151,7 @@ index 374eff6aff48..ac4494d47926 100644
  
  	return err;
  }
-@@ -2642,6 +2677,9 @@ static int fastrpc_rpmsg_probe(struct rpmsg_device *rpdev)
+@@ -2639,6 +2674,9 @@ static int fastrpc_rpmsg_probe(struct rpmsg_device *rpdev)
  	INIT_LIST_HEAD(&data->invoke_interrupted_mmaps);
  	spin_lock_init(&data->lock);
  	idr_init(&data->ctx_idr);
@@ -161,7 +161,7 @@ index 374eff6aff48..ac4494d47926 100644
  	data->domain_id = domain_id;
  	data->rpdev = rpdev;
  	dev_set_drvdata(&rpdev->dev, data);
-@@ -2685,11 +2723,25 @@ static void fastrpc_rpmsg_remove(struct rpmsg_device *rpdev)
+@@ -2682,11 +2720,25 @@ static void fastrpc_rpmsg_remove(struct rpmsg_device *rpdev)
  
  	/* No invocations past this point */
  	spin_lock_irqsave(&cctx->lock, flags);
@@ -188,6 +188,3 @@ index 374eff6aff48..ac4494d47926 100644
  	if (cctx->fdevice)
  		misc_deregister(&cctx->fdevice->miscdev);
  
--- 
-2.43.0
-

@@ -24,7 +24,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 27 insertions(+), 1 deletion(-)
 
 diff --git a/sound/soc/codecs/lpass-tx-macro.c b/sound/soc/codecs/lpass-tx-macro.c
-index a8e83eb60ba2..cd446c0fb211 100644
+index 6deaaabe43af..1e2e4d1ac616 100644
 --- a/sound/soc/codecs/lpass-tx-macro.c
 +++ b/sound/soc/codecs/lpass-tx-macro.c
 @@ -186,7 +186,8 @@
@@ -83,6 +83,3 @@ index a8e83eb60ba2..cd446c0fb211 100644
  		snd_soc_component_write_field(component, tx_vol_ctl_reg,
  					     CDC_TXn_CLK_EN_MASK, 0x1);
  		if (!is_amic_enabled(component, tx, decimator)) {
--- 
-2.43.0
-

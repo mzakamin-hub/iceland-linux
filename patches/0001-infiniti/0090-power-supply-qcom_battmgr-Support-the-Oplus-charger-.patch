@@ -9,11 +9,11 @@ space and leaves charging and OTG policy to the host.
 
 Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
 ---
- drivers/power/supply/qcom_battmgr.c | 372 +++++++++++++++++++++++++++-
- 1 file changed, 370 insertions(+), 2 deletions(-)
+ drivers/power/supply/qcom_battmgr.c | 371 +++++++++++++++++++++++++++-
+ 1 file changed, 368 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 7716eb9e1aff..4cc263457d8a 100644
+index 636d6f6acecc..277c94d8d545 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -5,7 +5,9 @@
@@ -205,7 +205,7 @@ index 7716eb9e1aff..4cc263457d8a 100644
  		break;
  	case POWER_SUPPLY_PROP_CHARGE_TYPE:
  		val->intval = battmgr->info.charge_type;
-@@ -931,6 +1056,28 @@ static const struct power_supply_desc sm8550_bat_psy_desc = {
+@@ -932,6 +1057,28 @@ static const struct power_supply_desc sm8550_bat_psy_desc = {
  	.property_is_writeable = qcom_battmgr_bat_is_writeable,
  };
  
@@ -234,7 +234,7 @@ index 7716eb9e1aff..4cc263457d8a 100644
  static int qcom_battmgr_ac_get_property(struct power_supply *psy,
  					enum power_supply_property psp,
  					union power_supply_propval *val)
-@@ -989,6 +1136,9 @@ static int qcom_battmgr_usb_sm8350_update(struct qcom_battmgr *battmgr,
+@@ -990,6 +1137,9 @@ static int qcom_battmgr_usb_sm8350_update(struct qcom_battmgr *battmgr,
  
  	prop = sm8350_usb_prop_map[psp];
  
@@ -244,7 +244,7 @@ index 7716eb9e1aff..4cc263457d8a 100644
  	mutex_lock(&battmgr->lock);
  	ret = qcom_battmgr_request_property(battmgr, BATTMGR_USB_PROPERTY_GET, prop, 0);
  	mutex_unlock(&battmgr->lock);
-@@ -1188,6 +1338,29 @@ static const struct power_supply_desc sm8350_wls_psy_desc = {
+@@ -1189,6 +1339,29 @@ static const struct power_supply_desc sm8350_wls_psy_desc = {
  	.get_property = qcom_battmgr_wls_get_property,
  };
  
@@ -274,7 +274,7 @@ index 7716eb9e1aff..4cc263457d8a 100644
  static void qcom_battmgr_notification(struct qcom_battmgr *battmgr,
  				      const struct qcom_battmgr_message *msg,
  				      int len)
-@@ -1218,7 +1391,10 @@ static void qcom_battmgr_notification(struct qcom_battmgr *battmgr,
+@@ -1219,7 +1392,10 @@ static void qcom_battmgr_notification(struct qcom_battmgr *battmgr,
  		power_supply_changed(battmgr->wls_psy);
  		break;
  	default:
@@ -286,7 +286,7 @@ index 7716eb9e1aff..4cc263457d8a 100644
  		break;
  	}
  }
-@@ -1364,6 +1540,18 @@ static void qcom_battmgr_sc8280xp_callback(struct qcom_battmgr *battmgr,
+@@ -1391,6 +1567,18 @@ static void qcom_battmgr_sc8280xp_callback(struct qcom_battmgr *battmgr,
  	complete(&battmgr->ack);
  }
  
@@ -305,18 +305,17 @@ index 7716eb9e1aff..4cc263457d8a 100644
  static void qcom_battmgr_sm8350_callback(struct qcom_battmgr *battmgr,
  					 const struct qcom_battmgr_message *resp,
  					 size_t len)
-@@ -1516,6 +1704,10 @@ static void qcom_battmgr_sm8350_callback(struct qcom_battmgr *battmgr,
- 		case USB_TYPE:
- 			battmgr->usb.usb_type = le32_to_cpu(resp->intval.value);
+@@ -1541,7 +1729,8 @@ static void qcom_battmgr_sm8350_callback(struct qcom_battmgr *battmgr,
+ 			battmgr->usb.current_limit = le32_to_cpu(resp->intval.value);
  			break;
-+		case USB_ADAP_TYPE:
+ 		case USB_ADAP_TYPE:
+-			battmgr->usb.usb_type = le32_to_cpu(resp->intval.value);
 +			battmgr->usb.usb_type =
 +				qcom_battmgr_oplus_usb_type(le32_to_cpu(resp->intval.value));
-+			break;
+ 			break;
  		default:
  			dev_warn(battmgr->dev, "unknown property %#x\n", property);
- 			break;
-@@ -1560,6 +1752,14 @@ static void qcom_battmgr_sm8350_callback(struct qcom_battmgr *battmgr,
+@@ -1587,6 +1776,14 @@ static void qcom_battmgr_sm8350_callback(struct qcom_battmgr *battmgr,
  	case BATTMGR_CHG_CTRL_LIMIT_EN:
  		battmgr->error = 0;
  		break;
@@ -331,7 +330,7 @@ index 7716eb9e1aff..4cc263457d8a 100644
  	default:
  		dev_warn(battmgr->dev, "unknown message %#x\n", opcode);
  		break;
-@@ -1569,6 +1769,33 @@ static void qcom_battmgr_sm8350_callback(struct qcom_battmgr *battmgr,
+@@ -1596,6 +1793,33 @@ out_complete:
  	complete(&battmgr->ack);
  }
  
@@ -365,7 +364,7 @@ index 7716eb9e1aff..4cc263457d8a 100644
  static void qcom_battmgr_callback(const void *data, size_t len, void *priv)
  {
  	const struct pmic_glink_hdr *hdr = data;
-@@ -1577,6 +1804,8 @@ static void qcom_battmgr_callback(const void *data, size_t len, void *priv)
+@@ -1604,6 +1828,8 @@ static void qcom_battmgr_callback(const void *data, size_t len, void *priv)
  
  	if (opcode == BATTMGR_NOTIFICATION)
  		qcom_battmgr_notification(battmgr, data, len);
@@ -374,7 +373,7 @@ index 7716eb9e1aff..4cc263457d8a 100644
  	else if (battmgr->variant == QCOM_BATTMGR_SC8280XP ||
  		 battmgr->variant == QCOM_BATTMGR_X1E80100)
  		qcom_battmgr_sc8280xp_callback(battmgr, data, len);
-@@ -1584,6 +1813,134 @@ static void qcom_battmgr_callback(const void *data, size_t len, void *priv)
+@@ -1611,6 +1837,134 @@ static void qcom_battmgr_callback(const void *data, size_t len, void *priv)
  		qcom_battmgr_sm8350_callback(battmgr, data, len);
  }
  
@@ -509,7 +508,7 @@ index 7716eb9e1aff..4cc263457d8a 100644
  static void qcom_battmgr_enable_worker(struct work_struct *work)
  {
  	struct qcom_battmgr *battmgr = container_of(work, struct qcom_battmgr, enable_work);
-@@ -1597,6 +1954,9 @@ static void qcom_battmgr_enable_worker(struct work_struct *work)
+@@ -1624,6 +1978,9 @@ static void qcom_battmgr_enable_worker(struct work_struct *work)
  	ret = qcom_battmgr_request(battmgr, &req, sizeof(req));
  	if (ret)
  		dev_err(battmgr->dev, "failed to request power notifications\n");
@@ -519,7 +518,7 @@ index 7716eb9e1aff..4cc263457d8a 100644
  }
  
  static void qcom_battmgr_pdr_notify(void *priv, int state)
-@@ -1618,6 +1978,7 @@ static const struct of_device_id qcom_battmgr_of_variants[] = {
+@@ -1645,6 +2002,7 @@ static const struct of_device_id qcom_battmgr_of_variants[] = {
  	{ .compatible = "qcom,sc8280xp-pmic-glink", .data = (void *)QCOM_BATTMGR_SC8280XP },
  	{ .compatible = "qcom,sm8550-pmic-glink", .data = (void *)QCOM_BATTMGR_SM8550 },
  	{ .compatible = "qcom,x1e80100-pmic-glink", .data = (void *)QCOM_BATTMGR_X1E80100 },
@@ -527,7 +526,7 @@ index 7716eb9e1aff..4cc263457d8a 100644
  	/* Unmatched devices falls back to QCOM_BATTMGR_SM8350 */
  	{}
  };
-@@ -1690,7 +2051,9 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
+@@ -1717,7 +2075,9 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
  			return dev_err_probe(dev, PTR_ERR(battmgr->wls_psy),
  					     "failed to register wireless charing power supply\n");
  	} else {
@@ -538,7 +537,7 @@ index 7716eb9e1aff..4cc263457d8a 100644
  			psy_desc = &sm8550_bat_psy_desc;
  		else
  			psy_desc = &sm8350_bat_psy_desc;
-@@ -1716,6 +2079,11 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
+@@ -1743,6 +2103,11 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
  	if (ret)
  		return ret;
  
@@ -550,6 +549,3 @@ index 7716eb9e1aff..4cc263457d8a 100644
  	battmgr->client = devm_pmic_glink_client_alloc(dev, PMIC_GLINK_OWNER_BATTMGR,
  						       qcom_battmgr_callback,
  						       qcom_battmgr_pdr_notify,
--- 
-2.43.0
-

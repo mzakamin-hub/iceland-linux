@@ -12,7 +12,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
-index ba810f26ea30..39aab52658ce 100644
+index 2ac517db50fc..301b9414c4e7 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
 @@ -571,6 +571,7 @@ static void dpu_encoder_phys_vid_prepare_for_kickoff(
@@ -23,6 +23,3 @@ index ba810f26ea30..39aab52658ce 100644
  		dpu_core_irq_unregister_callback(phys_enc->dpu_kms,
  				phys_enc->irq[INTR_IDX_VSYNC]);
  	}
--- 
-2.43.0
-

@@ -66,6 +66,3 @@ index 70f1a4e6e866..608966c021bd 100644
  
  	return IRQ_HANDLED;
  }
--- 
-2.43.0
-

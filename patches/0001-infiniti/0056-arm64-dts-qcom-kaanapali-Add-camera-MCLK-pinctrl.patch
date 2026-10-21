@@ -14,10 +14,10 @@ Signed-off-by: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
  1 file changed, 56 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 40d756126eca..fc897698e86a 100644
+index c070a35c4209..7bd3b98aa5cc 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -4754,6 +4754,62 @@ tlmm: pinctrl@f100000 {
+@@ -4756,6 +4756,62 @@
  			#interrupt-cells = <2>;
  			wakeup-parent = <&pdc>;
  
@@ -80,6 +80,3 @@ index 40d756126eca..fc897698e86a 100644
  			cci0_i2c0_default: cci0-i2c0-default-state {
  				scl-pins {
  					pins = "gpio110";
--- 
-2.43.0
-

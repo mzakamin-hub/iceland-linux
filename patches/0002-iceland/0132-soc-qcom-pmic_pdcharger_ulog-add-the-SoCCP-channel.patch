@@ -16,7 +16,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/soc/qcom/pmic_pdcharger_ulog.c b/drivers/soc/qcom/pmic_pdcharger_ulog.c
-index 39f412bbf2c1..50f52ca757de 100644
+index 06cd9c4411c2..b063c3295708 100644
 --- a/drivers/soc/qcom/pmic_pdcharger_ulog.c
 +++ b/drivers/soc/qcom/pmic_pdcharger_ulog.c
 @@ -148,6 +148,7 @@ static void pmic_pdcharger_ulog_rpmsg_remove(struct rpmsg_device *rpdev)
@@ -27,6 +27,3 @@ index 39f412bbf2c1..50f52ca757de 100644
  	{}
  };
  /*
--- 
-2.43.0
-

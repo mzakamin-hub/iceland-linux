@@ -1,0 +1,25 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Rob Clark <robin.clark@oss.qualcomm.com>
+Date: Tue, 20 Oct 2026 13:46:26 -0700
+Subject: [PATCH] drm/msm/adreno: Remove temporary __maybe_unused
+
+Now that is unneeded.
+
+Signed-off-by: Rob Clark <robin.clark@oss.qualcomm.com>
+---
+ drivers/gpu/drm/msm/adreno/adreno_gpu.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/msm/adreno/adreno_gpu.h b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
+index ad6b7ac7fbca..05beb80e4ed0 100644
+--- a/drivers/gpu/drm/msm/adreno/adreno_gpu.h
++++ b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
+@@ -171,7 +171,7 @@ struct adreno_protect {
+ };
+ 
+ #define DECLARE_ADRENO_PROTECT(name, __count_max)	\
+-static const struct adreno_protect name __maybe_unused = {		\
++static const struct adreno_protect name = {		\
+ 	.regs = name ## _regs,				\
+ 	.count = ARRAY_SIZE(name ## _regs),		\
+ 	.count_max = __count_max,			\

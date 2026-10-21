@@ -49,7 +49,7 @@ index 9cd2e6ed8bbb..587d349da91d 100644
  };
  
 diff --git a/drivers/crypto/qce/sha.c b/drivers/crypto/qce/sha.c
-index eb8a5b0c4173..586efed68d36 100644
+index b67d749db05f..8c12c072f4a9 100644
 --- a/drivers/crypto/qce/sha.c
 +++ b/drivers/crypto/qce/sha.c
 @@ -249,18 +249,53 @@ static int qce_ahash_update(struct ahash_request *req)
@@ -137,6 +137,3 @@ index eb8a5b0c4173..586efed68d36 100644
  	base = &alg->halg.base;
  	base->cra_blocksize = def->blocksize;
  	base->cra_priority = 175;
--- 
-2.43.0
-

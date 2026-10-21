@@ -3791,6 +3791,3 @@ index 000000000000..2e77b75ee0d1
 +	{.id = {0xFF, 0xFF, 0xFF, 0x76, 0x66, 0x03}, .mask = {0, 0, 0, 1, 1, 1},
 +		.mmap = &NT36676F_memory_map, .hwinfo = &NT36676F_hw_info}
 +};
--- 
-2.43.0
-

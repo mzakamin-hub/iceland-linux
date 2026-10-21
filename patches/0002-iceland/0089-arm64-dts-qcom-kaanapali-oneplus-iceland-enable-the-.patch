@@ -29,7 +29,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 301bc5310f23..57b9a314cfc1 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1245,12 +1245,11 @@ vcm: actuator@c {
+@@ -1245,12 +1245,11 @@
  		reg = <0x0c>;
  
  		vdd-supply = <&vreg_l16b_2p8>;
@@ -44,7 +44,7 @@ index 301bc5310f23..57b9a314cfc1 100644
  	};
  
  	/* rear: SmartSens SC1320CS, chip id 0xc658 (stock "icelandmain") */
-@@ -1271,6 +1270,8 @@ camera@36 {
+@@ -1271,6 +1270,8 @@
  		orientation = <1>;
  		rotation = <90>;
  
@@ -53,6 +53,3 @@ index 301bc5310f23..57b9a314cfc1 100644
  		port {
  			cam_rear_out: endpoint {
  				link-frequencies = /bits/ 64 <662400000>;
--- 
-2.43.0
-

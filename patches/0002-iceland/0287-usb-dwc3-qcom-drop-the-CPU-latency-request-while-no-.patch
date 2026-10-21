@@ -110,6 +110,3 @@ index 3c8d3eef9a14..b0df29d2aa8e 100644
  	cpu_latency_qos_add_request(&qcom->pm_qos_req, DWC3_QCOM_PM_QOS_LATENCY_US);
  	ret = dwc3_core_probe(&probe_data);
  	if (ret)  {
--- 
-2.43.0
-

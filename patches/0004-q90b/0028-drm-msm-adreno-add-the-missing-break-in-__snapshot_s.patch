@@ -1,0 +1,30 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Wed, 21 Oct 2026 19:30:00 +0300
+Subject: [PATCH] drm/msm/adreno: add the missing break in
+ __snapshot_sect_init()
+
+clang warns about the unannotated fall-through from the
+ADRENO_SNAPSHOT_SECTION_REGS_V2 case into the default case
+(-Wimplicit-fallthrough, enabled for the kernel build). The default case
+only breaks, so a break after the REGS_V2 case is the same code.
+
+Fixes: a7e12c21a86e ("drm/msm: Import adreno_snapshot.h")
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/adreno/adreno_snapshot.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/gpu/drm/msm/adreno/adreno_snapshot.h b/drivers/gpu/drm/msm/adreno/adreno_snapshot.h
+index e8ff102a628b..6e301a9eb97e 100644
+--- a/drivers/gpu/drm/msm/adreno/adreno_snapshot.h
++++ b/drivers/gpu/drm/msm/adreno/adreno_snapshot.h
+@@ -391,6 +391,7 @@ __snapshot_sect_init(struct adreno_gpu_state *state, uint16_t id, size_t extra_s
+ 	switch (id) {
+ 	case ADRENO_SNAPSHOT_SECTION_REGS_V2:
+ 		sect_hdr_sz = 0;
++		break;
+ 	default:
+ 		break;
+ 	}

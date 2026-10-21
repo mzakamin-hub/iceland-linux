@@ -29,10 +29,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  2 files changed, 9 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
-index 14d422d7ab95..da66b5f2bfc0 100644
+index 662f09bec9d5..848bcba5a84a 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
-@@ -645,6 +645,10 @@ static void a6xx_rpmh_stop(struct a6xx_gmu *gmu)
+@@ -658,6 +658,10 @@ static void a6xx_rpmh_stop(struct a6xx_gmu *gmu)
  	if (!test_and_clear_bit(GMU_STATUS_FW_START, &gmu->status))
  		return;
  
@@ -40,14 +40,14 @@ index 14d422d7ab95..da66b5f2bfc0 100644
 +	if (system_state == SYSTEM_POWER_OFF || system_state == SYSTEM_HALT)
 +		return;
 +
- 	if (adreno_is_a840(adreno_gpu))
+ 	if (adreno_is_a840(adreno_gpu) || adreno_is_a850_family(adreno_gpu))
  		bitmask = BIT(30);
  
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_device.c b/drivers/gpu/drm/msm/adreno/adreno_device.c
-index 35b2c0db0ee8..934b5450bdfa 100644
+index bf86b6cacf0e..3d2b47682eef 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_device.c
 +++ b/drivers/gpu/drm/msm/adreno/adreno_device.c
-@@ -290,6 +290,11 @@ static void adreno_remove(struct platform_device *pdev)
+@@ -292,6 +292,11 @@ static void adreno_remove(struct platform_device *pdev)
  
  static void adreno_shutdown(struct platform_device *pdev)
  {
@@ -59,6 +59,3 @@ index 35b2c0db0ee8..934b5450bdfa 100644
  	WARN_ON_ONCE(adreno_system_suspend(&pdev->dev));
  }
  
--- 
-2.43.0
-

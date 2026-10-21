@@ -19,10 +19,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 5 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/dsi/dsi.c b/drivers/gpu/drm/msm/dsi/dsi.c
-index 3c9f01ed6271..f0538ae21051 100644
+index c726fc628a08..f3ba7fac3a0c 100644
 --- a/drivers/gpu/drm/msm/dsi/dsi.c
 +++ b/drivers/gpu/drm/msm/dsi/dsi.c
-@@ -42,14 +42,13 @@ static int dsi_get_phy(struct msm_dsi *msm_dsi)
+@@ -44,14 +44,13 @@ static int dsi_get_phy(struct msm_dsi *msm_dsi)
  
  	of_node_put(phy_node);
  
@@ -42,6 +42,3 @@ index 3c9f01ed6271..f0538ae21051 100644
  	}
  
  	return 0;
--- 
-2.43.0
-

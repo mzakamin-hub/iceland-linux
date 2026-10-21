@@ -14,19 +14,16 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 3 insertions(+)
 
 diff --git a/drivers/phy/qualcomm/phy-qcom-eusb2-repeater.c b/drivers/phy/qualcomm/phy-qcom-eusb2-repeater.c
-index efeec4709a15..29a31816edef 100644
+index 89bc1c89fc85..d056f0f8dd93 100644
 --- a/drivers/phy/qualcomm/phy-qcom-eusb2-repeater.c
 +++ b/drivers/phy/qualcomm/phy-qcom-eusb2-repeater.c
-@@ -174,6 +174,9 @@ static int eusb2_repeater_init(struct phy *phy)
+@@ -173,6 +173,9 @@ static int eusb2_repeater_init(struct phy *phy)
  	if (!of_property_read_u8(np, "qcom,tune-res-fsdif", &val))
- 		regmap_write(regmap, base + EUSB2_TUNE_RES_FSDIF, val);
+ 		regmap_write(regmap, EUSB2_TUNE_RES_FSDIF, val);
  
 +	if (!of_property_read_u8(np, "qcom,tune-usb2-slew", &val))
-+		regmap_write(regmap, base + EUSB2_TUNE_USB2_SLEW, val);
++		regmap_write(regmap, EUSB2_TUNE_USB2_SLEW, val);
 +
  	if (!of_property_read_s32(np, "qcom,squelch-detector-bp", &dt_val)) {
  		for (i = 0; i < ARRAY_SIZE(squelch_detector); i++) {
  			if (squelch_detector[i] == dt_val) {
--- 
-2.43.0
-

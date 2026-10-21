@@ -1,0 +1,58 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Wang Haoran <haoranwangsec@gmail.com>
+Date: Wed, 21 Oct 2026 13:20:42 +0800
+Subject: [PATCH] scsi: ufs: Fix wild pointer dereference in
+ ufshcd_clkscale_enable_store()
+
+ufshcd_clkscale_enable_store() calls
+list_first_entry(&hba->clk_list_head, ...) and immediately dereferences
+the result with clki->max_freq, without checking whether the clock list
+is empty. list_first_entry() does not return NULL on an empty list: it
+returns container_of() applied to the list head, i.e. a non-NULL wild
+pointer pointing at &hba->clk_list_head itself, so the ->max_freq read
+lands on adjacent fields of struct ufs_hba and yields a garbage value /
+out-of-bounds access. The clock list can legitimately be empty on this
+path: it starts out empty (INIT_LIST_HEAD() in ufshcd_alloc_host()) and
+ufshcd_parse_clock_info() returns success leaving it empty when the
+device tree has no clock-names property, while UFSHCD_CAP_CLK_SCALING is
+a software capability bit set independently by vendor/platform code, so
+a "cap set but no clocks" configuration is possible. In that state
+ufshcd_devfreq_init() explicitly returns success for an empty list and
+ufshcd_async_scan() still creates the clkscale_enable sysfs attribute
+with is_enabled = true, so a simple "echo 0 > .../clkscale_enable"
+reaches the unguarded list_first_entry() and dereferences the wild
+pointer. Notably, all five sibling functions in this file that access
+clk_list_head (ufshcd_print_clk_freqs(), ufshcd_setup_clocks(),
+ufshcd_init_clocks(), ufshcd_devfreq_init(), ufshcd_devfreq_scale())
+guard with list_empty() first - only this one was missed, which suggests
+an oversight rather than a deliberate design. This potential issue was
+found during a code audit.
+
+Fix this by adding a list_empty() guard before the list_first_entry()
+call, returning -EINVAL via the existing out_rel error path when the
+clock list is empty, exactly matching how the sibling functions handle
+the same condition. Behaviour with a non-empty clock list is unchanged.
+
+Reported-by: Wang Haoran <haoranwangsec@gmail.com>
+Reported-by: Li Ximo <lixicaicai@gmail.com>
+Signed-off-by: Wang Haoran <haoranwangsec@gmail.com>
+---
+ drivers/ufs/core/ufshcd.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/drivers/ufs/core/ufshcd.c b/drivers/ufs/core/ufshcd.c
+index 87f78ffc8cbd..8c8c85a2e3f8 100644
+--- a/drivers/ufs/core/ufshcd.c
++++ b/drivers/ufs/core/ufshcd.c
+@@ -1874,6 +1874,11 @@ static ssize_t ufshcd_clkscale_enable_store(struct device *dev,
+ 		goto out_rel;
+ 	}
+ 
++	if (list_empty(&hba->clk_list_head)) {
++		err = -EINVAL;
++		goto out_rel;
++	}
++
+ 	clki = list_first_entry(&hba->clk_list_head, struct ufs_clk_info, list);
+ 	freq = clki->max_freq;
+ 

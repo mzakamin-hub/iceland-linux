@@ -120,6 +120,3 @@ index f90fb2d13e42..2984ce3b68ed 100644
  
  	/* Wait for any vblank work that's still executing to finish */
  	drm_vblank_flush_worker(vblank);
--- 
-2.43.0
-

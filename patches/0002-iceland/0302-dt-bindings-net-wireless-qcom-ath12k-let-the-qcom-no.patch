@@ -28,6 +28,3 @@ index 37c431772c9c..a15af133f804 100644
        second radio has no 5 GHz path. The firmware must be told not to use it.
  
    vddaon-supply:
--- 
-2.43.0
-

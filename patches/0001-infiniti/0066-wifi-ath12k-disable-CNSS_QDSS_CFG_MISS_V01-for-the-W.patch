@@ -13,10 +13,10 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1 insertion(+), 2 deletions(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/wifi7/hw.c b/drivers/net/wireless/ath/ath12k/wifi7/hw.c
-index d4155335f130..ad85dd85f51d 100644
+index 3bd3a233308a..a1d7d81db356 100644
 --- a/drivers/net/wireless/ath/ath12k/wifi7/hw.c
 +++ b/drivers/net/wireless/ath/ath12k/wifi7/hw.c
-@@ -768,8 +768,7 @@ static const struct ath12k_hw_params ath12k_wifi7_hw_params[] = {
+@@ -778,8 +778,7 @@ static const struct ath12k_hw_params ath12k_wifi7_hw_params[] = {
  
  		.wmi_init = ath12k_wifi7_wmi_init_wcn7850,
  
@@ -26,6 +26,3 @@ index d4155335f130..ad85dd85f51d 100644
  					   BIT(CNSS_AUX_UC_SUPPORT_V01),
  
  		.rfkill_pin = 0,
--- 
-2.43.0
-

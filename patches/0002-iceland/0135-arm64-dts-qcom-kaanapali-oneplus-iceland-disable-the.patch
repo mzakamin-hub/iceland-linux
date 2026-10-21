@@ -19,7 +19,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 71d2e65c0627..ac59bcc8ab09 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1433,6 +1433,18 @@ &i2c_master_hub {
+@@ -1433,6 +1433,18 @@
  	status = "okay";
  };
  
@@ -38,6 +38,3 @@ index 71d2e65c0627..ac59bcc8ab09 100644
  &mdss {
  	/*
  	 * The display needs both core GDSCs, as in the stock kernel (canoe-sde: "core_gdsc", "core_int2_gdsc").
--- 
-2.43.0
-

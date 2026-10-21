@@ -31,6 +31,3 @@ index f29fc335f3f5..7d6c9546b649 100644
    qcom,squelch-detector-bp:
      description:
        This adjusts the voltage level for the threshold used to detect valid
--- 
-2.43.0
-

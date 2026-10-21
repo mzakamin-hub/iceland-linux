@@ -20,10 +20,10 @@ Signed-off-by: Vikash Garodia <vikash.garodia@oss.qualcomm.com>
  1 file changed, 50 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
-index bb8135bd238b..368e157f2ef7 100644
+index fd5c3e47a15f..61b4e50e4135 100644
 --- a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
 +++ b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
-@@ -1814,6 +1814,55 @@ static u32 hfi_vpu4x_buffer_line_vp9d(u32 frame_width, u32 frame_height, u32 _yu
+@@ -2134,6 +2134,55 @@ static u32 hfi_vpu4x_buffer_line_vp9d(u32 frame_width, u32 frame_height, u32 _yu
  	return lb_size + dpb_obp_size;
  }
  
@@ -79,7 +79,7 @@ index bb8135bd238b..368e157f2ef7 100644
  static u32 iris_vpu4x_dec_line_size(struct iris_inst *inst)
  {
  	u32 num_vpp_pipes = inst->core->iris_platform_data->num_vpp_pipe;
-@@ -1829,7 +1878,7 @@ static u32 iris_vpu4x_dec_line_size(struct iris_inst *inst)
+@@ -2149,7 +2198,7 @@ static u32 iris_vpu4x_dec_line_size(struct iris_inst *inst)
  	if (inst->codec == V4L2_PIX_FMT_H264)
  		return hfi_buffer_line_h264d(width, height, is_opb, num_vpp_pipes);
  	else if (inst->codec == V4L2_PIX_FMT_HEVC)
@@ -88,6 +88,3 @@ index bb8135bd238b..368e157f2ef7 100644
  	else if (inst->codec == V4L2_PIX_FMT_VP9)
  		return hfi_vpu4x_buffer_line_vp9d(width, height, out_min_count, is_opb,
  						  num_vpp_pipes);
--- 
-2.43.0
-

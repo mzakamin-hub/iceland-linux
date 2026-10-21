@@ -27,10 +27,10 @@ index 87da8a0a6ac7..5a71d6eb40a3 100644
  # SOC
  CONFIG_ARM64_PMEM=y
 diff --git a/sound/soc/codecs/Kconfig b/sound/soc/codecs/Kconfig
-index 4570bc138035..dc67ffff7856 100644
+index 387a74bc92d0..a388ca8b915f 100644
 --- a/sound/soc/codecs/Kconfig
 +++ b/sound/soc/codecs/Kconfig
-@@ -2294,6 +2294,10 @@ config SND_SOC_TDA7419
+@@ -2322,6 +2322,10 @@ config SND_SOC_TDA7419
  	depends on I2C
  	select REGMAP_I2C
  
@@ -42,10 +42,10 @@ index 4570bc138035..dc67ffff7856 100644
  	tristate "NXP/Goodix TFA9866 amplifier"
  	depends on I2C
 diff --git a/sound/soc/codecs/Makefile b/sound/soc/codecs/Makefile
-index f59a2b29a72b..66ef6b3eed1b 100644
+index 0f0906717ff0..153a65e6bf27 100644
 --- a/sound/soc/codecs/Makefile
 +++ b/sound/soc/codecs/Makefile
-@@ -331,6 +331,7 @@ snd-soc-tas2781-comlib-i2c-y := tas2781-comlib-i2c.o
+@@ -334,6 +334,7 @@ snd-soc-tas2781-comlib-i2c-y := tas2781-comlib-i2c.o
  snd-soc-tas2781-fmwlib-y := tas2781-fmwlib.o
  snd-soc-tas2781-i2c-y := tas2781-i2c.o
  snd-soc-tas2783-sdw-y := tas2783-sdw.o
@@ -53,7 +53,7 @@ index f59a2b29a72b..66ef6b3eed1b 100644
  snd-soc-tfa9866-y := tfa9866.o
  snd-soc-tfa9879-y := tfa9879.o
  snd-soc-tfa989x-y := tfa989x.o
-@@ -776,6 +777,7 @@ obj-$(CONFIG_SND_SOC_TAS6424)	+= snd-soc-tas6424.o
+@@ -783,6 +784,7 @@ obj-$(CONFIG_SND_SOC_TAS6424)	+= snd-soc-tas6424.o
  obj-$(CONFIG_SND_SOC_TAS675X)	+= snd-soc-tas675x.o
  obj-$(CONFIG_SND_SOC_TDA7419)	+= snd-soc-tda7419.o
  obj-$(CONFIG_SND_SOC_TAS2770) += snd-soc-tas2770.o
@@ -654,6 +654,3 @@ index 000000000000..97d1db2e7a44
 +MODULE_DESCRIPTION("ASoC Goodix TFA9865 driver");
 +MODULE_AUTHOR("map220v <map220v300@gmail.com>");
 +MODULE_LICENSE("GPL");
--- 
-2.43.0
-

@@ -19,7 +19,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index bd4fc183fbc6..b191f5b39f35 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1376,6 +1376,18 @@ &pon_resin {
+@@ -1376,6 +1376,18 @@
  	status = "okay";
  };
  
@@ -38,6 +38,3 @@ index bd4fc183fbc6..b191f5b39f35 100644
  &remoteproc_adsp {
  	firmware-name = "qcom/kaanapali/iceland/adsp.mbn",
  			"qcom/kaanapali/iceland/adsp_dtb.mbn";
--- 
-2.43.0
-

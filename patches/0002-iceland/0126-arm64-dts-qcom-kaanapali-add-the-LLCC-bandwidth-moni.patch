@@ -16,10 +16,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 60 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 7ad84e4a5442..106eda6048f5 100644
+index ad1e43b42926..03865b947d33 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -7763,6 +7763,66 @@ compute-cb@13 {
+@@ -7759,6 +7759,66 @@
  			};
  		};
  
@@ -86,6 +86,3 @@ index 7ad84e4a5442..106eda6048f5 100644
  		/* Cluster 0 */
  		pmu@310b3400 {
  			compatible = "qcom,kaanapali-cpu-bwmon", "qcom,sdm845-bwmon";
--- 
-2.43.0
-

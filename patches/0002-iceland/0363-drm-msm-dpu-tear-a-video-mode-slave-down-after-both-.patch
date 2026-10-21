@@ -75,10 +75,10 @@ index cb0cc4454b01..8879cd96f966 100644
  	/* after phys waits for frame-done, should be no more frames pending */
  	if (atomic_xchg(&dpu_enc->frame_done_timeout_ms, 0)) {
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
-index e422ca15edb3..064348b51d48 100644
+index bffe55bc20f2..69f78e4ef7f0 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
-@@ -662,6 +662,17 @@ static void dpu_encoder_phys_vid_disable(struct dpu_encoder_phys *phys_enc)
+@@ -660,6 +660,17 @@ static void dpu_encoder_phys_vid_disable(struct dpu_encoder_phys *phys_enc)
  		dpu_encoder_phys_inc_pending(phys_enc);
  	spin_unlock_irqrestore(phys_enc->enc_spinlock, lock_flags);
  
@@ -96,6 +96,3 @@ index e422ca15edb3..064348b51d48 100644
  	/*
  	 * Wait for a vsync so we know the ENABLE=0 latched before
  	 * the (connector) source of the vsync's gets disabled,
--- 
-2.43.0
-

@@ -358,6 +358,3 @@ index 2355a1db9b94..a1d83ef906f2 100644
  	const u32 common_regs_offset;
  	const u32 common_status_offset;
  };
--- 
-2.43.0
-

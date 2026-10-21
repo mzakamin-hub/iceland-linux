@@ -50,6 +50,3 @@ index 61b22d949454..d24e39597f2f 100644
  	    !dpu_encoder_use_dsc_merge(phys_enc->parent))
  		return BLEND_3D_H_ROW_INT;
  
--- 
-2.43.0
-

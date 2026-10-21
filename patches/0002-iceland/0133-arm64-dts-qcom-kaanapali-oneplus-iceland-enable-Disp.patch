@@ -20,7 +20,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index a2416ee0482d..7455dda42ece 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1434,6 +1434,20 @@ &iris {
+@@ -1434,6 +1434,20 @@
  	status = "okay";
  };
  
@@ -41,6 +41,3 @@ index a2416ee0482d..7455dda42ece 100644
  &mdss_dsi0 {
  	vdda-supply = <&vreg_l1d_1p2>;
  	qcom,dual-dsi-mode;
--- 
-2.43.0
-

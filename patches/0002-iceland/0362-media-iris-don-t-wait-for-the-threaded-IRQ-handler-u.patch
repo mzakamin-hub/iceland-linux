@@ -51,10 +51,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  4 files changed, 18 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_core.c b/drivers/media/platform/qcom/iris/iris_core.c
-index 8c335dbfce16..d4fcf5d07560 100644
+index d558475986ff..32b7639a4e65 100644
 --- a/drivers/media/platform/qcom/iris/iris_core.c
 +++ b/drivers/media/platform/qcom/iris/iris_core.c
-@@ -28,6 +28,9 @@ void iris_core_deinit(struct iris_core *core)
+@@ -29,6 +29,9 @@ void iris_core_deinit(struct iris_core *core)
  	}
  	mutex_unlock(&core->lock);
  
@@ -77,7 +77,7 @@ index 3e4cf652bf39..293d0a4fa70a 100644
  	struct video_device			*vdev_dec;
  	struct video_device			*vdev_enc;
 diff --git a/drivers/media/platform/qcom/iris/iris_hfi_common.c b/drivers/media/platform/qcom/iris/iris_hfi_common.c
-index e87d16717e32..9998bc1edc34 100644
+index de4d53f31983..e120b6fa8f4a 100644
 --- a/drivers/media/platform/qcom/iris/iris_hfi_common.c
 +++ b/drivers/media/platform/qcom/iris/iris_hfi_common.c
 @@ -109,6 +109,12 @@ irqreturn_t iris_hfi_isr_handler(int irq, void *data)
@@ -94,10 +94,10 @@ index e87d16717e32..9998bc1edc34 100644
  	iris_vpu_clear_interrupt(core);
  	mutex_unlock(&core->lock);
 diff --git a/drivers/media/platform/qcom/iris/iris_vpu_common.c b/drivers/media/platform/qcom/iris/iris_vpu_common.c
-index 7e4fcf79a01d..97db6f15d249 100644
+index 243bd845349f..3dc1580d92b1 100644
 --- a/drivers/media/platform/qcom/iris/iris_vpu_common.c
 +++ b/drivers/media/platform/qcom/iris/iris_vpu_common.c
-@@ -236,8 +236,14 @@ void iris_vpu_power_off(struct iris_core *core)
+@@ -239,8 +239,14 @@ void iris_vpu_power_off(struct iris_core *core)
  	core->iris_platform_data->vpu_ops->power_off_controller(core);
  	iris_unset_icc_bw(core);
  
@@ -113,14 +113,11 @@ index 7e4fcf79a01d..97db6f15d249 100644
  }
  
  int iris_vpu_power_on_controller(struct iris_core *core)
-@@ -492,6 +498,7 @@ int iris_vpu_power_on(struct iris_core *core)
+@@ -521,6 +527,7 @@ int iris_vpu_power_on(struct iris_core *core)
  
- 	iris_vpu_interrupt_init(core);
+ 	core->iris_platform_data->vpu_ops->interrupt_init(core);
  	core->intr_status = 0;
 +	core->hw_powered = true;
  	enable_irq(core->irq);
  
  	return 0;
--- 
-2.43.0
-

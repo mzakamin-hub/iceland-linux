@@ -148,6 +148,3 @@ index dc1075dc3446..4d50cf230950 100644
  
  /* DEVFREQ notifier interface */
  #define DEVFREQ_TRANSITION_NOTIFIER	(0)
--- 
-2.43.0
-

@@ -150,6 +150,3 @@ index ab98c2d7f0dc..0664fdb842a3 100644
  	dwc3_core_remove(&qcom->dwc);
  	clk_bulk_disable_unprepare(qcom->num_clocks, qcom->clks);
  	dwc3_qcom_interconnect_exit(qcom);
--- 
-2.43.0
-

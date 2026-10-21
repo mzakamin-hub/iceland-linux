@@ -32,6 +32,3 @@ index fd2415e231eb..008eaea9b889 100644
    rcv-gpios:
      description: optional GPIO to be asserted when receiver mode is enabled.
  
--- 
-2.43.0
-
