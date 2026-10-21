@@ -48,3 +48,7 @@ TREE_AFTER_0004_q90b=1f26e549db103a558bab8efbd3be0791b7e4b500
 # q90c (TRIAL, 21 Oct 2026) = q90b + 0005-q90c: the display clock controller's own MX vote (dt-bindings + kaanapali.dtsi;
 # docs/DISPLAY-CX-VOTE-FIX-2026-10-21.md). No C change: q90b's Image and modules, new device trees only.
 TREE_AFTER_0005_q90c=9b899e5d1dc9efeb7c7f19be6a76eb8fd08ce06b
+# q90d (TRIAL, 22 Oct 2026) = q90c + 0006-q90d: dwc3-qcom keeps the interconnect votes across runtime suspend on
+# Kaanapali (the display glitch fix; dwc3_qcom.keep_icc_runtime=0 = upstream), rpmhpd.kaanapali_mmcx_cx_parent (opt-in,
+# default off), serial: qcom-geni: Clear pending IRQs while suspended (pw 1190182). docs/DISPLAY-CX-VOTE-FIX-2026-10-21.md.
+TREE_AFTER_0006_q90d=e68f3558489de193ec7e2091b9b8c87caabe4050
