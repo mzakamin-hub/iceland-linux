@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Praveen Talari <praveen.talari@oss.qualcomm.com>
 Date: Wed, 21 Oct 2026 09:19:37 +0530
-Subject: [PATCH 3/3] serial: qcom-geni: Clear pending IRQs while suspended
+Subject: [PATCH 2/2] serial: qcom-geni: Clear pending IRQs while suspended
 
 When uart_suspend_port() marks a port suspended, an interrupt may still
 be pending before TX and RX are stopped. Returning IRQ_NONE before taking

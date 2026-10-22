@@ -42,30 +42,33 @@ TREE_AFTER_0001_infiniti=f2bf8ad883fe41773f3860b7c8a3a63ca0e548d2
 # kernel q89w (TRIAL) = q89v + 0395-0402 (DP lanes from the Type-C pin assignment, link-training fallback, modes vs the trained link, link-status BAD, msm.dp_max_lanes; vtotal write window; + the USB-C device fragment section), 7.3.0-rc7-iceland-00519-gec0a0e306dd9 had f755e421b3f5;
 # kernel q89x (TRIAL) = q89w - 0349 (Gen2 limit) - 0357 (UFS v1) + 0404 0406-0412 (DSI PLL_SYSTEM_MUXES at PHY enable + msm.dsi_phy_muxes_first, codec DMA channel map reset, devfreq after the GPU init, UFS outstanding_reqs v2), 7.3.0-rc7-iceland-00529-g2968dd8b437e had ea9fec590a90;
 # kernel q89y (TRIAL) = q89x - 0001-infiniti 0132 (one cluster power domain for all 8 CPUs, the upstream / SuperTurtleDev topology), 7.3.0-rc7-iceland-00530-g242d83c86fe0:
-TREE_AFTER_0002_iceland=c1eab20ba31b01d5d2cc1c8f6f58c7ec240ebc19
-TREE_AFTER_0003_glitchfix=5b84f7f688155bb3b1a10583df8bcbde2bc9f8d6
-TREE_AFTER_0004_q90b=1f26e549db103a558bab8efbd3be0791b7e4b500
+TREE_AFTER_0002_iceland=d007cfbcba12a0c1ba6be4512bc8490cb9a0cce3
+TREE_AFTER_0003_glitchfix=0dc80ac37f671559282384206e0fab7c5fa959d4
+TREE_AFTER_0004_q90b=a4721eaa34fbd1eb4a7ee8deed03d67884c7ffcb
 # q90c (TRIAL, 21 Oct 2026) = q90b + 0005-q90c: the display clock controller's own MX vote (dt-bindings + kaanapali.dtsi;
 # docs/DISPLAY-CX-VOTE-FIX-2026-10-21.md). No C change: q90b's Image and modules, new device trees only.
-TREE_AFTER_0005_q90c=9b899e5d1dc9efeb7c7f19be6a76eb8fd08ce06b
+TREE_AFTER_0005_q90c=471975f6f3caf444641d1bd0467669a8cfe931df
 # q90d (TRIAL, 22 Oct 2026) = q90c + 0006-q90d: dwc3-qcom keeps the interconnect votes across runtime suspend on
-# Kaanapali (the display glitch fix; dwc3_qcom.keep_icc_runtime=0 = upstream), rpmhpd.kaanapali_mmcx_cx_parent (opt-in,
-# default off), serial: qcom-geni: Clear pending IRQs while suspended (pw 1190182). docs/DISPLAY-CX-VOTE-FIX-2026-10-21.md.
-TREE_AFTER_0006_q90d=e68f3558489de193ec7e2091b9b8c87caabe4050
+# Kaanapali (the display glitch fix; dwc3_qcom.keep_icc_runtime=0 = upstream), serial: qcom-geni: Clear pending IRQs
+# while suspended (pw 1190182). docs/DISPLAY-CX-VOTE-FIX-2026-10-21.md.
+TREE_AFTER_0006_q90d=dabe7cd7e3c84e45041d87b8b813d373b5be6f51
 # q90e (TRIAL, 22 Oct 2026) = q90d + 0007-q90e: drm/msm/a8xx crash state capture opt-in (msm.a8xx_crashstate, default
 # off): the capture's GMU CX register read raised a synchronous external abort and GPU recovery never ran.
-TREE_AFTER_0007_q90e=1e12b26b8ae75adf9ba353eb24ca3488778674a9
-# q90f (TRIAL, 22 Oct 2026) = q90e + 0008-q90f: A840 Kaanapali protect table (msm.a8xx_legacy_protect),
-# two-sample INTF diagnostics at vblank timeouts (msm.dpu_intf_diag), no submit replay on a GPU that was not reset
-# (msm.a8xx_safe_recover).
-TREE_AFTER_0008_q90f=7996a88caab17a00d57d87592062c8c5da767164
-# q90g (TRIAL, 22 Oct 2026) = q90f + 0009-q90g: idle refresh debug round (input activity filter, commit / input
-# raise counters, msm.dpu_idle_rr_qos_release: relax the 0335 latency request at the idle rate, default off).
-TREE_AFTER_0009_q90g=d87f7cfc842e631c6e9762a117e76cb8fb74be11
+TREE_AFTER_0007_q90e=b356e67ae99279a6a99fe505feea18c4592a6349
+# q90f (TRIAL, 22 Oct 2026) = q90e + 0008-q90f: A840 Kaanapali protect table (msm.a8xx_legacy_protect), no submit
+# replay on a GPU that was not reset (msm.a8xx_safe_recover).
+TREE_AFTER_0008_q90f=3f3cf595d698a45fff3ce146c0918cb155201672
+# q90g (TRIAL, 22 Oct 2026) = q90f + 0009-q90g: idle refresh round (input activity filter,
+# msm.dpu_idle_rr_qos_release: relax the 0335 latency request at the idle rate, default off).
+TREE_AFTER_0009_q90g=8f233c5792820f51db2a808fd44eeab7251782b8
 # q90h (TRIAL, 22 Oct 2026) = q90g + 0010-q90h: qcom_battmgr OPLUS power_now at the nominal voltage of
 # energy_now (qcom_battmgr.oplus_power_nominal, default Y), so that energy_now / power_now = charge_now / current_now.
-TREE_AFTER_0010_q90h=6e577777519f1ba28563554bb4a28d967bf85cf9
+TREE_AFTER_0010_q90h=dca32f9e9e4bc5649af3993a447674a2ac0919e2
 # q90i (TRIAL, 22 Oct 2026) = q90h + 0011-q90i: memlat devfreq read-back polling off by default (B1), and
 # configs/q90i.config (VA_BITS 48, HZ 250, PREEMPT_DYNAMIC with full preemption by default, ATH12K_DEBUG /
 # CoreSight / STM off; config only, no tree change).
-TREE_AFTER_0011_q90i=3e4ab27a494addd473b902cf318744ab23e940fa
+TREE_AFTER_0011_q90i=774795ac228285cceff8584e4790d278598bd508
+# q90j (TRIAL, 22 Oct 2026) = q90i without its six diagnostics-only patches: 0002-iceland 0353 (smp2p_sleepstate
+# A/B switches), 0003-glitchfix 0003 / 0004 (GLITCH-DIAG debugfs files), 0006-q90d rpmhpd.kaanapali_mmcx_cx_parent,
+# 0008-q90f msm.dpu_intf_diag, 0009-q90g raise_commit counters. Every TREE_AFTER from 0002 on is q90j's
+# (0006 / 0008 / 0009 re-exported); the config is q90i's. Kernel 7.3.0-next-20261020-iceland-00457-g8c8519cc8363.

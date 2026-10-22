@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Thu, 22 Oct 2026 13:20:49 +0300
-Subject: [PATCH 3/3] drm/msm/dpu: optionally relax the IRQ CPU latency limit
+Subject: [PATCH 2/2] drm/msm/dpu: optionally relax the IRQ CPU latency limit
  at the idle refresh rate
 
 While a CRTC is enabled, msm.dpu_irq_cpu_latency_us (default 500 us)
@@ -34,10 +34,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  3 files changed, 113 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
-index 433fec29a82b..fbc316515552 100644
+index 88c7c2ab4d41..97fa68516346 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
-@@ -158,6 +158,8 @@ enum dpu_enc_rc_states {
+@@ -155,6 +155,8 @@ enum dpu_enc_rc_states {
   * @last_tries:		frames it took to hit the window
   * @late:		writes made outside the window after
   *			DPU_VFP_WIN_TRIES frames
@@ -46,7 +46,7 @@ index 433fec29a82b..fbc316515552 100644
   *
   * The fields are changed under kms->commit_lock[@crtc_idx] (the commit, the
   * encoder enable and disable all run under it); @crtc_idx, @low, @idle_vtotal,
-@@ -188,6 +190,7 @@ struct dpu_enc_idle_rr {
+@@ -184,6 +186,7 @@ struct dpu_enc_idle_rr {
  	unsigned int last_window;
  	unsigned int last_tries;
  	unsigned int late;
@@ -54,7 +54,7 @@ index 433fec29a82b..fbc316515552 100644
  };
  
  /**
-@@ -373,6 +376,17 @@ module_param_cb(dpu_idle_refresh_hz, &dpu_idle_rr_param_ops,
+@@ -369,6 +372,17 @@ module_param_cb(dpu_idle_refresh_hz, &dpu_idle_rr_param_ops,
  MODULE_PARM_DESC(dpu_idle_refresh_hz,
  		 "Lowest idle refresh rate: the slowest panel rate at or above it that differs from the mode only in the vertical front porch (default 60)");
  
@@ -72,7 +72,7 @@ index 433fec29a82b..fbc316515552 100644
  /*
   * An idle video mode encoder (no frame for IDLE_TIMEOUT) used to drop its
   * vsync interrupt until the next kickoff. Keep it on unless this is set, see
-@@ -848,6 +862,24 @@ static void dpu_idle_rr_set(struct dpu_encoder_virt *dpu_enc, bool low)
+@@ -844,6 +858,24 @@ static void dpu_idle_rr_set(struct dpu_encoder_virt *dpu_enc, bool low)
  		DPU_DEBUG_ENC(dpu_enc, "idle refresh: low %d\n", low);
  }
  
@@ -97,7 +97,7 @@ index 433fec29a82b..fbc316515552 100644
  /* under the commit lock */
  static void dpu_idle_rr_arm(struct dpu_enc_idle_rr *idle)
  {
-@@ -930,6 +962,8 @@ static void dpu_idle_rr_work_fn(struct work_struct *work)
+@@ -926,6 +958,8 @@ static void dpu_idle_rr_work_fn(struct work_struct *work)
  	}
  
  	dpu_idle_rr_set(dpu_enc, true);
@@ -106,7 +106,7 @@ index 433fec29a82b..fbc316515552 100644
  out:
  	mutex_unlock(&kms->commit_lock[idx]);
  }
-@@ -946,6 +980,8 @@ static void dpu_idle_rr_raise(struct dpu_encoder_virt *dpu_enc)
+@@ -942,6 +976,8 @@ static void dpu_idle_rr_raise(struct dpu_encoder_virt *dpu_enc)
  
  	mutex_lock(&priv->kms->commit_lock[idx]);
  	if (idle->enabled && idle->crtc_idx == idx) {
@@ -115,7 +115,7 @@ index 433fec29a82b..fbc316515552 100644
  		if (idle->low)
  			dpu_idle_rr_set(dpu_enc, false);
  		dpu_idle_rr_arm(idle);
-@@ -1105,6 +1141,8 @@ static void dpu_idle_rr_disable(struct dpu_encoder_virt *dpu_enc)
+@@ -1101,6 +1137,8 @@ static void dpu_idle_rr_disable(struct dpu_encoder_virt *dpu_enc)
  	if (!idle->enabled)
  		return;
  
@@ -124,7 +124,7 @@ index 433fec29a82b..fbc316515552 100644
  	idle->enabled = false;
  	idle->gen++;
  	if (idle->low)
-@@ -1119,6 +1157,9 @@ static void dpu_idle_rr_prepare_kickoff(struct dpu_encoder_virt *dpu_enc)
+@@ -1115,6 +1153,9 @@ static void dpu_idle_rr_prepare_kickoff(struct dpu_encoder_virt *dpu_enc)
  {
  	struct dpu_enc_idle_rr *idle = &dpu_enc->idle_rr;
  
