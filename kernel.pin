@@ -65,3 +65,7 @@ TREE_AFTER_0009_q90g=d87f7cfc842e631c6e9762a117e76cb8fb74be11
 # q90h (TRIAL, 22 Oct 2026) = q90g + 0010-q90h: qcom_battmgr OPLUS power_now at the nominal voltage of
 # energy_now (qcom_battmgr.oplus_power_nominal, default Y), so that energy_now / power_now = charge_now / current_now.
 TREE_AFTER_0010_q90h=6e577777519f1ba28563554bb4a28d967bf85cf9
+# q90i (TRIAL, 22 Oct 2026) = q90h + 0011-q90i: memlat devfreq read-back polling off by default (B1), and
+# configs/q90i.config (VA_BITS 48, HZ 250, PREEMPT_DYNAMIC with full preemption by default, ATH12K_DEBUG /
+# CoreSight / STM off; config only, no tree change).
+TREE_AFTER_0011_q90i=3e4ab27a494addd473b902cf318744ab23e940fa

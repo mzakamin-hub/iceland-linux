@@ -1,0 +1,61 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Thu, 22 Oct 2026 17:00:00 +0300
+Subject: [PATCH] PM / devfreq: qcom-memlat: Do not poll the remote frequency
+ by default
+
+The memlat devfreq devices use the remote governor: the CPU control
+processor (CPUCP) runs the memory latency algorithm and votes the DDR,
+LLCC and DDR_QOS levels by itself, the kernel only reads the vote back.
+The driver still sets polling_ms to cpucp_sample_ms / 2, so the devfreq
+core queues the monitor every 2 ms on Kaanapali, and every poll is one
+SCMI get_param round trip per monitor, only to keep trans_stat current.
+
+On a Kaanapali (SM8850) tablet with the screen off and the system idle
+this costs about 3300 CPUCP mailbox interrupts per second on CPU0, about
+3200 function call IPIs per second on the other CPUs of the cluster and
+the matching workqueue wakeups. CPU0 stays in WFI and the cluster and
+system power domains rarely collapse. With polling_interval set to 0 the
+interrupt rate drops from 7592 to 183 per second and the IPI rate from
+2539 to 46 per second, with no change in the votes, which CPUCP keeps
+making.
+
+cur_freq does not depend on the polling: cur_freq_show() calls
+get_cur_freq(), which asks CPUCP for the current level on every read.
+Only trans_stat and the devfreq_frequency trace event need the polling.
+Leave polling_ms at 0 by default; anyone who wants the transition
+statistics can still write a period to polling_interval in sysfs.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/devfreq/scmi-qcom-memlat-devfreq.c | 15 ++++++++++-----
+ 1 file changed, 10 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/devfreq/scmi-qcom-memlat-devfreq.c b/drivers/devfreq/scmi-qcom-memlat-devfreq.c
+index 9ca85b2f4c1a..6d19fc36528e 100644
+--- a/drivers/devfreq/scmi-qcom-memlat-devfreq.c
++++ b/drivers/devfreq/scmi-qcom-memlat-devfreq.c
+@@ -1176,12 +1176,17 @@ static int scmi_qcom_memlat_configure_events(struct scmi_device *sdev,
+ 		struct devfreq_dev_profile *profile = &memory->profile;
+ 
+ 		/*
+-		 * CPUCP re-evaluates and re-votes at most once per cpucp_sample_ms,
+-		 * so a new operating point can appear only that often. Polling at half
+-		 * that period guarantees each distinct vote is observed in trans_stat
+-		 * before it can change again.
++		 * CPUCP selects and votes the memory frequency on its own; the
++		 * kernel only reads the vote back. cur_freq queries CPUCP on demand
++		 * through get_cur_freq(), so periodic polling is not needed for it.
++		 * Polling only keeps trans_stat and the devfreq_frequency trace
++		 * event current, at the cost of one SCMI round trip per monitor
++		 * (and its mailbox interrupt) every poll, which keeps the CPUs out
++		 * of their deep idle states. Leave it off by default; userspace can
++		 * enable it through the polling_interval attribute. A period of half
++		 * of cpucp_sample_ms observes every distinct vote.
+ 		 */
+-		profile->polling_ms = max(1U, info->cfg_data->cpucp_sample_ms / 2);
++		profile->polling_ms = 0;
+ 		profile->get_cur_freq = scmi_qcom_devfreq_get_cur_freq;
+ 		profile->initial_freq = range->max_freq_khz > 1 ?
+ 					(unsigned long)((u64)range->min_freq_khz * HZ_PER_KHZ) :
