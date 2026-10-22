@@ -1,0 +1,5 @@
+# checkpatch ERRORs in our patches that .github/scripts/checkpatch-queue.sh reports as warnings: one line each,
+# <patch file name> <checkpatch message>, after a comment with the reason.
+#
+# TFA9865_ICELAND_TDM() expands to three initializers of a register table; parentheses would not compile.
+0046-ASoC-codecs-tfa9865-stock-TDM-setup-for-the-OnePlus-.patch Macros with complex values should be enclosed in parentheses

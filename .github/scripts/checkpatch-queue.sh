@@ -26,6 +26,14 @@ for p in "$@"; do
 		esac
 		ln=$(printf '%s' "$line" | sed -n 's/^[^:]*:\([0-9][0-9]*\): .*/\1/p')
 		msg=${line#*": $kind: "}
+		# known items, reported as warnings: the Assisted-by trailer (Documentation/process/coding-assistants.rst)
+		# is not known to the pinned checkpatch, which reads it as an e-mail signature; and the entries of
+		# .github/checkpatch-known.txt (<patch file name> <message>, each with its reason there)
+		if [ "$kind" = ERROR ] && [ "$own" = 1 ]; then
+			case "$msg" in "Unrecognized email address: "*)
+				sed -n "$((${ln:-1} + 0))p" "$p" | grep -q '^Assisted-by: ' && kind=KNOWN ;; esac
+			grep -v '^#' "$(dirname "$0")/../checkpatch-known.txt" 2>/dev/null | grep -q -x -F "$(basename "$p") $msg" && kind=KNOWN
+		fi
 		if [ "$kind" = ERROR ] && [ "$own" = 1 ]; then
 			own_err=$((own_err + 1)); echo "::error file=$p,line=${ln:-1},title=checkpatch --strict ERROR::$msg"
 		else
