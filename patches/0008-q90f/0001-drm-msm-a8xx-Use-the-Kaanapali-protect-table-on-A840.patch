@@ -1,0 +1,116 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Thu, 22 Oct 2026 11:38:22 +0300
+Subject: [PATCH 1/3] drm/msm/a8xx: Use the Kaanapali protect table on A840
+
+The A840 (Kaanapali, chip id 0x44050a01) catalog entry programs
+pakala_protect, the SM8750 table, while the generated kaanapali_protect
+is declared, size-checked and used by no GPU entry. Every other A8xx
+entry uses its own SoC's table; this looks like a slip in the switch to
+generated protect tables.
+
+With the pakala table an unprivileged IB on A840 can reach ranges that
+Kaanapali's own table blocks: 0x0775-0x077f, 0x0c07-0x0c0f,
+0x0e40-0x0f00, 0x3d00-0x5cff, 0xa82e, 0xaf00-0xb17f, GMU CX
+0x1fd80-0x1ffff (and 0xaed0-0xaeff for writes).
+
+Before the switch, every register that Mesa's freedreno / turnip code
+can name for A8XX (Mesa's a6xx.xml, A8XX variant) was intersected with
+both tables: no register referenced by the driver code falls into a
+range that kaanapali_protect blocks more strictly than pakala_protect,
+and no A8XX register of the database lies in those ranges at all.
+
+Program kaanapali_protect on A840. msm.a8xx_legacy_protect=1 (read-only
+at run time, default off) programs the previous table, for comparison
+if a protect fault ever shows up. The table used is logged once.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/adreno/a6xx_gpu.h      |  2 ++
+ drivers/gpu/drm/msm/adreno/a8xx_catalog.c  |  3 ++-
+ drivers/gpu/drm/msm/adreno/a8xx_gpu.c      | 11 ++++++++++-
+ drivers/gpu/drm/msm/adreno/adreno_device.c |  5 +++++
+ drivers/gpu/drm/msm/adreno/adreno_gpu.h    |  1 +
+ 5 files changed, 20 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
+index 50e18486e411..cc23bbc1bf1a 100644
+--- a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
++++ b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
+@@ -60,6 +60,8 @@ static const struct a6xx_limits_tbl name = {	\
+ struct a6xx_info {
+ 	const struct adreno_reglist *hwcg;
+ 	const struct adreno_protect *protect;
++	/* the table used before, with msm.a8xx_legacy_protect=1 (A840 only) */
++	const struct adreno_protect *protect_legacy;
+ 	const struct adreno_reglist_list *pwrup_reglist;
+ 	const struct adreno_reglist_pipe_list *dyn_pwrup_reglist;
+ 	const struct adreno_reglist_list *ifpc_reglist;
+diff --git a/drivers/gpu/drm/msm/adreno/a8xx_catalog.c b/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
+index 5f5f71d86df9..4dc5de4d5ede 100644
+--- a/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
++++ b/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
+@@ -1026,7 +1026,8 @@ static const struct adreno_info a8xx_gpus[] = {
+ 			  ADRENO_QUIRK_IFPC,
+ 		.funcs = &a8xx_gpu_funcs,
+ 		.a6xx = &(const struct a6xx_info) {
+-			.protect = &pakala_protect,
++			.protect = &kaanapali_protect,
++			.protect_legacy = &pakala_protect,
+ 			.nonctxt_reglist = kaanapali_nonctxt_regs,
+ 			.pwrup_reglist = &a840_pwrup_reglist,
+ 			.dyn_pwrup_reglist = &a840_dyn_pwrup_reglist,
+diff --git a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
+index d3efef7460bb..896d55d5cf5c 100644
+--- a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
++++ b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
+@@ -249,10 +249,19 @@ static void a8xx_set_hwcg(struct msm_gpu *gpu, bool state)
+ static void a8xx_set_cp_protect(struct msm_gpu *gpu)
+ {
+ 	struct adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
+-	const struct adreno_protect *protect = adreno_gpu->info->a6xx->protect;
++	const struct a6xx_info *info = adreno_gpu->info->a6xx;
++	const struct adreno_protect *protect = info->protect;
+ 	u32 cntl, final_cfg;
+ 	unsigned int i;
+ 
++	if (a8xx_legacy_protect && info->protect_legacy)
++		protect = info->protect_legacy;
++
++	dev_info_once(&gpu->pdev->dev,
++		      "CP protect: %s table, %u entries, last span from 0x%05x\n",
++		      protect == info->protect ? "SoC" : "legacy", protect->count,
++		      protect->regs[protect->count - 1] & 0x3ffff);
++
+ 	cntl = A8XX_CP_PROTECT_CNTL_PIPE_ACCESS_PROT_EN |
+ 		A8XX_CP_PROTECT_CNTL_PIPE_ACCESS_FAULT_ON_VIOL_EN |
+ 		A8XX_CP_PROTECT_CNTL_PIPE_LAST_SPAN_INF_RANGE |
+diff --git a/drivers/gpu/drm/msm/adreno/adreno_device.c b/drivers/gpu/drm/msm/adreno/adreno_device.c
+index ff1b65652204..3c3773d5758c 100644
+--- a/drivers/gpu/drm/msm/adreno/adreno_device.c
++++ b/drivers/gpu/drm/msm/adreno/adreno_device.c
+@@ -33,6 +33,11 @@ MODULE_PARM_DESC(a8xx_crashstate,
+ 		 "A8xx: capture the GPU crash state (devcoredump) at a GPU fault / hang (0=off (default), 1=on)");
+ module_param(a8xx_crashstate, bool, 0600);
+ 
++bool a8xx_legacy_protect;
++MODULE_PARM_DESC(a8xx_legacy_protect,
++		 "A840: program the CP protect table used before the SoC's own one (0=SoC table (default), 1=legacy)");
++module_param(a8xx_legacy_protect, bool, 0444);
++
+ bool enable_clx;
+ MODULE_PARM_DESC(enable_clx, "Enable the GPU current limiter (CLX) on GPUs with a CLX table (0=off (default), 1=on)");
+ module_param(enable_clx, bool, 0400);
+diff --git a/drivers/gpu/drm/msm/adreno/adreno_gpu.h b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
+index d3bcdf180d4c..48bc55048a3d 100644
+--- a/drivers/gpu/drm/msm/adreno/adreno_gpu.h
++++ b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
+@@ -22,6 +22,7 @@
+ extern bool snapshot_debugbus;
+ extern bool enable_clx;
+ extern bool a8xx_crashstate;
++extern bool a8xx_legacy_protect;
+ 
+ enum {
+ 	ADRENO_FW_PM4 = 0,

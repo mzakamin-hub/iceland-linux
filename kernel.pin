@@ -55,3 +55,7 @@ TREE_AFTER_0006_q90d=e68f3558489de193ec7e2091b9b8c87caabe4050
 # q90e (TRIAL, 22 Oct 2026) = q90d + 0007-q90e: drm/msm/a8xx crash state capture opt-in (msm.a8xx_crashstate, default
 # off): the capture's GMU CX register read raised a synchronous external abort and GPU recovery never ran.
 TREE_AFTER_0007_q90e=1e12b26b8ae75adf9ba353eb24ca3488778674a9
+# q90f (TRIAL, 22 Oct 2026) = q90e + 0008-q90f: A840 Kaanapali protect table (msm.a8xx_legacy_protect),
+# two-sample INTF diagnostics at vblank timeouts (msm.dpu_intf_diag), no submit replay on a GPU that was not reset
+# (msm.a8xx_safe_recover).
+TREE_AFTER_0008_q90f=7996a88caab17a00d57d87592062c8c5da767164
