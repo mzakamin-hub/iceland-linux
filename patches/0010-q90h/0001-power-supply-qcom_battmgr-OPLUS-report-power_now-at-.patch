@@ -1,0 +1,77 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Thu, 22 Oct 2026 18:00:00 +0200
+Subject: [PATCH] power: supply: qcom_battmgr: OPLUS: report power_now at the
+ nominal voltage
+
+The OPLUS gauge counts charge only, and energy_now / energy_full are that
+charge at the battery's nominal voltage (its design energy over its design
+charge). power_now was the battery's voltage times its current. User space
+(UPower) divides energy_now by power_now for the time to empty and the
+remaining energy by power_now for the time to full, so the two bases
+disagreed by voltage_now / nominal: on the OnePlus Pad 4 at 76 % (4.12 V
+against 3.89 V nominal) the time to empty came out 6 % short of the
+charge over the current, and below the nominal voltage it comes out long,
+up to about 8 % near empty.
+
+Report power_now at the nominal voltage when the battery has one, so that
+energy_now / power_now = charge_now / current_now. The module parameter
+oplus_power_nominal=N restores the battery-voltage power. The battery's
+voltage and current stay available in voltage_now and current_now.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/power/supply/qcom_battmgr.c | 24 ++++++++++++++++++++++--
+ 1 file changed, 22 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
+index 0d8e883b226d..e8455a22c610 100644
+--- a/drivers/power/supply/qcom_battmgr.c
++++ b/drivers/power/supply/qcom_battmgr.c
+@@ -171,6 +171,16 @@ enum qcom_battmgr_variant {
+ #define OPLUS_OTG_REDETECTS		3
+ #define OPLUS_OTG_BOOST_MA		2000
+ 
++/*
++ * OPLUS: power_now at the battery's nominal voltage, the voltage energy_now and
++ * energy_full are reported at, so that energy_now / power_now is the time the
++ * charge lasts at the present current (N: the battery's voltage times current).
++ */
++static bool oplus_power_nominal = true;
++module_param(oplus_power_nominal, bool, 0644);
++MODULE_PARM_DESC(oplus_power_nominal,
++		 "OPLUS: report power_now at the nominal voltage of energy_now (default: Y)");
++
+ #define OPLUS_CHARGER_ICL_UA		3000000
+ #define OPLUS_CHARGER_FCC_UA		4000000
+ #define OPLUS_PDO_SETTLE_MS		2000
+@@ -1049,6 +1059,7 @@ static int qcom_battmgr_bat_get_property(struct power_supply *psy,
+ 			 * current as this driver reports it.
+ 			 */
+ 			int fw_uw = battmgr->status.power_now;
++			int uv;
+ 			s64 uw;
+ 
+ 			ret = qcom_battmgr_bat_sm8350_update(battmgr,
+@@ -1060,9 +1071,18 @@ static int qcom_battmgr_bat_get_property(struct power_supply *psy,
+ 			if (ret < 0)
+ 				return ret;
+ 
++			/*
++			 * energy_now is the gauge's charge at the nominal
++			 * voltage: a power at the battery's voltage would make
++			 * energy_now / power_now (user space's time to empty)
++			 * short at a high voltage and long at a low one.
++			 */
++			uv = battmgr->status.voltage_now;
++			if (oplus_power_nominal && battmgr->nominal_uv)
++				uv = battmgr->nominal_uv;
++
+ 			/* uV * uA overflows 32 bits; result in uW */
+-			uw = div_s64((s64)battmgr->status.voltage_now *
+-				     qcom_battmgr_oplus_current(battmgr), 1000000);
++			uw = div_s64((s64)uv * qcom_battmgr_oplus_current(battmgr), 1000000);
+ 			val->intval = clamp_t(s64, uw, INT_MIN, INT_MAX);
+ 			dev_dbg(battmgr->dev, "power_now: firmware %d uW, V*I %d uW\n",
+ 				fw_uw, val->intval);

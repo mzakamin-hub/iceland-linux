@@ -62,3 +62,6 @@ TREE_AFTER_0008_q90f=7996a88caab17a00d57d87592062c8c5da767164
 # q90g (TRIAL, 22 Oct 2026) = q90f + 0009-q90g: idle refresh debug round (input activity filter, commit / input
 # raise counters, msm.dpu_idle_rr_qos_release: relax the 0335 latency request at the idle rate, default off).
 TREE_AFTER_0009_q90g=d87f7cfc842e631c6e9762a117e76cb8fb74be11
+# q90h (TRIAL, 22 Oct 2026) = q90g + 0010-q90h: qcom_battmgr OPLUS power_now at the nominal voltage of
+# energy_now (qcom_battmgr.oplus_power_nominal, default Y), so that energy_now / power_now = charge_now / current_now.
+TREE_AFTER_0010_q90h=6e577777519f1ba28563554bb4a28d967bf85cf9
