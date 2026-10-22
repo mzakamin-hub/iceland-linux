@@ -13,8 +13,11 @@ mk() { make -C "$src" O="$out" ARCH=arm64 LLVM=1 -j"$jobs" "$@"; }
 
 mkdir -p "$out"
 mk defconfig
-"$src/scripts/kconfig/merge_config.sh" -m -O "$out" "$out/.config" \
-	"$src/arch/arm64/configs/sm8850.config" "$top/configs/distro-neutral.config" >/dev/null
+# The fragments in order: map220v's SoC fragment, ours, then the queue's release fragments (q90b: the 7.4-base
+# config pass; q90i: the config round; q90i-shipped: the rest of the shipped q90i config).
+frags=("$top/configs/distro-neutral.config" "$top/configs/q90b.config" "$top/configs/q90i.config"
+	"$top/configs/q90i-shipped.config")
+"$src/scripts/kconfig/merge_config.sh" -m -O "$out" "$out/.config" 	"$src/arch/arm64/configs/sm8850.config" "${frags[@]}" >/dev/null
 mk olddefconfig
 
 # Our fragment + the must-have list are checked strictly (a silent drop = unmet dependency);
@@ -35,7 +38,8 @@ check() { # check <fragment> <strict:0|1>
 	echo "  (warnings above are drift in $(basename "$1"), not fatal)"
 }
 check "$src/arch/arm64/configs/sm8850.config" 0 > "$out/config-drift.txt" || true
-check "$top/configs/distro-neutral.config" 1 && check "$top/configs/required.config" 1 || {
+check "$top/configs/q90i.config" 1 && check "$top/configs/q90i-shipped.config" 1 &&
+	check "$top/configs/required.config" 1 || {
 	echo "config check failed (fix fragment dependencies)"; [ "${ALLOW_CONFIG_DRIFT:-0}" = 1 ] || exit 1; }
 
 mk Image Image.gz dtbs modules
