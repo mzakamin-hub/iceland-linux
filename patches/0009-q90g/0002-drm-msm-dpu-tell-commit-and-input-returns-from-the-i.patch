@@ -1,0 +1,95 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Thu, 22 Oct 2026 13:19:10 +0300
+Subject: [PATCH 2/3] drm/msm/dpu: tell commit and input returns from the idle
+ refresh rate apart
+
+The r157 idle refresh rows measured 74.8 Hz for a 120 -> 60 Hz drop and
+34.29 Hz for 60 -> 30 Hz while 120 -> 30 Hz was exact. The encoder's
+debugfs status only counts drops and raises, so a measuring window that
+contained returns to the mode rate could not say whether a commit (the
+compositor repainting something) or an input event caused them.
+
+Count the returns made by a commit separately and print them as
+raise_commit in the encoder's status; the rest come from input or a
+parameter change. A commit that changes the front porch in place while
+the idle rate runs (dpu_vfp_inplace) also leaves the idle rate: count
+it as a raise too, so that drops and raises stay balanced.
+
+Only counters; nothing changes while msm.dpu_idle_refresh_ms is 0.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c | 25 ++++++++++++++++-----
+ 1 file changed, 20 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+index da68ccc649aa..433fec29a82b 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+@@ -144,6 +144,9 @@ enum dpu_enc_rc_states {
+  * @last_kick:		jiffies of the last commit
+  * @drops:		number of drops to the idle rate
+  * @raises:		number of returns to the mode rate
++ * @raises_commit:	the returns made by a commit (its kickoff, or an
++ *			in-place front porch change); the others come from
++ *			input or a parameter change
+  * @prev_vtotal:	vertical total that ran before the last in-place
+  *			front porch change, 0 if there was none
+  * @vfp_changes:	number of in-place front porch changes
+@@ -175,6 +178,7 @@ struct dpu_enc_idle_rr {
+ 	unsigned long last_kick;
+ 	unsigned int drops;
+ 	unsigned int raises;
++	unsigned int raises_commit;
+ 	u32 prev_vtotal;
+ 	unsigned int vfp_changes;
+ 	u32 last_from;
+@@ -1132,9 +1136,16 @@ static bool dpu_idle_rr_kickoff_locked(struct dpu_encoder_virt *dpu_enc,
+ 				       unsigned int tries)
+ {
+ 	struct dpu_enc_idle_rr *idle = &dpu_enc->idle_rr;
++	int ret;
++
++	if (!idle->enabled || !idle->capable || !idle->low)
++		return true;
+ 
+-	if (idle->enabled && idle->capable && idle->low)
+-		return dpu_idle_rr_program(dpu_enc, false, false, tries) != -EAGAIN;
++	ret = dpu_idle_rr_program(dpu_enc, false, false, tries);
++	if (ret == -EAGAIN)
++		return false;
++	if (!ret)
++		idle->raises_commit++;
+ 
+ 	return true;
+ }
+@@ -1242,8 +1253,11 @@ static bool dpu_encoder_vfp_kickoff_locked(struct dpu_encoder_virt *dpu_enc,
+ 	DPU_DEBUG_ENC(dpu_enc, "in-place change %u -> %d lines\n",
+ 		      running, mode->vtotal);
+ 
+-	if (idle->low)
++	if (idle->low) {
+ 		atomic_dec(&dpu_idle_rr_nr_low);
++		idle->raises++;
++		idle->raises_commit++;
++	}
+ 	WRITE_ONCE(idle->low, false);
+ 	WRITE_ONCE(idle->prev_vtotal, running);
+ 	drm_mode_copy(&idle->mode, mode);
+@@ -3801,11 +3815,12 @@ static int _dpu_encoder_status_show(struct seq_file *s, void *data)
+ 	}
+ 	mutex_unlock(&dpu_enc->enc_lock);
+ 
+-	seq_printf(s, "idle_refresh: capable:%d mode_vtotal:%d idle_vtotal:%u low:%d drops:%u raises:%u\n",
++	seq_printf(s, "idle_refresh: capable:%d mode_vtotal:%d idle_vtotal:%u low:%d drops:%u raises:%u raise_commit:%u\n",
+ 		   dpu_enc->idle_rr.capable, dpu_enc->idle_rr.mode.vtotal,
+ 		   READ_ONCE(dpu_enc->idle_rr.idle_vtotal),
+ 		   READ_ONCE(dpu_enc->idle_rr.low),
+-		   dpu_enc->idle_rr.drops, dpu_enc->idle_rr.raises);
++		   dpu_enc->idle_rr.drops, dpu_enc->idle_rr.raises,
++		   dpu_enc->idle_rr.raises_commit);
+ 	seq_printf(s, "vfp_inplace: on:%d changes:%u prev_vtotal:%u\n",
+ 		   READ_ONCE(dpu_vfp_inplace), dpu_enc->idle_rr.vfp_changes,
+ 		   READ_ONCE(dpu_enc->idle_rr.prev_vtotal));

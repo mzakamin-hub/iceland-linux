@@ -1,0 +1,274 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Thu, 22 Oct 2026 13:20:49 +0300
+Subject: [PATCH 3/3] drm/msm/dpu: optionally relax the IRQ CPU latency limit
+ at the idle refresh rate
+
+While a CRTC is enabled, msm.dpu_irq_cpu_latency_us (default 500 us)
+keeps the CPU that takes the MDSS interrupt, and with it its cluster and
+the system power domain, out of idle states whose exit latency would
+delay the vblank and frame-done interrupts by milliseconds. That matters
+while frames are presented. While the idle refresh rate runs, nothing has
+been committed for msm.dpu_idle_refresh_ms and the interrupts pace no
+frame; the limit only costs power.
+
+Add msm.dpu_idle_rr_qos_release (default off). With it set, an encoder
+that drops to its idle rate asks the KMS to relax the request, and the
+request goes to no constraint while every enabled CRTC does so. It is
+restored before the return to the mode rate is written: in the commit's
+prepare_for_kickoff, before an input raise, and before the encoder is
+disabled (so before its CRTC drops the request), as well as when another
+CRTC is enabled. The return of a commit waits for the late front porch
+window of the stretched frame anyway (msm.dpu_vfp_window), which hides
+the one exit from a deep state that the first interrupt may still pay.
+
+Nothing changes unless both msm.dpu_idle_refresh_ms and the new
+parameter are set.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c | 41 +++++++++++++
+ drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c     | 67 ++++++++++++++++++++-
+ drivers/gpu/drm/msm/disp/dpu1/dpu_kms.h     |  7 +++
+ 3 files changed, 113 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+index 433fec29a82b..fbc316515552 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+@@ -158,6 +158,8 @@ enum dpu_enc_rc_states {
+  * @last_tries:		frames it took to hit the window
+  * @late:		writes made outside the window after
+  *			DPU_VFP_WIN_TRIES frames
++ * @qos_idle:		this encoder asked for the MDSS IRQ CPU latency limit
++ *			to be relaxed (dpu_idle_rr_qos_release)
+  *
+  * The fields are changed under kms->commit_lock[@crtc_idx] (the commit, the
+  * encoder enable and disable all run under it); @crtc_idx, @low, @idle_vtotal,
+@@ -188,6 +190,7 @@ struct dpu_enc_idle_rr {
+ 	unsigned int last_window;
+ 	unsigned int last_tries;
+ 	unsigned int late;
++	bool qos_idle;
+ };
+ 
+ /**
+@@ -373,6 +376,17 @@ module_param_cb(dpu_idle_refresh_hz, &dpu_idle_rr_param_ops,
+ MODULE_PARM_DESC(dpu_idle_refresh_hz,
+ 		 "Lowest idle refresh rate: the slowest panel rate at or above it that differs from the mode only in the vertical front porch (default 60)");
+ 
++/*
++ * While the idle refresh rate runs on every enabled CRTC, relax the resume
++ * latency limit of the MDSS interrupt CPU (msm.dpu_irq_cpu_latency_us, see
++ * dpu_kms_irq_cpu_latency_idle()); the next commit or input event restores
++ * it before the return to the mode rate is written. Read at every drop.
++ */
++static bool dpu_idle_rr_qos_release;
++module_param(dpu_idle_rr_qos_release, bool, 0644);
++MODULE_PARM_DESC(dpu_idle_rr_qos_release,
++		 "Release the msm.dpu_irq_cpu_latency_us limit while every enabled CRTC runs at its idle refresh rate (default: off)");
++
+ /*
+  * An idle video mode encoder (no frame for IDLE_TIMEOUT) used to drop its
+  * vsync interrupt until the next kickoff. Keep it on unless this is set, see
+@@ -848,6 +862,24 @@ static void dpu_idle_rr_set(struct dpu_encoder_virt *dpu_enc, bool low)
+ 		DPU_DEBUG_ENC(dpu_enc, "idle refresh: low %d\n", low);
+ }
+ 
++/*
++ * Ask for the MDSS IRQ CPU latency limit to be relaxed (@idle, only with
++ * dpu_idle_rr_qos_release) or take that back. Under the commit lock, may
++ * sleep.
++ */
++static void dpu_idle_rr_qos(struct dpu_encoder_virt *dpu_enc, bool idle)
++{
++	struct msm_drm_private *priv = dpu_enc->base.dev->dev_private;
++	struct dpu_enc_idle_rr *rr = &dpu_enc->idle_rr;
++
++	if (idle == rr->qos_idle ||
++	    (idle && !READ_ONCE(dpu_idle_rr_qos_release)))
++		return;
++
++	rr->qos_idle = idle;
++	dpu_kms_irq_cpu_latency_idle(to_dpu_kms(priv->kms), idle);
++}
++
+ /* under the commit lock */
+ static void dpu_idle_rr_arm(struct dpu_enc_idle_rr *idle)
+ {
+@@ -930,6 +962,8 @@ static void dpu_idle_rr_work_fn(struct work_struct *work)
+ 	}
+ 
+ 	dpu_idle_rr_set(dpu_enc, true);
++	if (idle->low)
++		dpu_idle_rr_qos(dpu_enc, true);
+ out:
+ 	mutex_unlock(&kms->commit_lock[idx]);
+ }
+@@ -946,6 +980,8 @@ static void dpu_idle_rr_raise(struct dpu_encoder_virt *dpu_enc)
+ 
+ 	mutex_lock(&priv->kms->commit_lock[idx]);
+ 	if (idle->enabled && idle->crtc_idx == idx) {
++		/* the limit first: the next frame is paced again */
++		dpu_idle_rr_qos(dpu_enc, false);
+ 		if (idle->low)
+ 			dpu_idle_rr_set(dpu_enc, false);
+ 		dpu_idle_rr_arm(idle);
+@@ -1105,6 +1141,8 @@ static void dpu_idle_rr_disable(struct dpu_encoder_virt *dpu_enc)
+ 	if (!idle->enabled)
+ 		return;
+ 
++	/* before the CRTC drops its latency request */
++	dpu_idle_rr_qos(dpu_enc, false);
+ 	idle->enabled = false;
+ 	idle->gen++;
+ 	if (idle->low)
+@@ -1119,6 +1157,9 @@ static void dpu_idle_rr_prepare_kickoff(struct dpu_encoder_virt *dpu_enc)
+ {
+ 	struct dpu_enc_idle_rr *idle = &dpu_enc->idle_rr;
+ 
++	/* before the kickoff writes the return to the mode rate */
++	dpu_idle_rr_qos(dpu_enc, false);
++
+ 	if (!idle->enabled || !idle->capable)
+ 		return;
+ 
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
+index 8d01ac5be62c..2e53bb503c62 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
+@@ -1442,6 +1442,34 @@ static unsigned int dpu_kms_irq_cpu(struct dpu_kms *dpu_kms)
+ 	return cpu < nr_cpu_ids ? cpu : 0;
+ }
+ 
++/*
++ * Relax the request while every CRTC that holds it runs at its idle refresh
++ * rate (dpu_kms_irq_cpu_latency_idle()), restore it otherwise. Called with
++ * irq_cpu_lock held.
++ */
++static void dpu_kms_irq_cpu_latency_apply(struct dpu_kms *dpu_kms)
++{
++	bool relax = dpu_kms->irq_cpu_users &&
++		     dpu_kms->irq_cpu_idle >= dpu_kms->irq_cpu_users;
++	int ret;
++
++	if (relax == dpu_kms->irq_cpu_relaxed ||
++	    !dev_pm_qos_request_active(&dpu_kms->irq_cpu_req))
++		return;
++
++	ret = dev_pm_qos_update_request(&dpu_kms->irq_cpu_req,
++					relax ? PM_QOS_RESUME_LATENCY_NO_CONSTRAINT :
++						dpu_kms->irq_cpu_us);
++	if (ret < 0) {
++		DPU_ERROR("cpu resume latency update failed: %d\n", ret);
++		return;
++	}
++
++	dpu_kms->irq_cpu_relaxed = relax;
++	DRM_DEBUG_KMS("cpu resume latency limit %s\n",
++		      relax ? "relaxed (idle refresh)" : "restored");
++}
++
+ /**
+  * dpu_kms_irq_cpu_latency_get() - limit the resume latency of the MDSS IRQ CPU
+  * @dpu_kms: the DPU KMS
+@@ -1460,7 +1488,12 @@ void dpu_kms_irq_cpu_latency_get(struct dpu_kms *dpu_kms)
+ 	int ret;
+ 
+ 	mutex_lock(&dpu_kms->irq_cpu_lock);
+-	if (dpu_kms->irq_cpu_users++ || !us)
++	if (dpu_kms->irq_cpu_users++) {
++		/* a CRTC that is not idle yet: restore a relaxed limit */
++		dpu_kms_irq_cpu_latency_apply(dpu_kms);
++		goto out;
++	}
++	if (!us)
+ 		goto out;
+ 
+ 	cpu = dpu_kms_irq_cpu(dpu_kms);
+@@ -1476,6 +1509,8 @@ void dpu_kms_irq_cpu_latency_get(struct dpu_kms *dpu_kms)
+ 		goto out;
+ 	}
+ 
++	dpu_kms->irq_cpu_us = min_t(unsigned int, us, S32_MAX);
++	dpu_kms->irq_cpu_relaxed = false;
+ 	WRITE_ONCE(dpu_irq_cpu_latency_cpu, cpu);
+ 	DRM_DEBUG_KMS("cpu%u resume latency limited to %u us\n", cpu, us);
+ out:
+@@ -1496,11 +1531,15 @@ void dpu_kms_irq_cpu_latency_put(struct dpu_kms *dpu_kms)
+ 	if (WARN_ON(!dpu_kms->irq_cpu_users))
+ 		goto out;
+ 
+-	if (--dpu_kms->irq_cpu_users)
++	if (--dpu_kms->irq_cpu_users) {
++		/* the CRTCs left on may all be idle now */
++		dpu_kms_irq_cpu_latency_apply(dpu_kms);
+ 		goto out;
++	}
+ 
+ 	if (dev_pm_qos_request_active(&dpu_kms->irq_cpu_req)) {
+ 		dev_pm_qos_remove_request(&dpu_kms->irq_cpu_req);
++		dpu_kms->irq_cpu_relaxed = false;
+ 		WRITE_ONCE(dpu_irq_cpu_latency_cpu, -1);
+ 		DRM_DEBUG_KMS("cpu resume latency limit released\n");
+ 	}
+@@ -1508,6 +1547,30 @@ out:
+ 	mutex_unlock(&dpu_kms->irq_cpu_lock);
+ }
+ 
++/**
++ * dpu_kms_irq_cpu_latency_idle() - relax the MDSS IRQ CPU latency limit while
++ *	the screen is static
++ * @dpu_kms: the DPU KMS
++ * @idle: an encoder starts (true) or stops (false) running at its idle
++ *	  refresh rate
++ *
++ * Called by the encoders with msm.dpu_idle_rr_qos_release set, balanced, and
++ * may sleep. While every enabled CRTC runs at its idle refresh rate nothing is
++ * committed, so the vblank and frame-done interrupts that the request keeps
++ * timely do not pace any frame: the request is set to no constraint until
++ * the first CRTC leaves the idle rate (or another one is enabled).
++ */
++void dpu_kms_irq_cpu_latency_idle(struct dpu_kms *dpu_kms, bool idle)
++{
++	mutex_lock(&dpu_kms->irq_cpu_lock);
++	if (idle)
++		dpu_kms->irq_cpu_idle++;
++	else if (!WARN_ON(!dpu_kms->irq_cpu_idle))
++		dpu_kms->irq_cpu_idle--;
++	dpu_kms_irq_cpu_latency_apply(dpu_kms);
++	mutex_unlock(&dpu_kms->irq_cpu_lock);
++}
++
+ static int dpu_dev_probe(struct platform_device *pdev)
+ {
+ 	struct device *dev = &pdev->dev;
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.h
+index 32e81dd561af..90059c767452 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.h
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.h
+@@ -107,9 +107,15 @@ struct dpu_kms {
+ 	/*
+ 	 * Resume latency request on the CPU that takes the MDSS interrupt,
+ 	 * held while any CRTC is enabled, see dpu_kms_irq_cpu_latency_get().
++	 * irq_cpu_idle counts the encoders that run at their idle refresh
++	 * rate and asked for the request to be relaxed, see
++	 * dpu_kms_irq_cpu_latency_idle().
+ 	 */
+ 	struct mutex irq_cpu_lock;
+ 	unsigned int irq_cpu_users;
++	unsigned int irq_cpu_idle;
++	s32 irq_cpu_us;
++	bool irq_cpu_relaxed;
+ 	struct dev_pm_qos_request irq_cpu_req;
+ };
+ 
+@@ -126,6 +132,7 @@ struct vsync_info {
+ 
+ void dpu_kms_irq_cpu_latency_get(struct dpu_kms *dpu_kms);
+ void dpu_kms_irq_cpu_latency_put(struct dpu_kms *dpu_kms);
++void dpu_kms_irq_cpu_latency_idle(struct dpu_kms *dpu_kms, bool idle);
+ 
+ #define to_dpu_global_state(x) container_of(x, struct dpu_global_state, base)
+ 

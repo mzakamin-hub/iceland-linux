@@ -59,3 +59,6 @@ TREE_AFTER_0007_q90e=1e12b26b8ae75adf9ba353eb24ca3488778674a9
 # two-sample INTF diagnostics at vblank timeouts (msm.dpu_intf_diag), no submit replay on a GPU that was not reset
 # (msm.a8xx_safe_recover).
 TREE_AFTER_0008_q90f=7996a88caab17a00d57d87592062c8c5da767164
+# q90g (TRIAL, 22 Oct 2026) = q90f + 0009-q90g: idle refresh debug round (input activity filter, commit / input
+# raise counters, msm.dpu_idle_rr_qos_release: relax the 0335 latency request at the idle rate, default off).
+TREE_AFTER_0009_q90g=d87f7cfc842e631c6e9762a117e76cb8fb74be11
