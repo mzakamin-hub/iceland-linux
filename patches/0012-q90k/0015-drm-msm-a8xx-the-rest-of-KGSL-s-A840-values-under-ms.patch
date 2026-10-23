@@ -1,0 +1,160 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 23 Oct 2026 22:31:51 +0300
+Subject: [PATCH 15/17] drm/msm/a8xx: the rest of KGSL's A840 values under
+ msm.a8xx_kgsl_eco
+
+KGSL's gen8_2_0_nonctxt_regs also sets six registers that
+kaanapali_nonctxt_regs leaves at their reset value:
+
+  RB_RBP_CNTL             BIT(5)  no Dead Draw Merge scheme on RB-HLSQ
+  SP_CHICKEN_BITS         BIT(26) no mode_switch optimization in UMAS
+  SP_SS_CHICKEN_BITS_0    BIT(3)  no LPAC large-LM mode
+  SP_HLSQ_DBG_ECO_CNTL_1  BIT(17) ignore HLSQ shared constant feedback
+  SP_HLSQ_DBG_ECO_CNTL_2  BIT(24) no CS dead batch merge
+  SP_HLSQ_DBG_ECO_CNTL_3  BIT(7)  no HLSQ stproc stc_buf_mode
+
+and it does not write SP_HLSQ_DBG_ECO_CNTL, which the generated A8xx
+catalog sets to 0x04000000 for every A8xx (KGSL only saves and restores
+the register). With msm.a8xx_kgsl_eco=1 the A840 now gets exactly
+KGSL's table: the six values are added to a840_kgsl_eco_regs and the
+SP_HLSQ_DBG_ECO_CNTL entry of the base table is left out. With the
+option off (the default) nothing changes. The boot log prints every
+read-back value and the value of the register that was not written.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/adreno/a6xx_gpu.h     |  2 ++
+ drivers/gpu/drm/msm/adreno/a8xx_catalog.c | 25 ++++++++++++++++++
+ drivers/gpu/drm/msm/adreno/a8xx_gpu.c     | 31 ++++++++++++++++++-----
+ 3 files changed, 52 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
+index 1e5d891c87db..8be039d5061f 100644
+--- a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
++++ b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
+@@ -69,6 +69,8 @@ struct a6xx_info {
+ 	const struct adreno_reglist_pipe *nonctxt_reglist;
+ 	/* written after nonctxt_reglist with msm.a8xx_kgsl_eco=1 (A840 only) */
+ 	const struct adreno_reglist_pipe *nonctxt_kgsl_eco;
++	/* nonctxt_reglist entries NOT written with msm.a8xx_kgsl_eco=1 */
++	const u32 *nonctxt_kgsl_eco_drop;
+ 	/* HFI_FEATURE_BCL data (response type + throttle levels), A8xx */
+ 	u32 bcl_data;
+ 	u32 max_slices;
+diff --git a/drivers/gpu/drm/msm/adreno/a8xx_catalog.c b/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
+index 01942eed25d9..736bfa12272a 100644
+--- a/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
++++ b/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
+@@ -672,9 +672,33 @@ static const struct adreno_reglist_pipe a840_kgsl_eco_regs[] = {
+ 	{ REG_A6XX_TPL1_DBG_ECO_CNTL, 0x10100000, BIT(PIPE_NONE) },
+ 	/* 0x720 -> 0x4000720: BIT(26) no final clamp for bicubic filtering */
+ 	{ REG_A6XX_TPL1_DBG_ECO_CNTL1, 0x04000720, BIT(PIPE_NONE) },
++	/* the rest of KGSL's table that kaanapali_nonctxt_regs does not set */
++	/* no Dead Draw Merge scheme on RB-HLSQ */
++	{ REG_A6XX_RB_RBP_CNTL, BIT(5), BIT(PIPE_BV) | BIT(PIPE_BR) },
++	/* no mode_switch optimization in UMAS */
++	{ REG_A6XX_SP_CHICKEN_BITS, BIT(26), BIT(PIPE_NONE) },
++	/* no LPAC large-LM mode */
++	{ REG_A8XX_SP_SS_CHICKEN_BITS_0, BIT(3), BIT(PIPE_NONE) },
++	/* ignore the HLSQ shared constant feedback from SP */
++	{ REG_A7XX_SP_HLSQ_DBG_ECO_CNTL_1, BIT(17), BIT(PIPE_NONE) },
++	/* no CS dead batch merge */
++	{ REG_A7XX_SP_HLSQ_DBG_ECO_CNTL_2, BIT(24), BIT(PIPE_NONE) },
++	/* no HLSQ stproc stc_buf_mode */
++	{ REG_A8XX_SP_HLSQ_DBG_ECO_CNTL_3, BIT(7), BIT(PIPE_NONE) },
+ 	{ /* sentinel */ },
+ };
+ 
++/*
++ * kaanapali_nonctxt_regs entries that KGSL does not write: with
++ * msm.a8xx_kgsl_eco=1 they keep their reset value. SP_HLSQ_DBG_ECO_CNTL
++ * 0x04000000 comes from the generated A8xx catalog (the same value for
++ * every A8xx there); KGSL only saves / restores the register.
++ */
++static const u32 a840_kgsl_eco_drop[] = {
++	REG_A7XX_SP_HLSQ_DBG_ECO_CNTL,
++	0
++};
++
+ static const struct a6xx_hfi_clx_table_v2_cmd a840_clx_tbl = {
+ 	.version = (2 << 16) | 1,
+ 	.domain = {
+@@ -1051,6 +1075,7 @@ static const struct adreno_info a8xx_gpus[] = {
+ 			.protect_legacy = &pakala_protect,
+ 			.nonctxt_reglist = kaanapali_nonctxt_regs,
+ 			.nonctxt_kgsl_eco = a840_kgsl_eco_regs,
++			.nonctxt_kgsl_eco_drop = a840_kgsl_eco_drop,
+ 			/* KGSL GEN8_2_X_BCL_DATA: levels 62 / 75 / 83 %, response type 1 */
+ 			.bcl_data = (62 << 15) | (75 << 8) | (83 << 1) | 0x1,
+ 			.pwrup_reglist = &a840_pwrup_reglist,
+diff --git a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
+index 56efa1fdc8d5..4452cd65a677 100644
+--- a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
++++ b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
+@@ -392,8 +392,9 @@ static void a8xx_nonctxt_config(struct msm_gpu *gpu)
+ 	const struct a6xx_info *info = adreno_gpu->info->a6xx;
+ 	const struct adreno_reglist_pipe *regs = info->nonctxt_reglist;
+ 	const struct adreno_reglist_pipe *eco = a8xx_kgsl_eco ? info->nonctxt_kgsl_eco : NULL;
+-	u32 eco_val[8] = { 0 };
+-	unsigned int pipe_id, i;
++	const u32 *drop = eco ? info->nonctxt_kgsl_eco_drop : NULL;
++	u32 eco_val[12] = { 0 }, drop_val = 0;
++	unsigned int pipe_id, i, j;
+ 	unsigned long flags;
+ 
+ 	for (pipe_id = PIPE_NONE; pipe_id <= PIPE_DDE_BV; pipe_id++) {
+@@ -407,6 +408,13 @@ static void a8xx_nonctxt_config(struct msm_gpu *gpu)
+ 			if (!(BIT(pipe_id) & regs[i].pipe))
+ 				continue;
+ 
++			/* with KGSL's values: leave out what KGSL does not write */
++			for (j = 0; drop && drop[j]; j++)
++				if (drop[j] == regs[i].offset)
++					break;
++			if (drop && drop[j])
++				continue;
++
+ 			if ((regs[i].offset << 2) >= gmu->mmio_offset) {
+ 				gmu_write(gmu, regs[i].offset, regs[i].value);
+ 			} else {
+@@ -417,7 +425,9 @@ static void a8xx_nonctxt_config(struct msm_gpu *gpu)
+ 		/*
+ 		 * KGSL's workaround values, read back once for the log (in the
+ 		 * table's order: PC_CHICKEN_BITS_3, RB_CCU_DBG_ECO_CNTL,
+-		 * SP_CHICKEN_BITS_2, TPL1_DBG_ECO_CNTL, TPL1_DBG_ECO_CNTL1)
++		 * SP_CHICKEN_BITS_2, TPL1_DBG_ECO_CNTL, TPL1_DBG_ECO_CNTL1,
++		 * RB_RBP_CNTL, SP_CHICKEN_BITS, SP_SS_CHICKEN_BITS_0,
++		 * SP_HLSQ_DBG_ECO_CNTL_1 / _2 / _3)
+ 		 */
+ 		for (i = 0; eco && eco[i].offset; i++) {
+ 			if (!(BIT(pipe_id) & eco[i].pipe))
+@@ -429,15 +439,24 @@ static void a8xx_nonctxt_config(struct msm_gpu *gpu)
+ 				eco_val[i] = gpu_read(gpu, eco[i].offset);
+ 		}
+ 
++		if (drop && drop[0] && pipe_id == PIPE_NONE)
++			drop_val = gpu_read(gpu, drop[0]);
++
+ 		a8xx_aperture_release(gpu, flags);
+ 	}
+ 
+ 	a8xx_aperture_clear(gpu);
+ 
+-	if (eco)
++	if (eco) {
++		dev_info_once(&gpu->pdev->dev,
++			      "KGSL workaround values on: %08x %08x %08x %08x %08x %08x\n",
++			      eco_val[0], eco_val[1], eco_val[2], eco_val[3], eco_val[4],
++			      eco_val[5]);
+ 		dev_info_once(&gpu->pdev->dev,
+-			      "KGSL workaround values on: %08x %08x %08x %08x %08x\n",
+-			      eco_val[0], eco_val[1], eco_val[2], eco_val[3], eco_val[4]);
++			      "KGSL workaround values on: %08x %08x %08x %08x %08x, not written %08x\n",
++			      eco_val[6], eco_val[7], eco_val[8], eco_val[9], eco_val[10],
++			      drop_val);
++	}
+ }
+ 
+ static void a8xx_patch_pwrup_reglist(struct msm_gpu *gpu)

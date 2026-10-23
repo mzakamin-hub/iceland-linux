@@ -1,0 +1,70 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 23 Oct 2026 14:17:40 +0300
+Subject: [PATCH 12/17] drm/msm/dpu: flush shared video CTLs once per kickoff
+ (switch)
+
+Bonded video interfaces on DPU 5 and newer share an active CTL, but the
+kickoff loop triggers the same pending mask twice (needs_single_flush()
+is false there, so master and slave each flush) and increments a slave
+counter that the slave's vblank does not retire. The second trigger also
+races the master's on the same CTL.
+
+Submit the shared video CTL through its master only. Independent CTLs
+and the command-mode and writeback paths are unchanged.
+
+Based on the patch by slwyts <slwyts@foxmail.com> in Project SunUEFI
+(SM8750 port), patches/linux/7.3/
+0023-dpu-shared-video-ctl.patch, without its vblank-timeout message
+change. Here behind msm.dpu_dual_dsi_single_flush (default off) for an
+A/B on the OnePlus Pad 4's bonded dual-DSI video panel.
+
+Link: https://github.com/slwyts/Project-SunUEFI
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c | 24 +++++++++++++++++++++
+ 1 file changed, 24 insertions(+)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+index 97fa68516346..c0a625b13211 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+@@ -411,6 +411,17 @@ module_param(dpu_vid_slave_late_cleanup, bool, 0644);
+ MODULE_PARM_DESC(dpu_vid_slave_late_cleanup,
+ 		 "Clean a bonded video-mode slave up after the master's last frame (default: on)");
+ 
++/*
++ * A bonded video-mode pair shares one active CTL on DPU 5 and newer; its
++ * pending mask already holds both interfaces and only the master's vblank
++ * retires the kickoff. On: flush that CTL once, through the master; off:
++ * master and slave each trigger it, as upstream. Read at every kickoff.
++ */
++static bool dpu_dual_dsi_single_flush;
++module_param(dpu_dual_dsi_single_flush, bool, 0644);
++MODULE_PARM_DESC(dpu_dual_dsi_single_flush,
++		 "Flush the CTL shared by a bonded video-mode pair once per kickoff, through the master (default: off)");
++
+ bool dpu_encoder_slave_late_cleanup(void)
+ {
+ 	return READ_ONCE(dpu_vid_slave_late_cleanup);
+@@ -3024,6 +3035,19 @@ static bool _dpu_encoder_kickoff_phys(struct dpu_encoder_virt *dpu_enc,
+ 
+ 		ctl = phys->hw_ctl;
+ 
++		/*
++		 * Bonded video interfaces can share one active CTL. Its pending
++		 * mask already includes both interfaces, and only the master
++		 * receives the vblank that completes this kickoff. Flushing the
++		 * slave again races the same CTL and leaves its count unretired.
++		 */
++		if (READ_ONCE(dpu_dual_dsi_single_flush) &&
++		    phys->intf_mode == INTF_MODE_VIDEO &&
++		    phys->split_role == ENC_ROLE_SLAVE &&
++		    dpu_enc->cur_master &&
++		    ctl == dpu_enc->cur_master->hw_ctl)
++			continue;
++
+ 		/*
+ 		 * This is cleared in frame_done worker, which isn't invoked
+ 		 * for async commits. So don't set this for async, since it'll

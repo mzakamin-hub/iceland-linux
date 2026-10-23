@@ -1,0 +1,83 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 23 Oct 2026 14:16:38 +0300
+Subject: [PATCH 08/17] firmware: psci: switch for the vendor reboot modes,
+ plain reset fallback
+
+The PSCI reboot-mode node turns "reboot bootloader" into a SYSTEM_RESET2
+vendor reset. Keep the previous behaviour reachable without another
+device tree: psci.vendor_reset=0 (command line, or
+/sys/module/psci/parameters/vendor_reset before the reboot) makes a
+reboot with a command use the plain reset again, so that only the other
+reboot-mode drivers (on Kaanapali the PMIC SDAM reboot reason, which is
+written either way) store the command. A reboot without a command and a
+power off never set a vendor reset and are not affected.
+
+If the firmware refuses the vendor reset and returns, issue the plain
+SYSTEM_RESET instead of falling through to the next restart handler.
+
+Look the reboot-mode node up as a child of the PSCI node only:
+of_find_node_by_name() continues through all later nodes, so a PSCI node
+without such a child would pick up another driver's /reboot-mode node
+(the PMIC's) and send its SDAM magic numbers as vendor reset types.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/firmware/psci/psci.c | 20 ++++++++++++++++++--
+ 1 file changed, 18 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/firmware/psci/psci.c b/drivers/firmware/psci/psci.c
+index 158a0a1b9b87..fcff2126d530 100644
+--- a/drivers/firmware/psci/psci.c
++++ b/drivers/firmware/psci/psci.c
+@@ -13,6 +13,7 @@
+ #include <linux/debugfs.h>
+ #include <linux/errno.h>
+ #include <linux/linkage.h>
++#include <linux/moduleparam.h>
+ #include <linux/of.h>
+ #include <linux/panic_notifier.h>
+ #include <linux/pm.h>
+@@ -62,6 +63,17 @@ struct psci_vendor_sysreset2 {
+ 
+ static struct psci_vendor_sysreset2 vendor_reset;
+ 
++/*
++ * Off: the reboot-mode commands of the PSCI node are not used, a reboot
++ * with a command takes the plain SYSTEM_RESET (or the architectural warm
++ * reset) as before, and only the other reboot-mode drivers (e.g. a PMIC
++ * SDAM reboot reason) store the command. Read at reboot time.
++ */
++static bool psci_vendor_reset_on = true;
++module_param_named(vendor_reset, psci_vendor_reset_on, bool, 0644);
++MODULE_PARM_DESC(vendor_reset,
++		 "Use the SYSTEM_RESET2 vendor resets of the PSCI reboot-mode node for reboot commands (default: on)");
++
+ static int psci_panic_event(struct notifier_block *nb, unsigned long v, void *p)
+ {
+ 	vendor_reset.valid = false;
+@@ -330,9 +342,12 @@ static int get_set_conduit_method(const struct device_node *np)
+ static int psci_sys_reset(struct notifier_block *nb, unsigned long action,
+ 			  void *data)
+ {
+-	if (vendor_reset.valid && psci_system_reset2_supported) {
++	if (vendor_reset.valid && psci_system_reset2_supported &&
++	    READ_ONCE(psci_vendor_reset_on)) {
+ 		invoke_psci_fn(PSCI_FN_NATIVE(1_1, SYSTEM_RESET2), vendor_reset.reset_type,
+ 			       vendor_reset.cookie, 0);
++		/* still here: the firmware refused the vendor reset, reset plainly */
++		invoke_psci_fn(PSCI_0_2_FN_SYSTEM_RESET, 0, 0, 0);
+ 	} else if ((reboot_mode == REBOOT_WARM || reboot_mode == REBOOT_SOFT) &&
+ 	    psci_system_reset2_supported) {
+ 		/*
+@@ -609,7 +624,8 @@ static int __init psci_init_vendor_reset(void)
+ 	if (!psci_np)
+ 		return -ENODEV;
+ 
+-	np = of_find_node_by_name(psci_np, "reboot-mode");
++	/* only the PSCI node's own child, never a later node of that name */
++	np = of_get_child_by_name(psci_np, "reboot-mode");
+ 	if (!np) {
+ 		of_node_put(psci_np);
+ 		return -ENODEV;

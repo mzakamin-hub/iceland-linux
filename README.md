@@ -12,7 +12,7 @@ This repository is one part of the project. The boot chain and the install are d
 ## Current kernel
 
 - **Branch:** [`iceland-7.3-rc7-next`](https://github.com/mzakamin-hub/iceland-linux/tree/iceland-7.3-rc7-next). Build from this branch.
-- **Queue:** q90j, kernel release `7.3.0-next-20261020-iceland-00457-g8c8519cc8363`, packaged as
+- **Queue:** q90k, kernel release `7.3.0-next-20261020-iceland-00474-g9bd5b02f1103`, packaged as
   `kernel-iceland`. The branch name is kept from the v7.3-rc7 queues; since q90b the queue applies onto linux-next
   `next-20261020` and moves to 7.4-rc1 once it is out.
 - **New since q89w:** the queue on the 7.4 base (107 patches dropped as upstream there), Qualcomm's split CPU cluster
@@ -28,7 +28,7 @@ This repository is one part of the project. The boot chain and the install are d
 
 ## Download
 
-q90j has no release download yet: build it from the branch (below). The newest packaged release is q89w:
+q90k has no release download yet: build it from the branch (below). The newest packaged release is q89w:
 the [`q89w` release](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89w) has:
 
 - `kernel-iceland-7.3.0.rc7.iceland.00519.gec0a0e306dd9-1.fc44.aarch64.rpm`, the Fedora 44 package for the tablet;
@@ -54,7 +54,7 @@ The counts below are for `iceland-7.3-rc7-next`.
 | `kernel.pin` | the upstream tag and commit, the tree hash expected after each series, the kernel release of each queue |
 | `patches/0001-infiniti/` | 110 patches from infiniti-mainline/linux (OnePlus 15, the same SoC), rebased onto `next-20261020` |
 | `patches/0002-iceland/` | 304 patches: the OnePlus Pad 4 series, numbered with gaps up to 0412 |
-| `patches/0003-glitchfix/` to `patches/0011-q90i/` | 43 patches: the display-timing switches of q89z, then one series per queue q90b to q90i (upstream picks and our fixes) |
+| `patches/0003-glitchfix/` to `patches/0012-q90k/` | 60 patches: the display-timing switches of q89z, then one series per queue q90b to q90k (upstream picks and our fixes) |
 | `configs/` | `distro-neutral.config`, `q90b.config`, `q90i.config` and `q90i-shipped.config` (merged into the build, in that order) and `required.config` (options the build checks) |
 | `scripts/prepare.sh` | clones the upstream tag, checks its commit, applies every series with `git am`, checks the tree hashes |
 | `scripts/build.sh` | configures and builds the kernel; writes `out/dist/` with `BUILD_INFO` and `SHA256SUMS` |
@@ -78,7 +78,7 @@ scripts/build.sh ./src ./out    # Image, Image.gz, the DTB and the modules; writ
 - `scripts/build.sh` runs `defconfig`, merges `arch/arm64/configs/sm8850.config` (map220v's fragment; drift is reported
   but not fatal), `configs/distro-neutral.config`, `q90b.config`, `q90i.config` and `q90i-shipped.config`, then checks
   `distro-neutral.config`, `q90i.config`, `q90i-shipped.config` and `required.config` strictly. The result is the same
-  `.config` as the kernel-iceland q90i and q90j packages'.
+  `.config` as the kernel-iceland q90i, q90j and q90k packages'.
   A failed strict check stops the build unless `ALLOW_CONFIG_DRIFT=1` is set.
 - `out/dist/` holds `Image`, `Image.gz`, `kaanapali-oneplus-iceland.dtb`, the config, `modules-<release>.tar.zst`,
   `BUILD_INFO` (kernel release, source commit, queue commit, compiler) and `SHA256SUMS`.

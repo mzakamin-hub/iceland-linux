@@ -1,0 +1,61 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 23 Oct 2026 14:16:58 +0300
+Subject: [PATCH 09/17] arm64: dts: qcom: iceland: reboot to the boot loader
+ through PSCI
+
+Add the PSCI SYSTEM_RESET2 reboot mode for "bootloader" with the value
+Qualcomm uses on Kaanapali (reset type 0x80010001, cookie 2, from
+"arm64: dts: qcom: kaanapali: add reboot-mode support" by Xin Liu), and
+the psci label it needs in kaanapali.dtsi.
+
+The PMIC SDAM reboot reason (mode-bootloader = 2) stays and is still
+written; the OnePlus Pad 4's boot loader ignores it after a cold reset
+from Linux and boots the default slot. The EDL mode of the MTP / QRD
+boards is left out on purpose, and recovery keeps the SDAM reason.
+
+Link: https://lore.kernel.org/all/20260529-psci_sys_reset-dt-changes-for-pakala-v1-2-7c32161cf50b@oss.qualcomm.com/
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../boot/dts/qcom/kaanapali-oneplus-iceland.dts     | 13 +++++++++++++
+ arch/arm64/boot/dts/qcom/kaanapali.dtsi             |  2 +-
+ 2 files changed, 14 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 5a044fb69f91..5ed53e5b6547 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -2112,6 +2112,19 @@
+ 	status = "okay";
+ };
+ 
++&psci {
++	/*
++	 * SYSTEM_RESET2 vendor reset for "reboot bootloader" (Qualcomm's
++	 * Kaanapali value): the boot loader stops in fastboot, which it does
++	 * not do for the SDAM reboot reason after a cold reset from Linux.
++	 * Recovery stays with the SDAM reason (pmk8850.dtsi); no EDL mode.
++	 * psci.vendor_reset=0 returns to the plain reset.
++	 */
++	reboot-mode {
++		mode-bootloader = <0x80010001 0x2>;
++	};
++};
++
+ &q6apmbedai {
+ 	#address-cells = <1>;
+ 	#size-cells = <0>;
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
+index f39f3dac2a08..6e6b69fe1319 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
++++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
+@@ -352,7 +352,7 @@
+ 		interrupts = <GIC_PPI 7 IRQ_TYPE_LEVEL_LOW>;
+ 	};
+ 
+-	psci {
++	psci: psci {
+ 		compatible = "arm,psci-1.0";
+ 		method = "smc";
+ 

@@ -72,3 +72,13 @@ TREE_AFTER_0011_q90i=774795ac228285cceff8584e4790d278598bd508
 # A/B switches), 0003-glitchfix 0003 / 0004 (GLITCH-DIAG debugfs files), 0006-q90d rpmhpd.kaanapali_mmcx_cx_parent,
 # 0008-q90f msm.dpu_intf_diag, 0009-q90g raise_commit counters. Every TREE_AFTER from 0002 on is q90j's
 # (0006 / 0008 / 0009 re-exported); the config is q90i's. Kernel 7.3.0-next-20261020-iceland-00457-g8c8519cc8363.
+# q90k (TRIAL, 23 Oct 2026) = q90j + 0012-q90k: ath12k station power save in vif_cfg_changed (kernel-topics
+# 5838d806db9d; upstream had it and reverted it for WCN7850 throughput), PSCI SYSTEM_RESET2 vendor resets as
+# reboot-mode (kernel-topics tech/pm/power) + nvmem-reboot-mode cell length fix + psci.vendor_reset switch +
+# the iceland /psci/reboot-mode bootloader node, qcom-cci reset on runtime resume (pw 1189997), DPU single flush
+# of a shared video CTL (msm.dpu_dual_dsi_single_flush, default off), A840 KGSL workaround values
+# (msm.a8xx_kgsl_eco, default off; with it KGSL's whole A840 table), GMU BCL (msm.a8xx_kgsl_bcl, default
+# off), GPU_CLX_EN_REQ in the TZ request (msm.a8xx_clx_tz_flag, default off, only with msm.enable_clx=1),
+# iris: EOS only for the drain LAST buffer (seek fix for FFmpeg v4l2m2m). Config = q90j's.
+# Kernel 7.3.0-next-20261020-iceland-00474-g9bd5b02f1103.
+TREE_AFTER_0012_q90k=da112382c0d85ddcbd54fa581f12da1939825a68

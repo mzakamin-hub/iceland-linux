@@ -1,0 +1,45 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 23 Oct 2026 14:15:13 +0300
+Subject: [PATCH 06/17] power: reset: nvmem-reboot-mode: write the cell's own
+ length again
+
+"power: reset: reboot-mode: Add support for 64 bit magic" changed the
+cell write to sizeof(u32) bytes. nvmem_cell_write() only accepts the
+cell's own length (or the byte count of its bits), so a one-byte cell
+now fails with -EINVAL and no reboot mode is stored any more. The PMK8850
+SDAM reboot reason is such a cell (one byte, bits <1 7>): reboot to
+recovery and to the boot loader would both lose their magic.
+
+Write buf_len bytes of the 32-bit magic again and compare buf_len with
+the size of that 32-bit value.
+
+Fixes: 2257cdbe10c8 ("power: reset: reboot-mode: Add support for 64 bit magic")
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/power/reset/nvmem-reboot-mode.c | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/power/reset/nvmem-reboot-mode.c b/drivers/power/reset/nvmem-reboot-mode.c
+index 4479c874077c..326fe50bb1da 100644
+--- a/drivers/power/reset/nvmem-reboot-mode.c
++++ b/drivers/power/reset/nvmem-reboot-mode.c
+@@ -37,10 +37,15 @@ static int nvmem_reboot_mode_write(struct reboot_mode_driver *reboot, u64 magic)
+ 		return PTR_ERR(buf);
+ 	kfree(buf);
+ 
+-	if (buf_len > sizeof(magic))
++	if (buf_len > sizeof(magic_32))
+ 		return -EINVAL;
+ 
+-	ret = nvmem_cell_write(nvmem_rbm->cell, &magic_32, sizeof(magic_32));
++	/*
++	 * The cell takes exactly its own length (nvmem_cell_write() refuses
++	 * any other); on little endian the first buf_len bytes of magic_32
++	 * are the value, as with the old unsigned int magic.
++	 */
++	ret = nvmem_cell_write(nvmem_rbm->cell, &magic_32, buf_len);
+ 	if (ret < 0)
+ 		dev_err(reboot->dev, "update reboot mode bits failed\n");
+ 
