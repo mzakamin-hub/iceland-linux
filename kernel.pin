@@ -82,3 +82,7 @@ TREE_AFTER_0011_q90i=774795ac228285cceff8584e4790d278598bd508
 # iris: EOS only for the drain LAST buffer (seek fix for FFmpeg v4l2m2m). Config = q90j's.
 # Kernel 7.3.0-next-20261020-iceland-00474-g9bd5b02f1103.
 TREE_AFTER_0012_q90k=da112382c0d85ddcbd54fa581f12da1939825a68
+# q90l (TRIAL, 23 Oct 2026) = q90k + 0013-q90l: ath12k no 'sband is NULL' warning when the RX channel fallback
+# is the expected one (invalid PHY-metadata channel number, centre frequency within 160 MHz of the RX channel;
+# dev_dbg_ratelimited instead). Config = q90k's. Kernel 7.3.0-next-20261020-iceland-00475-g80df3fcf6e51.
+TREE_AFTER_0013_q90l=57e56198995dc2a87eece4b8009fc9f0323bce3b

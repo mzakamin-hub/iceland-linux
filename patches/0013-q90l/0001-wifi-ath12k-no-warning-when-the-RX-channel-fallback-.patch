@@ -1,0 +1,78 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 23 Oct 2026 23:46:14 +0300
+Subject: [PATCH 1/1] wifi: ath12k: no warning when the RX channel fallback is
+ the expected one
+
+On a WCN7860 station on 5 GHz (channel 36, VHT80), once station power
+save has been applied in the boot (also after it is switched off again
+at run time), the RX PHY metadata of most frames during a large transfer
+carries an invalid channel number (233) with the right centre frequency
+of the 80 MHz channel (5210 MHz). ath12k_dp_rx_h_ppdu() then finds no
+band, warns "sband is NULL for status band 6 channel_num 233 center_freq
+5210" and falls back to ar->rx_channel, which gives the right band and
+frequency: the frame is delivered normally. The rate-limited warning
+fires about 200 000 times per 300 MB received.
+
+Keep the fallback. Warn only when the metadata's centre frequency is not
+within 160 MHz (half the widest channel) of the RX channel or when there
+is no RX channel; otherwise report it with dev_dbg_ratelimited(), which
+dynamic debug can switch on (ath12k_dbg() is compiled out without
+CONFIG_ATH12K_DEBUG, which this kernel does not set).
+The warning prints the values from the metadata, not the fallback's.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/net/wireless/ath/ath12k/dp_rx.c | 27 ++++++++++++++++++++++---
+ 1 file changed, 24 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/net/wireless/ath/ath12k/dp_rx.c b/drivers/net/wireless/ath/ath12k/dp_rx.c
+index c7b371e824d6..97d2d88d4018 100644
+--- a/drivers/net/wireless/ath/ath12k/dp_rx.c
++++ b/drivers/net/wireless/ath/ath12k/dp_rx.c
+@@ -1439,13 +1439,22 @@ void ath12k_dp_rx_h_ppdu(struct ath12k_pdev_dp *dp_pdev,
+ 	if (unlikely(rx_status->band == NUM_NL80211_BANDS ||
+ 		     !ath12k_pdev_dp_to_hw(dp_pdev)->wiphy->bands[rx_status->band])) {
+ 		struct ath12k *ar = ath12k_pdev_dp_to_ar(dp_pdev);
+-
+-		ath12k_warn(ar->ab, "sband is NULL for status band %d channel_num %d center_freq %d pdev_id %d\n",
+-			    rx_status->band, channel_num, center_freq, ar->pdev_idx);
++		int st_band = rx_status->band;
++		u8 st_chan = channel_num;
++		bool expected = false;
+ 
+ 		spin_lock_bh(&ar->data_lock);
+ 		channel = ar->rx_channel;
+ 		if (channel) {
++			/*
++			 * Some firmware leaves the channel number of the PHY
++			 * metadata invalid while its centre frequency (the
++			 * centre of the whole operating channel) is right. If
++			 * that frequency lies within the widest channel around
++			 * the current RX channel, the fallback below is the
++			 * expected answer: no warning for every such frame.
++			 */
++			expected = abs((int)center_freq - (int)channel->center_freq) <= 160;
+ 			rx_status->band = channel->band;
+ 			channel_num =
+ 				ieee80211_frequency_to_channel(channel->center_freq);
+@@ -1455,6 +1464,18 @@ void ath12k_dp_rx_h_ppdu(struct ath12k_pdev_dp *dp_pdev,
+ 			ath12k_err(ar->ab, "unable to determine channel, band for rx packet");
+ 		}
+ 		spin_unlock_bh(&ar->data_lock);
++
++		/*
++		 * dynamic debug (file dp_rx.c +p): ath12k_dbg() is compiled
++		 * out without CONFIG_ATH12K_DEBUG
++		 */
++		if (expected)
++			dev_dbg_ratelimited(ar->ab->dev,
++					    "rx: invalid channel_num %d, center_freq %d, using the rx channel\n",
++					    st_chan, center_freq);
++		else
++			ath12k_warn(ar->ab, "sband is NULL for status band %d channel_num %d center_freq %d pdev_id %d\n",
++				    st_band, st_chan, center_freq, ar->pdev_idx);
+ 		goto h_rate;
+ 	}
+ 
