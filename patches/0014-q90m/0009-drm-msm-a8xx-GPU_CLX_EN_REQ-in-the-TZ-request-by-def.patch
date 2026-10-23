@@ -1,0 +1,37 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 24 Oct 2026 00:48:12 +0300
+Subject: [PATCH 09/10] drm/msm/a8xx: GPU_CLX_EN_REQ in the TZ request by
+ default
+
+msm.a8xx_clx_tz_flag (q90k) defaults to on. It still acts only with
+msm.enable_clx=1, and a TZ refusal still falls back to the plain request.
+
+On the OnePlus Pad 4 (A840, vendor GMU 5.3.33) TZ accepts the request,
+and in a 60 s glmark2 burst the GPU's current limiting then works as
+intended: battery current mean 3.59 -> 3.25 A, peak 3.77 -> 3.45 A, GPU
+mean frequency 1.19 -> 1.02 GHz, against CLX without the flag. The owner
+switched it on for the installed system (iceland-device 0.28-35 CLX_TZ).
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/adreno/adreno_device.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/adreno/adreno_device.c b/drivers/gpu/drm/msm/adreno/adreno_device.c
+index a879d21c0945..62a1f6e88a4e 100644
+--- a/drivers/gpu/drm/msm/adreno/adreno_device.c
++++ b/drivers/gpu/drm/msm/adreno/adreno_device.c
+@@ -48,9 +48,9 @@ MODULE_PARM_DESC(a8xx_kgsl_bcl,
+ 		 "A840: enable the GMU battery current limiter (BCL) as KGSL does: TZ BCL request, then HFI_FEATURE_BCL with 62/75/83 % throttle levels (0=off (default), 1=on)");
+ module_param(a8xx_kgsl_bcl, bool, 0400);
+ 
+-bool a8xx_clx_tz_flag;
++bool a8xx_clx_tz_flag = true;
+ MODULE_PARM_DESC(a8xx_clx_tz_flag,
+-		 "A8xx: with msm.enable_clx=1 also set GPU_CLX_EN_REQ in the TZ GPU init request, as KGSL does (0=off (default), 1=on)");
++		 "A8xx: with msm.enable_clx=1 also set GPU_CLX_EN_REQ in the TZ GPU init request, as KGSL does (0=off, 1=on (default))");
+ module_param(a8xx_clx_tz_flag, bool, 0400);
+ 
+ bool a8xx_safe_recover = true;

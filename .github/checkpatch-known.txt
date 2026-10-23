@@ -3,3 +3,7 @@
 #
 # TFA9865_ICELAND_TDM() expands to three initializers of a register table; parentheses would not compile.
 0046-ASoC-codecs-tfa9865-stock-TDM-setup-for-the-OnePlus-.patch Macros with complex values should be enclosed in parentheses
+# q90m: 0010-binder-bring-the-C-binder-driver-back-as-an-option-r.patch restores drivers/android/tests/binder_alloc_kunit.c unchanged; checkpatch reads the ?: after the
+# string 'back ' as a label (upstream code, not ours to restyle).
+0010-binder-bring-the-C-binder-driver-back-as-an-option-r.patch space prohibited before that ':' (ctx:WxW)
+0010-binder-bring-the-C-binder-driver-back-as-an-option-r.patch trailing statements should be on next line

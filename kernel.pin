@@ -86,3 +86,7 @@ TREE_AFTER_0012_q90k=da112382c0d85ddcbd54fa581f12da1939825a68
 # is the expected one (invalid PHY-metadata channel number, centre frequency within 160 MHz of the RX channel;
 # dev_dbg_ratelimited instead). Config = q90k's. Kernel 7.3.0-next-20261020-iceland-00475-g80df3fcf6e51.
 TREE_AFTER_0013_q90l=57e56198995dc2a87eece4b8009fc9f0323bce3b
+# q90m (TRIAL, 24 Oct 2026) = q90l + 0014-q90m: the Gunyah host stack as in-tree modules (android17-6.18 import,
+# adapted to 7.3, unload, vCPU status, GuestAccept; configs/q90m.config: CONFIG_GUNYAH and friends =m, nothing loads at
+# boot), msm.a8xx_clx_tz_flag default Y and the C binder + binderfs (revert of its removal). Kernel 7.3.0-next-20261020-iceland-00485-g317e59a58503.
+TREE_AFTER_0014_q90m=20038efd69193fc9f9fd8a25d4cf19a6beccd44f
