@@ -1,0 +1,65 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Joonhoe Kim <26rote@gmail.com>
+Date: Fri, 23 Oct 2026 01:52:19 +0900
+Subject: [PATCH 01/12] phy: qcom: qmp-combo: Leave the USB PCS alone in
+ DP-only mode
+
+In DP-only mode (DisplayPort pin assignments C and E) all four lanes
+belong to the DisplayPort PHY and the USB PCS stays powered down. The
+USB controller can still exit and re-init its PHY in this state, e.g.
+across a system suspend that loses power. qmp_combo_usb_init() then
+programs the USB serdes, lane and PCS tables over the DisplayPort
+configuration and times out waiting for PHYSTATUS, and
+qmp_combo_usb_exit() resets and powers down a PCS that is not in use.
+
+In DP-only mode only take and drop the common reference, but keep
+counting the USB user, so that qmp_combo_reconfigure_phy() powers the
+USB PCS up when the port leaves DP-only mode.
+
+On a Lenovo Y700 Gen 5 (TB323FU, Kaanapali) with a USB-C monitor
+in pin assignment C, resume from s2idle failed with "phy initialization
+timed-out", the dwc3 resume returned -110 and the following xHCI resume
+hung the system.
+
+Fixes: 896277138c13 ("phy: qcom: qmp-combo: register a typec mux to change the QMPPHY_MODE")
+Signed-off-by: Joonhoe Kim <26rote@gmail.com>
+---
+ drivers/phy/qualcomm/phy-qcom-qmp-combo.c | 18 +++++++++++-------
+ 1 file changed, 11 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
+index 0bbc7ccf4089..c5c963916cd4 100644
+--- a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
++++ b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
+@@ -4557,10 +4557,12 @@ static int qmp_combo_usb_init(struct phy *phy)
+ 	if (ret)
+ 		return ret;
+ 
+-	ret = qmp_combo_usb_power_on(phy);
+-	if (ret) {
+-		qmp_combo_com_exit(qmp, false);
+-		return ret;
++	if (qmp->qmpphy_mode != QMPPHY_MODE_DP_ONLY) {
++		ret = qmp_combo_usb_power_on(phy);
++		if (ret) {
++			qmp_combo_com_exit(qmp, false);
++			return ret;
++		}
+ 	}
+ 
+ 	qmp->usb_init_count++;
+@@ -4582,9 +4584,11 @@ static int qmp_combo_usb_exit(struct phy *phy)
+ 		return 0;
+ 	}
+ 
+-	ret = qmp_combo_usb_power_off(phy);
+-	if (ret)
+-		return ret;
++	if (qmp->qmpphy_mode != QMPPHY_MODE_DP_ONLY) {
++		ret = qmp_combo_usb_power_off(phy);
++		if (ret)
++			return ret;
++	}
+ 
+ 	ret = qmp_combo_com_exit(qmp, false);
+ 	if (ret)

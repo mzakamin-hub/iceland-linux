@@ -1,0 +1,51 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 24 Oct 2026 04:04:15 +0300
+Subject: [PATCH 11/12] hwmon: qcom-bcl-hwmon: probe only with enable=1
+ (default off)
+
+The PMIC BCL monitor programs alarm thresholds and takes interrupts on
+the PMIH0108 BCL block. On the OnePlus Pad 4 it is new and untested, so
+make it opt-in: without qcom_bcl_hwmon.enable=1 (command line or a
+modprobe option) the probe logs one line and returns -ENODEV before it
+touches the hardware. The device tree node stays, so turning it on needs
+no other change.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/hwmon/qcom-bcl-hwmon.c | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/drivers/hwmon/qcom-bcl-hwmon.c b/drivers/hwmon/qcom-bcl-hwmon.c
+index 33bbdd8196d1..03fed448e034 100644
+--- a/drivers/hwmon/qcom-bcl-hwmon.c
++++ b/drivers/hwmon/qcom-bcl-hwmon.c
+@@ -1328,12 +1328,27 @@ static int bcl_regmap_field_init(struct device *dev, struct bcl_device *bcl,
+ 	return 0;
+ }
+ 
++/*
++ * Off by default on this kernel (iceland): the BCL block is only read and
++ * its alarm thresholds programmed with qcom_bcl_hwmon.enable=1 (command line
++ * or modprobe option), so the device tree node changes nothing until the
++ * driver has been tested on the OnePlus Pad 4.
++ */
++static bool enable;
++module_param(enable, bool, 0444);
++MODULE_PARM_DESC(enable, "Probe the PMIC BCL monitor (default: off)");
++
+ static int bcl_probe(struct platform_device *pdev)
+ {
+ 	struct bcl_device *bcl;
+ 	int ret;
+ 	u32 reg;
+ 
++	if (!enable) {
++		dev_info(&pdev->dev, "off (qcom_bcl_hwmon.enable=1 switches it on)\n");
++		return -ENODEV;
++	}
++
+ 	bcl = devm_kzalloc(&pdev->dev, sizeof(*bcl), GFP_KERNEL);
+ 	if (!bcl)
+ 		return -ENOMEM;

@@ -1,0 +1,39 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Manaf Meethalavalappu Pallikunhi <manaf.pallikunhi@oss.qualcomm.com>
+Date: Wed, 22 Jul 2026 00:00:13 +0530
+Subject: [PATCH 10/12] FROMLIST: arm64: dts: qcom: pmih0108-kaanapali: Enable
+ BCL sensor node
+
+Add Battery Current Limiting (BCL) hardware monitor node for pmih0108
+PMIC. The BCL monitors battery voltage and current, providing hardware
+interrupts when configurable thresholds are violated.
+
+Signed-off-by: Manaf Meethalavalappu Pallikunhi <manaf.pallikunhi@oss.qualcomm.com>
+Link: https://lore.kernel.org/r/20260722-qcom-bcl-hwmon-v2-8-febe2805e17b@oss.qualcomm.com
+[ kernel-topics tech 6c3f04a5ef67; picked for the iceland kernel q90n: placed after temp-alarm@c00 (our tree has
+  that node; context conflict) ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ arch/arm64/boot/dts/qcom/pmih0108-kaanapali.dtsi | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/pmih0108-kaanapali.dtsi b/arch/arm64/boot/dts/qcom/pmih0108-kaanapali.dtsi
+index c0958e8d6114..4c1dc1991de6 100644
+--- a/arch/arm64/boot/dts/qcom/pmih0108-kaanapali.dtsi
++++ b/arch/arm64/boot/dts/qcom/pmih0108-kaanapali.dtsi
+@@ -81,6 +81,15 @@
+ 			#thermal-sensor-cells = <0>;
+ 		};
+ 
++		sensor@4700 {
++			compatible = "qcom,pmih0108-bcl";
++			reg = <0x4700>;
++			interrupts = <0x7 0x47 0x0 IRQ_TYPE_EDGE_RISING>,
++				     <0x7 0x47 0x1 IRQ_TYPE_EDGE_RISING>;
++			interrupt-names = "max-min",
++					  "critical";
++		};
++
+ 		pmih0108_e1_gpios: gpio@8800 {
+ 			compatible = "qcom,pmih0108-gpio", "qcom,spmi-gpio";
+ 			reg = <0x8800>;

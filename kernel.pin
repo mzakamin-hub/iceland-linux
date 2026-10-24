@@ -90,3 +90,9 @@ TREE_AFTER_0013_q90l=57e56198995dc2a87eece4b8009fc9f0323bce3b
 # adapted to 7.3, unload, vCPU status, GuestAccept; configs/q90m.config: CONFIG_GUNYAH and friends =m, nothing loads at
 # boot), msm.a8xx_clx_tz_flag default Y and the C binder + binderfs (revert of its removal). Kernel 7.3.0-next-20261020-iceland-00485-g317e59a58503.
 TREE_AFTER_0014_q90m=20038efd69193fc9f9fd8a25d4cf19a6beccd44f
+# q90n (TRIAL, 24 Oct 2026) = q90m + 0015-q90n: qmp-combo DP-only PCS + UFS ESI after reset (pw 1191470 /
+# 1191467), iris 64 capture buffers + VSP clock for high bitrates, lpass rx/tx/va/wsa macro clocks under runtime PM,
+# the PMIC BCL hwmon driver + pmih0108 node (probes only with qcom_bcl_hwmon.enable=1), gunyah_timer.ko; configs/q90n.config:
+# ANON_VMA_NAME, soft + buddy hard-lockup detectors, ARM64_PSEUDO_NMI (off until irqchip.gicv3_pseudo_nmi=1), BCL =m.
+# Kernel 7.3.0-next-20261020-iceland-00497-gd0cd8dc8fa4d.
+TREE_AFTER_0015_q90n=f78a906b0ce420c70b65fc09083335b1f2845ad0

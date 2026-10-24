@@ -1,0 +1,30 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 24 Oct 2026 04:04:30 +0300
+Subject: [PATCH 12/12] virt: gunyah: build the Gunyah vCPU timer as
+ gunyah_timer.ko
+
+arch/arm64/gunyah/timer.c was built as timer.ko, a module name that says
+nothing and could clash with any other "timer" module. Name the module
+gunyah_timer (same source file, no code change), as the other Gunyah
+modules. The users resolve it through the module dependencies
+(gunyah.ko and gunyah_vcpu.ko use its exports), so modprobe pulls it in
+under the new name; iceland-gvm loads either name.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/gunyah/Makefile | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm64/gunyah/Makefile b/arch/arm64/gunyah/Makefile
+index e3a4052b4a12..1a1725268b1e 100644
+--- a/arch/arm64/gunyah/Makefile
++++ b/arch/arm64/gunyah/Makefile
+@@ -1,4 +1,5 @@
+ # SPDX-License-Identifier: GPL-2.0
+ 
+ obj-$(CONFIG_GUNYAH_HYPERCALLS) += gunyah_hypercall.o
+-obj-$(CONFIG_GUNYAH_TIMER) += timer.o
++obj-$(CONFIG_GUNYAH_TIMER) += gunyah_timer.o
++gunyah_timer-y := timer.o
