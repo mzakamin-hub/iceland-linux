@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 24 Oct 2026 09:51:22 +0300
+Subject: [PATCH 2/4] Revert "FROMLIST: arm64: dts: qcom: pmih0108-kaanapali:
+ Enable BCL sensor node"
+
+The base tree already has the PMIC BCL alarms: the built-in thermal driver
+qcom-spmi-bcl (98ed81efec18) binds the existing bcl@4700 nodes of pmh0101 and
+pmih0108 (9df281ca6a04). The q90n hwmon driver duplicated it and never bound.
+
+This reverts commit 3bdee4d28fcc8ebaf4d47134aceb505340d87262.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/pmih0108-kaanapali.dtsi | 9 ---------
+ 1 file changed, 9 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/pmih0108-kaanapali.dtsi b/arch/arm64/boot/dts/qcom/pmih0108-kaanapali.dtsi
+index 4c1dc1991de6..c0958e8d6114 100644
+--- a/arch/arm64/boot/dts/qcom/pmih0108-kaanapali.dtsi
++++ b/arch/arm64/boot/dts/qcom/pmih0108-kaanapali.dtsi
+@@ -81,15 +81,6 @@
+ 			#thermal-sensor-cells = <0>;
+ 		};
+ 
+-		sensor@4700 {
+-			compatible = "qcom,pmih0108-bcl";
+-			reg = <0x4700>;
+-			interrupts = <0x7 0x47 0x0 IRQ_TYPE_EDGE_RISING>,
+-				     <0x7 0x47 0x1 IRQ_TYPE_EDGE_RISING>;
+-			interrupt-names = "max-min",
+-					  "critical";
+-		};
+-
+ 		pmih0108_e1_gpios: gpio@8800 {
+ 			compatible = "qcom,pmih0108-gpio", "qcom,spmi-gpio";
+ 			reg = <0x8800>;

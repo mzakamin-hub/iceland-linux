@@ -1,0 +1,50 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 24 Oct 2026 09:51:22 +0300
+Subject: [PATCH 1/4] Revert "hwmon: qcom-bcl-hwmon: probe only with enable=1
+ (default off)"
+
+The base tree already has the PMIC BCL alarms: the built-in thermal driver
+qcom-spmi-bcl (98ed81efec18) binds the existing bcl@4700 nodes of pmh0101 and
+pmih0108 (9df281ca6a04). The q90n hwmon driver duplicated it and never bound.
+
+This reverts commit 3a11486e53855b449327deb6c231bf8eb21d36f0.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/hwmon/qcom-bcl-hwmon.c | 15 ---------------
+ 1 file changed, 15 deletions(-)
+
+diff --git a/drivers/hwmon/qcom-bcl-hwmon.c b/drivers/hwmon/qcom-bcl-hwmon.c
+index 03fed448e034..33bbdd8196d1 100644
+--- a/drivers/hwmon/qcom-bcl-hwmon.c
++++ b/drivers/hwmon/qcom-bcl-hwmon.c
+@@ -1328,27 +1328,12 @@ static int bcl_regmap_field_init(struct device *dev, struct bcl_device *bcl,
+ 	return 0;
+ }
+ 
+-/*
+- * Off by default on this kernel (iceland): the BCL block is only read and
+- * its alarm thresholds programmed with qcom_bcl_hwmon.enable=1 (command line
+- * or modprobe option), so the device tree node changes nothing until the
+- * driver has been tested on the OnePlus Pad 4.
+- */
+-static bool enable;
+-module_param(enable, bool, 0444);
+-MODULE_PARM_DESC(enable, "Probe the PMIC BCL monitor (default: off)");
+-
+ static int bcl_probe(struct platform_device *pdev)
+ {
+ 	struct bcl_device *bcl;
+ 	int ret;
+ 	u32 reg;
+ 
+-	if (!enable) {
+-		dev_info(&pdev->dev, "off (qcom_bcl_hwmon.enable=1 switches it on)\n");
+-		return -ENODEV;
+-	}
+-
+ 	bcl = devm_kzalloc(&pdev->dev, sizeof(*bcl), GFP_KERNEL);
+ 	if (!bcl)
+ 		return -ENOMEM;
