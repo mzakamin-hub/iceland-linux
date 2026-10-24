@@ -1,0 +1,166 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Igor Borodin <hatemosphere@protonmail.com>
+Date: Fri, 23 Oct 2026 23:17:17 +0200
+Subject: [PATCH 08/13] wifi: mac80211: fix MLO multicast duplicate detection
+
+Since commit 676259100cf3 ("wifi: mac80211: implement MLO multicast
+deduplication"), a station MLD drops a group addressed Data frame unless
+its sequence number is newer than the last one it accepted
+(mcast_seq_last).
+
+That assumes all group addressed Data frames of the AP MLD come from a
+single, increasing sequence number space. Some APs use more than one.
+A TP-Link Deco (Wi-Fi 7 MLO network) interleaves two spaces on the same
+link, the second one for frames with More Data set, apparently the
+DTIM-buffered ones. Traced at ieee80211_rx_napi() on the station:
+
+  sn=508 sn=2338 sn=510 sn=2339 sn=513 sn=2340 sn=515 ...
+
+Once a frame of the leading space is accepted, every frame of the other
+space is "not newer" and dropped as RX_DROP_U_DUP until that space
+catches up, which takes minutes, after which the roles swap. Meanwhile
+the station receives almost no broadcast or multicast: ARP requests from
+the LAN are lost and the host becomes unreachable, while unicast keeps
+working. With an RTL8922AE (rtw89) station on a single active link this
+happened every 10-15 minutes, for several minutes each time.
+
+IEEE 802.11be (10.3.2.14, RC16) has the station MLD discard a group
+addressed Data frame it already received on any link, and leaves
+sequence number wraparound handling to the implementation. Do that with
+a small cache of the sequence number and source address of recently
+received frames, as the mesh RMC does, instead of tracking only the
+highest sequence number seen. The cache is much smaller than the
+sequence number space, so a match cannot come from a wrapped number.
+
+Fixes: 676259100cf3 ("wifi: mac80211: implement MLO multicast deduplication")
+Assisted-by: LLM
+Signed-off-by: Igor Borodin <hatemosphere@protonmail.com>
+---
+ net/mac80211/ieee80211_i.h | 10 +++++++++-
+ net/mac80211/mlme.c        | 14 ++++++++++++--
+ net/mac80211/rx.c          | 29 ++++++++++++++++++++++++++---
+ 3 files changed, 47 insertions(+), 6 deletions(-)
+
+diff --git a/net/mac80211/ieee80211_i.h b/net/mac80211/ieee80211_i.h
+index 1a6cbbb5a17d..067354bc0931 100644
+--- a/net/mac80211/ieee80211_i.h
++++ b/net/mac80211/ieee80211_i.h
+@@ -533,6 +533,8 @@ struct ieee80211_adv_ttlm_info {
+ 
+ DECLARE_EWMA(beacon_signal, 4, 4)
+ 
++#define IEEE80211_MCAST_DUP_ENTRIES	32
++
+ struct ieee80211_if_managed {
+ 	struct timer_list timer;
+ 	struct timer_list conn_mon_timer;
+@@ -560,7 +562,12 @@ struct ieee80211_if_managed {
+ 
+ 	unsigned int flags;
+ 
+-	u16 mcast_seq_last;
++	/* recent group addressed Data frames, for MLD duplicate detection */
++	struct {
++		u8 sa[ETH_ALEN] __aligned(2);
++		u16 sn;
++	} mcast_dup[IEEE80211_MCAST_DUP_ENTRIES];
++	u8 mcast_dup_next;
+ 
+ 	bool status_acked;
+ 	bool status_received;
+@@ -2041,6 +2048,7 @@ void ieee80211_uhr_disable_dbe_all_stas(struct ieee80211_link_data *link);
+ 
+ /* STA code */
+ void ieee80211_sta_setup_sdata(struct ieee80211_sub_if_data *sdata);
++void ieee80211_mgd_mcast_dup_reset(struct ieee80211_sub_if_data *sdata);
+ int ieee80211_mgd_auth(struct ieee80211_sub_if_data *sdata,
+ 		       struct cfg80211_auth_request *req);
+ int ieee80211_mgd_assoc(struct ieee80211_sub_if_data *sdata,
+diff --git a/net/mac80211/mlme.c b/net/mac80211/mlme.c
+index 6ec45a9f7221..c13c9783d38b 100644
+--- a/net/mac80211/mlme.c
++++ b/net/mac80211/mlme.c
+@@ -4755,7 +4755,7 @@ static void ieee80211_set_disassoc(struct ieee80211_sub_if_data *sdata,
+ 
+ 	ieee80211_vif_set_links(sdata, 0, 0);
+ 
+-	ifmgd->mcast_seq_last = IEEE80211_SN_MODULO;
++	ieee80211_mgd_mcast_dup_reset(sdata);
+ 
+ 	ifmgd->epcs.enabled = false;
+ 	ifmgd->epcs.dialog_token = 0;
+@@ -9557,6 +9557,16 @@ static void ieee80211_ml_sta_reconf_timeout(struct wiphy *wiphy,
+ }
+ 
+ /* interface setup */
++void ieee80211_mgd_mcast_dup_reset(struct ieee80211_sub_if_data *sdata)
++{
++	struct ieee80211_if_managed *ifmgd = &sdata->u.mgd;
++	int i;
++
++	for (i = 0; i < ARRAY_SIZE(ifmgd->mcast_dup); i++)
++		ifmgd->mcast_dup[i].sn = IEEE80211_SN_MODULO;
++	ifmgd->mcast_dup_next = 0;
++}
++
+ void ieee80211_sta_setup_sdata(struct ieee80211_sub_if_data *sdata)
+ {
+ 	struct ieee80211_if_managed *ifmgd = &sdata->u.mgd;
+@@ -9594,7 +9604,7 @@ void ieee80211_sta_setup_sdata(struct ieee80211_sub_if_data *sdata)
+ 	spin_lock_init(&ifmgd->teardown_lock);
+ 	ifmgd->teardown_skb = NULL;
+ 	ifmgd->orig_teardown_skb = NULL;
+-	ifmgd->mcast_seq_last = IEEE80211_SN_MODULO;
++	ieee80211_mgd_mcast_dup_reset(sdata);
+ }
+ 
+ static void ieee80211_recalc_smps_work(struct wiphy *wiphy,
+diff --git a/net/mac80211/rx.c b/net/mac80211/rx.c
+index ecee9348c70d..12d734b54a03 100644
+--- a/net/mac80211/rx.c
++++ b/net/mac80211/rx.c
+@@ -1497,6 +1497,31 @@ static void ieee80211_rx_reorder_ampdu(struct ieee80211_rx_data *rx,
+ 	__skb_queue_tail(frames, skb);
+ }
+ 
++/*
++ * An AP MLD may send a group addressed Data frame on several links with
++ * the same SN (SNS11); a frame already received on any link is discarded
++ * (RC16, IEEE 802.11be 10.3.2.14). Remember recent SN/SA pairs, since a
++ * single "last SN" breaks with APs that use more than one SN space.
++ */
++static bool ieee80211_mgd_mcast_is_dup(struct ieee80211_sub_if_data *sdata,
++				       struct ieee80211_hdr *hdr, u16 sn)
++{
++	struct ieee80211_if_managed *ifmgd = &sdata->u.mgd;
++	int i;
++
++	for (i = 0; i < ARRAY_SIZE(ifmgd->mcast_dup); i++) {
++		if (ifmgd->mcast_dup[i].sn == sn &&
++		    ether_addr_equal(ifmgd->mcast_dup[i].sa, hdr->addr3))
++			return true;
++	}
++
++	i = ifmgd->mcast_dup_next;
++	ifmgd->mcast_dup_next = (i + 1) % ARRAY_SIZE(ifmgd->mcast_dup);
++	ifmgd->mcast_dup[i].sn = sn;
++	ether_addr_copy(ifmgd->mcast_dup[i].sa, hdr->addr3);
++	return false;
++}
++
+ static ieee80211_rx_result debug_noinline
+ ieee80211_rx_h_check_dup(struct ieee80211_rx_data *rx)
+ {
+@@ -1535,11 +1560,9 @@ ieee80211_rx_h_check_dup(struct ieee80211_rx_data *rx)
+ 		    sdata->vif.type != NL80211_IFTYPE_STATION)
+ 			return RX_CONTINUE;
+ 
+-		if (sdata->u.mgd.mcast_seq_last != IEEE80211_SN_MODULO &&
+-		    ieee80211_sn_less_eq(sn, sdata->u.mgd.mcast_seq_last))
++		if (ieee80211_mgd_mcast_is_dup(sdata, hdr, sn))
+ 			return RX_DROP_U_DUP;
+ 
+-		sdata->u.mgd.mcast_seq_last = sn;
+ 		return RX_CONTINUE;
+ 	}
+ 

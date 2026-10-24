@@ -1,0 +1,54 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 24 Oct 2026 16:46:00 +0300
+Subject: [PATCH 10/13] Revert "phy: qcom: qmp-combo: Leave the USB PCS alone
+ in DP-only mode"
+
+The v1 of this fix (q90n) is replaced by its v2 (pw 1192123), which also
+covers an orientation flip while in DP-only mode and the power-off path
+when DP-only mode is left.
+
+This reverts commit b8f735f43cf95a8ed77c3ea4118a0b1e20594da2.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/phy/qualcomm/phy-qcom-qmp-combo.c | 18 +++++++-----------
+ 1 file changed, 7 insertions(+), 11 deletions(-)
+
+diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
+index f5fe18bb1a52..00520433919d 100644
+--- a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
++++ b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
+@@ -4557,12 +4557,10 @@ static int qmp_combo_usb_init(struct phy *phy)
+ 	if (ret)
+ 		return ret;
+ 
+-	if (qmp->qmpphy_mode != QMPPHY_MODE_DP_ONLY) {
+-		ret = qmp_combo_usb_power_on(phy);
+-		if (ret) {
+-			qmp_combo_com_exit(qmp, false);
+-			return ret;
+-		}
++	ret = qmp_combo_usb_power_on(phy);
++	if (ret) {
++		qmp_combo_com_exit(qmp, false);
++		return ret;
+ 	}
+ 
+ 	qmp->usb_init_count++;
+@@ -4584,11 +4582,9 @@ static int qmp_combo_usb_exit(struct phy *phy)
+ 		return 0;
+ 	}
+ 
+-	if (qmp->qmpphy_mode != QMPPHY_MODE_DP_ONLY) {
+-		ret = qmp_combo_usb_power_off(phy);
+-		if (ret)
+-			return ret;
+-	}
++	ret = qmp_combo_usb_power_off(phy);
++	if (ret)
++		return ret;
+ 
+ 	ret = qmp_combo_com_exit(qmp, false);
+ 	if (ret)

@@ -1,0 +1,54 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: HOYOUNG SEO <hy50.seo@samsung.com>
+Date: Fri, 23 Oct 2026 20:34:52 +0900
+Subject: [PATCH 13/13] scsi: ufs: core: add is_sys_suspended state before
+ recovery
+
+If a LINERESET is reported and the hibern8 exit fails in
+__ufshcd_wl_resume() during system resume, the link is recovered twice:
+
+  - the UIC error interrupt schedules eh_work, and ufshcd_err_handler()
+    calls ufshcd_link_recovery() because hba->pm_op_in_progress is set;
+  - __ufshcd_wl_resume() calls ufshcd_link_recovery() itself after the
+    hibern8 exit failure.
+
+Since the early recovery path in ufshcd_err_handler() does not take
+hba->host_sem, the two recoveries are not serialized and may reset the
+host and the device concurrently.
+
+During system resume, hba->host_sem is held from ufshcd_wl_suspend()
+until ufshcd_wl_resume() returns, so the error handler can simply wait
+for it. Skip the early link recovery when hba->is_sys_suspended is set.
+With the previous patch, the errors already recovered by the resume path
+are cleared, so ufshcd_err_handler() stops once host_sem is released
+unless new errors occurred. If the resume failed, is_sys_suspended stays
+set and the error handler performs a full recovery as usual.
+
+The early link recovery is kept for runtime PM, where host_sem is not
+held and the error handler cannot wait for the PM operation to finish.
+
+Signed-off-by: HOYOUNG SEO <hy50.seo@samsung.com>
+---
+ drivers/ufs/core/ufshcd.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/ufs/core/ufshcd.c b/drivers/ufs/core/ufshcd.c
+index 4e402df754fb..308b69e47caf 100644
+--- a/drivers/ufs/core/ufshcd.c
++++ b/drivers/ufs/core/ufshcd.c
+@@ -7083,9 +7083,14 @@ static void ufshcd_err_handler(struct work_struct *work)
+ 		 * runtime resume. This avoids potential deadlocks that could
+ 		 * happen if we tried to resume the device while a PM operation
+ 		 * is already in progress.
++		 *
++		 * During system resume, host_sem is held from
++		 * ufshcd_wl_suspend() until ufshcd_wl_resume() returns, so wait
++		 * for it below instead of recovering the link concurrently with
++		 * the resume path.
+ 		 */
+ 		ufshcd_rpm_get_noresume(hba);
+-		if (hba->pm_op_in_progress) {
++		if (hba->pm_op_in_progress && !hba->is_sys_suspended) {
+ 			ufshcd_link_recovery(hba);
+ 			ufshcd_rpm_put(hba);
+ 			return;

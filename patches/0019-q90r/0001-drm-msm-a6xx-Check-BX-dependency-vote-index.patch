@@ -1,0 +1,32 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Akhil P Oommen <akhilpo@oss.qualcomm.com>
+Date: Sat, 24 Oct 2026 16:00:07 +0530
+Subject: [PATCH 01/13] drm/msm/a6xx: Check BX dependency vote index
+
+a6xx_gmu_rpmh_arc_index() returns a signed error value. Check the result
+before passing it to FIELD_MODIFY(), which rejects a compiler-propagated
+negative value as too large for the field.
+
+Fixes: 020b8eaa1db8 ("drm/msm/a6xx: Add BX rail support to GMU dependency votes")
+Cc: stable@vger.kernel.org
+Reported-by: kernel test robot <lkp@intel.com>
+Closes: https://lore.kernel.org/oe-kbuild-all/202610070334.bYvBJSpj-lkp@intel.com/
+Signed-off-by: Akhil P Oommen <akhilpo@oss.qualcomm.com>
+---
+ drivers/gpu/drm/msm/adreno/a6xx_gmu.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
+index fadf5261009d..b7dac7903b68 100644
+--- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
++++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
+@@ -1937,6 +1937,9 @@ static int a6xx_gmu_rpmh_dep_votes_init(struct device *dev, u32 *votes,
+ 		 * back to the highest BX corner if none is high enough.
+ 		 */
+ 		bx = a6xx_gmu_rpmh_arc_index(dev, gbx, gbx_count, gx[index], true);
++		if (bx < 0)
++			return bx;
++
+ 		FIELD_MODIFY(GMU_BX_MASK, &votes[i], bx);
+ 	}
+ 
