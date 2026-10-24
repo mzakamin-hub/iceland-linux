@@ -1,0 +1,433 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 24 Oct 2026 11:39:57 +0300
+Subject: [PATCH 1/4] drm/msm: iceland: built-in defaults for the board's
+ command line switches
+
+The OnePlus Pad 4 boots with a long list of msm switches on its kernel
+command line. Most of them already equal the driver defaults; four do
+not: msm.dpu_dsc_once=1, msm.dpu_idle_refresh_ms=1000,
+msm.dpu_idle_refresh_hz=30, and - with the vendor GPU firmware pair only -
+msm.enable_preemption=1 and msm.enable_clx=1.
+
+Add CONFIG_DRM_MSM_ICELAND_DEFAULTS. Those switches now remember an
+explicit value (command line or sysfs). On the board whose root
+compatible is "oneplus,iceland", and only there, the driver applies the
+board's value to every one of them that was not set: the display values
+before the encoders are created, the GPU values before the ring count is
+chosen. Preemption and CLX are proven only with the vendor GMU v5.3.33 /
+SQE 0x094 pair (preemption with the stock or linux-firmware pair reset
+the board early in boot), so they default on only when the GMU and SQE
+files the firmware loader finds have that pair's sha256. Other boards
+and an explicit value are not affected.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/Kconfig                 | 15 ++++
+ drivers/gpu/drm/msm/Makefile                |  1 +
+ drivers/gpu/drm/msm/adreno/a6xx_gpu.c       |  2 +
+ drivers/gpu/drm/msm/adreno/adreno_device.c  | 68 ++++++++++++++-
+ drivers/gpu/drm/msm/adreno/adreno_gpu.h     |  8 ++
+ drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c | 29 ++++++-
+ drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h |  2 +
+ drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c     |  2 +
+ drivers/gpu/drm/msm/msm_iceland.c           | 95 +++++++++++++++++++++
+ drivers/gpu/drm/msm/msm_iceland.h           | 34 ++++++++
+ 10 files changed, 252 insertions(+), 4 deletions(-)
+ create mode 100644 drivers/gpu/drm/msm/msm_iceland.c
+ create mode 100644 drivers/gpu/drm/msm/msm_iceland.h
+
+diff --git a/drivers/gpu/drm/msm/Kconfig b/drivers/gpu/drm/msm/Kconfig
+index ed1c4775d1e9..3fee914f50b6 100644
+--- a/drivers/gpu/drm/msm/Kconfig
++++ b/drivers/gpu/drm/msm/Kconfig
+@@ -71,6 +71,21 @@ config DRM_MSM_KMS
+ 	select DRM_PANEL
+ 	select DRM_PANEL_BRIDGE
+ 
++config DRM_MSM_ICELAND_DEFAULTS
++	bool "OnePlus Pad 4 (iceland) built-in defaults"
++	depends on DRM_MSM
++	select CRYPTO_LIB_SHA256
++	default n
++	help
++	  On the OnePlus Pad 4 (root compatible "oneplus,iceland") only, use
++	  the board's tested values as the defaults of a few msm and panel
++	  switches that its kernel command line used to set: DSC programmed
++	  once per enable, the 30 Hz idle refresh after 1 s, the panel's stock
++	  power timing and late backlight, and - only with the vendor GPU
++	  firmware pair the board was proven with - GPU preemption and the
++	  current limiter (CLX). An explicit value on the command line or in
++	  sysfs still wins; other boards are not affected.
++
+ config DRM_MSM_KMS_FBDEV
+ 	def_bool DRM_FBDEV_EMULATION
+ 	depends on DRM_MSM_KMS
+diff --git a/drivers/gpu/drm/msm/Makefile b/drivers/gpu/drm/msm/Makefile
+index b5d64ee7eb74..fdb216e1112a 100644
+--- a/drivers/gpu/drm/msm/Makefile
++++ b/drivers/gpu/drm/msm/Makefile
+@@ -167,6 +167,7 @@ msm-display-$(CONFIG_DRM_MSM_DSI_10NM_PHY) += dsi/phy/dsi_phy_10nm.o
+ msm-display-$(CONFIG_DRM_MSM_DSI_7NM_PHY) += dsi/phy/dsi_phy_7nm.o
+ 
+ msm-y += $(adreno-y)
++msm-$(CONFIG_DRM_MSM_ICELAND_DEFAULTS) += msm_iceland.o
+ msm-$(CONFIG_DRM_MSM_KMS) += $(msm-display-y)
+ 
+ obj-$(CONFIG_DRM_MSM)	+= msm.o
+diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gpu.c b/drivers/gpu/drm/msm/adreno/a6xx_gpu.c
+index 3f1aeeb5ab07..b21f860255bc 100644
+--- a/drivers/gpu/drm/msm/adreno/a6xx_gpu.c
++++ b/drivers/gpu/drm/msm/adreno/a6xx_gpu.c
+@@ -2749,6 +2749,8 @@ static struct msm_gpu *a6xx_gpu_init(struct drm_device *dev)
+ 		return ERR_PTR(ret);
+ 	}
+ 
++	adreno_iceland_gpu_defaults(&pdev->dev, info);
++
+ 	if ((enable_preemption == 1) || (enable_preemption == -1 &&
+ 	    (info->quirks & ADRENO_QUIRK_PREEMPTION)))
+ 		nr_rings = 4;
+diff --git a/drivers/gpu/drm/msm/adreno/adreno_device.c b/drivers/gpu/drm/msm/adreno/adreno_device.c
+index 62a1f6e88a4e..b2ec0146c9fe 100644
+--- a/drivers/gpu/drm/msm/adreno/adreno_device.c
++++ b/drivers/gpu/drm/msm/adreno/adreno_device.c
+@@ -6,7 +6,10 @@
+  * Copyright (c) 2014,2017 The Linux Foundation. All rights reserved.
+  */
+ 
++#include <crypto/sha2.h>
++#include <linux/firmware.h>
+ #include "adreno_gpu.h"
++#include "msm_iceland.h"
+ 
+ bool hang_debug = false;
+ MODULE_PARM_DESC(hang_debug, "Dump registers when hang is detected (can be slow!)");
+@@ -18,7 +21,7 @@ module_param_named(snapshot_debugbus, snapshot_debugbus, bool, 0600);
+ 
+ int enable_preemption;
+ MODULE_PARM_DESC(enable_preemption, "Enable preemption (A7xx+ only) (1=on, 0=disable (default), -1=auto)");
+-module_param(enable_preemption, int, 0600);
++msm_module_param_given(enable_preemption, int, 0600);
+ 
+ bool disable_ifpc;
+ MODULE_PARM_DESC(disable_ifpc, "Keep the GMU out of inter-frame power collapse (IFPC) on GPUs that support it (default: IFPC on)");
+@@ -60,7 +63,68 @@ module_param(a8xx_safe_recover, bool, 0644);
+ 
+ bool enable_clx;
+ MODULE_PARM_DESC(enable_clx, "Enable the GPU current limiter (CLX) on GPUs with a CLX table (0=off (default), 1=on)");
+-module_param(enable_clx, bool, 0400);
++msm_module_param_given(enable_clx, bool, 0400);
++
++#ifdef CONFIG_DRM_MSM_ICELAND_DEFAULTS
++/*
++ * The OnePlus Pad 4 runs GPU preemption and CLX only with the vendor GMU
++ * v5.3.33 / SQE 0x094 pair (iceland-firmware 11.A.38-6, iceland-gpu-vendor533):
++ * preemption with the stock or linux-firmware pair reset the board early in
++ * boot. So the board defaults apply only when the files the firmware loader
++ * finds are exactly that pair (sha256).
++ */
++static const u8 iceland_gmu_sha256[SHA256_DIGEST_SIZE] = {
++	0x06, 0xf4, 0x48, 0x4f, 0xa0, 0x6f, 0x91, 0x63, 0x8a, 0xa4, 0xae, 0x24,
++	0x12, 0x05, 0x1b, 0xcd, 0xdf, 0xfd, 0xad, 0x69, 0xa7, 0xe2, 0xf8, 0x38,
++	0x49, 0xc7, 0x24, 0x12, 0xe6, 0xda, 0xa4, 0x4d,
++};
++
++static const u8 iceland_sqe_sha256[SHA256_DIGEST_SIZE] = {
++	0xe2, 0xd4, 0xe7, 0x42, 0x82, 0xf5, 0x0e, 0x40, 0x78, 0x8b, 0x83, 0xb9,
++	0xba, 0x4a, 0x5f, 0x58, 0x94, 0xc7, 0x97, 0x5e, 0xd3, 0x56, 0xc0, 0x3a,
++	0x01, 0x61, 0x37, 0x2d, 0x78, 0xf1, 0x29, 0x32,
++};
++
++static bool adreno_iceland_fw_is(struct device *dev, const char *name, const u8 *want)
++{
++	u8 digest[SHA256_DIGEST_SIZE];
++	const struct firmware *fw;
++	char path[64];
++	bool ok;
++
++	if (!name)
++		return false;
++	snprintf(path, sizeof(path), "qcom/%s", name);
++	if (request_firmware_direct(&fw, path, dev))
++		return false;
++	sha256(fw->data, fw->size, digest);
++	ok = !memcmp(digest, want, SHA256_DIGEST_SIZE);
++	release_firmware(fw);
++
++	return ok;
++}
++
++void adreno_iceland_gpu_defaults(struct device *dev, const struct adreno_info *info)
++{
++	bool vendor;
++
++	if (!msm_iceland())
++		return;
++	if (msm_param_given(&enable_preemption) && msm_param_given(&enable_clx))
++		return;
++	vendor = adreno_iceland_fw_is(dev, info->fw[ADRENO_FW_GMU], iceland_gmu_sha256) &&
++		 adreno_iceland_fw_is(dev, info->fw[ADRENO_FW_SQE], iceland_sqe_sha256);
++	if (vendor) {
++		if (!msm_param_given(&enable_preemption))
++			enable_preemption = 1;
++		if (!msm_param_given(&enable_clx))
++			enable_clx = true;
++	}
++	dev_info(dev, "iceland defaults: GPU firmware %s: enable_preemption %d, enable_clx %d\n",
++		 vendor ? "is the vendor533 pair" : "is not the vendor533 pair (defaults off)",
++		 enable_preemption, enable_clx);
++}
++#endif
+ 
+ static bool skip_gpu;
+ MODULE_PARM_DESC(skip_gpu, "Disable GPU driver register (0=enable GPU driver register (default), 1=skip GPU driver register");
+diff --git a/drivers/gpu/drm/msm/adreno/adreno_gpu.h b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
+index 3a8f6a78200b..719b822cedad 100644
+--- a/drivers/gpu/drm/msm/adreno/adreno_gpu.h
++++ b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
+@@ -21,6 +21,14 @@
+ 
+ extern bool snapshot_debugbus;
+ extern bool enable_clx;
++
++struct adreno_info;
++#ifdef CONFIG_DRM_MSM_ICELAND_DEFAULTS
++void adreno_iceland_gpu_defaults(struct device *dev, const struct adreno_info *info);
++#else
++static inline void adreno_iceland_gpu_defaults(struct device *dev,
++					       const struct adreno_info *info) { }
++#endif
+ extern bool a8xx_crashstate;
+ extern bool a8xx_safe_recover;
+ extern bool a8xx_legacy_protect;
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+index c0a625b13211..1d02172f9950 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+@@ -24,6 +24,7 @@
+ #include <drm/drm_framebuffer.h>
+ 
+ #include "msm_drv.h"
++#include "msm_iceland.h"
+ #include "dpu_kms.h"
+ #include "dpu_hwio.h"
+ #include "dpu_hw_catalog.h"
+@@ -352,8 +353,10 @@ static int dpu_idle_rr_param_set(const char *val, const struct kernel_param *kp)
+ {
+ 	int ret = param_set_uint(val, kp);
+ 
+-	if (!ret)
++	if (!ret) {
++		msm_param_note_given(kp->arg);
+ 		dpu_idle_rr_kick();
++	}
+ 
+ 	return ret;
+ }
+@@ -438,7 +441,7 @@ MODULE_PARM_DESC(dpu_vid_idle_irq_off,
+  * configuration does not change in between. Read at every kickoff.
+  */
+ static bool dpu_dsc_once;
+-module_param(dpu_dsc_once, bool, 0644);
++msm_module_param_given(dpu_dsc_once, bool, 0644);
+ MODULE_PARM_DESC(dpu_dsc_once,
+ 		 "Program the DSC blocks once per enable / mode set (default: on every commit)");
+ 
+@@ -4032,6 +4035,28 @@ static const struct drm_encoder_funcs dpu_encoder_funcs = {
+ 	.debugfs_init = dpu_encoder_debugfs_init,
+ };
+ 
++/**
++ * dpu_encoder_iceland_defaults - the iceland board's display defaults
++ *
++ * On the OnePlus Pad 4 only, and only for switches not set on the command
++ * line or in sysfs: DSC programmed once per enable / mode set, and the idle
++ * refresh rate (30 Hz after 1 s without a commit). Called before the encoders
++ * are created.
++ */
++void dpu_encoder_iceland_defaults(void)
++{
++	if (!msm_iceland())
++		return;
++	if (!msm_param_given(&dpu_dsc_once))
++		dpu_dsc_once = true;
++	if (!msm_param_given(&dpu_idle_refresh_ms))
++		dpu_idle_refresh_ms = 1000;
++	if (!msm_param_given(&dpu_idle_refresh_hz))
++		dpu_idle_refresh_hz = 30;
++	DRM_INFO("iceland defaults: dpu_dsc_once %d, idle refresh %u ms / %u Hz\n",
++		 dpu_dsc_once, dpu_idle_refresh_ms, dpu_idle_refresh_hz);
++}
++
+ /**
+  * dpu_encoder_init - initialize virtual encoder object
+  * @dev:        Pointer to drm device structure
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h
+index 956779c60bf6..97c2dd0c2f3f 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h
+@@ -62,6 +62,8 @@ void dpu_encoder_virt_runtime_resume(struct drm_encoder *encoder);
+ 
+ uint32_t dpu_encoder_get_clones(struct drm_encoder *drm_enc);
+ 
++void dpu_encoder_iceland_defaults(void);
++
+ struct drm_encoder *dpu_encoder_init(struct drm_device *dev,
+ 		int drm_enc_mode,
+ 		struct msm_display_info *disp_info);
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
+index 2e53bb503c62..9d8f22c5b288 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
+@@ -1342,6 +1342,8 @@ static int dpu_kms_init(struct drm_device *ddev)
+ 
+ 	dev_pm_opp_set_rate(dev, max_freq);
+ 
++	dpu_encoder_iceland_defaults();
++
+ 	ret = msm_kms_init(&dpu_kms->base, &kms_funcs);
+ 	if (ret) {
+ 		DPU_ERROR("failed to init kms, ret=%d\n", ret);
+diff --git a/drivers/gpu/drm/msm/msm_iceland.c b/drivers/gpu/drm/msm/msm_iceland.c
+new file mode 100644
+index 000000000000..b4fe770b9fe9
+--- /dev/null
++++ b/drivers/gpu/drm/msm/msm_iceland.c
+@@ -0,0 +1,95 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * OnePlus Pad 4 (iceland): built-in defaults of msm switches (see msm_iceland.h).
++ * The values the board used to get from its kernel command line become the
++ * defaults on this board only; the command line and sysfs still override them.
++ */
++
++#include <linux/of.h>
++#include <linux/spinlock.h>
++
++#include "msm_iceland.h"
++
++#define MSM_ICELAND_MAX_GIVEN	16
++
++static const void *msm_given[MSM_ICELAND_MAX_GIVEN];
++static unsigned int msm_nr_given;
++static DEFINE_SPINLOCK(msm_given_lock);
++
++void msm_param_note_given(const void *arg)
++{
++	unsigned long flags;
++	unsigned int i;
++
++	spin_lock_irqsave(&msm_given_lock, flags);
++	for (i = 0; i < msm_nr_given; i++)
++		if (msm_given[i] == arg)
++			goto out;
++	if (msm_nr_given < MSM_ICELAND_MAX_GIVEN)
++		msm_given[msm_nr_given++] = arg;
++out:
++	spin_unlock_irqrestore(&msm_given_lock, flags);
++}
++
++bool msm_param_given(const void *arg)
++{
++	unsigned long flags;
++	unsigned int i;
++	bool ret = false;
++
++	spin_lock_irqsave(&msm_given_lock, flags);
++	for (i = 0; i < msm_nr_given; i++)
++		if (msm_given[i] == arg)
++			ret = true;
++	spin_unlock_irqrestore(&msm_given_lock, flags);
++
++	return ret;
++}
++
++bool msm_iceland(void)
++{
++	return of_machine_is_compatible("oneplus,iceland");
++}
++
++static int msm_param_set_bool_given(const char *val, const struct kernel_param *kp)
++{
++	int ret = param_set_bool(val, kp);
++
++	if (!ret)
++		msm_param_note_given(kp->arg);
++	return ret;
++}
++
++static int msm_param_set_int_given(const char *val, const struct kernel_param *kp)
++{
++	int ret = param_set_int(val, kp);
++
++	if (!ret)
++		msm_param_note_given(kp->arg);
++	return ret;
++}
++
++static int msm_param_set_uint_given(const char *val, const struct kernel_param *kp)
++{
++	int ret = param_set_uint(val, kp);
++
++	if (!ret)
++		msm_param_note_given(kp->arg);
++	return ret;
++}
++
++const struct kernel_param_ops msm_param_ops_bool_given = {
++	.flags = KERNEL_PARAM_OPS_FL_NOARG,
++	.set = msm_param_set_bool_given,
++	.get = param_get_bool,
++};
++
++const struct kernel_param_ops msm_param_ops_int_given = {
++	.set = msm_param_set_int_given,
++	.get = param_get_int,
++};
++
++const struct kernel_param_ops msm_param_ops_uint_given = {
++	.set = msm_param_set_uint_given,
++	.get = param_get_uint,
++};
+diff --git a/drivers/gpu/drm/msm/msm_iceland.h b/drivers/gpu/drm/msm/msm_iceland.h
+new file mode 100644
+index 000000000000..9df4669c8e9b
+--- /dev/null
++++ b/drivers/gpu/drm/msm/msm_iceland.h
+@@ -0,0 +1,34 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * OnePlus Pad 4 (iceland): built-in defaults of msm switches.
++ *
++ * A switch declared with msm_module_param_given() records whether it was set
++ * explicitly (kernel command line or sysfs). On the iceland board only
++ * (of_machine_is_compatible("oneplus,iceland")) the driver then applies the
++ * board's value to every switch that was not set; an explicit value always
++ * wins and every other board keeps the generic default.
++ */
++#ifndef __MSM_ICELAND_H__
++#define __MSM_ICELAND_H__
++
++#include <linux/moduleparam.h>
++#include <linux/types.h>
++
++#ifdef CONFIG_DRM_MSM_ICELAND_DEFAULTS
++extern const struct kernel_param_ops msm_param_ops_bool_given;
++extern const struct kernel_param_ops msm_param_ops_int_given;
++extern const struct kernel_param_ops msm_param_ops_uint_given;
++void msm_param_note_given(const void *arg);
++bool msm_param_given(const void *arg);
++bool msm_iceland(void);
++#define msm_module_param_given(name, type, perm) \
++	module_param_cb(name, &msm_param_ops_##type##_given, &name, perm); \
++	__MODULE_PARM_TYPE(name, #type)
++#else
++static inline void msm_param_note_given(const void *arg) { }
++static inline bool msm_param_given(const void *arg) { return false; }
++static inline bool msm_iceland(void) { return false; }
++#define msm_module_param_given(name, type, perm) module_param(name, type, perm)
++#endif
++
++#endif /* __MSM_ICELAND_H__ */

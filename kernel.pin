@@ -101,3 +101,8 @@ TREE_AFTER_0015_q90n=f78a906b0ce420c70b65fc09083335b1f2845ad0
 # notifier on unload (suspend oops after modprobe -r). configs/q90o.config: no symbol (BCL gone with the driver).
 # Kernel 7.3.0-next-20261020-iceland-00501-g93375214c848.
 TREE_AFTER_0016_q90o=3b52377bdb38661ab09f674be32468be8eca8e60
+# q90p (TRIAL, 24 Oct 2026) = q90o + 0017-q90p: the iceland built-in defaults of the msm / panel
+# switches (CONFIG_DRM_MSM_ICELAND_DEFAULTS; preemption / CLX only with the vendor533 GPU pair), a
+# configurable default cpuidle governor, a build-time s2idle default. configs/q90p.config: those +
+# RCU_NOCB_CPU_DEFAULT_ALL, lazy RCU on by default. Kernel 7.3.0-next-20261020-iceland-00505-gd18e14392cfc.
+TREE_AFTER_0017_q90p=05f751ce7eefad597b7b598d9d5cb7f8a38c0c99

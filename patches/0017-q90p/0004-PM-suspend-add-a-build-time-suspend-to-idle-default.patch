@@ -1,0 +1,52 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 24 Oct 2026 11:40:00 +0300
+Subject: [PATCH 4/4] PM: suspend: add a build-time suspend-to-idle default
+
+Add CONFIG_PM_SLEEP_DEFAULT_S2IDLE: "mem" then means suspend-to-idle
+even when the platform also offers deep sleep, as with
+mem_sleep_default=s2idle on the command line; mem_sleep_default= still
+overrides it. Default n keeps the current behaviour.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ kernel/power/Kconfig   | 10 ++++++++++
+ kernel/power/suspend.c |  3 ++-
+ 2 files changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/kernel/power/Kconfig b/kernel/power/Kconfig
+index 71165e7f04f4..b6fa09552d5c 100644
+--- a/kernel/power/Kconfig
++++ b/kernel/power/Kconfig
+@@ -8,6 +8,16 @@ config SUSPEND
+ 	  powered and thus its contents are preserved, such as the
+ 	  suspend-to-RAM state (e.g. the ACPI S3 state).
+ 
++config PM_SLEEP_DEFAULT_S2IDLE
++	bool "Suspend-to-idle as the default mem sleep state"
++	depends on SUSPEND
++	default n
++	help
++	  Make "mem" (/sys/power/state) mean suspend-to-idle by default even
++	  when the platform supports deep sleep, as mem_sleep_default=s2idle
++	  on the kernel command line does (which, like mem_sleep_default=deep,
++	  still overrides it). If unsure, say N.
++
+ config SUSPEND_FREEZER
+ 	bool "Enable freezer for suspend to RAM/standby" \
+ 		if ARCH_WANTS_FREEZER_CONTROL || BROKEN
+diff --git a/kernel/power/suspend.c b/kernel/power/suspend.c
+index 57c44268698f..e647a8325c7c 100644
+--- a/kernel/power/suspend.c
++++ b/kernel/power/suspend.c
+@@ -48,7 +48,8 @@ static const char * const mem_sleep_labels[] = {
+ const char *mem_sleep_states[PM_SUSPEND_MAX];
+ 
+ suspend_state_t mem_sleep_current = PM_SUSPEND_TO_IDLE;
+-suspend_state_t mem_sleep_default = PM_SUSPEND_MAX;
++suspend_state_t mem_sleep_default =
++	IS_ENABLED(CONFIG_PM_SLEEP_DEFAULT_S2IDLE) ? PM_SUSPEND_TO_IDLE : PM_SUSPEND_MAX;
+ suspend_state_t pm_suspend_target_state;
+ EXPORT_SYMBOL_GPL(pm_suspend_target_state);
+ 

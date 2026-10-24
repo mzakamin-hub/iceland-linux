@@ -1,0 +1,88 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 24 Oct 2026 11:39:58 +0300
+Subject: [PATCH 2/4] drm/panel: novatek-nt36536: iceland defaults for the
+ power timing switches
+
+The OnePlus Pad 4 sets panel_novatek_nt36536.stock_power_timing=1 and
+panel_novatek_nt36536.bl_after_video=1 on its command line. Both switches
+now remember an explicit value; with CONFIG_DRM_MSM_ICELAND_DEFAULTS on the
+board whose root compatible is "oneplus,iceland" the probe turns on every
+one that was not set. An explicit value still wins.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/panel/panel-novatek-nt36536.c | 45 +++++++++++++++++--
+ 1 file changed, 42 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/panel/panel-novatek-nt36536.c b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
+index 30eeb21343e1..d11ff1617232 100644
+--- a/drivers/gpu/drm/panel/panel-novatek-nt36536.c
++++ b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
+@@ -73,7 +73,36 @@ static const struct regulator_bulk_data novatek_supplies[] = {
+  * no waits (default). Read at every prepare / unprepare.
+  */
+ static bool stock_power_timing;
+-module_param(stock_power_timing, bool, 0644);
++static bool stock_power_timing_given;
++static bool bl_after_video;
++static bool bl_after_video_given;
++
++/*
++ * Both switches remember an explicit value (command line or sysfs): on the
++ * OnePlus Pad 4 (CONFIG_DRM_MSM_ICELAND_DEFAULTS) the probe turns every switch
++ * that was not set on, the values the board's command line used to carry.
++ */
++static int novatek_param_set(const char *val, const struct kernel_param *kp)
++{
++	int ret = param_set_bool(val, kp);
++
++	if (!ret) {
++		if (kp->arg == &stock_power_timing)
++			stock_power_timing_given = true;
++		else
++			bl_after_video_given = true;
++	}
++	return ret;
++}
++
++static const struct kernel_param_ops novatek_param_ops = {
++	.flags = KERNEL_PARAM_OPS_FL_NOARG,
++	.set = novatek_param_set,
++	.get = param_get_bool,
++};
++
++module_param_cb(stock_power_timing, &novatek_param_ops, &stock_power_timing, 0644);
++__MODULE_PARM_TYPE(stock_power_timing, "bool");
+ MODULE_PARM_DESC(stock_power_timing,
+ 		 "Use stock's waits around vddio, display off and sleep in (default: off)");
+ 
+@@ -83,8 +112,8 @@ MODULE_PARM_DESC(stock_power_timing,
+  * which runs after the DSI hosts started video. Off: from prepare, before
+  * video (default). Read at every prepare / enable.
+  */
+-static bool bl_after_video;
+-module_param(bl_after_video, bool, 0644);
++module_param_cb(bl_after_video, &novatek_param_ops, &bl_after_video, 0644);
++__MODULE_PARM_TYPE(bl_after_video, "bool");
+ MODULE_PARM_DESC(bl_after_video,
+ 		 "Turn the backlight on at the panel enable, after video started (default: at prepare)");
+ 
+@@ -440,6 +469,16 @@ static int novatek_probe(struct mipi_dsi_device *dsi)
+ 	int num_dsi = 1;
+ 	int ret, i;
+ 
++	if (IS_ENABLED(CONFIG_DRM_MSM_ICELAND_DEFAULTS) &&
++	    of_machine_is_compatible("oneplus,iceland")) {
++		if (!stock_power_timing_given)
++			stock_power_timing = true;
++		if (!bl_after_video_given)
++			bl_after_video = true;
++		dev_info(dev, "iceland defaults: stock_power_timing %d, bl_after_video %d\n",
++			 stock_power_timing, bl_after_video);
++	}
++
+ 	ctx = devm_drm_panel_alloc(dev, struct novatek, panel,
+ 				   &novatek_panel_funcs,
+ 				   DRM_MODE_CONNECTOR_DSI);
