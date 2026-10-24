@@ -106,3 +106,8 @@ TREE_AFTER_0016_q90o=3b52377bdb38661ab09f674be32468be8eca8e60
 # configurable default cpuidle governor, a build-time s2idle default. configs/q90p.config: those +
 # RCU_NOCB_CPU_DEFAULT_ALL, lazy RCU on by default. Kernel 7.3.0-next-20261020-iceland-00505-gd18e14392cfc.
 TREE_AFTER_0017_q90p=05f751ce7eefad597b7b598d9d5cb7f8a38c0c99
+# q90q (TRIAL, 24 Oct 2026) = q90p + 0018-q90q: gunyah vm_mgr no WARN on unload, qmp-combo / qmp-usb system
+# PM callbacks, remoteproc pas DTB release, geni AUTOCTS, dwc3-qcom hcd check, ucsi_glink no suspend in a
+# notification, arm-smmu-qcom suspended fault-info, fastrpc duplicate maps, cpucp readq, q6apm guard.
+# configs/q90q.config: no symbol. Kernel 7.3.0-next-20261020-iceland-00516-g1d3dd350d42e.
+TREE_AFTER_0018_q90q=33208048442be03723d6e23bd82650157fc270ca

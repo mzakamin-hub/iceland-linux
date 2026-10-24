@@ -1,0 +1,58 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 24 Oct 2026 13:52:55 +0300
+Subject: [PATCH 01/11] virt: gunyah: vm_mgr: do not warn on every module
+ unload
+
+gunyah_vm_function_unregister() and gunyah_auth_vm_mgr_unregister()
+warn when the owner module still holds references:
+
+	WARN_ON(fn->mod && module_refcount(fn->mod));
+
+They are only called from the owner's module exit, and by then
+try_release_module_ref() has already dropped MODULE_REF_BASE, so
+module_refcount() reads -1 and the warning fires on every unload
+(modprobe -r of gunyah_vcpu, gunyah_irqfd, gunyah_ioeventfd and
+gunyah_qtvm: four warnings, kernel q90p run, 24 Oct 2026). Check that the
+owner is going instead.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/virt/gunyah/vm_mgr.c | 16 ++++++++++++----
+ 1 file changed, 12 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/virt/gunyah/vm_mgr.c b/drivers/virt/gunyah/vm_mgr.c
+index 46c01e794bad..12726713a5b0 100644
+--- a/drivers/virt/gunyah/vm_mgr.c
++++ b/drivers/virt/gunyah/vm_mgr.c
+@@ -66,8 +66,12 @@ EXPORT_SYMBOL_GPL(gunyah_auth_vm_mgr_register);
+ 
+ void gunyah_auth_vm_mgr_unregister(struct gunyah_auth_vm_mgr *auth_vm)
+ {
+-	/* Expecting unregister to only come when unloading a module */
+-	WARN_ON(auth_vm->mod && module_refcount(auth_vm->mod));
++	/*
++	 * Only the owner's module exit unregisters. By then the module core has
++	 * dropped the base reference, so module_refcount() reads -1 and the old
++	 * check warned on every unload: check that the owner is going instead.
++	 */
++	WARN_ON(auth_vm->mod && module_is_live(auth_vm->mod));
+ 	xa_erase(&gunyah_auth_vm_mgr, auth_vm->type);
+ }
+ EXPORT_SYMBOL_GPL(gunyah_auth_vm_mgr_unregister);
+@@ -340,8 +344,12 @@ EXPORT_SYMBOL_GPL(gunyah_vm_function_register);
+ 
+ void gunyah_vm_function_unregister(struct gunyah_vm_function *fn)
+ {
+-	/* Expecting unregister to only come when unloading a module */
+-	WARN_ON(fn->mod && module_refcount(fn->mod));
++	/*
++	 * Expecting unregister to only come when unloading a module. By then the
++	 * module core has dropped the base reference (module_refcount() reads -1),
++	 * so check that the owner is going instead of its reference count.
++	 */
++	WARN_ON(fn->mod && module_is_live(fn->mod));
+ 	xa_erase(&gunyah_vm_functions, fn->type);
+ }
+ EXPORT_SYMBOL_GPL(gunyah_vm_function_unregister);

@@ -1,0 +1,50 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Michael McAllister <me@michaelmcallister.org>
+Date: Thu, 22 Oct 2026 20:36:39 +0100
+Subject: [PATCH 05/11] serial: qcom-geni: Set UPSTAT_AUTOCTS for hardware flow
+ control
+
+qcom_geni_serial_set_termios() clears UART_CTS_MASK when CRTSCTS is set,
+enabling hardware CTS flow control. However, it never sets UPSTAT_AUTOCTS,
+so uart_softcts_mode() also selects software-assisted CTS flow control.
+
+If CTS is deasserted when uart_change_line_settings() samples the modem
+status, serial core sets hw_stopped and stops transmission. The GENI
+driver does not handle CTS-change interrupts, so asserting CTS again does
+not clear hw_stopped or restart the transmitter.
+
+On a Motorola Moto G10 with WCN3950, this can stall Bluetooth setup in
+tty_wait_until_sent() while qca_setup() closes the serial port. A captured
+stall had one byte left in the software transmit queue, hw_stopped set,
+and CTS asserted, with the UART powered and its interrupt enabled.
+
+Set UPSTAT_AUTOCTS under the port lock when CRTSCTS is enabled, and clear
+it when CRTSCTS is disabled, to match the hardware configuration.
+
+Fixes: 8a8a66a1a18a ("tty: serial: qcom_geni_serial: Add support for flow control")
+Cc: stable@vger.kernel.org
+Assisted-by: LLM
+Signed-off-by: Michael McAllister <me@michaelmcallister.org>
+---
+ drivers/tty/serial/qcom_geni_serial.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drivers/tty/serial/qcom_geni_serial.c b/drivers/tty/serial/qcom_geni_serial.c
+index d8323d6b5286..684252042fe4 100644
+--- a/drivers/tty/serial/qcom_geni_serial.c
++++ b/drivers/tty/serial/qcom_geni_serial.c
+@@ -1579,6 +1579,14 @@ static void qcom_geni_serial_set_termios(struct uart_port *uport,
+ 	writel(bits_per_char, uport->membase + SE_UART_RX_WORD_LEN);
+ 	writel(stop_bit_len, uport->membase + SE_UART_TX_STOP_BIT_LEN);
+ 
++	/* CTS gates TX in hardware; no CTS interrupt updates hw_stopped. */
++	scoped_guard(uart_port_lock_irqsave, uport) {
++		if (termios->c_cflag & CRTSCTS)
++			uport->status |= UPSTAT_AUTOCTS;
++		else
++			uport->status &= ~UPSTAT_AUTOCTS;
++	}
++
+ 	trace_geni_serial_set_termios(uport->dev, baud, bits_per_char,
+ 				      tx_trans_cfg, tx_parity_cfg, rx_trans_cfg,
+ 				      rx_parity_cfg, stop_bit_len);
