@@ -1,0 +1,252 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sun, 25 Oct 2026 19:07:11 +0300
+Subject: [PATCH 08/11] PM / devfreq: scmi-qcom-memlat: Add the vendor's
+ Kaanapali gating as an option
+
+All Kaanapali latency monitors are configured with an instructions-per-
+miss ceiling of 20000000, so a busy CPU raises DDR / LLCC along its
+cpufreq map even for cache-resident work. The vendor's boot script on
+the same SoC (init.kernel.post_boot-canoe) lowers the ceilings: DDR
+gold 3000, DDR prime 13000 with a 25 % frequency scale between 1500
+and 2800 MHz, DDR-QoS gold 700 and prime 350, and 300000 for the
+latency-floor monitors (DDR mon_3, DDR-QoS mon_2). The frequency maps
+themselves are already the vendor's.
+
+Add these values to the Kaanapali monitor table as stock_* fields and
+a module parameter, stock_gating (0644, default off), that sends them
+instead of the table's ceilings, plus the DDR prime frequency scale
+(MEMLAT_FREQ_SCALE_PCT / _FLOOR_MHZ / _CEIL_MHZ). A write re-sends the
+gating of the affected monitors to the running firmware at once (off:
+the table's ceilings and a 0 % scale), as the vendor's sysfs does. The
+LLCC monitors keep their ceilings: the vendor script does not set them,
+and the downstream driver default is not known. With the parameter off
+from boot the messages sent to the CPUCP firmware are the same as
+before.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/devfreq/scmi-qcom-memlat-devfreq.c | 125 ++++++++++++++++++++-
+ 1 file changed, 123 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/devfreq/scmi-qcom-memlat-devfreq.c b/drivers/devfreq/scmi-qcom-memlat-devfreq.c
+index 6d19fc36528e..d16a2d8e129e 100644
+--- a/drivers/devfreq/scmi-qcom-memlat-devfreq.c
++++ b/drivers/devfreq/scmi-qcom-memlat-devfreq.c
+@@ -98,6 +98,15 @@ enum scmi_qcom_memlat_hw_type {
+  *            at or below this ceiling; a monitor with @ipm_ceil == 0 is a
+  *            "compute" monitor and scales passively with cpufreq.
+  * @table_len: number of valid rows in @table.
++ * @stock_ipm_ceil: the vendor's @ipm_ceil for this monitor, sent instead of
++ *                  @ipm_ceil while stock_gating is set (0: keep @ipm_ceil).
++ * @stock_freq_scale_pct: the vendor's frequency scaling for this monitor with
++ *                        stock_gating: the memory vote is scaled by this
++ *                        percentage while the CPU runs between
++ *                        @stock_freq_scale_floor_mhz and
++ *                        @stock_freq_scale_ceil_mhz (0: none).
++ * @stock_freq_scale_floor_mhz: see @stock_freq_scale_pct.
++ * @stock_freq_scale_ceil_mhz: see @stock_freq_scale_pct.
+  */
+ struct scmi_qcom_monitor_cfg {
+ 	const struct scmi_qcom_map_table *table;
+@@ -106,6 +115,10 @@ struct scmi_qcom_monitor_cfg {
+ 	u32 cpu_mask;
+ 	u32 ipm_ceil;
+ 	u32 table_len;
++	u32 stock_ipm_ceil;
++	u32 stock_freq_scale_pct;
++	u32 stock_freq_scale_floor_mhz;
++	u32 stock_freq_scale_ceil_mhz;
+ };
+ 
+ struct scmi_qcom_memory_cfg {
+@@ -777,6 +790,7 @@ static const struct scmi_qcom_memory_cfg kaanapali_memory_cfg[] = {
+ 				.name = "mon_0",
+ 				.cpu_mask = 0x3f,
+ 				.ipm_ceil = 20000000,
++				.stock_ipm_ceil = 3000,
+ 				.be_stall_floor = 1,
+ 				.table_len = 6,
+ 				.table = (const struct scmi_qcom_map_table[]) {
+@@ -792,6 +806,10 @@ static const struct scmi_qcom_memory_cfg kaanapali_memory_cfg[] = {
+ 				.name = "mon_1",
+ 				.cpu_mask = 0xc0,
+ 				.ipm_ceil = 20000000,
++				.stock_ipm_ceil = 13000,
++				.stock_freq_scale_pct = 25,
++				.stock_freq_scale_floor_mhz = 1500,
++				.stock_freq_scale_ceil_mhz = 2800,
+ 				.be_stall_floor = 1,
+ 				.table_len = 8,
+ 				.table = (const struct scmi_qcom_map_table[]) {
+@@ -818,6 +836,7 @@ static const struct scmi_qcom_memory_cfg kaanapali_memory_cfg[] = {
+ 				.name = "mon_3",
+ 				.cpu_mask = 0xc0,
+ 				.ipm_ceil = 20000000,
++				.stock_ipm_ceil = 300000,
+ 				.be_stall_floor = 1,
+ 				.table_len = 2,
+ 				.table = (const struct scmi_qcom_map_table[]) {
+@@ -891,6 +910,7 @@ static const struct scmi_qcom_memory_cfg kaanapali_memory_cfg[] = {
+ 				.name = "mon_0",
+ 				.cpu_mask = 0xff,
+ 				.ipm_ceil = 20000000,
++				.stock_ipm_ceil = 700,
+ 				.be_stall_floor = 1,
+ 				.table_len = 2,
+ 				.table = (const struct scmi_qcom_map_table[]) {
+@@ -902,6 +922,7 @@ static const struct scmi_qcom_memory_cfg kaanapali_memory_cfg[] = {
+ 				.name = "mon_1",
+ 				.cpu_mask = 0xc0,
+ 				.ipm_ceil = 20000000,
++				.stock_ipm_ceil = 350,
+ 				.be_stall_floor = 1,
+ 				.table_len = 2,
+ 				.table = (const struct scmi_qcom_map_table[]) {
+@@ -913,6 +934,7 @@ static const struct scmi_qcom_memory_cfg kaanapali_memory_cfg[] = {
+ 				.name = "mon_2",
+ 				.cpu_mask = 0xc0,
+ 				.ipm_ceil = 20000000,
++				.stock_ipm_ceil = 300000,
+ 				.be_stall_floor = 1,
+ 				.table_len = 2,
+ 				.table = (const struct scmi_qcom_map_table[]) {
+@@ -972,6 +994,97 @@ static int memlat_set_param(struct scmi_qcom_memlat_info *info, void *msg,
+ 	return info->ops->set_param(info->ph, msg, size, MEMLAT_ALGO_STR, param_id);
+ }
+ 
++/*
++ * Kaanapali: the vendor's boot script lowers the instructions-per-miss
++ * ceilings (DDR gold 3000, DDR prime 13000 with a 25 % frequency scale
++ * between 1500 and 2800 MHz, DDR-QoS gold 700 / prime 350, the latency
++ * floor monitors 300000), so that cache-friendly work does not raise DDR.
++ * Off by default (the ceilings of the table). A write re-sends the gating
++ * of the affected monitors to the running firmware.
++ */
++static bool stock_gating;
++static DEFINE_MUTEX(stock_gating_lock);
++static struct scmi_qcom_memlat_info *stock_gating_info;
++
++/*
++ * Send a monitor's IPM ceiling and, if it has a stock frequency scale, the
++ * scale: the stock values while @stock, else the table's ceiling and no
++ * scale (the scale only when @scale_off, i.e. when switching back; at probe
++ * the firmware starts without one).
++ */
++static int memlat_send_gating(struct scmi_qcom_memlat_info *info,
++			      const struct scmi_qcom_memory_cfg *cfg,
++			      int monitor_index, bool stock, bool scale_off)
++{
++	const struct scmi_qcom_monitor_cfg *mon = &cfg->monitor_cfg[monitor_index];
++	struct scalar_param_msg scalar = {};
++	bool scale = mon->stock_freq_scale_pct && (stock || scale_off);
++	int ret;
++
++	scalar.hw_type = cpu_to_le32(cfg->memory_type);
++	scalar.mon_idx = cpu_to_le32(monitor_index);
++	scalar.val = cpu_to_le32(stock && mon->stock_ipm_ceil ?
++				 mon->stock_ipm_ceil : mon->ipm_ceil);
++	ret = memlat_set_param(info, &scalar, sizeof(scalar), MEMLAT_IPM_CEIL);
++	if (ret < 0 || !scale)
++		return ret;
++
++	scalar.val = cpu_to_le32(stock ? mon->stock_freq_scale_pct : 0);
++	ret = memlat_set_param(info, &scalar, sizeof(scalar), MEMLAT_FREQ_SCALE_PCT);
++	if (ret < 0 || !stock)
++		return ret;
++
++	scalar.val = cpu_to_le32(mon->stock_freq_scale_floor_mhz);
++	ret = memlat_set_param(info, &scalar, sizeof(scalar), MEMLAT_FREQ_SCALE_FLOOR_MHZ);
++	if (ret < 0)
++		return ret;
++
++	scalar.val = cpu_to_le32(mon->stock_freq_scale_ceil_mhz);
++	return memlat_set_param(info, &scalar, sizeof(scalar), MEMLAT_FREQ_SCALE_CEIL_MHZ);
++}
++
++static int stock_gating_set(const char *val, const struct kernel_param *kp)
++{
++	struct scmi_qcom_memlat_info *info;
++	bool on;
++	int ret, i, j;
++
++	ret = kstrtobool(val, &on);
++	if (ret)
++		return ret;
++
++	mutex_lock(&stock_gating_lock);
++	stock_gating = on;
++	info = stock_gating_info;
++	for (i = 0; info && i < info->memory_cnt && !ret; i++) {
++		const struct scmi_qcom_memory_cfg *cfg = info->memory[i]->cfg;
++
++		for (j = 0; j < cfg->monitor_cnt && !ret; j++) {
++			if (!cfg->monitor_cfg[j].stock_ipm_ceil &&
++			    !cfg->monitor_cfg[j].stock_freq_scale_pct)
++				continue;
++			ret = memlat_send_gating(info, cfg, j, on, true);
++			if (ret < 0)
++				pr_err("memlat: failed to send the %s gating of %s %s: %d\n",
++				       on ? "stock" : "default", cfg->name,
++				       cfg->monitor_cfg[j].name, ret);
++		}
++	}
++	mutex_unlock(&stock_gating_lock);
++
++	return ret < 0 ? ret : 0;
++}
++
++static const struct kernel_param_ops stock_gating_ops = {
++	.set = stock_gating_set,
++	.get = param_get_bool,
++};
++
++module_param_cb(stock_gating, &stock_gating_ops, &stock_gating, 0644);
++__MODULE_PARM_TYPE(stock_gating, "bool");
++MODULE_PARM_DESC(stock_gating,
++		 "Kaanapali: the vendor's memlat ceilings and DDR prime frequency scale (default: off; a write applies at once)");
++
+ static int configure_cpucp_common_events(struct scmi_qcom_memlat_info *info)
+ {
+ 	struct ev_map_msg ev = {};
+@@ -1041,8 +1154,7 @@ static int configure_cpucp_mon(struct device *dev, struct scmi_qcom_memlat_info
+ 
+ 	scalar.hw_type = cpu_to_le32(cfg->memory_type);
+ 	scalar.mon_idx = cpu_to_le32(monitor_index);
+-	scalar.val = cpu_to_le32(mon->ipm_ceil);
+-	ret = memlat_set_param(info, &scalar, sizeof(scalar), MEMLAT_IPM_CEIL);
++	ret = memlat_send_gating(info, cfg, monitor_index, stock_gating, false);
+ 	if (ret < 0)
+ 		return dev_err_probe(dev, ret, "failed to set ipm ceil for %s\n", mon->name);
+ 
+@@ -1293,13 +1405,17 @@ static int scmi_qcom_devfreq_memlat_probe(struct scmi_device *sdev)
+ 	if (ret)
+ 		return ret;
+ 
++	mutex_lock(&stock_gating_lock);
+ 	ret = scmi_qcom_memlat_configure_events(sdev, info);
+ 	if (ret) {
++		mutex_unlock(&stock_gating_lock);
+ 		scmi_qcom_memlat_teardown(info);
+ 		return ret;
+ 	}
+ 
+ 	dev_set_drvdata(&sdev->dev, info);
++	stock_gating_info = info;
++	mutex_unlock(&stock_gating_lock);
+ 
+ 	return 0;
+ }
+@@ -1309,6 +1425,11 @@ static void scmi_qcom_devfreq_memlat_remove(struct scmi_device *sdev)
+ 	struct scmi_qcom_memlat_info *info = dev_get_drvdata(&sdev->dev);
+ 	int ret;
+ 
++	mutex_lock(&stock_gating_lock);
++	if (stock_gating_info == info)
++		stock_gating_info = NULL;
++	mutex_unlock(&stock_gating_lock);
++
+ 	ret = info->ops->stop_activity(info->ph, NULL, 0, MEMLAT_ALGO_STR, MEMLAT_STOP_TIMER);
+ 	if (ret < 0)
+ 		dev_err(&sdev->dev, "failed to stop memory group timer\n");

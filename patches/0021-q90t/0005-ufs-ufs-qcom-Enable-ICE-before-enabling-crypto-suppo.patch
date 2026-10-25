@@ -1,0 +1,112 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Kuldeep Singh <kuldeep.singh@oss.qualcomm.com>
+Date: Thu, 22 Oct 2026 15:21:51 +0530
+Subject: [PATCH 05/11] ufs: ufs-qcom: Enable ICE before enabling crypto
+ support
+
+ufs-qcom currently exposes UFS crypto profile and sets UFSHCD_CAP_CRYPTO
+before enabling ICE. This leaves a window where blk-crypto can issue
+keyslot programming calls before ufs-qcom has explicitly enabled ICE.
+
+Similar to MMC, UFS also works today as ICE clocks remain enabled after
+the probe, but it should not rely on that implicit clock state. Once ICE
+supports runtime PM, ICE clocks can be suspended after probe, and
+accessing ICE registers before qcom_ice_enable() call can fail due to
+unclocked register access in qcom_ice_program_key().
+
+Enable ICE during ufs crypto init path to ensure ICE is ready before
+blk-crypto can issue key programming calls.
+
+Also call qcom_ice_enable() from HCE PRE_CHANGE path once crypto support
+has been enabled. UFS controller reset can reset ICE state, and the UFS
+core can reprogram keys during HCE start before POST_CHANGE.
+Re-enabling ICE in PRE_CHANGE makes ICE ready before reset-time key
+reprogramming and for any later ICE operation.
+
+Fixes: 56541c7c4468 ("scsi: ufs: ufs-qcom: Switch to the new ICE API")
+Signed-off-by: Kuldeep Singh <kuldeep.singh@oss.qualcomm.com>
+---
+ drivers/ufs/host/ufs-qcom.c | 29 ++++++++++++++++++++---------
+ 1 file changed, 20 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
+index ea2a106cbe26..3ee3e920dc1c 100644
+--- a/drivers/ufs/host/ufs-qcom.c
++++ b/drivers/ufs/host/ufs-qcom.c
+@@ -158,13 +158,15 @@ static void ufs_qcom_config_ice_allocator(struct ufs_qcom_host *host)
+ 	ufshcd_writel(hba, config, REG_UFS_MEM_ICE_NUM_CORE);
+ }
+ 
+-static inline void ufs_qcom_ice_enable(struct ufs_qcom_host *host)
++static const struct blk_crypto_ll_ops ufs_qcom_crypto_ops; /* forward decl */
++
++static inline int ufs_qcom_ice_enable(struct ufs_qcom_host *host)
+ {
+ 	if (host->hba->caps & UFSHCD_CAP_CRYPTO)
+-		qcom_ice_enable(host->ice);
+-}
++		return qcom_ice_enable(host->ice);
+ 
+-static const struct blk_crypto_ll_ops ufs_qcom_crypto_ops; /* forward decl */
++	return 0;
++}
+ 
+ static int ufs_qcom_ice_init(struct ufs_qcom_host *host)
+ {
+@@ -188,6 +190,12 @@ static int ufs_qcom_ice_init(struct ufs_qcom_host *host)
+ 
+ 	host->ice = ice;
+ 
++	err = qcom_ice_enable(host->ice);
++	if (err) {
++		dev_err(dev, "Failed to enable ICE: %d\n", err);
++		return err;
++	}
++
+ 	/* Initialize the blk_crypto_profile */
+ 
+ 	caps.reg_val = cpu_to_le32(ufshcd_readl(hba, REG_UFS_CCAP));
+@@ -318,11 +326,12 @@ static const struct blk_crypto_ll_ops ufs_qcom_crypto_ops = {
+ 
+ #else
+ 
+-static inline void ufs_qcom_ice_enable(struct ufs_qcom_host *host)
++static int ufs_qcom_ice_init(struct ufs_qcom_host *host)
+ {
++	return 0;
+ }
+ 
+-static int ufs_qcom_ice_init(struct ufs_qcom_host *host)
++static inline int ufs_qcom_ice_enable(struct ufs_qcom_host *host)
+ {
+ 	return 0;
+ }
+@@ -636,12 +645,15 @@ static int ufs_qcom_hce_enable_notify(struct ufs_hba *hba,
+ 		 * is initialized.
+ 		 */
+ 		err = ufs_qcom_enable_lane_clks(host);
++		if (err)
++			return err;
++
++		err = ufs_qcom_ice_enable(host);
+ 		break;
+ 	case POST_CHANGE:
+ 		/* check if UFS PHY moved from DISABLED to HIBERN8 */
+ 		err = ufs_qcom_check_hibern8(hba);
+ 		ufs_qcom_enable_hw_clk_gating(hba);
+-		ufs_qcom_ice_enable(host);
+ 		ufs_qcom_config_ice_allocator(host);
+ 		break;
+ 	default:
+@@ -660,10 +672,9 @@ static int ufs_qcom_fw_managed_hce_enable_notify(struct ufs_hba *hba,
+ 	switch (status) {
+ 	case PRE_CHANGE:
+ 		ufs_qcom_select_unipro_mode(host);
+-		break;
++		return ufs_qcom_ice_enable(host);
+ 	case POST_CHANGE:
+ 		ufs_qcom_enable_hw_clk_gating(hba);
+-		ufs_qcom_ice_enable(host);
+ 		break;
+ 	default:
+ 		dev_err(hba->dev, "Invalid status %d\n", status);

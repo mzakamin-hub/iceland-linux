@@ -1,0 +1,109 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sun, 25 Oct 2026 19:07:13 +0300
+Subject: [PATCH 10/11] wifi: ath12k: Add an opt-in LTR disable for
+ WCN7850-family devices
+
+The WCN7850 firmware reports an LTR value just below the
+LTR_L1.2_THRESHOLD it reads at enumeration, so the PCIe link only
+enters ASPM L1.1, never L1.2. With LTR mechanism enable cleared in the
+endpoint, as Windows leaves it, the link idles in L1.2.
+
+Add a module parameter, ath12k.pcie_ltr_off (0644, default off), that
+clears PCI_EXP_DEVCTL2_LTR_EN of WCN7850-family endpoints (17cb:1107
+and 17cb:110e, the WCN7860 of the OnePlus Pad 4). A write applies to
+the bound devices at once (off sets LTR enable again where the PCI core
+had enabled the LTR path), and the value is applied again at every
+power up: probe, resume and recovery, after the PCI core restored the
+endpoint state. Off from boot changes nothing.
+
+Inspired by Anthony Ruhier's "PCI: Disable LTR on Qualcomm WCN7850
+[17cb:1107] to allow ASPM L1.2" (linux-pci, 23 Oct 2026), which does
+this as an unconditional PCI quirk for 0x1107 and measured about 70 mW
+less idle power on X1E80100; this is a switchable version in the
+driver, so that both link states can be compared on one kernel.
+
+Link: https://lore.kernel.org/r/20261023-quick-wcn7850-v1-1-9a139b9b2c8e@mailbox.org
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/net/wireless/ath/ath12k/pci.c | 61 +++++++++++++++++++++++++++
+ 1 file changed, 61 insertions(+)
+
+diff --git a/drivers/net/wireless/ath/ath12k/pci.c b/drivers/net/wireless/ath/ath12k/pci.c
+index fa35e0e085c3..dba07b75f09e 100644
+--- a/drivers/net/wireless/ath/ath12k/pci.c
++++ b/drivers/net/wireless/ath/ath12k/pci.c
+@@ -1445,11 +1445,72 @@ static void ath12k_pci_coredump_download(struct ath12k_base *ab)
+ }
+ #endif
+ 
++/*
++ * WCN7850-family firmware reports an LTR just below the LTR_L1.2_THRESHOLD it
++ * reads at enumeration, so the link never enters ASPM L1.2, only L1.1. With
++ * LTR disabled in the endpoint the link idles in L1.2, as on Windows. Off by
++ * default. A write applies to the bound devices at once; the value is also
++ * applied at every power up (probe, resume, recovery), after the PCI core
++ * restored the endpoint's LTR enable.
++ */
++static bool ath12k_pcie_ltr_off;
++
++static bool ath12k_pci_ltr_quirk_dev(struct pci_dev *pdev)
++{
++	return pdev->vendor == PCI_VENDOR_ID_QCOM &&
++	       (pdev->device == 0x1107 || pdev->device == 0x110e);
++}
++
++static void ath12k_pci_ltr_apply(struct pci_dev *pdev, bool off)
++{
++	if (!ath12k_pci_ltr_quirk_dev(pdev))
++		return;
++
++	if (off)
++		pcie_capability_clear_word(pdev, PCI_EXP_DEVCTL2, PCI_EXP_DEVCTL2_LTR_EN);
++#ifdef CONFIG_PCIEASPM
++	else if (pdev->ltr_path)
++		pcie_capability_set_word(pdev, PCI_EXP_DEVCTL2, PCI_EXP_DEVCTL2_LTR_EN);
++#endif
++}
++
++static int ath12k_pcie_ltr_off_set(const char *val, const struct kernel_param *kp)
++{
++	struct pci_dev *pdev = NULL;
++	bool off;
++	int ret;
++
++	ret = kstrtobool(val, &off);
++	if (ret)
++		return ret;
++
++	WRITE_ONCE(ath12k_pcie_ltr_off, off);
++	while ((pdev = pci_get_device(PCI_VENDOR_ID_QCOM, PCI_ANY_ID, pdev))) {
++		if (pdev->dev.driver && ath12k_pci_ltr_quirk_dev(pdev))
++			ath12k_pci_ltr_apply(pdev, off);
++	}
++
++	return 0;
++}
++
++static const struct kernel_param_ops ath12k_pcie_ltr_off_ops = {
++	.set = ath12k_pcie_ltr_off_set,
++	.get = param_get_bool,
++};
++
++module_param_cb(pcie_ltr_off, &ath12k_pcie_ltr_off_ops, &ath12k_pcie_ltr_off, 0644);
++__MODULE_PARM_TYPE(pcie_ltr_off, "bool");
++MODULE_PARM_DESC(pcie_ltr_off,
++		 "Clear LTR enable of WCN7850-family endpoints so the link can enter ASPM L1.2 (default: off)");
++
+ int ath12k_pci_power_up(struct ath12k_base *ab)
+ {
+ 	struct ath12k_pci *ab_pci = ath12k_pci_priv(ab);
+ 	int ret;
+ 
++	if (READ_ONCE(ath12k_pcie_ltr_off))
++		ath12k_pci_ltr_apply(ab_pci->pdev, true);
++
+ 	ab_pci->register_window = 0;
+ 	clear_bit(ATH12K_PCI_FLAG_INIT_DONE, &ab_pci->flags);
+ 	ath12k_pci_sw_reset(ab_pci->ab, true);

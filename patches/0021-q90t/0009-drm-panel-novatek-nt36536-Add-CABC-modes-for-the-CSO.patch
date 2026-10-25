@@ -1,0 +1,153 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sun, 25 Oct 2026 19:07:12 +0300
+Subject: [PATCH 09/11] drm/panel: novatek-nt36536: Add CABC modes for the CSOT
+ XN251
+
+The XN251 panel of the OnePlus Pad 4 supports content adaptive
+backlight control through DCS 0x55 in the CMD1 page; the stock device
+tree enables it (oplus,dsi-cabc-enabled) with off / UI / still image /
+video commands 55 00 / 01 / 02 / 03, chosen at run time by a service.
+The driver writes 55 00 (off) in its init sequence and never changes
+it.
+
+Add a cabc_mode module parameter (0644, default 0 = off, as before):
+1 UI, 2 still image, 3 video. A non-zero mode is sent at every prepare
+after the init sequence, and a change is sent to the running panel at
+once, with the stock command (page CMD1, fb 01, 55 mode). Only panels
+whose description sets has_cabc (the XN251) use it.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/panel/panel-novatek-nt36536.c | 75 +++++++++++++++++++
+ 1 file changed, 75 insertions(+)
+
+diff --git a/drivers/gpu/drm/panel/panel-novatek-nt36536.c b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
+index d11ff1617232..61f0c2621bfd 100644
+--- a/drivers/gpu/drm/panel/panel-novatek-nt36536.c
++++ b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
+@@ -36,6 +36,8 @@ struct novatek {
+ 	struct backlight_device *backlight;
+ 	/* bl_after_video: the backlight waits for novatek_enable() */
+ 	bool bl_deferred;
++	/* between prepare and unprepare (cabc_lock) */
++	bool prepared;
+ };
+ 
+ struct panel_desc {
+@@ -58,6 +60,8 @@ struct panel_desc {
+ 
+ 	bool is_dual_dsi;
+ 	bool has_dcs_backlight;
++	/* DCS 0x55 CABC modes (the cabc_mode parameter) */
++	bool has_cabc;
+ };
+ 
+ static const struct regulator_bulk_data novatek_supplies[] = {
+@@ -117,6 +121,58 @@ __MODULE_PARM_TYPE(bl_after_video, "bool");
+ MODULE_PARM_DESC(bl_after_video,
+ 		 "Turn the backlight on at the panel enable, after video started (default: at prepare)");
+ 
++/*
++ * Content adaptive backlight control of the XN251 (stock: oplus,dsi-cabc-enabled,
++ * DCS 0x55 in page CMD1): 0 off (default, as before), 1 UI, 2 still image,
++ * 3 video. Sent at every prepare and, when changed, to the running panel.
++ */
++static unsigned int cabc_mode;
++static struct novatek *cabc_panel;
++static DEFINE_MUTEX(cabc_lock);
++
++static inline struct mipi_dsi_device *to_primary_dsi(struct novatek *ctx);
++
++static void novatek_cabc_write(struct mipi_dsi_multi_context *dsi_ctx, u8 mode)
++{
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0xff, 0x10);
++	mipi_dsi_dcs_write_seq_multi(dsi_ctx, 0xfb, 0x01);
++	mipi_dsi_dcs_write_buffer_multi(dsi_ctx, (const u8[]){ 0x55, mode }, 2);
++}
++
++static int novatek_cabc_set(const char *val, const struct kernel_param *kp)
++{
++	struct mipi_dsi_multi_context dsi_ctx = {};
++	unsigned int mode;
++	int ret;
++
++	ret = kstrtouint(val, 0, &mode);
++	if (ret)
++		return ret;
++	if (mode > 3)
++		return -EINVAL;
++
++	mutex_lock(&cabc_lock);
++	cabc_mode = mode;
++	if (cabc_panel && cabc_panel->prepared) {
++		dsi_ctx.dsi = to_primary_dsi(cabc_panel);
++		novatek_cabc_write(&dsi_ctx, mode);
++		ret = dsi_ctx.accum_err;
++	}
++	mutex_unlock(&cabc_lock);
++
++	return ret;
++}
++
++static const struct kernel_param_ops novatek_cabc_ops = {
++	.set = novatek_cabc_set,
++	.get = param_get_uint,
++};
++
++module_param_cb(cabc_mode, &novatek_cabc_ops, &cabc_mode, 0644);
++__MODULE_PARM_TYPE(cabc_mode, "uint");
++MODULE_PARM_DESC(cabc_mode,
++		 "XN251 CABC: 0 off (default), 1 UI, 2 still image, 3 video");
++
+ static inline struct novatek *to_novatek(struct drm_panel *panel)
+ {
+ 	return container_of(panel, struct novatek, panel);
+@@ -187,6 +243,14 @@ static int novatek_prepare(struct drm_panel *panel)
+ 	mipi_dsi_compression_mode_multi(&dsi_ctx, true);
+ 	mipi_dsi_msleep(&dsi_ctx, 28);
+ 
++	if (ctx->desc->has_cabc) {
++		mutex_lock(&cabc_lock);
++		if (cabc_mode)
++			novatek_cabc_write(&dsi_ctx, cabc_mode);
++		ctx->prepared = true;
++		mutex_unlock(&cabc_lock);
++	}
++
+ 	ctx->bl_deferred = READ_ONCE(bl_after_video);
+ 	if (ctx->bl_deferred)
+ 		return 0;
+@@ -229,6 +293,10 @@ static int novatek_unprepare(struct drm_panel *panel)
+ 
+ 	backlight_disable(ctx->backlight);
+ 
++	mutex_lock(&cabc_lock);
++	ctx->prepared = false;
++	mutex_unlock(&cabc_lock);
++
+ 	ret = novatek_off(&dsi_ctx);
+ 	if (ret < 0)
+ 		dev_err(dev, "Failed to un-initialize panel: %d\n", ret);
+@@ -556,6 +624,12 @@ static int novatek_probe(struct mipi_dsi_device *dsi)
+ 			return dev_err_probe(dev, ret, "Failed to get backlight\n");
+ 	}
+ 
++	if (desc->has_cabc) {
++		mutex_lock(&cabc_lock);
++		cabc_panel = ctx;
++		mutex_unlock(&cabc_lock);
++	}
++
+ 	return 0;
+ }
+ 
+@@ -826,6 +900,7 @@ static const struct panel_desc csot_iceland_desc = {
+ 	.init_sends_pps = true,
+ 	.is_dual_dsi = true,
+ 	.has_dcs_backlight = false,
++	.has_cabc = true,
+ };
+ 
+ static const struct of_device_id novatek_of_match[] = {

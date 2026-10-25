@@ -121,3 +121,9 @@ TREE_AFTER_0019_q90r=a14cfe5c10f38ca8371938f88614e08bfc674237
 # default off); 0005 gunyah: no release of still-donated / assigned memory; 0006 gunyah_qcom: failed demand-page
 # assign logging (debug_assign, default off). configs/q90s.config: CONFIG_VHOST_NET=m. Kernel 7.3.0-next-20261020-iceland-00535-ge0ecda4a8eb6.
 TREE_AFTER_0020_q90s=c2b6782009c5f6d6d442a71e356c9b472dc2f193
+# q90t (25 Oct 2026) = q90s4 + 0021-q90t: UFS device-management timeouts in jiffies + runtime
+# resume errors propagated (pw 1192856 1/2/3/5), ICE enable order + runtime PM (pw 1191193 2/3, 3/3) and
+# optional tunables, all off by default: ICE power/control (auto), scmi_qcom_memlat_devfreq.stock_gating,
+# panel_novatek_nt36536.cabc_mode, ath12k.pcie_ltr_off, spi_geni_qcom.gpi_cpu_latency_us.
+# configs/q90t.config: BLK_WBT (not on by default), ZRAM_BACKEND_LZ4. Kernel 7.3.0-next-20261020-iceland-00546-gd4ae0205473d.
+TREE_AFTER_0021_q90t=f96bb4b23aca5d930c89650404327eeadd330e70

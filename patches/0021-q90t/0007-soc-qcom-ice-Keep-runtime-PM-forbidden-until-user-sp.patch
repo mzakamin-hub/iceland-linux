@@ -1,0 +1,141 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sun, 25 Oct 2026 19:07:10 +0300
+Subject: [PATCH 07/11] soc: qcom: ice: Keep runtime PM forbidden until user
+ space allows it
+
+"soc: qcom: ice: Add runtime PM support" gates the ICE core and iface
+clocks whenever no storage consumer holds a dedicated ICE node. On the
+OnePlus Pad 4 the UFS host is the only consumer; the change saves idle
+power but also changes the clock state the UFS crypto path sees, so it
+should be possible to compare both on one kernel.
+
+Forbid runtime PM at probe, so the device's standard power/control
+reads "on" and the engine behaves as before runtime PM support: it is
+resumed at probe, and qcom_ice_suspend() / qcom_ice_resume() gate and
+ungate its clocks directly with the consumer. Writing "auto" to
+power/control allows runtime PM: the clocks are then gated by runtime
+PM whenever no consumer holds the engine. The clock helpers track
+their state, so moving between "on" and "auto" in either consumer
+state stays balanced.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/soc/qcom/ice.c | 53 ++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 49 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/soc/qcom/ice.c b/drivers/soc/qcom/ice.c
+index f9939e2d037c..7cfccefa9cb4 100644
+--- a/drivers/soc/qcom/ice.c
++++ b/drivers/soc/qcom/ice.c
+@@ -115,6 +115,8 @@ struct qcom_ice {
+ 	bool hwkm_init_complete;
+ 	u8 hwkm_version;
+ 	bool use_pm_runtime;
++	/* core and iface clocks enabled (runtime PM and the consumer path) */
++	bool clks_on;
+ };
+ 
+ static DEFINE_XARRAY(ice_handles);
+@@ -335,6 +337,9 @@ static int qcom_ice_enable_clocks(struct qcom_ice *ice)
+ {
+ 	int err;
+ 
++	if (ice->clks_on)
++		return 0;
++
+ 	err = clk_prepare_enable(ice->core_clk);
+ 	if (err)
+ 		return err;
+@@ -345,19 +350,27 @@ static int qcom_ice_enable_clocks(struct qcom_ice *ice)
+ 		return err;
+ 	}
+ 
++	ice->clks_on = true;
+ 	return 0;
+ }
+ 
+ static void qcom_ice_disable_clocks(struct qcom_ice *ice)
+ {
++	if (!ice->clks_on)
++		return;
++
+ 	clk_disable_unprepare(ice->iface_clk);
+ 	clk_disable_unprepare(ice->core_clk);
++	ice->clks_on = false;
+ }
+ 
+ static int qcom_ice_do_resume(struct qcom_ice *ice)
+ {
+ 	int err = 0;
+ 
++	if (ice->clks_on)
++		return 0;
++
+ 	err = qcom_ice_enable_clocks(ice);
+ 	if (err)
+ 		return err;
+@@ -374,10 +387,33 @@ static int qcom_ice_do_resume(struct qcom_ice *ice)
+ 	return err;
+ }
+ 
++/*
++ * Runtime PM of a dedicated ICE node is forbidden at probe, so power/control
++ * reads "on" and the engine behaves as before runtime PM support: its clocks
++ * follow the consumer's suspend / resume directly. With "auto" the clocks are
++ * gated by runtime PM whenever no consumer holds the engine.
++ */
++static bool qcom_ice_rpm_forbidden(struct qcom_ice *ice)
++{
++	/* runtime_auto is a bit-field; a racy read only delays the gating */
++	return !ice->dev->power.runtime_auto;
++}
++
+ int qcom_ice_resume(struct qcom_ice *ice)
+ {
+-	if (ice->use_pm_runtime)
+-		return pm_runtime_resume_and_get(ice->dev);
++	int err;
++
++	if (ice->use_pm_runtime) {
++		err = pm_runtime_resume_and_get(ice->dev);
++		if (err)
++			return err;
++
++		/* "on": the clocks were gated by qcom_ice_suspend() */
++		err = qcom_ice_do_resume(ice);
++		if (err)
++			pm_runtime_put_noidle(ice->dev);
++		return err;
++	}
+ 
+ 	return qcom_ice_do_resume(ice);
+ }
+@@ -393,8 +429,14 @@ static int qcom_ice_do_suspend(struct qcom_ice *ice)
+ 
+ int qcom_ice_suspend(struct qcom_ice *ice)
+ {
+-	if (ice->use_pm_runtime)
+-		return pm_runtime_put_sync_suspend(ice->dev);
++	int err;
++
++	if (ice->use_pm_runtime) {
++		err = pm_runtime_put_sync_suspend(ice->dev);
++		if (qcom_ice_rpm_forbidden(ice))
++			qcom_ice_do_suspend(ice);
++		return err;
++	}
+ 
+ 	return qcom_ice_do_suspend(ice);
+ }
+@@ -843,6 +885,9 @@ static int qcom_ice_probe(struct platform_device *pdev)
+ 		xa_store(&ice_handles, phandle, ERR_PTR(err), GFP_KERNEL);
+ 		return err;
+ 	}
++
++	/* power/control "on" by default: resumes the engine now and keeps it */
++	pm_runtime_forbid(&pdev->dev);
+ 	xa_store(&ice_handles, phandle, engine, GFP_KERNEL);
+ 
+ 	return 0;

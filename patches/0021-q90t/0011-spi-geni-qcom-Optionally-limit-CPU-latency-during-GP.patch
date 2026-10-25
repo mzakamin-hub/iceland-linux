@@ -1,0 +1,130 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sun, 25 Oct 2026 19:07:15 +0300
+Subject: [PATCH 11/11] spi: geni-qcom: Optionally limit CPU latency during GPI
+ DMA messages
+
+In GPI DMA mode the data moves between the serial engine and DDR without
+a CPU, so every CPU may enter idle while a message is in flight. On
+SM8750 / Kaanapali the system low power state (exit latency 4400 us) is
+then entered and stalls the DMA until it is left; the cluster state
+(1983 us) does not. The OnePlus Pad 4's touch controller is read through
+exactly this path (spi19 with GPI DMA).
+
+Add a module parameter, gpi_cpu_latency_us (0644, default 0 = no limit, as
+before). When it is set, a CPU latency QoS request of that many
+microseconds is held from prepare_message to unprepare_message of each
+GPI DMA message; 2000 keeps the system state off during transfers while
+allowing the cluster state.
+
+Inspired by yzddmr6's "spi: geni-qcom: keep the system out of deep idle
+while a GPI DMA message runs" (linux-sm8750-piano, Xiaomi Pad 8 Pro,
+322fd1bf), which measured 43-51 % slow touch reads without the limit
+and holds a fixed 2000 us; this is a re-implementation with the limit
+as an opt-in parameter.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/spi/spi-geni-qcom.c | 51 +++++++++++++++++++++++++++++++++++--
+ 1 file changed, 49 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/spi/spi-geni-qcom.c b/drivers/spi/spi-geni-qcom.c
+index 91e75e213f92..59580a7792df 100644
+--- a/drivers/spi/spi-geni-qcom.c
++++ b/drivers/spi/spi-geni-qcom.c
+@@ -19,6 +19,7 @@
+ #include <linux/panic_notifier.h>
+ #include <linux/platform_device.h>
+ #include <linux/pm_opp.h>
++#include <linux/pm_qos.h>
+ #include <linux/pm_runtime.h>
+ #include <linux/property.h>
+ #include <linux/soc/qcom/geni-se.h>
+@@ -120,8 +121,23 @@ struct spi_geni_master {
+ 	const struct geni_spi_desc *dev_data;
+ 	struct notifier_block panic_nb;
+ 	struct gpio_desc *ready_gpio;
++	struct pm_qos_request gpi_qos;
++	bool gpi_qos_held;
+ };
+ 
++/*
++ * CPU latency limit (us) held while a GPI DMA message is in flight. The DMA
++ * moves data without a CPU, so every CPU may go idle; the system low power
++ * state (exit latency 4400 us on Kaanapali / SM8750) then stalls the transfer
++ * until it is left, while the cluster state (1983 us) does not. 0: no limit
++ * (default, as before); 2000 keeps the system state off during messages.
++ * Read at every message.
++ */
++static unsigned int gpi_cpu_latency_us;
++module_param(gpi_cpu_latency_us, uint, 0644);
++MODULE_PARM_DESC(gpi_cpu_latency_us,
++		 "CPU latency limit in us held during GPI DMA messages, 0 = none (default: 0)");
++
+ static void spi_slv_setup(struct spi_geni_master *mas)
+ {
+ 	struct geni_se *se = &mas->se;
+@@ -569,15 +585,40 @@ static int spi_geni_prepare_message(struct spi_controller *spi,
+ 		setup_spi_params(spi_msg->spi, spi);
+ 		return 0;
+ 
+-	case GENI_GPI_DMA:
+-		/* nothing to do for GPI DMA */
++	case GENI_GPI_DMA: {
++		unsigned int us = READ_ONCE(gpi_cpu_latency_us);
++
++		if (us) {
++			cpu_latency_qos_update_request(&mas->gpi_qos, us);
++			mas->gpi_qos_held = true;
++		}
+ 		return 0;
+ 	}
++	}
+ 
+ 	dev_err(mas->dev, "Mode not supported %d", mas->cur_xfer_mode);
+ 	return -EINVAL;
+ }
+ 
++static int spi_geni_unprepare_message(struct spi_controller *spi,
++				      struct spi_message *spi_msg)
++{
++	struct spi_geni_master *mas = spi_controller_get_devdata(spi);
++
++	if (mas->gpi_qos_held) {
++		cpu_latency_qos_update_request(&mas->gpi_qos, PM_QOS_DEFAULT_VALUE);
++		mas->gpi_qos_held = false;
++	}
++	return 0;
++}
++
++static void spi_geni_remove_gpi_qos(void *data)
++{
++	struct spi_geni_master *mas = data;
++
++	cpu_latency_qos_remove_request(&mas->gpi_qos);
++}
++
+ static void spi_geni_release_dma_chan(void *data)
+ {
+ 	struct spi_geni_master *mas = data;
+@@ -1189,6 +1230,7 @@ static int spi_geni_probe(struct platform_device *pdev)
+ 	spi->max_speed_hz = 50000000;
+ 	spi->max_dma_len = 0xffff0; /* 24 bits for tx/rx dma length */
+ 	spi->prepare_message = spi_geni_prepare_message;
++	spi->unprepare_message = spi_geni_unprepare_message;
+ 	spi->transfer_one = spi_geni_transfer_one;
+ 	spi->can_dma = geni_can_dma;
+ 	spi->dma_map_dev = dev->parent;
+@@ -1212,6 +1254,11 @@ static int spi_geni_probe(struct platform_device *pdev)
+ 					      "Failed to request GPIO\n");
+ 	}
+ 
++	cpu_latency_qos_add_request(&mas->gpi_qos, PM_QOS_DEFAULT_VALUE);
++	ret = devm_add_action_or_reset(dev, spi_geni_remove_gpi_qos, mas);
++	if (ret)
++		return ret;
++
+ 	pm_runtime_use_autosuspend(&pdev->dev);
+ 	pm_runtime_set_autosuspend_delay(&pdev->dev, 250);
+ 	ret = devm_pm_runtime_enable(dev);

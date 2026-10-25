@@ -1,0 +1,88 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Stanley Jhu <stanleyjhu@google.com>
+Date: Sun, 25 Oct 2026 09:34:46 +0800
+Subject: [PATCH 04/11] scsi: ufs: hwmon, debugfs: Propagate runtime PM resume
+ errors
+
+ufs_hwmon_read(), ufs_hwmon_write(), and ufs_debugfs_get_user_access()
+ignore the return value of ufshcd_rpm_get_sync():
+
+1. A hwmon sensor access, a debugfs exception-event write, or a debugfs
+   TX equalization retrain request runs when W-LUN runtime resume
+   fails, when power.runtime_error is set, or when W-LUN runtime PM is
+   disabled while suspended.
+2. ufshcd_rpm_get_sync() fails with a negative errno while leaving the
+   device unresumed.
+3. The caller still issues temperature or exception-event query UPIUs,
+   or retrains TX equalization, on the suspended target.
+
+Convert all three call sites to ufshcd_rpm_resume_and_get() and release
+hba->host_sem before returning the error, ahead of
+__acquire(ufs_debugfs) in ufs_debugfs_get_user_access(). This covers
+ee_usr_mask_set(), ufs_debugfs_restart_ee(), and ufs_tx_eq_ctrl_write(),
+which all use ufs_debugfs_get_user_access().
+
+Fixes: b294ff3e3449 ("scsi: ufs: core: Enable power management for wlun")
+Fixes: e88e2d32200a ("scsi: ufs: core: Probe for temperature notification support")
+Fixes: adbabdcf0db0 ("scsi: ufs: core: Add support to retrain TX Equalization via debugfs")
+Cc: stable@vger.kernel.org # needs "scsi: ufs: core: Introduce ufshcd_rpm_resume_and_get() helper"
+Signed-off-by: Stanley Jhu <stanleyjhu@google.com>
+---
+ drivers/ufs/core/ufs-debugfs.c |  8 +++++++-
+ drivers/ufs/core/ufs-hwmon.c   | 12 ++++++++++--
+ 2 files changed, 17 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/ufs/core/ufs-debugfs.c b/drivers/ufs/core/ufs-debugfs.c
+index 9f83628f3e2c..44a1a9692324 100644
+--- a/drivers/ufs/core/ufs-debugfs.c
++++ b/drivers/ufs/core/ufs-debugfs.c
+@@ -70,12 +70,18 @@ token_context_lock(ufs_debugfs);
+ static int ufs_debugfs_get_user_access(struct ufs_hba *hba)
+ 	__cond_acquires(0, ufs_debugfs)
+ {
++	int err;
++
+ 	down(&hba->host_sem);
+ 	if (!ufshcd_is_user_access_allowed(hba)) {
+ 		up(&hba->host_sem);
+ 		return -EBUSY;
+ 	}
+-	ufshcd_rpm_get_sync(hba);
++	err = ufshcd_rpm_resume_and_get(hba);
++	if (err) {
++		up(&hba->host_sem);
++		return err;
++	}
+ 	__acquire(ufs_debugfs);
+ 	return 0;
+ }
+diff --git a/drivers/ufs/core/ufs-hwmon.c b/drivers/ufs/core/ufs-hwmon.c
+index aa0b60a0ee8a..2b9673d92573 100644
+--- a/drivers/ufs/core/ufs-hwmon.c
++++ b/drivers/ufs/core/ufs-hwmon.c
+@@ -61,7 +61,11 @@ static int ufs_hwmon_read(struct device *dev, enum hwmon_sensor_types type, u32
+ 		return -EBUSY;
+ 	}
+ 
+-	ufshcd_rpm_get_sync(hba);
++	err = ufshcd_rpm_resume_and_get(hba);
++	if (err) {
++		up(&hba->host_sem);
++		return err;
++	}
+ 
+ 	switch (attr) {
+ 	case hwmon_temp_enable:
+@@ -113,7 +117,11 @@ static int ufs_hwmon_write(struct device *dev, enum hwmon_sensor_types type, u32
+ 		return -EBUSY;
+ 	}
+ 
+-	ufshcd_rpm_get_sync(hba);
++	err = ufshcd_rpm_resume_and_get(hba);
++	if (err) {
++		up(&hba->host_sem);
++		return err;
++	}
+ 
+ 	if (val == 1)
+ 		err = ufshcd_update_ee_usr_mask(hba, MASK_EE_URGENT_TEMP, 0);

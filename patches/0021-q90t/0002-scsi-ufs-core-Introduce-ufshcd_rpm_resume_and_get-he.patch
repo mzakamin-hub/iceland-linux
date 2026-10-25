@@ -1,0 +1,73 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Stanley Jhu <stanleyjhu@google.com>
+Date: Sun, 25 Oct 2026 09:34:43 +0800
+Subject: [PATCH 02/11] scsi: ufs: core: Introduce ufshcd_rpm_resume_and_get()
+ helper
+
+ufshcd_clkscale_enable_store() and ufshcd_auto_hibern8_update() call
+ufshcd_rpm_get_sync() without checking its return value:
+
+1. Runtime resume of the UFS device W-LUN fails and leaves the W-LUN in
+   RPM_SUSPENDED, or a prior runtime suspend error latches
+   power.runtime_error, or runtime PM is disabled while suspended so
+   !pm_runtime_suspended() still evaluates to true.
+2. ufshcd_rpm_get_sync() returns a negative errno and leaves
+   power.usage_count incremented.
+3. Both functions proceed as if the host were active, scaling clocks or
+   writing REG_AUTO_HIBERNATE_IDLE_TIMER while the controller or link
+   is still suspended.
+
+Add ufshcd_rpm_resume_and_get() wrapping pm_runtime_resume_and_get() so
+failed resumes drop the usage reference automatically, and return early
+in ufshcd_clkscale_enable_store() and ufshcd_auto_hibern8_update() when
+it fails.
+
+Fixes: b294ff3e3449 ("scsi: ufs: core: Enable power management for wlun")
+Cc: stable@vger.kernel.org
+Signed-off-by: Stanley Jhu <stanleyjhu@google.com>
+---
+ drivers/ufs/core/ufshcd-priv.h | 5 +++++
+ drivers/ufs/core/ufshcd.c      | 7 +++++--
+ 2 files changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/ufs/core/ufshcd-priv.h b/drivers/ufs/core/ufshcd-priv.h
+index e55c2a02c1f5..99f654b79035 100644
+--- a/drivers/ufs/core/ufshcd-priv.h
++++ b/drivers/ufs/core/ufshcd-priv.h
+@@ -388,6 +388,11 @@ static inline int ufshcd_rpm_get_sync(struct ufs_hba *hba)
+ 	return pm_runtime_get_sync(&hba->ufs_device_wlun->sdev_gendev);
+ }
+ 
++static inline int ufshcd_rpm_resume_and_get(struct ufs_hba *hba)
++{
++	return pm_runtime_resume_and_get(&hba->ufs_device_wlun->sdev_gendev);
++}
++
+ static inline int ufshcd_rpm_get_if_active(struct ufs_hba *hba)
+ {
+ 	return pm_runtime_get_if_active(&hba->ufs_device_wlun->sdev_gendev);
+diff --git a/drivers/ufs/core/ufshcd.c b/drivers/ufs/core/ufshcd.c
+index 557382964005..32a5fee8f70e 100644
+--- a/drivers/ufs/core/ufshcd.c
++++ b/drivers/ufs/core/ufshcd.c
+@@ -1864,7 +1864,9 @@ static ssize_t ufshcd_clkscale_enable_store(struct device *dev,
+ 	if (value == hba->clk_scaling.is_enabled)
+ 		goto out;
+ 
+-	ufshcd_rpm_get_sync(hba);
++	err = ufshcd_rpm_resume_and_get(hba);
++	if (err)
++		goto out;
+ 	ufshcd_hold(hba);
+ 
+ 	hba->clk_scaling.is_enabled = value;
+@@ -4805,7 +4807,8 @@ void ufshcd_auto_hibern8_update(struct ufs_hba *hba, u32 ahit)
+ 
+ 	WRITE_ONCE(hba->ahit, ahit);
+ 	if (!pm_runtime_suspended(&hba->ufs_device_wlun->sdev_gendev)) {
+-		ufshcd_rpm_get_sync(hba);
++		if (ufshcd_rpm_resume_and_get(hba))
++			return;
+ 		ufshcd_hold(hba);
+ 		/*
+ 		 * Serialize with the host driver's AHIT control. Skip the
