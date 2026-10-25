@@ -19,21 +19,20 @@ This repository is one part of the project. The boot chain and the install are d
 
 ## Download
 
-The newest release download is q90i: the [`q90i` release](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90i)
+The newest release download is q90r: the [`q90r` release](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90r)
 has:
 
-- `kernel-iceland-7.3.0.next.20261020.iceland.00463.g9948599f2a47-1.fc44.aarch64.rpm`, the Fedora 44 package for the
+- `kernel-iceland-7.3.0.next.20261020.iceland.00529.gb04181fcf88f-1.fc44.aarch64.rpm`, the Fedora 44 package for the
   tablet;
-- the source RPM, which carries this repository's queue at its head, and the build's config;
-- `SHA256SUMS`.
+- the source RPM, which carries this repository's queue, and `SHA256SUMS`.
 
 Check the files with `sha256sum -c SHA256SUMS`. On the tablet's Fedora 44 system, install the package with dnf:
 
 ```bash
-sudo dnf install ./kernel-iceland-7.3.0.next.20261020.iceland.00463.g9948599f2a47-1.fc44.aarch64.rpm
+sudo dnf install ./kernel-iceland-7.3.0.next.20261020.iceland.00529.gb04181fcf88f-1.fc44.aarch64.rpm
 ```
 
-q90r is built from the branch `iceland-7.3-rc7-next`. Earlier releases:
+Earlier releases: [q90i](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90i),
 [q89w](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89w),
 [q89m](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89m),
 [q89l](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89l) and
