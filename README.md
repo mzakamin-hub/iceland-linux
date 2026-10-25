@@ -1,7 +1,8 @@
 # iceland-linux
 
 The Linux kernel for the OnePlus Pad 4 (`iceland`, Qualcomm SM8850P "kaanapali"). The kernel is kept as a patch queue
-on an upstream tag, Linux v7.3-rc7, so every commit keeps its original author. This is the same approach as the
+on an upstream tag, linux-next `next-20261020` (Linux 7.3 plus the trees queued for 7.4) on the current branch, so
+every commit keeps its original author. This is the same approach as the
 postmarketOS kernel packages and other tablet ports.
 
 This repository is one part of the project. The boot chain and the install are described in the hub,
@@ -11,25 +12,30 @@ This repository is one part of the project. The boot chain and the install are d
 ## Current kernel
 
 - **Branch:** [`iceland-7.3-rc7-next`](https://github.com/mzakamin-hub/iceland-linux/tree/iceland-7.3-rc7-next). Build from this branch.
-- **Queue:** q89w (tag `q89w`), kernel release `7.3.0-rc7-iceland-00519-gec0a0e306dd9`, packaged as `kernel-iceland`.
+- **Queue:** q90r (tag `q90r`), kernel release `7.3.0-next-20261020-iceland-00529-gb04181fcf88f`, packaged as
+  `kernel-iceland`. What each queue adds is in that branch's README.
 - **`main`** holds the older queue q89g, the kernel of the first install image. Later queues are only on
   `iceland-7.3-rc7-next`.
 
 ## Download
 
-The [`q89w` release](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89w) has:
+The newest release download is q90i: the [`q90i` release](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90i)
+has:
 
-- `kernel-iceland-7.3.0.rc7.iceland.00519.gec0a0e306dd9-1.fc44.aarch64.rpm`, the Fedora 44 package for the tablet;
+- `kernel-iceland-7.3.0.next.20261020.iceland.00463.g9948599f2a47-1.fc44.aarch64.rpm`, the Fedora 44 package for the
+  tablet;
 - the source RPM, which carries this repository's queue at its head, and the build's config;
 - `SHA256SUMS`.
 
 Check the files with `sha256sum -c SHA256SUMS`. On the tablet's Fedora 44 system, install the package with dnf:
 
 ```bash
-sudo dnf install ./kernel-iceland-7.3.0.rc7.iceland.00519.gec0a0e306dd9-1.fc44.aarch64.rpm
+sudo dnf install ./kernel-iceland-7.3.0.next.20261020.iceland.00463.g9948599f2a47-1.fc44.aarch64.rpm
 ```
 
-Earlier releases: [q89m](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89m),
+q90r is built from the branch `iceland-7.3-rc7-next`. Earlier releases:
+[q89w](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89w),
+[q89m](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89m),
 [q89l](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89l) and
 [q89k](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89k).
 
