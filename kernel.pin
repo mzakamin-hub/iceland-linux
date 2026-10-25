@@ -127,3 +127,7 @@ TREE_AFTER_0020_q90s=c2b6782009c5f6d6d442a71e356c9b472dc2f193
 # panel_novatek_nt36536.cabc_mode, ath12k.pcie_ltr_off, spi_geni_qcom.gpi_cpu_latency_us.
 # configs/q90t.config: BLK_WBT (not on by default), ZRAM_BACKEND_LZ4. Kernel 7.3.0-next-20261020-iceland-00546-gd4ae0205473d.
 TREE_AFTER_0021_q90t=f96bb4b23aca5d930c89650404327eeadd330e70
+# q90u (26 Oct 2026) = q90t + 0022-q90u: ath12k creates its device debugfs files once with their
+# directory; gunyah reports a missing resource manager log at info level. Every tunable stays at its
+# default (off). Kernel 7.3.0-next-20261020-iceland-00548-g18ffc096fcee.
+TREE_AFTER_0022_q90u=0d8a6f33b250c441be51996b24a7f81bd13308bb

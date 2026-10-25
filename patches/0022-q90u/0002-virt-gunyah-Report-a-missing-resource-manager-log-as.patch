@@ -1,0 +1,36 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 26 Oct 2026 01:22:47 +0300
+Subject: [PATCH 2/2] virt: gunyah: Report a missing resource manager log as
+ information
+
+Firmware without a resource manager log answers the log query with
+"not supported", and the driver then logs "Error in returning log: -95"
+at error level every time the module loads, although nothing failed:
+the log is optional and the driver carries on without it.
+
+Log that case at info level; other errors keep the error message.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/virt/gunyah/rsc_mgr.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/virt/gunyah/rsc_mgr.c b/drivers/virt/gunyah/rsc_mgr.c
+index 9aacd013df20..7d7a5b569390 100644
+--- a/drivers/virt/gunyah/rsc_mgr.c
++++ b/drivers/virt/gunyah/rsc_mgr.c
+@@ -780,7 +780,11 @@ static int gunyah_rm_sysfs_register(struct gunyah_rm *rm)
+ 	int ret = gunyah_rm_get_log(rm, 0, &addr, &size);
+ 
+ 	if (ret < 0) {
+-		pr_err("Error in returning log: %d\n", ret);
++		/* firmware without a resource manager log answers "not supported" */
++		if (ret == -EOPNOTSUPP)
++			pr_info("Resource manager log not available\n");
++		else
++			pr_err("Error in returning log: %d\n", ret);
+ 		return 0;
+ 	}
+ 

@@ -1,0 +1,101 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 26 Oct 2026 01:22:30 +0300
+Subject: [PATCH 1/2] wifi: ath12k: Create the device debugfs files with their
+ directory
+
+simulate_fw_crash and device_dp_stats are created in
+ath12k_core_pdev_create(), which runs again on every device setup after a
+firmware restart or a resume, but they are only removed together with
+the device's debugfs directory, when the device goes away. Each restart
+therefore logs
+
+  debugfs: 'simulate_fw_crash' already exists in 'pci-0000:01:00.0'
+  debugfs: 'device_dp_stats' already exists in 'pci-0000:01:00.0'
+
+Both files only need the ath12k_base, and its DP device lives from probe
+to remove, longer than the directory. Create them once, right after the
+directory, and drop ath12k_debugfs_pdev_create().
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/net/wireless/ath/ath12k/core.c    |  2 --
+ drivers/net/wireless/ath/ath12k/debugfs.c | 21 ++++++++++++---------
+ drivers/net/wireless/ath/ath12k/debugfs.h |  4 ----
+ 3 files changed, 12 insertions(+), 15 deletions(-)
+
+diff --git a/drivers/net/wireless/ath/ath12k/core.c b/drivers/net/wireless/ath/ath12k/core.c
+index b64c20027e47..5592cc7a8d78 100644
+--- a/drivers/net/wireless/ath/ath12k/core.c
++++ b/drivers/net/wireless/ath/ath12k/core.c
+@@ -914,8 +914,6 @@ static int ath12k_core_pdev_create(struct ath12k_base *ab)
+ 		goto err_dp_pdev_free;
+ 	}
+ 
+-	ath12k_debugfs_pdev_create(ab);
+-
+ 	return 0;
+ 
+ err_dp_pdev_free:
+diff --git a/drivers/net/wireless/ath/ath12k/debugfs.c b/drivers/net/wireless/ath/ath12k/debugfs.c
+index 69f546420bd4..b8f39c821465 100644
+--- a/drivers/net/wireless/ath/ath12k/debugfs.c
++++ b/drivers/net/wireless/ath/ath12k/debugfs.c
+@@ -1321,15 +1321,6 @@ static const struct file_operations fops_device_dp_stats = {
+ 	.llseek = default_llseek,
+ };
+ 
+-void ath12k_debugfs_pdev_create(struct ath12k_base *ab)
+-{
+-	debugfs_create_file("simulate_fw_crash", 0600, ab->debugfs_soc, ab,
+-			    &fops_simulate_fw_crash);
+-
+-	debugfs_create_file("device_dp_stats", 0600, ab->debugfs_soc, ab,
+-			    &fops_device_dp_stats);
+-}
+-
+ void ath12k_debugfs_soc_create(struct ath12k_base *ab)
+ {
+ 	bool dput_needed;
+@@ -1352,6 +1343,18 @@ void ath12k_debugfs_soc_create(struct ath12k_base *ab)
+ 
+ 	ab->debugfs_soc = debugfs_create_dir(soc_name, debugfs_ath12k);
+ 
++	/*
++	 * Created once with the directory: the device setup that used to add
++	 * them runs again after every firmware restart and resume, while only
++	 * the directory removal took them away.
++	 */
++	if (!IS_ERR_OR_NULL(ab->debugfs_soc)) {
++		debugfs_create_file("simulate_fw_crash", 0600, ab->debugfs_soc, ab,
++				    &fops_simulate_fw_crash);
++		debugfs_create_file("device_dp_stats", 0600, ab->debugfs_soc, ab,
++				    &fops_device_dp_stats);
++	}
++
+ 	if (dput_needed)
+ 		dput(debugfs_ath12k);
+ }
+diff --git a/drivers/net/wireless/ath/ath12k/debugfs.h b/drivers/net/wireless/ath/ath12k/debugfs.h
+index f5dbca1b8d75..f0002d41347d 100644
+--- a/drivers/net/wireless/ath/ath12k/debugfs.h
++++ b/drivers/net/wireless/ath/ath12k/debugfs.h
+@@ -14,7 +14,6 @@ void ath12k_debugfs_register(struct ath12k *ar);
+ void ath12k_debugfs_unregister(struct ath12k *ar);
+ void ath12k_debugfs_op_vif_add(struct ieee80211_hw *hw,
+ 			       struct ieee80211_vif *vif);
+-void ath12k_debugfs_pdev_create(struct ath12k_base *ab);
+ 
+ static inline bool ath12k_debugfs_is_extd_rx_stats_enabled(struct ath12k *ar)
+ {
+@@ -139,9 +138,6 @@ static inline void ath12k_debugfs_op_vif_add(struct ieee80211_hw *hw,
+ {
+ }
+ 
+-static inline void ath12k_debugfs_pdev_create(struct ath12k_base *ab)
+-{
+-}
+ #endif /* CONFIG_ATH12K_DEBUGFS */
+ 
+ #endif /* _ATH12K_DEBUGFS_H_ */
