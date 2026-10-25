@@ -14,9 +14,12 @@ mk() { make -C "$src" O="$out" ARCH=arm64 LLVM=1 -j"$jobs" "$@"; }
 mkdir -p "$out"
 mk defconfig
 # The fragments in order: map220v's SoC fragment, ours, then the queue's release fragments (q90b: the 7.4-base
-# config pass; q90i: the config round; q90i-shipped: the rest of the shipped q90i config).
+# config pass; q90i: the config round; q90i-shipped: the rest of the shipped q90i config; q90m: the in-tree Gunyah
+# VM stack as modules and the C binder driver; q90n-q90r: the options of each later queue; q90p: the board's command
+# line as built-in defaults). The result is the shipped q90r config.
 frags=("$top/configs/distro-neutral.config" "$top/configs/q90b.config" "$top/configs/q90i.config"
-	"$top/configs/q90i-shipped.config")
+	"$top/configs/q90i-shipped.config" "$top/configs/q90m.config" "$top/configs/q90n.config"
+	"$top/configs/q90o.config" "$top/configs/q90p.config" "$top/configs/q90q.config" "$top/configs/q90r.config")
 "$src/scripts/kconfig/merge_config.sh" -m -O "$out" "$out/.config" 	"$src/arch/arm64/configs/sm8850.config" "${frags[@]}" >/dev/null
 mk olddefconfig
 
@@ -39,6 +42,7 @@ check() { # check <fragment> <strict:0|1>
 }
 check "$src/arch/arm64/configs/sm8850.config" 0 > "$out/config-drift.txt" || true
 check "$top/configs/q90i.config" 1 && check "$top/configs/q90i-shipped.config" 1 &&
+	check "$top/configs/q90m.config" 1 && check "$top/configs/q90p.config" 1 &&
 	check "$top/configs/required.config" 1 || {
 	echo "config check failed (fix fragment dependencies)"; [ "${ALLOW_CONFIG_DRIFT:-0}" = 1 ] || exit 1; }
 

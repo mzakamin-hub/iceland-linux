@@ -12,36 +12,51 @@ This repository is one part of the project. The boot chain and the install are d
 ## Current kernel
 
 - **Branch:** [`iceland-7.3-rc7-next`](https://github.com/mzakamin-hub/iceland-linux/tree/iceland-7.3-rc7-next). Build from this branch.
-- **Queue:** q90r, kernel release `7.3.0-next-20261020-iceland-00529-gb04181fcf88f`, packaged as
+- **Queue:** q90r (tag `q90r`), kernel release `7.3.0-next-20261020-iceland-00529-gb04181fcf88f`, packaged as
   `kernel-iceland`. The branch name is kept from the v7.3-rc7 queues; since q90b the queue applies onto linux-next
   `next-20261020` and moves to 7.4-rc1 once it is out.
-- **New since q89w:** the queue on the 7.4 base (107 patches dropped as upstream there), Qualcomm's split CPU cluster
-  power domains, the rpmhpd fix that lets the GPU's CLX start, the display clock controller's own MX vote, dwc3-qcom
-  keeping its interconnect votes across runtime suspend on Kaanapali (fixes display flicker while the USB-C
-  controller is suspended), the A8xx crash-state capture made opt-in (GPU recovery no longer hangs), the Kaanapali CP
-  protect table on the A840, no submit replay on a GPU that was not reset, battery power reported at the nominal
-  voltage (correct time-to-empty), the memlat devfreq read-back poll off by default, and a config round (VA_BITS 48,
-  HZ 250, PREEMPT_DYNAMIC, CoreSight / STM off). q90j is q90i without the debugfs files, log lines and test
-  switches that only served the display-flicker investigation.
+- **New since q90i:**
+  - q90j: the debugfs files, log lines and test switches that only served the display-flicker investigation are gone.
+  - q90k / q90l: the A840 hardware workaround values, battery current limiter and CLX request of Qualcomm's KGSL
+    driver as switches (default off), PSCI SYSTEM_RESET2 vendor resets as reboot modes, ath12k station power save and
+    a quieter RX channel fallback, CCI reset on runtime resume, an optional single flush of the shared dual-DSI video
+    CTL, and iris EOS only for the drain's last buffer (a seek no longer ends an FFmpeg stream).
+  - q90m: the Gunyah hypervisor's VM manager in the tree (built as modules; used by the protected virtual machines of
+    [iceland-gvm](https://github.com/mzakamin-hub/iceland-gvm) and [iceland-vms](https://github.com/mzakamin-hub/iceland-vms))
+    and the C binder driver back as an option (binderfs, for Android containers).
+  - q90n / q90o: named anonymous mappings, the soft and buddy hard-lockup detectors, the Gunyah vCPU timer as a module,
+    the resource manager's PM notifier removed on unload (suspend after a VM no longer oopses).
+  - q90n also brings iris capture buffer pools and VSP clock fixes, the LPASS macro clocks under runtime PM, the
+    qmp-combo DP-only mode and UFS ESI after a host controller reset.
+  - q90p: the board's kernel command line as built-in defaults for the OnePlus Pad 4 only (display and panel
+    switches; GPU preemption and CLX only with the vendor GPU firmware pair), teo as the default cpuidle governor,
+    suspend-to-idle by default, RCU callbacks offloaded with lazy RCU. A value given on the command line still wins.
+  - q90q / q90r: upstream fixes for qmp-combo / qmp-usb system sleep, remoteproc, the geni UART, dwc3-qcom, ucsi_glink,
+    arm-smmu-qcom, fastrpc, q6apm and qcom-cpucp; drm/msm's October fixes (GMU shutdown idle check, stale boot
+    bandwidth vote, devfreq idle time, scheduler priority inversion, preemption records reset across suspend), qrtr
+    service re-announce, mac80211 MLO multicast duplicate detection, the qmp-combo DP-only mode v2 and UFS link
+    recovery.
 - **`main`** holds the older queue q89g, the kernel of the first install image. Later queues are only on
   `iceland-7.3-rc7-next`.
 
 ## Download
 
-q90r has no release download yet: build it from the branch (below). The newest packaged release is q89w:
-the [`q89w` release](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89w) has:
+The newest release download is q90i: the [`q90i` release](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90i)
+has:
 
-- `kernel-iceland-7.3.0.rc7.iceland.00519.gec0a0e306dd9-1.fc44.aarch64.rpm`, the Fedora 44 package for the tablet;
+- `kernel-iceland-7.3.0.next.20261020.iceland.00463.g9948599f2a47-1.fc44.aarch64.rpm`, the Fedora 44 package for the
+  tablet;
 - the source RPM, which carries this repository's queue at its head, and the build's config;
 - `SHA256SUMS`.
 
 Check the files with `sha256sum -c SHA256SUMS`. On the tablet's Fedora 44 system, install the package with dnf:
 
 ```bash
-sudo dnf install ./kernel-iceland-7.3.0.rc7.iceland.00519.gec0a0e306dd9-1.fc44.aarch64.rpm
+sudo dnf install ./kernel-iceland-7.3.0.next.20261020.iceland.00463.g9948599f2a47-1.fc44.aarch64.rpm
 ```
 
-Earlier releases: [q89m](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89m),
+q90r is built from the branch (below). Earlier releases: [q89w](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89w),
+[q89m](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89m),
 [q89l](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89l) and
 [q89k](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89k).
 
@@ -54,8 +69,8 @@ The counts below are for `iceland-7.3-rc7-next`.
 | `kernel.pin` | the upstream tag and commit, the tree hash expected after each series, the kernel release of each queue |
 | `patches/0001-infiniti/` | 110 patches from infiniti-mainline/linux (OnePlus 15, the same SoC), rebased onto `next-20261020` |
 | `patches/0002-iceland/` | 304 patches: the OnePlus Pad 4 series, numbered with gaps up to 0412 |
-| `patches/0003-glitchfix/` to `patches/0019-q90r/` | 60 patches: the display-timing switches of q89z, then one series per queue q90b to q90k (upstream picks and our fixes) |
-| `configs/` | `distro-neutral.config`, `q90b.config`, `q90i.config` and `q90i-shipped.config` (merged into the build, in that order) and `required.config` (options the build checks) |
+| `patches/0003-glitchfix/` to `patches/0019-q90r/` | 115 patches: the display-timing switches of q89z, then one series per queue q90b to q90r (upstream picks and our fixes; there is no q90j series: q90j only removed patches) |
+| `configs/` | `distro-neutral.config`, `q90b.config`, `q90i.config`, `q90i-shipped.config` and `q90m.config` to `q90r.config` (merged into the build, in that order) and `required.config` (options the build checks) |
 | `scripts/prepare.sh` | clones the upstream tag, checks its commit, applies every series with `git am`, checks the tree hashes |
 | `scripts/build.sh` | configures and builds the kernel; writes `out/dist/` with `BUILD_INFO` and `SHA256SUMS` |
 | `packaging/fedora/` | `kernel-iceland.spec`, `build-rpm.sh` and the kernel-install plugin for the Fedora 44 package |
@@ -76,9 +91,9 @@ scripts/build.sh ./src ./out    # Image, Image.gz, the DTB and the modules; writ
 ```
 
 - `scripts/build.sh` runs `defconfig`, merges `arch/arm64/configs/sm8850.config` (map220v's fragment; drift is reported
-  but not fatal), `configs/distro-neutral.config`, `q90b.config`, `q90i.config` and `q90i-shipped.config`, then checks
-  `distro-neutral.config`, `q90i.config`, `q90i-shipped.config` and `required.config` strictly. The result is the same
-  `.config` as the kernel-iceland q90i, q90j and q90k packages'.
+  but not fatal), `configs/distro-neutral.config`, `q90b.config`, `q90i.config`, `q90i-shipped.config` and
+  `q90m.config` to `q90r.config`, then checks `q90i.config`, `q90i-shipped.config`, `q90m.config`, `q90p.config` and
+  `required.config` strictly. The result is the same `.config` as the kernel-iceland q90r package's.
   A failed strict check stops the build unless `ALLOW_CONFIG_DRIFT=1` is set.
 - `out/dist/` holds `Image`, `Image.gz`, `kaanapali-oneplus-iceland.dtb`, the config, `modules-<release>.tar.zst`,
   `BUILD_INFO` (kernel release, source commit, queue commit, compiler) and `SHA256SUMS`.
