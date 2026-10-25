@@ -1,0 +1,162 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sun, 25 Oct 2026 16:57:03 +0300
+Subject: [PATCH 2/6] usb: typec: ucsi: glink: Quiesce notifications across
+ system sleep
+
+The glink UCSI driver has no PM callbacks. A USB-C notification that
+arrives while the system is going to sleep schedules notify_work, which
+then talks to the PPM over pmic_glink while the remote side and the
+glink transport are suspending; the core's connector work does the same.
+The 50 ms wakeup event taken for each notification only keeps the
+system awake for the interrupt, not for that work.
+
+Add system sleep callbacks:
+
+- suspend: wait for a pending (un)registration, then call
+  ucsi_suspend() while notifications are still delivered (a UCSI
+  command in flight completes through a notification), then stop
+  queueing notify_work and flush it. The core is not suspended while
+  its PPM init has not finished, so that the init is not cancelled.
+- resume: deliver notifications again first, then ucsi_resume(), which
+  re-enables the notifications and re-reads every connector, so a plug
+  or unplug that happened during sleep is picked up.
+
+The wakeup event is still taken for a notification during sleep, so a
+plug or unplug aborts the suspend or wakes the system as before.
+
+ucsi_unregister() freed ucsi->connector but left the pointer set; clear
+it, so that a later check of ucsi->connector (here, and in
+ucsi_suspend() / ucsi_resume()) never sees freed memory after a PD
+service restart.
+
+Inspired by Osilvfe's "usb: typec: ucsi: glink: quiesce notifications
+during suspend" (Osilvfe/linux, caihong-v7.3 branch, b275195f), which
+added a suspended flag and PM ops to this driver; this is a
+re-implementation that keeps notifications flowing until the core work
+has stopped and re-enables them before the core resumes.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/usb/typec/ucsi/ucsi.c       |  1 +
+ drivers/usb/typec/ucsi/ucsi_glink.c | 66 ++++++++++++++++++++++++++++-
+ 2 files changed, 66 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/usb/typec/ucsi/ucsi.c b/drivers/usb/typec/ucsi/ucsi.c
+index bdad3b89089d..8f12412f5bcb 100644
+--- a/drivers/usb/typec/ucsi/ucsi.c
++++ b/drivers/usb/typec/ucsi/ucsi.c
+@@ -2529,6 +2529,7 @@ void ucsi_unregister(struct ucsi *ucsi)
+ 	}
+ 
+ 	kfree(ucsi->connector);
++	ucsi->connector = NULL;
+ }
+ EXPORT_SYMBOL_GPL(ucsi_unregister);
+ 
+diff --git a/drivers/usb/typec/ucsi/ucsi_glink.c b/drivers/usb/typec/ucsi/ucsi_glink.c
+index a8207bfb719a..20728efd0cc8 100644
+--- a/drivers/usb/typec/ucsi/ucsi_glink.c
++++ b/drivers/usb/typec/ucsi/ucsi_glink.c
+@@ -84,6 +84,10 @@ struct pmic_glink_ucsi {
+ 	spinlock_t state_lock;
+ 	bool ucsi_registered;
+ 	bool pd_running;
++	/* system sleep: no notify work is queued while set (state_lock) */
++	bool suspended;
++	/* ucsi_suspend() was called for this sleep, so ucsi_resume() is due */
++	bool core_suspended;
+ 
+ 	u8 read_buf[UCSI_BUF_V2_SIZE];
+ };
+@@ -340,6 +344,7 @@ static void pmic_glink_ucsi_callback(const void *data, size_t len, void *priv)
+ {
+ 	struct pmic_glink_ucsi *ucsi = priv;
+ 	const struct pmic_glink_hdr *hdr = data;
++	unsigned long flags;
+ 
+ 	switch (le32_to_cpu(hdr->opcode)) {
+ 	case UC_UCSI_READ_BUF_REQ:
+@@ -351,7 +356,15 @@ static void pmic_glink_ucsi_callback(const void *data, size_t len, void *priv)
+ 	case UC_UCSI_USBC_NOTIFY_IND:
+ 		pm_wakeup_ws_event(ucsi->dev->power.wakeup,
+ 				   UCSI_GLINK_WAKEUP_TIMEOUT_MS, true);
+-		schedule_work(&ucsi->notify_work);
++		/*
++		 * While the system sleeps the notification is not handled: the
++		 * wakeup event above aborts or ends the sleep, and the resume
++		 * path re-reads every connector.
++		 */
++		spin_lock_irqsave(&ucsi->state_lock, flags);
++		if (!ucsi->suspended)
++			schedule_work(&ucsi->notify_work);
++		spin_unlock_irqrestore(&ucsi->state_lock, flags);
+ 		break;
+ 	}
+ }
+@@ -493,6 +506,56 @@ static void pmic_glink_ucsi_remove(struct auxiliary_device *adev)
+ 	}
+ }
+ 
++static int pmic_glink_ucsi_pm_suspend(struct device *dev)
++{
++	struct pmic_glink_ucsi *ucsi = dev_get_drvdata(dev);
++	unsigned long flags;
++
++	/* Let a pending (un)registration finish first */
++	flush_work(&ucsi->register_work);
++
++	/*
++	 * Stop the core's connector work while notifications still flow:
++	 * a UCSI command in flight completes through a notification.
++	 * Skipped while the PPM init has not finished yet, so that it is
++	 * not cancelled.
++	 */
++	ucsi->core_suspended = false;
++	if (ucsi->ucsi_registered && ucsi->ucsi->connector) {
++		ucsi_suspend(ucsi->ucsi);
++		ucsi->core_suspended = true;
++	}
++
++	spin_lock_irqsave(&ucsi->state_lock, flags);
++	ucsi->suspended = true;
++	spin_unlock_irqrestore(&ucsi->state_lock, flags);
++	flush_work(&ucsi->notify_work);
++
++	return 0;
++}
++
++static int pmic_glink_ucsi_pm_resume(struct device *dev)
++{
++	struct pmic_glink_ucsi *ucsi = dev_get_drvdata(dev);
++	unsigned long flags;
++
++	/* The resume work below needs the notifications of its commands */
++	spin_lock_irqsave(&ucsi->state_lock, flags);
++	ucsi->suspended = false;
++	spin_unlock_irqrestore(&ucsi->state_lock, flags);
++
++	if (ucsi->core_suspended) {
++		ucsi->core_suspended = false;
++		ucsi_resume(ucsi->ucsi);
++	}
++
++	return 0;
++}
++
++static DEFINE_SIMPLE_DEV_PM_OPS(pmic_glink_ucsi_pm_ops,
++				pmic_glink_ucsi_pm_suspend,
++				pmic_glink_ucsi_pm_resume);
++
+ static const struct auxiliary_device_id pmic_glink_ucsi_id_table[] = {
+ 	{ .name = "pmic_glink.ucsi", },
+ 	{},
+@@ -503,6 +566,7 @@ static struct auxiliary_driver pmic_glink_ucsi_driver = {
+ 	.name = "pmic_glink_ucsi",
+ 	.probe = pmic_glink_ucsi_probe,
+ 	.remove = pmic_glink_ucsi_remove,
++	.driver.pm = pm_sleep_ptr(&pmic_glink_ucsi_pm_ops),
+ 	.id_table = pmic_glink_ucsi_id_table,
+ };
+ 

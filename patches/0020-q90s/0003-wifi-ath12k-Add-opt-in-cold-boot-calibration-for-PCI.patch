@@ -1,0 +1,345 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sun, 25 Oct 2026 16:59:18 +0300
+Subject: [PATCH 3/6] wifi: ath12k: Add opt-in cold boot calibration for PCI
+ devices
+
+Qualcomm's downstream cnss2 driver runs a cold boot calibration (CBC)
+on WCN7850-family chips when the platform sets qcom,wlan-cbc-enabled,
+as the Kaanapali (SM8850) devices do: the firmware first boots in
+calibration mode (wlan mode 7), writes its RF calibration into the
+CALDB memory region and sends a COLD_BOOT_CAL_DONE indication (QMI
+0x003E); the device is then power cycled and boots into mission mode
+with cal_done set in the host capabilities, so the firmware uses that
+calibration instead of calibrating at run time. ath12k never does this.
+
+Add it behind a new module parameter, ath12k.cold_boot_cal, default
+off, so that the behaviour of every device stays as it is unless the
+user opts in, and the effect can be compared without another build:
+
+- on the first FW_READY of a PCI device, with the parameter set and
+  calibration not yet done or tried, send the calibration mode instead
+  of continuing into mission mode;
+- on COLD_BOOT_CAL_DONE set qmi.cal_done and, from a work item, set the
+  firmware mode OFF and power cycle the device through the HIF. The
+  target memory chunks, CALDB included, are reused across the power
+  cycle because their type and size do not change;
+- if the indication does not come within 30 s, power cycle into mission
+  mode without the calibration; a failed mode request continues without
+  it at once. The calibration is tried once per device probe.
+
+After a calibration-only boot MHI is up but the HIF was never started,
+so ath12k_pci_power_down() would return early; let it power down while
+a calibration is running. The work is cancelled on PCI remove.
+
+The parameter is read at the first firmware ready, so it can be changed
+at run time for the next probe (unbind / bind or module reload).
+
+Inspired by Reixo's "wifi: ath12k: Add support for the peach (WCN7880)
+chip" (Reixo0/nx809j-mainline, patch 0017), which implemented the
+calibration flow for the same chip (PCI 17cb:110e) and measured about
+8 s for the calibration; this is a re-implementation of only the
+calibration part, as an opt-in switch for the existing WCN7850-family
+support, with a timeout and a single attempt per probe.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/net/wireless/ath/ath12k/core.c  |   6 ++
+ drivers/net/wireless/ath/ath12k/core.h  |   2 +
+ drivers/net/wireless/ath/ath12k/debug.h |   1 +
+ drivers/net/wireless/ath/ath12k/pci.c   |   7 +-
+ drivers/net/wireless/ath/ath12k/qmi.c   | 100 ++++++++++++++++++++++++
+ drivers/net/wireless/ath/ath12k/qmi.h   |  17 ++++
+ 6 files changed, 132 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/ath/ath12k/core.c b/drivers/net/wireless/ath/ath12k/core.c
+index 59222182b36f..b64c20027e47 100644
+--- a/drivers/net/wireless/ath/ath12k/core.c
++++ b/drivers/net/wireless/ath/ath12k/core.c
+@@ -40,6 +40,11 @@ module_param_named(enable_11d, ath12k_enable_11d, bool, 0444);
+ MODULE_PARM_DESC(enable_11d, "Run the firmware's 802.11d country scan (default: off)");
+ EXPORT_SYMBOL(ath12k_enable_11d);
+ 
++bool ath12k_cold_boot_cal;
++module_param_named(cold_boot_cal, ath12k_cold_boot_cal, bool, 0644);
++MODULE_PARM_DESC(cold_boot_cal,
++		 "Run the firmware's cold boot calibration before the first mission mode boot of a PCI device (default: off)");
++
+ /* protected with ath12k_hw_group_mutex */
+ static struct list_head ath12k_hw_group_list = LIST_HEAD_INIT(ath12k_hw_group_list);
+ 
+@@ -2334,6 +2339,7 @@ struct ath12k_base *ath12k_core_alloc(struct device *dev, size_t priv_size,
+ 	INIT_WORK(&ab->reset_work, ath12k_core_reset);
+ 	INIT_WORK(&ab->rfkill_work, ath12k_rfkill_work);
+ 	INIT_WORK(&ab->dump_work, ath12k_coredump_upload);
++	INIT_DELAYED_WORK(&ab->cold_boot_cal_work, ath12k_qmi_cold_boot_cal_work);
+ 	INIT_WORK(&ab->update_11d_work, ath12k_update_11d);
+ 
+ 	timer_setup(&ab->rx_replenish_retry, ath12k_ce_rx_replenish_retry, 0);
+diff --git a/drivers/net/wireless/ath/ath12k/core.h b/drivers/net/wireless/ath/ath12k/core.h
+index 6212c7e69dd7..c8c5169789f7 100644
+--- a/drivers/net/wireless/ath/ath12k/core.h
++++ b/drivers/net/wireless/ath/ath12k/core.h
+@@ -959,6 +959,8 @@ struct ath12k_base {
+ 	struct ath12k_dump_file_data *dump_data;
+ 	size_t ath12k_coredump_len;
+ 	struct work_struct dump_work;
++	/* ends a cold boot calibration: power cycle into mission mode */
++	struct delayed_work cold_boot_cal_work;
+ 
+ 	struct ath12k_htc htc;
+ 
+diff --git a/drivers/net/wireless/ath/ath12k/debug.h b/drivers/net/wireless/ath/ath12k/debug.h
+index 57e3ff2182c3..0ff3eb154087 100644
+--- a/drivers/net/wireless/ath/ath12k/debug.h
++++ b/drivers/net/wireless/ath/ath12k/debug.h
+@@ -40,6 +40,7 @@ __printf(2, 3) void __ath12k_warn(struct device *dev, const char *fmt, ...);
+ extern unsigned int ath12k_debug_mask;
+ extern bool ath12k_ftm_mode;
+ extern bool ath12k_enable_11d;
++extern bool ath12k_cold_boot_cal;
+ 
+ #ifdef CONFIG_ATH12K_DEBUG
+ __printf(3, 4) void __ath12k_dbg(struct ath12k_base *ab,
+diff --git a/drivers/net/wireless/ath/ath12k/pci.c b/drivers/net/wireless/ath/ath12k/pci.c
+index 12bbb75570f1..fa35e0e085c3 100644
+--- a/drivers/net/wireless/ath/ath12k/pci.c
++++ b/drivers/net/wireless/ath/ath12k/pci.c
+@@ -1480,7 +1480,10 @@ void ath12k_pci_power_down(struct ath12k_base *ab, bool is_suspend)
+ {
+ 	struct ath12k_pci *ab_pci = ath12k_pci_priv(ab);
+ 
+-	if (!test_bit(ATH12K_PCI_FLAG_INIT_DONE, &ab_pci->flags))
++	/* after a calibration-only boot MHI is up but the HIF was never started */
++	if (!test_bit(ATH12K_PCI_FLAG_INIT_DONE, &ab_pci->flags) &&
++	    !(ab->qmi.cold_boot_cal_running &&
++	      test_bit(ATH12K_MHI_INIT, &ab_pci->mhi_state)))
+ 		return;
+ 
+ 	/* restore aspm in case firmware bootup fails */
+@@ -1704,6 +1707,8 @@ static void ath12k_pci_remove(struct pci_dev *pdev)
+ 
+ 	ath12k_pci_set_irq_affinity_hint(ab_pci, NULL);
+ 
++	cancel_delayed_work_sync(&ab->cold_boot_cal_work);
++
+ 	if (test_bit(ATH12K_FLAG_QMI_FAIL, &ab->dev_flags)) {
+ 		ath12k_pci_power_down(ab, false);
+ 		goto qmi_fail;
+diff --git a/drivers/net/wireless/ath/ath12k/qmi.c b/drivers/net/wireless/ath/ath12k/qmi.c
+index d4efde426c52..9e7d54189c7c 100644
+--- a/drivers/net/wireless/ath/ath12k/qmi.c
++++ b/drivers/net/wireless/ath/ath12k/qmi.c
+@@ -9,6 +9,7 @@
+ #include "qmi.h"
+ #include "core.h"
+ #include "debug.h"
++#include "hif.h"
+ #include <linux/of.h>
+ #include <linux/firmware.h>
+ #include <linux/of_address.h>
+@@ -2165,6 +2166,14 @@ static const struct qmi_elem_info qmi_wlanfw_fw_ready_ind_msg_v01_ei[] = {
+ 	},
+ };
+ 
++static const struct qmi_elem_info qmi_wlanfw_cold_boot_cal_done_ind_msg_v01_ei[] = {
++	{
++		.data_type	= QMI_EOTI,
++		.array_type	= NO_ARRAY,
++		.tlv_type	= QMI_COMMON_TLV_TYPE,
++	},
++};
++
+ static const struct qmi_elem_info qmi_wlanfw_wlan_ini_req_msg_v01_ei[] = {
+ 	{
+ 		.data_type	= QMI_OPT_FLAG,
+@@ -3864,6 +3873,67 @@ out:
+ 	return ret;
+ }
+ 
++/*
++ * Cold boot calibration (opt-in, ath12k.cold_boot_cal=1): on the first
++ * firmware ready of a PCI device, run the firmware in calibration mode. It
++ * writes its RF calibration into the CALDB region and sends
++ * COLD_BOOT_CAL_DONE; the device is then power cycled and boots into
++ * mission mode with cal_done set in the host capabilities, so the firmware
++ * uses that calibration. The CALDB chunk is kept across the power cycle
++ * (the target memory is reused when type and size are unchanged).
++ * Returns true when the calibration was started.
++ */
++static bool ath12k_qmi_cold_boot_cal_start(struct ath12k_base *ab)
++{
++	int ret;
++
++	if (!ath12k_cold_boot_cal || ath12k_ftm_mode ||
++	    ab->hif.bus != ATH12K_BUS_PCI ||
++	    ab->qmi.cal_done || ab->qmi.cold_boot_cal_tried)
++		return false;
++
++	ab->qmi.cold_boot_cal_tried = true;
++	ab->qmi.cold_boot_cal_running = true;
++
++	ath12k_info(ab, "starting cold boot calibration\n");
++	ret = ath12k_qmi_wlanfw_mode_send(ab, ATH12K_QMI_FIRMWARE_MODE_COLD_BOOT);
++	if (ret < 0) {
++		ath12k_warn(ab, "failed to start cold boot calibration: %d, continuing without it\n",
++			    ret);
++		ab->qmi.cold_boot_cal_running = false;
++		return false;
++	}
++
++	queue_delayed_work(ab->workqueue, &ab->cold_boot_cal_work,
++			   msecs_to_jiffies(ATH12K_COLD_BOOT_CAL_TIMEOUT_MS));
++	return true;
++}
++
++void ath12k_qmi_cold_boot_cal_work(struct work_struct *work)
++{
++	struct ath12k_base *ab = container_of(to_delayed_work(work),
++					      struct ath12k_base,
++					      cold_boot_cal_work);
++	int ret;
++
++	if (test_bit(ATH12K_FLAG_UNREGISTERING, &ab->dev_flags))
++		return;
++
++	if (ab->qmi.cal_done)
++		ath12k_info(ab, "cold boot calibration done, restarting the firmware\n");
++	else
++		ath12k_warn(ab, "cold boot calibration timed out, restarting the firmware without it\n");
++
++	ath12k_qmi_wlanfw_mode_send(ab, ATH12K_QMI_FIRMWARE_MODE_OFF);
++	ath12k_hif_power_down(ab, false);
++	ab->qmi.cold_boot_cal_running = false;
++
++	ret = ath12k_hif_power_up(ab);
++	if (ret)
++		ath12k_err(ab, "failed to power up after cold boot calibration: %d\n",
++			   ret);
++}
++
+ void ath12k_qmi_firmware_stop(struct ath12k_base *ab)
+ {
+ 	int ret;
+@@ -4162,6 +4232,18 @@ static void ath12k_qmi_msg_fw_ready_cb(struct qmi_handle *qmi_hdl,
+ 	ath12k_qmi_driver_event_post(qmi, ATH12K_QMI_EVENT_FW_READY, NULL);
+ }
+ 
++static void ath12k_qmi_msg_cold_boot_cal_done_cb(struct qmi_handle *qmi_hdl,
++						 struct sockaddr_qrtr *sq,
++						 struct qmi_txn *txn,
++						 const void *decoded)
++{
++	struct ath12k_qmi *qmi = container_of(qmi_hdl, struct ath12k_qmi, handle);
++	struct ath12k_base *ab = qmi->ab;
++
++	ath12k_dbg(ab, ATH12K_DBG_QMI, "qmi cold boot calibration done\n");
++	ath12k_qmi_driver_event_post(qmi, ATH12K_QMI_EVENT_COLD_BOOT_CAL_DONE, NULL);
++}
++
+ static const struct qmi_msg_handler ath12k_qmi_msg_handlers[] = {
+ 	{
+ 		.type = QMI_INDICATION,
+@@ -4184,6 +4266,14 @@ static const struct qmi_msg_handler ath12k_qmi_msg_handlers[] = {
+ 		.decoded_size = sizeof(struct qmi_wlanfw_fw_ready_ind_msg_v01),
+ 		.fn = ath12k_qmi_msg_fw_ready_cb,
+ 	},
++	{
++		.type = QMI_INDICATION,
++		.msg_id = QMI_WLFW_COLD_BOOT_CAL_DONE_IND_V01,
++		.ei = qmi_wlanfw_cold_boot_cal_done_ind_msg_v01_ei,
++		.decoded_size =
++			sizeof(struct qmi_wlanfw_cold_boot_cal_done_ind_msg_v01),
++		.fn = ath12k_qmi_msg_cold_boot_cal_done_cb,
++	},
+ 
+ 	/* end of list */
+ 	{},
+@@ -4294,6 +4384,10 @@ static void ath12k_qmi_driver_event_work(struct work_struct *work)
+ 
+ 			clear_bit(ATH12K_FLAG_CRASH_FLUSH,
+ 				  &ab->dev_flags);
++
++			if (ath12k_qmi_cold_boot_cal_start(ab))
++				break;
++
+ 			ret = ath12k_core_qmi_firmware_ready(ab);
+ 			if (!ret)
+ 				set_bit(ATH12K_FLAG_QMI_FW_READY_COMPLETE,
+@@ -4305,6 +4399,12 @@ static void ath12k_qmi_driver_event_work(struct work_struct *work)
+ 			if (ret < 0)
+ 				set_bit(ATH12K_FLAG_QMI_FAIL, &ab->dev_flags);
+ 			break;
++		case ATH12K_QMI_EVENT_COLD_BOOT_CAL_DONE:
++			if (!ab->qmi.cold_boot_cal_running || ab->qmi.cal_done)
++				break;
++			ab->qmi.cal_done = 1;
++			mod_delayed_work(ab->workqueue, &ab->cold_boot_cal_work, 0);
++			break;
+ 		default:
+ 			ath12k_warn(ab, "invalid event type: %d\n", event->type);
+ 			break;
+diff --git a/drivers/net/wireless/ath/ath12k/qmi.h b/drivers/net/wireless/ath/ath12k/qmi.h
+index 28ca7be46185..07f9ef441867 100644
+--- a/drivers/net/wireless/ath/ath12k/qmi.h
++++ b/drivers/net/wireless/ath/ath12k/qmi.h
+@@ -30,6 +30,10 @@
+ #define QMI_WLFW_REQUEST_MEM_IND_V01		0x0035
+ #define QMI_WLFW_FW_MEM_READY_IND_V01		0x0037
+ #define QMI_WLFW_FW_READY_IND_V01		0x0038
++#define QMI_WLFW_COLD_BOOT_CAL_DONE_IND_V01	0x003E
++
++/* the calibration takes about 8 s on WCN7860; give up after this */
++#define ATH12K_COLD_BOOT_CAL_TIMEOUT_MS		30000
+ 
+ #define QMI_WLANFW_MAX_DATA_SIZE_V01		6144
+ 
+@@ -65,6 +69,7 @@ enum ath12k_qmi_event_type {
+ 	ATH12K_QMI_EVENT_POWER_UP,
+ 	ATH12K_QMI_EVENT_POWER_DOWN,
+ 	ATH12K_QMI_EVENT_HOST_CAP,
++	ATH12K_QMI_EVENT_COLD_BOOT_CAL_DONE,
+ 	ATH12K_QMI_EVENT_MAX,
+ };
+ 
+@@ -146,6 +151,10 @@ struct ath12k_qmi {
+ 	u32 target_mem_mode;
+ 	bool target_mem_delayed;
+ 	u8 cal_done;
++	/* a cold boot calibration was started for this device */
++	bool cold_boot_cal_tried;
++	/* the firmware runs in calibration mode, or is power cycled after it */
++	bool cold_boot_cal_running;
+ 
+ 	/* protected with struct ath12k_qmi::event_lock */
+ 	bool block_event;
+@@ -378,6 +387,10 @@ struct qmi_wlanfw_fw_ready_ind_msg_v01 {
+ 	char placeholder;
+ };
+ 
++struct qmi_wlanfw_cold_boot_cal_done_ind_msg_v01 {
++	char placeholder;
++};
++
+ #define QMI_WLANFW_CAP_REQ_MSG_V01_MAX_LEN	0
+ #define QMI_WLANFW_CAP_REQ_V01			0x0024
+ 
+@@ -635,6 +648,9 @@ enum ath12k_qmi_firmware_mode {
+ 
+ 	/* firmware offline; values 2-3 reserved by firmware ABI */
+ 	ATH12K_QMI_FIRMWARE_MODE_OFF = 4,
++
++	/* cold boot calibration; values 5-6 reserved by firmware ABI */
++	ATH12K_QMI_FIRMWARE_MODE_COLD_BOOT = 7,
+ };
+ 
+ static inline void ath12k_qmi_set_event_block(struct ath12k_qmi *qmi, bool block)
+@@ -654,6 +670,7 @@ static inline bool ath12k_qmi_get_event_block(struct ath12k_qmi *qmi)
+ int ath12k_qmi_firmware_start(struct ath12k_base *ab,
+ 			      enum ath12k_qmi_firmware_mode mode);
+ void ath12k_qmi_firmware_stop(struct ath12k_base *ab);
++void ath12k_qmi_cold_boot_cal_work(struct work_struct *work);
+ void ath12k_qmi_deinit_service(struct ath12k_base *ab);
+ int ath12k_qmi_init_service(struct ath12k_base *ab);
+ void ath12k_qmi_free_resource(struct ath12k_base *ab);

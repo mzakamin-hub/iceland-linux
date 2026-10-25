@@ -1,0 +1,237 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sun, 25 Oct 2026 20:12:07 +0300
+Subject: [PATCH 5/6] virt: gunyah: Never release memory that may still be
+ donated or assigned
+
+Several error paths hand memory back to the page allocator although it
+may still belong to a guest or to the secure world:
+
+- gunyah_vm_provide_folio(): when the platform (SCM) release of a
+  demand-paged folio fails, it returned without erasing the folio from
+  the VM's tree, and gunyah_gup_demand_page() then unpinned it. The
+  freed page stays assigned away from HLOS; its next user's own assign
+  fails (-EINVAL), and the stale tree entry makes the VM teardown fail
+  (WARN in _gunyah_vm_put). When the hypervisor donation could not be
+  reclaimed, the page was even released to SCM and unpinned while still
+  mapped in the guest.
+- gunyah_rm_mem_share(): when the Resource Manager call fails and the
+  platform cannot assign the parcel back to HLOS, the callers unpin the
+  pages anyway (GUP parcels, protected shares).
+- qcom_scm_gunyah_rm_post_mem_reclaim() returned only the result of its
+  last entry, so an earlier failure was lost.
+
+Quarantine instead: a folio that may still be donated or assigned is
+dropped from the VM's tree but kept with a reference forever (logged
+with its pfn); a share that cannot be rolled back returns
+-ENOTRECOVERABLE, and its callers keep the pins (and the protected
+share retry loop stops). The platform reclaim now tries every entry and
+reports the first failure.
+
+Also unpin every folio of a reclaimed GUP parcel entry: entries merge
+physically contiguous folios, each pinned through its head page, but
+only the first folio of an entry was unpinned, leaking the pins (and the
+locked-memory accounting) of the others on every VM teardown.
+
+Found from the VM app's QEMU SHARE fault analysis: one gpa per failing
+run whose page the SCM refused to assign from HLOS.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/virt/gunyah/gunyah_qcom.c   | 19 ++++++++---
+ drivers/virt/gunyah/rsc_mgr_rpc.c   |  7 +++-
+ drivers/virt/gunyah/vm_mgr_mem.c    | 52 ++++++++++++++++++++++++-----
+ drivers/virt/gunyah/vm_mgr_pshare.c | 15 ++++++++-
+ 4 files changed, 77 insertions(+), 16 deletions(-)
+
+diff --git a/drivers/virt/gunyah/gunyah_qcom.c b/drivers/virt/gunyah/gunyah_qcom.c
+index 622d6a07db02..c9c2c3624a4b 100644
+--- a/drivers/virt/gunyah/gunyah_qcom.c
++++ b/drivers/virt/gunyah/gunyah_qcom.c
+@@ -104,13 +104,22 @@ qcom_scm_gunyah_rm_post_mem_reclaim(struct gunyah_rm *rm,
+ 	}
+ 
+ 	for (i = 0; i < mem_parcel->n_mem_entries; i++) {
++		int err;
++
+ 		src_cpy = src;
+-		ret = qcom_scm_assign_mem(
+-			le64_to_cpu(mem_parcel->mem_entries[i].phys_addr),
+-			le64_to_cpu(mem_parcel->mem_entries[i].size), &src_cpy,
+-			&new_perms, 1);
+-		WARN_ON_ONCE(ret);
++		err = qcom_scm_assign_mem(le64_to_cpu(mem_parcel->mem_entries[i].phys_addr),
++					  le64_to_cpu(mem_parcel->mem_entries[i].size),
++					  &src_cpy, &new_perms, 1);
++		if (err) {
++			pr_err("gunyah: failed to give %#llx (+%#llx) back to HLOS: %d\n",
++			       le64_to_cpu(mem_parcel->mem_entries[i].phys_addr),
++			       le64_to_cpu(mem_parcel->mem_entries[i].size), err);
++			/* report the first failure, try every entry */
++			if (!ret)
++				ret = err;
++		}
+ 	}
++	WARN_ON_ONCE(ret);
+ 
+ 	return ret;
+ }
+diff --git a/drivers/virt/gunyah/rsc_mgr_rpc.c b/drivers/virt/gunyah/rsc_mgr_rpc.c
+index 59b6471d055e..7c5db953548b 100644
+--- a/drivers/virt/gunyah/rsc_mgr_rpc.c
++++ b/drivers/virt/gunyah/rsc_mgr_rpc.c
+@@ -298,7 +298,12 @@ int gunyah_rm_mem_share(struct gunyah_rm *rm, struct gunyah_rm_mem_parcel *p)
+ 	kfree(msg);
+ 
+ 	if (ret) {
+-		gunyah_rm_platform_post_mem_reclaim(rm, p);
++		/*
++		 * If the platform cannot give the memory back to HLOS, the
++		 * caller must not release it: report that apart.
++		 */
++		if (gunyah_rm_platform_post_mem_reclaim(rm, p))
++			return -ENOTRECOVERABLE;
+ 		return ret;
+ 	}
+ 
+diff --git a/drivers/virt/gunyah/vm_mgr_mem.c b/drivers/virt/gunyah/vm_mgr_mem.c
+index f6fe84517af6..c48d3ba4489e 100644
+--- a/drivers/virt/gunyah/vm_mgr_mem.c
++++ b/drivers/virt/gunyah/vm_mgr_mem.c
+@@ -239,21 +239,38 @@ memextent_reclaim:
+ 	gunyah_error = gunyah_hypercall_memextent_donate(
+ 		reclaim_flags(share, true), guest_extent->capid,
+ 		host_extent->capid, pa, size);
+-	if (gunyah_error != GUNYAH_ERROR_OK)
++	if (gunyah_error != GUNYAH_ERROR_OK) {
+ 		pr_err("Failed to reclaim memory donation for guest address 0x%016llx: %d\n",
+ 		       gpa, gunyah_error);
++		/* still donated: it must not get back to the host's allocator */
++		goto quarantine;
++	}
+ platform_release:
+ 	tmp = gunyah_rm_platform_reclaim_demand_page(ghvm->rm, ghvm->vmid,
+ 						     access, folio);
+ 	if (tmp) {
+ 		pr_err("Platform failed to reclaim memory for guest address 0x%016llx: %d",
+ 		       gpa, tmp);
+-		return ret;
++		goto quarantine;
+ 	}
+ reclaim_host:
+ 	gunyah_folio_host_reclaim(folio);
+ 	mtree_erase(&ghvm->mm, gfn);
+ 	return ret;
++
++quarantine:
++	/*
++	 * The folio may still be donated to the guest or assigned away from
++	 * HLOS. The caller unpins it on error, so hold a plain reference
++	 * forever instead: it must never be handed out again by the page
++	 * allocator (the next user's own assign would fail, or worse). Drop
++	 * it from the VM's tracking so teardown does not touch it.
++	 */
++	folio_get(folio);
++	mtree_erase(&ghvm->mm, gfn);
++	pr_err("gunyah: quarantined pfn %#lx (%zu bytes) still owned by the guest / secure world\n",
++	       folio_pfn(folio), size);
++	return ret;
+ }
+ 
+ static int __gunyah_vm_reclaim_folio_locked(struct gunyah_vm *ghvm, void *entry,
+@@ -592,6 +609,15 @@ static int gunyah_gup_share_parcel(struct gunyah_vm *ghvm,
+ 	parcel->mem_entries[entries].size = entry_size;
+ 	parcel->n_mem_entries = entries + 1;
+ 	ret = gunyah_rm_mem_share(ghvm->rm, parcel);
++	if (ret == -ENOTRECOVERABLE) {
++		/* some memory is still assigned away: keep every pin */
++		dev_err(ghvm->parent, "share failed and not rolled back: keeping %d pinned pages\n",
++			pinned);
++		kfree(parcel->mem_entries);
++		parcel->mem_entries = NULL;
++		parcel->n_mem_entries = 0;
++		goto free_pages;
++	}
+ 	if (ret)
+ 		goto free_mem_entries;
+ 
+@@ -738,7 +764,6 @@ static int gunyah_gup_reclaim_parcel(struct gunyah_vm *ghvm,
+ 		struct gunyah_vm_parcel *vm_parcel, struct gunyah_vm_binding *b)
+ {
+ 	struct gunyah_rm_mem_parcel *parcel = &vm_parcel->parcel;
+-	struct gunyah_rm_mem_entry *entry;
+ 	struct folio *folio;
+ 	pgoff_t i;
+ 	int ret;
+@@ -758,15 +783,24 @@ static int gunyah_gup_reclaim_parcel(struct gunyah_vm *ghvm,
+ 	}
+ 
+ 	for (i = 0; i < parcel->n_mem_entries; i++) {
+-		entry = &parcel->mem_entries[i];
++		phys_addr_t pa = le64_to_cpu(parcel->mem_entries[i].phys_addr);
++		phys_addr_t end = pa + le64_to_cpu(parcel->mem_entries[i].size);
+ 
+-		folio = pfn_folio(PHYS_PFN(le64_to_cpu(entry->phys_addr)));
++		/*
++		 * An entry covers physically contiguous folios, each pinned
++		 * once through its head page and accounted as one page by
++		 * gunyah_gup_share_parcel().
++		 */
++		while (pa < end) {
++			folio = pfn_folio(PHYS_PFN(pa));
+ 
+-		if (folio_test_private(folio))
+-			gunyah_folio_host_reclaim(folio);
++			if (folio_test_private(folio))
++				gunyah_folio_host_reclaim(folio);
+ 
+-		unpin_user_page(folio_page(folio, 0));
+-		account_locked_vm(ghvm->mm_s, 1, false);
++			pa += folio_size(folio);
++			unpin_user_page(folio_page(folio, 0));
++			account_locked_vm(ghvm->mm_s, 1, false);
++		}
+ 	}
+ 
+ 	parcel->mem_handle = GUNYAH_MEM_HANDLE_INVAL;
+diff --git a/drivers/virt/gunyah/vm_mgr_pshare.c b/drivers/virt/gunyah/vm_mgr_pshare.c
+index b1b846929d75..10c510b89226 100644
+--- a/drivers/virt/gunyah/vm_mgr_pshare.c
++++ b/drivers/virt/gunyah/vm_mgr_pshare.c
+@@ -217,7 +217,7 @@ static int gunyah_vm_pshare_submit(struct gunyah_vm *ghvm,
+ 
+ 	for (tries = 0; tries < GUNYAH_PSHARE_SHARE_TRIES; tries++) {
+ 		ret = gunyah_rm_mem_share(ghvm->rm, &ps->parcel);
+-		if (!ret)
++		if (!ret || ret == -ENOTRECOVERABLE)
+ 			break;
+ 		usleep_range(500, 1500);
+ 	}
+@@ -299,6 +299,12 @@ int gunyah_vm_pshare_user(struct gunyah_vm *ghvm,
+ 					   PAGE_SIZE);
+ 
+ 	ret = gunyah_vm_pshare_submit(ghvm, ps, &args->mem_handle);
++	if (ret == -ENOTRECOVERABLE) {
++		/* memory still assigned away: keep the pins and the accounting */
++		dev_err(ghvm->parent, "share label %u not rolled back: keeping %lu pinned pages\n",
++			args->label, npages);
++		goto free_parcel;
++	}
+ 	if (ret)
+ 		goto unaccount;
+ 
+@@ -400,6 +406,13 @@ int gunyah_vm_pshare_dmabuf(struct gunyah_vm *ghvm,
+ 		goto free_parcel;
+ 
+ 	ret = gunyah_vm_pshare_submit(ghvm, ps, &args->mem_handle);
++	if (ret == -ENOTRECOVERABLE) {
++		/* memory still assigned away: keep the exporter's buffer mapped and referenced */
++		dev_err(ghvm->parent, "dmabuf share label %u not rolled back: keeping the buffer\n",
++			args->label);
++		gunyah_vm_pshare_free_parcel(ps);
++		return ret;
++	}
+ 	if (ret)
+ 		goto free_parcel;
+ 	return 0;

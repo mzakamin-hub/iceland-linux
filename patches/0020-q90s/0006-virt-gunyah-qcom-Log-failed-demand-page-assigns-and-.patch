@@ -1,0 +1,132 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sun, 25 Oct 2026 20:12:07 +0300
+Subject: [PATCH 6/6] virt: gunyah: qcom: Log failed demand-page assigns and
+ probe the owner
+
+A failed SCM assign of a demand-paged folio is reported only as the
+generic "Failed to provide folio" error, without the page. Log the pfn,
+size, order, access and VM of every failed demand-page assign and
+release.
+
+With the new debug_assign module parameter (0644, default off), a failed
+assign also probes who owns the page now: it retries from HLOS+RM and
+from RM, logs the first source set that succeeds and assigns the page
+straight back to it, so the page state does not change.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/virt/gunyah/gunyah_qcom.c | 71 +++++++++++++++++++++++++++++--
+ 1 file changed, 67 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/virt/gunyah/gunyah_qcom.c b/drivers/virt/gunyah/gunyah_qcom.c
+index c9c2c3624a4b..490109b0ae05 100644
+--- a/drivers/virt/gunyah/gunyah_qcom.c
++++ b/drivers/virt/gunyah/gunyah_qcom.c
+@@ -12,6 +12,54 @@
+ #include <linux/uuid.h>
+ 
+ #define QCOM_SCM_RM_MANAGED_VMID 0x3A
++
++/*
++ * Debug: when assigning a demand-paged folio fails, find out who owns it now by
++ * retrying from other source sets (HLOS + RM, RM) and, on success, assigning it
++ * straight back, so the page state is unchanged. Off by default.
++ */
++static bool debug_assign;
++module_param(debug_assign, bool, 0644);
++MODULE_PARM_DESC(debug_assign,
++		 "On a failed demand-page assign, probe the current owner and log it with the pfn (default: off)");
++
++static void qcom_scm_gunyah_probe_owner(phys_addr_t pa, size_t size,
++					struct qcom_scm_vmperm *perms, unsigned int n)
++{
++	static const struct { u64 src; const char *name; } probes[] = {
++		{ BIT_ULL(QCOM_SCM_VMID_HLOS) | BIT_ULL(QCOM_SCM_RM_MANAGED_VMID), "HLOS+RM" },
++		{ BIT_ULL(QCOM_SCM_RM_MANAGED_VMID), "RM" },
++	};
++	struct qcom_scm_vmperm back[2];
++	unsigned int i, j, nb;
++	u64 src, dst;
++	int ret;
++
++	for (i = 0; i < ARRAY_SIZE(probes); i++) {
++		src = probes[i].src;
++		ret = qcom_scm_assign_mem(pa, size, &src, perms, n);
++		pr_info("gunyah: pfn %#lx probe from %s: %d\n", (unsigned long)PHYS_PFN(pa),
++			probes[i].name, ret);
++		if (ret)
++			continue;
++
++		/* assign it back to the owner set the probe found */
++		dst = 0;
++		for (j = 0; j < n; j++)
++			dst |= BIT_ULL(perms[j].vmid);
++		nb = 0;
++		if (probes[i].src & BIT_ULL(QCOM_SCM_VMID_HLOS))
++			back[nb++] = (struct qcom_scm_vmperm){ QCOM_SCM_VMID_HLOS,
++				QCOM_SCM_PERM_READ | QCOM_SCM_PERM_WRITE | QCOM_SCM_PERM_EXEC };
++		back[nb++] = (struct qcom_scm_vmperm){ QCOM_SCM_RM_MANAGED_VMID,
++			QCOM_SCM_PERM_READ | QCOM_SCM_PERM_WRITE | QCOM_SCM_PERM_EXEC };
++		ret = qcom_scm_assign_mem(pa, size, &dst, back, nb);
++		pr_info("gunyah: pfn %#lx was owned by %s; restored: %d\n",
++			(unsigned long)PHYS_PFN(pa), probes[i].name, ret);
++		return;
++	}
++	pr_info("gunyah: pfn %#lx owner not found among the probes\n", (unsigned long)PHYS_PFN(pa));
++}
+ #define QCOM_SCM_MAX_MANAGED_VMID 0x3F
+ 
+ static int
+@@ -132,6 +180,7 @@ qcom_scm_gunyah_rm_pre_demand_page(struct gunyah_rm *rm, u16 vmid,
+ 	struct qcom_scm_vmperm new_perms[2];
+ 	unsigned int n = 1;
+ 	u64 src;
++	int ret;
+ 
+ 	new_perms[0].vmid = QCOM_SCM_RM_MANAGED_VMID;
+ 	new_perms[0].perm = QCOM_SCM_PERM_EXEC | QCOM_SCM_PERM_WRITE |
+@@ -147,8 +196,17 @@ qcom_scm_gunyah_rm_pre_demand_page(struct gunyah_rm *rm, u16 vmid,
+ 
+ 	src = BIT_ULL(QCOM_SCM_VMID_HLOS);
+ 
+-	return qcom_scm_assign_mem(__pfn_to_phys(folio_pfn(folio)),
+-				   folio_size(folio), &src, new_perms, n);
++	ret = qcom_scm_assign_mem(__pfn_to_phys(folio_pfn(folio)),
++				  folio_size(folio), &src, new_perms, n);
++	if (ret) {
++		pr_err_ratelimited("gunyah: demand-page assign of pfn %#lx (%zu bytes, order %u, access %d) to vm %u failed: %d\n",
++				   folio_pfn(folio), folio_size(folio), folio_order(folio),
++				   access, vmid, ret);
++		if (READ_ONCE(debug_assign))
++			qcom_scm_gunyah_probe_owner(__pfn_to_phys(folio_pfn(folio)),
++						    folio_size(folio), new_perms, n);
++	}
++	return ret;
+ }
+ 
+ static int
+@@ -158,6 +216,7 @@ qcom_scm_gunyah_rm_release_demand_page(struct gunyah_rm *rm, u16 vmid,
+ {
+ 	struct qcom_scm_vmperm new_perms;
+ 	u64 src;
++	int ret;
+ 
+ 	new_perms.vmid = QCOM_SCM_VMID_HLOS;
+ 	new_perms.perm = QCOM_SCM_PERM_EXEC | QCOM_SCM_PERM_WRITE |
+@@ -170,8 +229,12 @@ qcom_scm_gunyah_rm_release_demand_page(struct gunyah_rm *rm, u16 vmid,
+ 	    access != GUNYAH_PAGETABLE_ACCESS_RWX)
+ 		src |= BIT_ULL(QCOM_SCM_VMID_HLOS);
+ 
+-	return qcom_scm_assign_mem(__pfn_to_phys(folio_pfn(folio)),
+-				   folio_size(folio), &src, &new_perms, 1);
++	ret = qcom_scm_assign_mem(__pfn_to_phys(folio_pfn(folio)),
++				  folio_size(folio), &src, &new_perms, 1);
++	if (ret)
++		pr_err_ratelimited("gunyah: demand-page release of pfn %#lx (%zu bytes, access %d) from vm %u failed: %d\n",
++				   folio_pfn(folio), folio_size(folio), access, vmid, ret);
++	return ret;
+ }
+ 
+ static struct gunyah_rm_platform_ops qcom_scm_gunyah_rm_platform_ops = {
