@@ -115,3 +115,6 @@ TREE_AFTER_0018_q90q=33208048442be03723d6e23bd82650157fc270ca
 # (1191447), mac80211 MLO multicast dedup (1192424) + TX_CTL_AMPDU (1192062), qmp-combo DP-only v1 reverted + v2
 # (1192123), ufs core link recovery (1192082). configs/q90r.config: no symbol. Kernel 7.3.0-next-20261020-iceland-00529-gb04181fcf88f.
 TREE_AFTER_0019_q90r=a14cfe5c10f38ca8371938f88614e08bfc674237
+# q90s (25 Oct 2026, after the q90r release) = q90r + 0020-q90s/0001: the gunyah-cma-mem binding made valid YAML / schema
+# (binding only; kernel-checks dt_binding_check). Kernel code, config and DT = q90r's.
+TREE_AFTER_0020_q90s=b95514e34d25bf572a59f979934557c1f149fde3

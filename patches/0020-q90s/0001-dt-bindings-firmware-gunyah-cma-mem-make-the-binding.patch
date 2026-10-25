@@ -1,0 +1,104 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sun, 25 Oct 2026 14:00:00 +0300
+Subject: [PATCH] dt-bindings: firmware: gunyah-cma-mem: make the binding valid
+ YAML / schema
+
+The binding imported with the Android Gunyah drivers (0014-q90m/0001)
+does not parse: the example indents with tabs, "compatible" is a bare
+list, memory-region mixes a phandle $ref with items, the key is
+"example" instead of "examples" and additionalProperties is missing.
+dt_binding_check therefore reported a YAML error for the file.
+
+Rewrite it as a valid schema with the same meaning: compatible
+gunyah-cma-vm-mem, memory-region and memory-region-names with 1 to 8
+entries, additionalProperties false, and an example with the two
+reserved-memory regions it refers to. No code or DT change.
+
+Checked: yamllint (the bindings' .yamllint) clean, make dt_binding_check
+DT_SCHEMA_FILES=firmware/gunyah-cma-mem.yaml with dtschema 2026.9 clean.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../bindings/firmware/gunyah-cma-mem.yaml     | 50 ++++++++++++-------
+ 1 file changed, 33 insertions(+), 17 deletions(-)
+
+diff --git a/Documentation/devicetree/bindings/firmware/gunyah-cma-mem.yaml b/Documentation/devicetree/bindings/firmware/gunyah-cma-mem.yaml
+index 0bc499faf1d8..6345bfcf8e47 100644
+--- a/Documentation/devicetree/bindings/firmware/gunyah-cma-mem.yaml
++++ b/Documentation/devicetree/bindings/firmware/gunyah-cma-mem.yaml
+@@ -10,7 +10,7 @@ maintainers:
+   - Prakruthi Deepak Heragu <quic_pheragu@quicinc.com>
+   - Elliot Berman <quic_eberman@quicinc.com>
+ 
+-description: |+
++description:
+   gunyah-cma-mem is a CMA memory manager that allows VMMs to use
+   contiguous memory to backup Virtual Machines running on Gunyah. These
+   regions are pre-defined by the firmware to have special attributes
+@@ -18,32 +18,48 @@ description: |+
+ 
+ properties:
+   compatible:
+-      - const: gunyah-cma-vm-mem
++    const: gunyah-cma-vm-mem
+ 
+   memory-region:
+-    $ref: '/schemas/types.yaml#/definitions/phandle'
+-    items:
+-      - description: |
+-          Describes the specific reserved memory region that this allocator
+-          will allocate memory from for a Virtual Machine. Refer to
+-          Documentation/devicetree/bindings/reserved-memory/reserved-memory.txt
+-          for more information.
++    minItems: 1
++    maxItems: 8
++    description:
++      The reserved memory regions this allocator allocates Virtual Machine
++      memory from, one per Virtual Machine.
+ 
+   memory-region-names:
+-    $ref: /schemas/types.yaml#/definitions/string-array
+-    items:
+-      - description: Name of the memory-region to be used by VMM for operation
++    minItems: 1
++    maxItems: 8
++    description:
++      Names of the memory regions, used by the VMM to pick a region.
+ 
+ required:
+   - compatible
+   - memory-region
+   - memory-region-names
+ 
+-example:
++additionalProperties: false
++
++examples:
+   - |
+-    gunyah-cma-mem {
+-	compatible = "gunyah-cma-vm-mem";
+-	memory-region = <&trust_ui_vm_mem &oem_vm_mem>;
+-	memory-region-names = "trustedvm_cma" , "oemvm_cma";
++    reserved-memory {
++        #address-cells = <1>;
++        #size-cells = <1>;
++        ranges;
++
++        trust_ui_vm_mem: trust-ui-vm@d0000000 {
++            reg = <0xd0000000 0x800000>;
++            no-map;
++        };
++
++        oem_vm_mem: oem-vm@d0800000 {
++            reg = <0xd0800000 0x800000>;
++            no-map;
++        };
+     };
+ 
++    gunyah-cma-mem {
++        compatible = "gunyah-cma-vm-mem";
++        memory-region = <&trust_ui_vm_mem>, <&oem_vm_mem>;
++        memory-region-names = "trustedvm_cma", "oemvm_cma";
++    };
