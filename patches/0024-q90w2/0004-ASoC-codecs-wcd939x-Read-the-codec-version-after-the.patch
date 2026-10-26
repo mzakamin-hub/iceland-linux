@@ -1,0 +1,111 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 26 Oct 2026 19:24:01 +0300
+Subject: [PATCH 4/5] ASoC: codecs: wcd939x: Read the codec version after the
+ TX device attached
+
+wcd939x_bind() reads DIGITAL_CHIP_ID1 and EAR_STATUS_REG_1 to tell
+v1.0, v1.1 and v2.0 apart. At that point the TX SoundWire device is
+usually not attached yet: its regmap starts cache-only and only leaves
+that mode when the device reports ATTACHED. Both reads then fail with
+-EBUSY, their return values are not checked and id1 / status1 are
+uninitialised, so the detected version is whatever was on the stack.
+
+On a WCD9395 (OnePlus Pad 4) CHIP_ID1 was never read: the register is
+not volatile and has no default, yet it was absent from the regmap
+cache long after boot.
+
+Read the version in the component probe instead, after it waited for
+the TX device to initialise and resumed it, check both reads, keep the
+result in the private data for version-specific setup and log it. On a
+read error only a warning is printed and the version stays unknown.
+
+Fixes: 10f514bd172a ("ASoC: codecs: Add WCD939x Codec driver")
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ sound/soc/codecs/wcd939x.c | 43 +++++++++++++++++++++++++++-----------
+ 1 file changed, 31 insertions(+), 12 deletions(-)
+
+diff --git a/sound/soc/codecs/wcd939x.c b/sound/soc/codecs/wcd939x.c
+index 69078dc25a38..a52ae36ce250 100644
+--- a/sound/soc/codecs/wcd939x.c
++++ b/sound/soc/codecs/wcd939x.c
+@@ -203,6 +203,8 @@ struct wcd939x_priv {
+ 	u32 hph_mode;
+ 	u32 tx_mode[TX_ADC_MAX];
+ 	int variant;
++	unsigned int version;
++	bool version_known;
+ 	struct gpio_desc *reset_gpio;
+ 	int hphr_pdm_wd_int;
+ 	int hphl_pdm_wd_int;
+@@ -3028,6 +3030,33 @@ static int wcd939x_irq_init(struct wcd939x_priv *wcd, struct device *dev)
+ 					&wcd->irq_chip);
+ }
+ 
++/*
++ * Called with the TX device attached and resumed: before that its regmap is
++ * cache-only and the identification registers cannot be read.
++ */
++static void wcd939x_read_version(struct wcd939x_priv *wcd939x, struct device *dev)
++{
++	unsigned int id1 = 0, status1 = 0;
++	int ret;
++
++	ret = regmap_read(wcd939x->regmap, WCD939X_DIGITAL_CHIP_ID1, &id1);
++	if (!ret)
++		ret = regmap_read(wcd939x->regmap, WCD939X_EAR_STATUS_REG_1, &status1);
++	if (ret) {
++		dev_warn(dev, "cannot read the codec version: %d\n", ret);
++		return;
++	}
++
++	if (id1 == CHIPID_WCD939X_VER_MAJOR_1)
++		wcd939x->version = (status1 & CHIPID_WCD939X_VER_MINOR_1) ?
++				   WCD939X_VERSION_1_1 : WCD939X_VERSION_1_0;
++	else
++		wcd939x->version = WCD939X_VERSION_2_0;
++	wcd939x->version_known = true;
++
++	dev_info(dev, "WCD939x version %s\n", version_to_str(wcd939x->version));
++}
++
+ static int wcd939x_soc_codec_probe(struct snd_soc_component *component)
+ {
+ 	struct wcd939x_priv *wcd939x = snd_soc_component_get_drvdata(component);
+@@ -3048,6 +3077,8 @@ static int wcd939x_soc_codec_probe(struct snd_soc_component *component)
+ 							WCD939X_DIGITAL_EFUSE_REG_0,
+ 							WCD939X_EFUSE_REG_0_WCD939X_ID);
+ 
++	wcd939x_read_version(wcd939x, dev);
++
+ 	wcd939x->clsh_info = wcd_clsh_ctrl_alloc(component, WCD939X);
+ 	if (IS_ERR(wcd939x->clsh_info)) {
+ 		pm_runtime_put(dev);
+@@ -3363,7 +3394,6 @@ static struct snd_soc_dai_driver wcd939x_dais[] = {
+ static int wcd939x_bind(struct device *dev)
+ {
+ 	struct wcd939x_priv *wcd939x = dev_get_drvdata(dev);
+-	unsigned int version, id1, status1;
+ 	int ret;
+ 
+ #if IS_ENABLED(CONFIG_TYPEC)
+@@ -3450,17 +3480,6 @@ static int wcd939x_bind(struct device *dev)
+ 
+ 	wcd939x_set_micbias_data(dev, wcd939x);
+ 
+-	/* Check WCD9395 version */
+-	regmap_read(wcd939x->regmap, WCD939X_DIGITAL_CHIP_ID1, &id1);
+-	regmap_read(wcd939x->regmap, WCD939X_EAR_STATUS_REG_1, &status1);
+-
+-	if (id1 == CHIPID_WCD939X_VER_MAJOR_1)
+-		version = ((status1 & CHIPID_WCD939X_VER_MINOR_1) ? WCD939X_VERSION_1_1 : WCD939X_VERSION_1_0);
+-	else
+-		version = WCD939X_VERSION_2_0;
+-
+-	dev_dbg(dev, "wcd939x version: %s\n", version_to_str(version));
+-
+ 	ret = snd_soc_register_component(dev, &soc_codec_dev_wcd939x,
+ 					 wcd939x_dais, ARRAY_SIZE(wcd939x_dais));
+ 	if (ret) {

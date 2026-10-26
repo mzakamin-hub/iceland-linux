@@ -1,0 +1,82 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 26 Oct 2026 18:09:16 +0300
+Subject: [PATCH 3/5] ASoC: codecs: wcd-clsh-v2: Don't force IQ while the
+ flyback is on
+
+On class-H v3 codecs every HPH L, HPH R or EAR enable forces the IQ
+bias first (FLYBACK_VNEGDAC_CTRL_2 = 0xa0, CLASSH_MODE_3 bit 1,
+CLASSH_MODE_2 = 0x1c). Only the enable of the flyback and of the buck
+undoes it, and both run for the first user only (flyback_users and
+buck_users go from 0 to 1).
+
+When a second path is enabled while the flyback is already running,
+for example HPH R after HPH L for stereo headphones, its enable forces
+IQ again, the flyback and buck steps are skipped because they already
+have a user, and the forced IQ stays set for as long as audio plays.
+On the WCD9395 this is heard as background static on the headphones.
+
+Only force IQ when the flyback has no user yet, that is when the
+flyback and buck enables that release it will follow.
+
+The static and its cause were found by Reixo on the WCD9395 of the
+RedMagic 11 Pro (Reixo0/nx809j-mainline); this is a re-implementation
+from that description.
+
+Fixes: 19c5d1f6a0c3 ("ASoC: codecs: wcd-clsh: add new version support")
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ sound/soc/codecs/wcd-clsh-v2.c | 18 +++++++++++++++---
+ 1 file changed, 15 insertions(+), 3 deletions(-)
+
+diff --git a/sound/soc/codecs/wcd-clsh-v2.c b/sound/soc/codecs/wcd-clsh-v2.c
+index 62ca22ea0f3b..4ea84d00c6ae 100644
+--- a/sound/soc/codecs/wcd-clsh-v2.c
++++ b/sound/soc/codecs/wcd-clsh-v2.c
+@@ -449,6 +449,18 @@ static void wcd_clsh_v3_force_iq_ctl(struct snd_soc_component *component,
+ 	}
+ }
+ 
++/*
++ * Forcing IQ is released only by the flyback and buck enables of the first
++ * user. A path enabled while the flyback already runs would leave it forced.
++ */
++static void wcd_clsh_v3_force_iq_enable(struct wcd_clsh_ctrl *ctrl, int mode)
++{
++	if (ctrl->flyback_users)
++		return;
++
++	wcd_clsh_v3_force_iq_ctl(ctrl->comp, mode, true);
++}
++
+ static void wcd_clsh_v3_flyback_ctrl(struct snd_soc_component *component,
+ 				  struct wcd_clsh_ctrl *ctrl,
+ 				  int mode,
+@@ -547,7 +559,7 @@ static void wcd_clsh_v3_state_hph_r(struct wcd_clsh_ctrl *ctrl, int req_state,
+ 	if (is_enable) {
+ 		wcd_clsh_v3_set_buck_regulator_mode(component, mode);
+ 		wcd_clsh_v3_set_flyback_mode(component, mode);
+-		wcd_clsh_v3_force_iq_ctl(component, mode, true);
++		wcd_clsh_v3_force_iq_enable(ctrl, mode);
+ 		wcd_clsh_v3_flyback_ctrl(component, ctrl, mode, true);
+ 		wcd_clsh_v3_set_flyback_current(component, mode);
+ 		wcd_clsh_v3_set_buck_mode(component, mode);
+@@ -637,7 +649,7 @@ static void wcd_clsh_v3_state_hph_l(struct wcd_clsh_ctrl *ctrl, int req_state,
+ 	if (is_enable) {
+ 		wcd_clsh_v3_set_buck_regulator_mode(component, mode);
+ 		wcd_clsh_v3_set_flyback_mode(component, mode);
+-		wcd_clsh_v3_force_iq_ctl(component, mode, true);
++		wcd_clsh_v3_force_iq_enable(ctrl, mode);
+ 		wcd_clsh_v3_flyback_ctrl(component, ctrl, mode, true);
+ 		wcd_clsh_v3_set_flyback_current(component, mode);
+ 		wcd_clsh_v3_set_buck_mode(component, mode);
+@@ -721,7 +733,7 @@ static void wcd_clsh_v3_state_ear(struct wcd_clsh_ctrl *ctrl, int req_state,
+ 	if (is_enable) {
+ 		wcd_clsh_v3_set_buck_regulator_mode(component, mode);
+ 		wcd_clsh_v3_set_flyback_mode(component, mode);
+-		wcd_clsh_v3_force_iq_ctl(component, mode, true);
++		wcd_clsh_v3_force_iq_enable(ctrl, mode);
+ 		wcd_clsh_v3_flyback_ctrl(component, ctrl, mode, true);
+ 		wcd_clsh_v3_set_flyback_current(component, mode);
+ 		wcd_clsh_v3_set_buck_mode(component, mode);

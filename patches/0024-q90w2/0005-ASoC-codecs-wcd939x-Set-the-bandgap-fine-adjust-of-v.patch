@@ -1,0 +1,59 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 26 Oct 2026 19:24:01 +0300
+Subject: [PATCH 5/5] ASoC: codecs: wcd939x: Set the bandgap fine adjust of
+ v1.1 and later
+
+Qualcomm's vendor driver for the WCD939x writes 0xa5 to the bandgap
+fine adjust register (BIAS_VBG_FINE_ADJ, 0x3029; reset value 0x55) on
+codec versions 1.1 and 2.0, in the register patch it applies after it
+has read the version (reg_def_1_1 in the vendor wcd939x.c).
+
+Write the vendor value from wcd939x_io_init() when the version read in
+the component probe is v1.1 or later; v1.0, or a version that could
+not be read, keeps the reset value, as in the vendor driver.
+
+Pointed out by Reixo (Reixo0/nx809j-mainline), whose port sets the
+same value; the version condition and the value are taken from the
+vendor driver of the OnePlus SM8850 kernel.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ sound/soc/codecs/wcd939x.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/sound/soc/codecs/wcd939x.c b/sound/soc/codecs/wcd939x.c
+index a52ae36ce250..974ca92aabca 100644
+--- a/sound/soc/codecs/wcd939x.c
++++ b/sound/soc/codecs/wcd939x.c
+@@ -46,6 +46,9 @@
+ /* Version minor: x.1 */
+ #define CHIPID_WCD939X_VER_MINOR_1	0x3
+ 
++/* Bandgap fine adjust of Qualcomm's driver for v1.1 and later (reset value 0x55) */
++#define WCD939X_VBG_FINE_ADJ_V1_1	0xa5
++
+ enum {
+ 	WCD939X_VERSION_1_0 = 0,
+ 	WCD939X_VERSION_1_1,
+@@ -363,6 +366,8 @@ static int wcd939x_set_swr_clk_rate(struct snd_soc_component *component, int rat
+ 
+ static int wcd939x_io_init(struct snd_soc_component *component)
+ {
++	struct wcd939x_priv *wcd939x = snd_soc_component_get_drvdata(component);
++
+ 	snd_soc_component_write_field(component, WCD939X_ANA_BIAS,
+ 				      WCD939X_BIAS_ANALOG_BIAS_EN, true);
+ 	snd_soc_component_write_field(component, WCD939X_ANA_BIAS,
+@@ -373,6 +378,10 @@ static int wcd939x_io_init(struct snd_soc_component *component)
+ 	snd_soc_component_write_field(component, WCD939X_ANA_BIAS,
+ 				      WCD939X_BIAS_PRECHRG_EN, false);
+ 
++	if (wcd939x->version_known && wcd939x->version >= WCD939X_VERSION_1_1)
++		snd_soc_component_write(component, WCD939X_BIAS_VBG_FINE_ADJ,
++					WCD939X_VBG_FINE_ADJ_V1_1);
++
+ 	snd_soc_component_write_field(component, WCD939X_HPH_NEW_INT_RDAC_HD2_CTL_L,
+ 				      WCD939X_RDAC_HD2_CTL_L_HD2_RES_DIV_CTL_L, 0x15);
+ 	snd_soc_component_write_field(component, WCD939X_HPH_NEW_INT_RDAC_HD2_CTL_R,
