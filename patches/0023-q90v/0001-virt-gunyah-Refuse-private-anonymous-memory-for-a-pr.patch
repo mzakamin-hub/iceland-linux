@@ -1,0 +1,162 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 26 Oct 2026 11:57:40 +0300
+Subject: [PATCH 1/1] virt: gunyah: Refuse private anonymous memory for a
+ protected VM's shared region
+
+A protected VM's shared (not lent) memory is handed to the guest one
+folio at a time when the guest first touches it: the host asks the
+secure world to add the resource manager to the folio's owners
+(qcom_scm_assign_mem) and maps the folio into the guest.
+
+With QEMU's private anonymous guest RAM that assignment is refused with
+-EINVAL for the swiotlb pages, also when retried from the HLOS + RM and
+the RM-only source sets. The guest faults on the same address forever,
+the VMM injects an abort and the guest hangs early in boot. A shared
+memfd for the same region (QEMU memory-backend-memfd,share=on, crosvm)
+works.
+
+Check the backing when the VM starts: refuse a protected VM whose
+shared user memory is not a shared mapping, with a message that names
+the region and the remedy. Faults on such memory mapped after the start
+fail with -EACCES without asking the secure world.
+
+Keep the start error when the vmid is released on that path: the
+release result overwrote it, so VM_START reported -ENODEV instead.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/virt/gunyah/vm_mgr.c     | 13 ++++---
+ drivers/virt/gunyah/vm_mgr.h     |  1 +
+ drivers/virt/gunyah/vm_mgr_mem.c | 59 ++++++++++++++++++++++++++++++++
+ 3 files changed, 69 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/virt/gunyah/vm_mgr.c b/drivers/virt/gunyah/vm_mgr.c
+index 12726713a5b0..8cc96b46e285 100644
+--- a/drivers/virt/gunyah/vm_mgr.c
++++ b/drivers/virt/gunyah/vm_mgr.c
+@@ -817,7 +817,7 @@ static int gunyah_vm_start(struct gunyah_vm *ghvm)
+ {
+ 	struct gunyah_rm_hyp_resources *resources = NULL;
+ 	struct gunyah_resource *ghrsc;
+-	int ret, i, n;
++	int ret, tmp, i, n;
+ 	u16 vmid = 0;
+ 
+ 	down_write(&ghvm->status_lock);
+@@ -850,6 +850,10 @@ static int gunyah_vm_start(struct gunyah_vm *ghvm)
+ 	if (ret)
+ 		goto err_dealloc_vmid;
+ 
++	ret = gunyah_vm_check_share_backing(ghvm);
++	if (ret)
++		goto err_dealloc_vmid;
++
+ 	if (ghvm->fw.config.size > 0) {
+ 		ghvm->fw.parcel.start = gunyah_gpa_to_gfn(ghvm->fw.config.guest_phys_addr);
+ 		ghvm->fw.parcel.pages = gunyah_gpa_to_gfn(ghvm->fw.config.size);
+@@ -949,10 +953,11 @@ static int gunyah_vm_start(struct gunyah_vm *ghvm)
+ 	kfree(resources);
+ 	return ret;
+ err_dealloc_vmid:
+-	ret = gunyah_rm_dealloc_vmid(ghvm->rm, ghvm->vmid);
+-	if (ret)
++	/* keep the start error in ret */
++	tmp = gunyah_rm_dealloc_vmid(ghvm->rm, ghvm->vmid);
++	if (tmp)
+ 		dev_warn(ghvm->parent,
+-			 "Failed to deallocate vmid: %d\n", ret);
++			 "Failed to deallocate vmid: %d\n", tmp);
+ err_rm_notifier_unregister:
+ 	gunyah_rm_notifier_unregister(ghvm->rm, &ghvm->nb);
+ err:
+diff --git a/drivers/virt/gunyah/vm_mgr.h b/drivers/virt/gunyah/vm_mgr.h
+index fe07f81b6fea..6b92c5284066 100644
+--- a/drivers/virt/gunyah/vm_mgr.h
++++ b/drivers/virt/gunyah/vm_mgr.h
+@@ -269,6 +269,7 @@ int gunyah_demand_page(struct gunyah_vm *ghvm, u64 gpa, bool write);
+ int gunyah_setup_demand_paging(struct gunyah_vm *ghvm, u64 start_gfn,
+ 				u64 end_gfn);
+ int gunyah_vm_set_protected(struct gunyah_vm *ghvm);
++int gunyah_vm_check_share_backing(struct gunyah_vm *ghvm);
+ 
+ /* Runtime shares a protected guest accepts itself (vm_mgr_pshare.c) */
+ int gunyah_vm_pshare_user(struct gunyah_vm *ghvm,
+diff --git a/drivers/virt/gunyah/vm_mgr_mem.c b/drivers/virt/gunyah/vm_mgr_mem.c
+index c48d3ba4489e..036c00df4ae0 100644
+--- a/drivers/virt/gunyah/vm_mgr_mem.c
++++ b/drivers/virt/gunyah/vm_mgr_mem.c
+@@ -494,6 +494,15 @@ static int gunyah_gup_demand_page(struct gunyah_vm *ghvm, struct gunyah_vm_bindi
+ 		goto unpin_page;
+ 	}
+ 
++	/* Mapped as anonymous after VM start: see gunyah_vm_check_share_backing() */
++	if (ghvm->is_protected && b->share_type == VM_MEM_SHARE &&
++	    folio_test_anon(folio)) {
++		pr_warn_ratelimited("cannot share private anonymous memory with a protected VM (guest addr %016llx)\n",
++				    gpa);
++		ret = -EACCES;
++		goto unpin_page;
++	}
++
+ 	folio_lock(folio);
+ 	ret = gunyah_vm_provide_folio(ghvm, folio, gfn - folio_page_idx(folio, page),
+ 				      !(b->share_type == VM_MEM_LEND),
+@@ -740,6 +749,56 @@ int gunyah_vm_set_protected(struct gunyah_vm *ghvm)
+ 	return 0;
+ }
+ 
++/*
++ * A protected VM's shared (not lent) user memory is demand-shared one folio
++ * at a time: gunyah_vm_provide_folio() asks the secure world to add the
++ * resource manager to the folio's owners. On Qualcomm platforms that request
++ * is refused (-EINVAL) for folios of private anonymous memory; the guest then
++ * faults on the same address forever. Shared memory (memfd, shmem) works.
++ * Refuse such a VM at start with a clear message instead.
++ */
++int gunyah_vm_check_share_backing(struct gunyah_vm *ghvm)
++{
++	struct gunyah_vm_binding *b;
++	struct vm_area_struct *vma;
++	unsigned long index = 0;
++	unsigned long addr, end;
++	int ret = 0;
++
++	if (!ghvm->is_protected)
++		return 0;
++
++	if (!mmget_not_zero(ghvm->mm_s))
++		return -ESRCH;
++
++	/* same order as gunyah_demand_page(): bindings_lock, then mmap_lock */
++	down_read(&ghvm->bindings_lock);
++	mmap_read_lock(ghvm->mm_s);
++	mt_for_each(&ghvm->bindings, b, index, ULONG_MAX) {
++		if (b->share_type != VM_MEM_SHARE || b->mem_type != VM_MEM_USER ||
++		    gunyah_vm_is_fw_binding(ghvm, b))
++			continue;
++
++		end = b->userspace_addr + b->size;
++		for (addr = b->userspace_addr; addr < end; addr = vma->vm_end) {
++			vma = vma_lookup(ghvm->mm_s, addr);
++			if (vma && (vma->vm_flags & VM_SHARED))
++				continue;
++
++			dev_warn(ghvm->parent,
++				 "shared guest memory 0x%llx+0x%llx is not backed by shared memory (use a memfd): protected VMs cannot demand-share private anonymous pages\n",
++				 b->guest_phys_addr, b->size);
++			ret = -EINVAL;
++			goto out;
++		}
++	}
++out:
++	mmap_read_unlock(ghvm->mm_s);
++	up_read(&ghvm->bindings_lock);
++	mmput(ghvm->mm_s);
++	return ret;
++}
++
+ /*
+  * This function will provide the number of bindings from
+  * start_addr to end_addr.
