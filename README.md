@@ -12,27 +12,28 @@ This repository is one part of the project. The boot chain and the install are d
 ## Current kernel
 
 - **Branch:** [`iceland-7.3-rc7-next`](https://github.com/mzakamin-hub/iceland-linux/tree/iceland-7.3-rc7-next). Build from this branch.
-- **Queue:** q90r (tag `q90r`), kernel release `7.3.0-next-20261020-iceland-00529-gb04181fcf88f`, packaged as
+- **Queue:** q90u (tag `q90u`), kernel release `7.3.0-next-20261020-iceland-00548-g18ffc096fcee`, packaged as
   `kernel-iceland`. What each queue adds is in that branch's README.
 - **`main`** holds the older queue q89g, the kernel of the first install image. Later queues are only on
   `iceland-7.3-rc7-next`.
 
 ## Download
 
-The newest release download is q90r: the [`q90r` release](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90r)
+The newest release download is q90u: the [`q90u` release](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90u)
 has:
 
-- `kernel-iceland-7.3.0.next.20261020.iceland.00529.gb04181fcf88f-1.fc44.aarch64.rpm`, the Fedora 44 package for the
+- `kernel-iceland-7.3.0.next.20261020.iceland.00548.g18ffc096fcee-1.fc44.aarch64.rpm`, the Fedora 44 package for the
   tablet;
 - the source RPM, which carries this repository's queue, and `SHA256SUMS`.
 
 Check the files with `sha256sum -c SHA256SUMS`. On the tablet's Fedora 44 system, install the package with dnf:
 
 ```bash
-sudo dnf install ./kernel-iceland-7.3.0.next.20261020.iceland.00529.gb04181fcf88f-1.fc44.aarch64.rpm
+sudo dnf install ./kernel-iceland-7.3.0.next.20261020.iceland.00548.g18ffc096fcee-1.fc44.aarch64.rpm
 ```
 
-Earlier releases: [q90i](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90i),
+Earlier releases: [q90r](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90r),
+[q90i](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90i),
 [q89w](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89w),
 [q89m](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89m),
 [q89l](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89l) and
