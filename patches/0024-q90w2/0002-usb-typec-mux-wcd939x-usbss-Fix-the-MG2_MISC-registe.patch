@@ -1,0 +1,45 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 26 Oct 2026 18:09:15 +0300
+Subject: [PATCH 2/5] usb: typec: mux: wcd939x-usbss: Fix the MG2_MISC register
+ address
+
+The probe enables the 2x dynamic boost of the MG1 and MG2 OVP
+comparators by setting bit 5 of their MISC registers. MG1_MISC is
+correct at 0x27, but MG2_MISC is defined as 0x30.
+
+In Qualcomm's register map of the WCD939x USB subsystem
+(wcd-usbss-registers.h in the vendor kernel) the OVP block starts at
+0x1f and each MG switch has four registers: EN, BIAS, CTSNS_CTL and
+MISC. MG1 uses 0x24-0x27, so MG1_MISC is 0x27, and MG2 uses
+0x28-0x2b, so MG2_MISC is 0x2b; this driver already uses 0x28 and 0x29
+for MG2_EN and MG2_BIAS. 0x30 is TOP_MISC2, outside the OVP switch
+registers.
+
+So the probe never enabled the dynamic boost of the MG2 OVP and set
+bit 5 of TOP_MISC2 instead. Use 0x2b.
+
+Found by Reixo while porting the WCD9395 to the RedMagic 11 Pro
+(Reixo0/nx809j-mainline); the address is re-derived here from the
+vendor register map.
+
+Fixes: 36d586c0570e ("usb: typec: mux: add Qualcomm WCD939X USB SubSystem Altmode Mux driver")
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/usb/typec/mux/wcd939x-usbss.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/usb/typec/mux/wcd939x-usbss.c b/drivers/usb/typec/mux/wcd939x-usbss.c
+index 53bcd9eddb81..322c185a54dc 100644
+--- a/drivers/usb/typec/mux/wcd939x-usbss.c
++++ b/drivers/usb/typec/mux/wcd939x-usbss.c
+@@ -42,7 +42,7 @@
+ 
+ #define WCD_USBSS_MG2_BIAS_PCOMP_DYN_BST_EN				BIT(3)
+ 
+-#define WCD_USBSS_MG2_MISC			0x30
++#define WCD_USBSS_MG2_MISC			0x2b
+ 
+ #define WCD_USBSS_MG2_MISC_PCOMP_2X_DYN_BST_ON_EN			BIT(5)
+ 

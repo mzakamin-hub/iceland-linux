@@ -135,3 +135,8 @@ TREE_AFTER_0022_q90u=0d8a6f33b250c441be51996b24a7f81bd13308bb
 # is private anonymous memory (clear message at VM start instead of an endless fault loop) and
 # keeps the start error. Every tunable stays at its default (off). Kernel 7.3.0-next-20261020-iceland-00549-g9bf8752f1b8a.
 TREE_AFTER_0023_q90v=cc809decff41f7d06a008e4fbb013556b14d0485
+# q90w2 (26 Oct 2026) = q90v + 0024-q90w2: dwc3 resume-hs-terminations on Kaanapali (Peter Chen's
+# patch), the wcd939x-usbss MG2_MISC address, wcd-clsh-v2 force IQ only without flyback users,
+# the wcd939x version read after the TX device attached, and the v1.1+ bandgap fine adjust.
+# Every tunable stays at its default (off). Kernel 7.3.0-next-20261020-iceland-00554-g87174e7e291d.
+TREE_AFTER_0024_q90w2=e2cfded664a165c0b0e467edfa27919851f96f3e

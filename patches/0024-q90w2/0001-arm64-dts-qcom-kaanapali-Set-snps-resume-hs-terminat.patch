@@ -1,0 +1,35 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Peter Chen <peter.chen@oss.qualcomm.com>
+Date: Sun, 18 Oct 2026 19:15:46 -0700
+Subject: [PATCH 1/5] arm64: dts: qcom: kaanapali: Set
+ snps,resume-hs-terminations for USB controller
+
+The DWC3 controller on Kaanapali is paired with the M31 eUSB2 PHY.
+According to HPG, host-mode USB2 L2/L1 resume with this PHY, GUCTL1[10]
+(RESUME_OPMODE_HS_HOST) must be set.
+
+Set snps,resume-hs-terminations on the Kaanapali USB controller. This makes
+dwc3 core set GUCTL1[10].
+
+Fixes: 3d395de80a46 ("arm64: dts: qcom: kaanapali: Add USB support for Kaanapali SoC")
+Assisted-by: Claude:claude-opus-5-5
+Signed-off-by: Peter Chen <peter.chen@oss.qualcomm.com>
+Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
+Reviewed-by: Abel Vesa <abel.vesa@oss.qualcomm.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali.dtsi | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
+index 6e6b69fe1319..28cfa0bdbf10 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
++++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
+@@ -5034,6 +5034,7 @@
+ 			snps,usb3_lpm_capable;
+ 			snps,usb2-lpm-disable;
+ 			snps,has-lpm-erratum;
++			snps,resume-hs-terminations;
+ 			tx-fifo-resize;
+ 			dma-coherent;
+ 
