@@ -12,27 +12,28 @@ This repository is one part of the project. The boot chain and the install are d
 ## Current kernel
 
 - **Branch:** [`iceland-7.3-rc7-next`](https://github.com/mzakamin-hub/iceland-linux/tree/iceland-7.3-rc7-next). Build from this branch.
-- **Queue:** q90w2 (tag `q90w2`), kernel release `7.3.0-next-20261020-iceland-00554-g87174e7e291d`, packaged as
+- **Queue:** q90x (tag `q90x`), kernel release `7.3.0-next-20261020-iceland-00555-gbc55efdfac46`, packaged as
   `kernel-iceland`. What each queue adds is in that branch's README.
 - **`main`** holds the older queue q89g, the kernel of the first install image. Later queues are only on
   `iceland-7.3-rc7-next`.
 
 ## Download
 
-The newest release download is q90w2: the [`q90w2` release](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90w2)
+The newest release download is q90x: the [`q90x` release](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90x)
 has:
 
-- `kernel-iceland-7.3.0.next.20261020.iceland.00554.g87174e7e291d-1.fc44.aarch64.rpm`, the Fedora 44 package for the
+- `kernel-iceland-7.3.0.next.20261020.iceland.00555.gbc55efdfac46-1.fc44.aarch64.rpm`, the Fedora 44 package for the
   tablet;
 - the source RPM, which carries this repository's queue, and `SHA256SUMS`.
 
 Check the files with `sha256sum -c SHA256SUMS`. On the tablet's Fedora 44 system, install the package with dnf:
 
 ```bash
-sudo dnf install ./kernel-iceland-7.3.0.next.20261020.iceland.00554.g87174e7e291d-1.fc44.aarch64.rpm
+sudo dnf install ./kernel-iceland-7.3.0.next.20261020.iceland.00555.gbc55efdfac46-1.fc44.aarch64.rpm
 ```
 
-Earlier releases: [q90v](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90v),
+Earlier releases: [q90w2](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90w2),
+[q90v](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90v),
 [q90u](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90u),
 [q90r](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90r),
 [q90i](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90i),
