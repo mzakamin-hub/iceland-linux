@@ -140,3 +140,6 @@ TREE_AFTER_0023_q90v=cc809decff41f7d06a008e4fbb013556b14d0485
 # the wcd939x version read after the TX device attached, and the v1.1+ bandgap fine adjust.
 # Every tunable stays at its default (off). Kernel 7.3.0-next-20261020-iceland-00554-g87174e7e291d.
 TREE_AFTER_0024_q90w2=e2cfded664a165c0b0e467edfa27919851f96f3e
+# q90x (27 Oct 2026) = q90w2 + 0025-q90x: ktz8869_iceland starts at stock's default brightness
+# (1417 of 4095) instead of 2047. Config and device tree as q90w2. Kernel 7.3.0-next-20261020-iceland-00555-gbc55efdfac46.
+TREE_AFTER_0025_q90x=8aa54b80de2ef358d62f68d2ffb17b81ab1bae52
