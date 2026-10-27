@@ -1,0 +1,40 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Tue, 27 Oct 2026 14:15:37 +0300
+Subject: [PATCH 1/1] backlight: ktz8869_iceland: Start at stock's default
+ brightness
+
+The driver registered the backlight at 2047 of 4095, half the range,
+so a system without a saved brightness (the first boot of a new
+install) came up much brighter than stock: 4095 was seen at first use,
+9.2 W against 2.2-3.0 W at stock's level.
+
+Start at stock's default instead: SettingsProvider's
+def_screen_brightness is 102 of 255 on stock's manual range, which ends
+at level 3542 of the same 12-bit scale (above it is the HBM range):
+3542 * 102 / 255 = 1417. From the second boot on userspace restores the
+user's own value as before.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/video/backlight/ktz8869_iceland.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/video/backlight/ktz8869_iceland.c b/drivers/video/backlight/ktz8869_iceland.c
+index 8930f570fc68..a8de2dbd2e4a 100644
+--- a/drivers/video/backlight/ktz8869_iceland.c
++++ b/drivers/video/backlight/ktz8869_iceland.c
+@@ -14,7 +14,11 @@
+ #include <linux/regmap.h>
+ #include <linux/thermal.h>
+ 
+-#define DEFAULT_BRIGHTNESS 2047
++/*
++ * Stock's default brightness: SettingsProvider def_screen_brightness 102
++ * of 255 on stock's manual range, which ends at level 3542 (HBM above).
++ */
++#define DEFAULT_BRIGHTNESS 1417
+ #define MAX_BRIGHTNESS 4095
+ #define REG_MAX 0x15
+ 
