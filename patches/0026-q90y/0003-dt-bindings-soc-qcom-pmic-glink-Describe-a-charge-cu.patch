@@ -1,0 +1,56 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Wed, 28 Oct 2026 12:48:54 +0300
+Subject: [PATCH 3/6] dt-bindings: soc: qcom: pmic-glink: Describe a charge
+ current cooling device
+
+The battery management firmware behind pmic-glink accepts a limit on the
+battery charge current, which is what vendor thermal policies lower when
+a device runs hot while charging.
+
+Let a board list its charge current steps, highest first. With them the
+pmic-glink node is a cooling device with one state per step, which the
+thermal zones' cooling maps can refer to.
+
+The idea and the property name follow Doctor Logix's Perpetua kernel
+(denialwm/linux-perpetua 6fc72fc36e8c); the text is our own.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../bindings/soc/qcom/qcom,pmic-glink.yaml        | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/soc/qcom/qcom,pmic-glink.yaml b/Documentation/devicetree/bindings/soc/qcom/qcom,pmic-glink.yaml
+index 5c46a74c0a60..a336c47ff3a0 100644
+--- a/Documentation/devicetree/bindings/soc/qcom/qcom,pmic-glink.yaml
++++ b/Documentation/devicetree/bindings/soc/qcom/qcom,pmic-glink.yaml
+@@ -66,6 +66,18 @@ properties:
+   '#size-cells':
+     const: 0
+ 
++  '#cooling-cells':
++    const: 2
++
++  qcom,charge-current-limits-microamp:
++    description:
++      Battery charge current steps for thermal mitigation, highest first.
++      With this property the node is a cooling device with one state per
++      step; state 0 leaves the charge current to the firmware, state N caps
++      it at the Nth step.
++    minItems: 1
++    maxItems: 32
++
+   orientation-gpios:
+     description: Array of input gpios for the Type-C connector orientation indication.
+       The GPIO indication is used to detect the orientation of the Type-C connector.
+@@ -95,6 +107,9 @@ patternProperties:
+ required:
+   - compatible
+ 
++dependencies:
++  '#cooling-cells': [ 'qcom,charge-current-limits-microamp' ]
++
+ additionalProperties: false
+ 
+ examples:
