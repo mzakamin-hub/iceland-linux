@@ -1,0 +1,62 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Iranna Mundaganur <imundaga@oss.qualcomm.com>
+Date: Wed, 28 Oct 2026 12:22:26 +0530
+Subject: [PATCH 01/11] soc: qcom: icc-bwmon: Update zone1_thres_count to 3
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Reduce zone1_thres_count from 16 to 3 so the driver can lower the bus
+vote after 3 sample windows instead of waiting for 16. The previous
+16‑window delay (~64 ms) is too long at higher FPS workloads,
+causing delayed decision making and measurable power regression.
+
+Empirical tuning showed that lower values (e.g., 2) made bwmon behavior
+jittery, while higher values (4–6) were stable but less responsive and
+reduced power savings. A value of 3 provided the best balance: responsive
+enough for timely power reduction while maintaining stable bwmon
+operation.
+
+Significant power savings were observed across multiple use cases when
+reducing the threshold from 16 to 3:
+
+USECASE			zone1_thres_count=16     zone1_thres_count=3
+4K video playback	   236.15 mA                  203.15 mA
+Sleep			    7mA			        6.9mA
+Display (idle display)	  71.95mA			67.11mA
+
+Signed-off-by: Shivnandan Kumar <quic_kshivnan@quicinc.com>
+Signed-off-by: Pushpendra Singh <pussin@qti.qualcomm.com>
+Signed-off-by: Iranna Mundaganur <imundaga@oss.qualcomm.com>
+Link: https://lore.kernel.org/all/20260227111051.1789439-1-pussin@qti.qualcomm.com/
+
+[ from qualcomm-linux/kernel-topics tech/bsp/devfreq 450668743846 (FROMLIST); the Kaanapali CPU and LLCC
+  bwmon use sdm845_cpu_bwmon_data and sc7280_llcc_bwmon_data ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/soc/qcom/icc-bwmon.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/soc/qcom/icc-bwmon.c b/drivers/soc/qcom/icc-bwmon.c
+index 597f9025e422..e46975da7dba 100644
+--- a/drivers/soc/qcom/icc-bwmon.c
++++ b/drivers/soc/qcom/icc-bwmon.c
+@@ -830,7 +830,7 @@ static const struct icc_bwmon_data msm8998_bwmon_data = {
+ static const struct icc_bwmon_data sdm845_cpu_bwmon_data = {
+ 	.sample_ms = 4,
+ 	.count_unit_kb = 64,
+-	.zone1_thres_count = 16,
++	.zone1_thres_count = 3,
+ 	.zone3_thres_count = 1,
+ 	.quirks = BWMON_HAS_GLOBAL_IRQ,
+ 	.regmap_fields = sdm845_cpu_bwmon_reg_fields,
+@@ -849,7 +849,7 @@ static const struct icc_bwmon_data sdm845_llcc_bwmon_data = {
+ static const struct icc_bwmon_data sc7280_llcc_bwmon_data = {
+ 	.sample_ms = 4,
+ 	.count_unit_kb = 64,
+-	.zone1_thres_count = 16,
++	.zone1_thres_count = 3,
+ 	.zone3_thres_count = 1,
+ 	.quirks = BWMON_NEEDS_FORCE_CLEAR,
+ 	.regmap_fields = sdm845_llcc_bwmon_reg_fields,

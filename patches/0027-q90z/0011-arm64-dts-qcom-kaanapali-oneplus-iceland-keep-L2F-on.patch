@@ -1,0 +1,42 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 30 Oct 2026 08:19:25 +0200
+Subject: [PATCH 11/11] arm64: dts: qcom: kaanapali-oneplus-iceland: keep L2F
+ on
+
+L2F (1.8 V) supplies the camera sensors' DOVDD and the lens actuator's
+I/O, and it is also the pull-up supply of the camera I2C bus (i2c9,
+SE at 0x884000). The cameras turn it on only while they are powered,
+so the first transfer on the bus at boot runs with the pull-ups off:
+
+  gpi 800000.dma-controller: Error in Transaction
+  geni_i2c 884000.i2c: DMA txn failed:3
+  geni_i2c 884000.i2c: GPI transfer failed: -5
+
+Keep L2F always on, as stock does. SuperTurtleDev's iceland kernel
+(patches/platform-sm8850-7.3/apply/0048, Yibo Wang) found the same and
+notes that a transfer with the rail down can wedge the GENI / GPI
+engine until a reboot.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index cf5758dcba37..7ac40870b192 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -902,6 +902,11 @@
+ 			regulator-min-microvolt = <1800000>;
+ 			regulator-max-microvolt = <1800000>;
+ 			regulator-initial-mode = <RPMH_REGULATOR_MODE_AUTO>;
++			/*
++			 * Also the pull-up supply of the camera I2C bus (i2c9):
++			 * a transfer while it is off fails in the GENI / GPI engine
++			 */
++			regulator-always-on;
+ 			regulator-allow-set-load;
+ 			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
+ 						   RPMH_REGULATOR_MODE_AUTO>;
