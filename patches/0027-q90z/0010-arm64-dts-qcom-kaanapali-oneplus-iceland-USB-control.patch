@@ -1,0 +1,41 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 30 Oct 2026 08:19:25 +0200
+Subject: [PATCH 10/11] arm64: dts: qcom: kaanapali-oneplus-iceland: USB
+ controller as a mode switch
+
+The QMP USB3-DP combo PHY stops the USB3 PIPE clock when DisplayPort
+takes all four lanes (pin assignments C and E). Mark the controller
+as a mode switch: it is the remote of the connector's high-speed
+endpoint, so the Type-C mux state reaches it and it moves to the UTMI
+clock before the PIPE clock goes, which keeps USB 2.0 working, e.g.
+the hub of a USB-C monitor.
+
+The connector then has three mode switches (the QMP PHY, the WCD939x
+USB-SS switch and the controller), the most the Type-C class takes
+(TYPEC_MUX_MAX_DEVS).
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 5ed53e5b6547..cf5758dcba37 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -2489,6 +2489,13 @@
+ 	 */
+ 	/delete-property/ wakeup-source;
+ 
++	/*
++	 * With DisplayPort on all four lanes the QMP PHY stops the USB3 PIPE
++	 * clock; as a mode switch the controller moves to the UTMI clock first
++	 * and keeps USB 2.0 running (the hub of a USB-C monitor).
++	 */
++	mode-switch;
++
+ 	status = "okay";
+ };
+ 

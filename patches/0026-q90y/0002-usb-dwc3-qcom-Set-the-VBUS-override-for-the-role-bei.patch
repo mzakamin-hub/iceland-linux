@@ -1,0 +1,74 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Wed, 28 Oct 2026 12:48:54 +0300
+Subject: [PATCH 2/6] usb: dwc3: qcom: Set the VBUS override for the role being
+ entered
+
+dwc3_qcom_set_role_notifier() chooses the VBUS override from the role
+that is being left: off when leaving the device role, on for every other
+change. Going from host to "none", and from "none" to host, therefore
+sets the override, so after a USB device is unplugged the controller is
+told that a host supplies VBUS although nothing is attached.
+dwc3_qcom_run_stop_notifier() also sets it whenever the gadget starts,
+whatever the role.
+
+Choose the override from the role being entered: on for the device
+role, off otherwise, and set it on a gadget start only in the device
+role. Peripheral-only controllers keep the device role and are not
+affected.
+
+The problem and the fix were described by Doctor Logix in the Perpetua
+kernel (denialwm/linux-perpetua 4daa98a10ed7, "usb: dwc3: qcom: manage
+runtime power from connector roles"); this is a re-implementation of
+that part only. The runtime PM reference that commit holds in the
+device role is not part of it.
+
+Fixes: 21188e8d6d75 ("usb: dwc3: qcom: Implement glue callbacks to facilitate runtime suspend")
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/usb/dwc3/dwc3-qcom.c | 17 ++++++++++-------
+ 1 file changed, 10 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/usb/dwc3/dwc3-qcom.c b/drivers/usb/dwc3/dwc3-qcom.c
+index fddad078a214..3fab555ecee4 100644
+--- a/drivers/usb/dwc3/dwc3-qcom.c
++++ b/drivers/usb/dwc3/dwc3-qcom.c
+@@ -737,19 +737,21 @@ static void dwc3_qcom_set_role_notifier(struct dwc3 *dwc, enum usb_role next_rol
+ 		return;
+ 	}
+ 
+-	if (qcom->current_role == USB_ROLE_DEVICE)
+-		dwc3_qcom_vbus_override_enable(qcom, false);
+-	else if (qcom->current_role != USB_ROLE_DEVICE)
+-		dwc3_qcom_vbus_override_enable(qcom, true);
++	/*
++	 * The override tells the controller that a host supplies VBUS, so it
++	 * belongs to the device role only: leaving host mode for "none" must
++	 * not leave it set.
++	 */
++	dwc3_qcom_vbus_override_enable(qcom, next_role == USB_ROLE_DEVICE);
+ 
+ 	pm_runtime_mark_last_busy(qcom->dev);
+ 	pm_runtime_put_sync(qcom->dev);
+ 
+ 	/*
+ 	 * Current role changes via usb_role_switch_set_role callback protected
+-	 * internally by mutex lock.
++	 * internally by mutex lock. The gadget restart path reads it locklessly.
+ 	 */
+-	qcom->current_role = next_role;
++	WRITE_ONCE(qcom->current_role, next_role);
+ }
+ 
+ static void dwc3_qcom_run_stop_notifier(struct dwc3 *dwc, bool is_on)
+@@ -765,7 +767,8 @@ static void dwc3_qcom_run_stop_notifier(struct dwc3 *dwc, bool is_on)
+ 	if (!is_on)
+ 		return;
+ 
+-	dwc3_qcom_vbus_override_enable(qcom, true);
++	/* A gadget that starts while no host is attached gets no VBUS either. */
++	dwc3_qcom_vbus_override_enable(qcom, READ_ONCE(qcom->current_role) == USB_ROLE_DEVICE);
+ 	pm_runtime_mark_last_busy(qcom->dev);
+ }
+ 

@@ -1,0 +1,201 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Wed, 28 Oct 2026 12:48:55 +0300
+Subject: [PATCH 6/6] thermal: Add a sensor that averages thermal zones with
+ weights
+
+Add a driver for weighted-thermal-sensor: a thermal sensor whose
+temperature is the weighted average of the zones named in its zone-names
+property. Its probe waits until every input zone exists. The inputs are
+looked up by name on each read, so an input whose driver is reloaded is
+followed, and a read fails while any input cannot be read, so a missing
+input never lowers the estimate. A zone that names itself as an input
+is refused at read time.
+
+The design follows Doctor Logix's Perpetua kernel
+(denialwm/linux-perpetua 36df23454a01, "thermal: add a sensor that
+reports a weighted average of thermal zones"); that commit carries no
+Signed-off-by, so this is our own implementation.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/thermal/Kconfig            |  12 +++
+ drivers/thermal/Makefile           |   1 +
+ drivers/thermal/thermal-weighted.c | 132 +++++++++++++++++++++++++++++
+ 3 files changed, 145 insertions(+)
+ create mode 100644 drivers/thermal/thermal-weighted.c
+
+diff --git a/drivers/thermal/Kconfig b/drivers/thermal/Kconfig
+index 810eeccedfba..e18ec741897d 100644
+--- a/drivers/thermal/Kconfig
++++ b/drivers/thermal/Kconfig
+@@ -477,6 +477,18 @@ source "drivers/thermal/spacemit/Kconfig"
+ 
+ source "drivers/thermal/tegra/Kconfig"
+ 
++config THERMAL_WEIGHTED_SENSOR
++	tristate "Weighted average of thermal zones"
++	depends on THERMAL_OF
++	help
++	  A virtual thermal sensor that reports a weighted average of other
++	  thermal zones, as the device tree describes it. Handheld devices
++	  throttle on such an estimate for surfaces that carry no thermistor,
++	  such as the back cover.
++
++	  To compile this driver as a module, choose M here: the module
++	  will be called thermal-weighted.
++
+ config GENERIC_ADC_THERMAL
+ 	tristate "Generic ADC based thermal sensor"
+ 	depends on IIO
+diff --git a/drivers/thermal/Makefile b/drivers/thermal/Makefile
+index 3b249195c088..a44b3baef93e 100644
+--- a/drivers/thermal/Makefile
++++ b/drivers/thermal/Makefile
+@@ -63,6 +63,7 @@ obj-y				+= tegra/
+ obj-$(CONFIG_HISI_THERMAL)     += hisi_thermal.o
+ obj-y				+= mediatek/
+ obj-$(CONFIG_GENERIC_ADC_THERMAL)	+= thermal-generic-adc.o
++obj-$(CONFIG_THERMAL_WEIGHTED_SENSOR)	+= thermal-weighted.o
+ obj-$(CONFIG_UNIPHIER_THERMAL)	+= uniphier_thermal.o
+ obj-$(CONFIG_AMLOGIC_THERMAL)     += amlogic_thermal.o
+ obj-y				+= spacemit/
+diff --git a/drivers/thermal/thermal-weighted.c b/drivers/thermal/thermal-weighted.c
+new file mode 100644
+index 000000000000..b9a35feb8c17
+--- /dev/null
++++ b/drivers/thermal/thermal-weighted.c
+@@ -0,0 +1,132 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Weighted average of thermal zones, reported as a thermal sensor.
++ *
++ * Phone and tablet vendors throttle on the estimated temperature of surfaces
++ * that carry no thermistor (the back cover, the screen), computed as a fixed
++ * weighting of board, battery and SoC sensors. This sensor gives a thermal
++ * zone such an estimate: the zones it reads are named in the device tree,
++ * each with a weight.
++ *
++ * The inputs are found by zone name on every read, so an input whose driver
++ * is reloaded is followed. A read fails as long as any input cannot be read:
++ * a missing input never lowers the estimate.
++ */
++
++#include <linux/err.h>
++#include <linux/math64.h>
++#include <linux/mod_devicetable.h>
++#include <linux/module.h>
++#include <linux/of.h>
++#include <linux/overflow.h>
++#include <linux/platform_device.h>
++#include <linux/thermal.h>
++
++struct twavg_input {
++	const char *name;
++	u32 weight;
++};
++
++struct twavg {
++	struct thermal_zone_device *tz;
++	u64 weight_sum;
++	unsigned int count;
++	struct twavg_input in[] __counted_by(count);
++};
++
++static int twavg_get_temp(struct thermal_zone_device *tz, int *temp)
++{
++	struct twavg *avg = thermal_zone_device_priv(tz);
++	s64 acc = 0;
++	unsigned int i;
++
++	for (i = 0; i < avg->count; i++) {
++		struct thermal_zone_device *in;
++		int t, ret;
++
++		in = thermal_zone_get_zone_by_name(avg->in[i].name);
++		if (IS_ERR(in))
++			return PTR_ERR(in);
++		/* a zone that averaged itself would take its own lock again */
++		if (in == tz)
++			return -ELOOP;
++
++		ret = thermal_zone_get_temp(in, &t);
++		if (ret)
++			return ret;
++
++		acc += (s64)t * avg->in[i].weight;
++	}
++
++	*temp = div64_s64(acc, avg->weight_sum);
++
++	return 0;
++}
++
++static const struct thermal_zone_device_ops twavg_ops = {
++	.get_temp = twavg_get_temp,
++};
++
++static int twavg_probe(struct platform_device *pdev)
++{
++	struct device *dev = &pdev->dev;
++	struct device_node *np = dev->of_node;
++	struct twavg *avg;
++	int n, i;
++
++	n = of_property_count_strings(np, "zone-names");
++	if (n <= 0)
++		return dev_err_probe(dev, -EINVAL, "zone-names: no input zone\n");
++	if (of_property_count_u32_elems(np, "weights") != n)
++		return dev_err_probe(dev, -EINVAL, "weights: one per entry of zone-names\n");
++
++	avg = devm_kzalloc(dev, struct_size(avg, in, n), GFP_KERNEL);
++	if (!avg)
++		return -ENOMEM;
++	avg->count = n;
++
++	for (i = 0; i < n; i++) {
++		struct thermal_zone_device *in;
++
++		if (of_property_read_string_index(np, "zone-names", i, &avg->in[i].name) ||
++		    of_property_read_u32_index(np, "weights", i, &avg->in[i].weight))
++			return dev_err_probe(dev, -EINVAL, "input %d unreadable\n", i);
++		avg->weight_sum += avg->in[i].weight;
++
++		/* report nothing before every input is there */
++		in = thermal_zone_get_zone_by_name(avg->in[i].name);
++		if (PTR_ERR_OR_ZERO(in) == -ENODEV)
++			return dev_err_probe(dev, -EPROBE_DEFER, "input zone %s not there yet\n",
++					     avg->in[i].name);
++		if (IS_ERR(in))
++			return dev_err_probe(dev, PTR_ERR(in), "input zone %s\n",
++					     avg->in[i].name);
++	}
++
++	if (!avg->weight_sum)
++		return dev_err_probe(dev, -EINVAL, "weights: the sum is 0\n");
++
++	avg->tz = devm_thermal_of_zone_register(dev, 0, avg, &twavg_ops);
++	if (IS_ERR(avg->tz))
++		return dev_err_probe(dev, PTR_ERR(avg->tz), "cannot register the zone\n");
++
++	return 0;
++}
++
++static const struct of_device_id twavg_of_match[] = {
++	{ .compatible = "weighted-thermal-sensor" },
++	{ }
++};
++MODULE_DEVICE_TABLE(of, twavg_of_match);
++
++static struct platform_driver twavg_driver = {
++	.probe = twavg_probe,
++	.driver = {
++		.name = "thermal-weighted",
++		.of_match_table = twavg_of_match,
++	},
++};
++module_platform_driver(twavg_driver);
++
++MODULE_DESCRIPTION("Weighted average of thermal zones as a thermal sensor");
++MODULE_LICENSE("GPL");

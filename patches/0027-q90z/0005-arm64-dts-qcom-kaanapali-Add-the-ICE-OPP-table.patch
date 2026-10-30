@@ -1,0 +1,53 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 30 Oct 2026 08:19:24 +0200
+Subject: [PATCH 05/11] arm64: dts: qcom: kaanapali: Add the ICE OPP table
+
+The UFS host scales its clocks with the UFS OPP table (75, 100 and
+403 MHz). With ICE clock scaling the inline crypto engine follows it,
+but only with an OPP table of its own; without one its core clock
+stays at the rate it was left at.
+
+Add the ICE OPP table with the UFS table's three rates and their CX
+levels. The ICE core clock source has the same plan (75, 100, 201.5
+and 403 MHz from GPLL0 / GPLL4); 201.5 MHz is left out, as the UFS
+table does not use it and its level is not described here.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali.dtsi | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
+index 28cfa0bdbf10..39667f09a19a 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
++++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
+@@ -2894,6 +2894,27 @@
+ 			clock-names = "core",
+ 				      "iface";
+ 			power-domains = <&gcc GCC_UFS_PHY_GDSC>;
++
++			operating-points-v2 = <&ice_opp_table>;
++
++			ice_opp_table: opp-table {
++				compatible = "operating-points-v2";
++
++				opp-75000000 {
++					opp-hz = /bits/ 64 <75000000>;
++					required-opps = <&rpmhpd_opp_low_svs_d1>;
++				};
++
++				opp-100000000 {
++					opp-hz = /bits/ 64 <100000000>;
++					required-opps = <&rpmhpd_opp_low_svs>;
++				};
++
++				opp-403000000 {
++					opp-hz = /bits/ 64 <403000000>;
++					required-opps = <&rpmhpd_opp_nom>;
++				};
++			};
+ 		};
+ 
+ 		cryptobam: dma-controller@1dc4000 {

@@ -143,3 +143,13 @@ TREE_AFTER_0024_q90w2=e2cfded664a165c0b0e467edfa27919851f96f3e
 # q90x (27 Oct 2026) = q90w2 + 0025-q90x: ktz8869_iceland starts at stock's default brightness
 # (1417 of 4095) instead of 2047. Config and device tree as q90w2. Kernel 7.3.0-next-20261020-iceland-00555-gbc55efdfac46.
 TREE_AFTER_0025_q90x=8aa54b80de2ef358d62f68d2ffb17b81ab1bae52
+# q90y (28 Oct 2026) = q90x + 0026-q90y: Perpetua review picks - qrtr ns keeps announcing after a failed
+# send (Igor Opaniuk), dwc3-qcom VBUS override for the role entered, the battmgr charge current cooling
+# device and the weighted thermal sensor (neither used by the device tree). Config: + configs/q90y.config.
+# Kernel 7.3.0-next-20261020-iceland-00561-g94aa2d05027c.
+TREE_AFTER_0026_q90y=fc7da0370f23bdc3f2a2aad2e205dac1cbac4637
+# q90z (30 Oct 2026) = q90y + 0027-q90z: bwmon zone1 3, iris NoC LPI poll, ICE OPP clock scaling with UFS +
+# the kaanapali ICE OPP table, qrtr re-announce v3 (replaces v1), dwc3 UTMI pipe clock in DP-only modes,
+# L2F always on. Config: + configs/q90z.config (SWIOTLB 2 MB dynamic, CMA 128 MB).
+# Kernel 7.3.0-next-20261020-iceland-00572-ga7adbdc40113.
+TREE_AFTER_0027_q90z=a89ee3eb7d82fdcf2bc11d64ac1793e634afdcf1

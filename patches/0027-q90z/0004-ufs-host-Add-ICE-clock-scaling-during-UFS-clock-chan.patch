@@ -1,0 +1,76 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Abhinaba Rakshit <abhinaba.rakshit@oss.qualcomm.com>
+Date: Wed, 18 Feb 2026 14:08:31 +0530
+Subject: [PATCH 04/11] ufs: host: Add ICE clock scaling during UFS clock
+ changes
+
+Implement ICE (Inline Crypto Engine) clock scaling in sync with
+UFS controller clock scaling. This ensures that the ICE operates at
+an appropriate frequency when the UFS clocks are scaled up or down,
+improving performance and maintaining stability for crypto operations.
+
+For scale_up operation ensure to pass ~round_ceil (round_floor)
+and vice-versa for scale_down operations.
+
+In case of OPP scaling is not supported by ICE, ensure to not prevent
+devfreq for UFS, as ICE OPP-table is optional.
+
+Link: https://lore.kernel.org/all/20260824-enable-ice-clock-scaling-v12-2-09271f583dc6@oss.qualcomm.com/
+Acked-by: Manivannan Sadhasivam <mani@kernel.org>
+Reviewed-by: Harshal Dev <harshal.dev@oss.qualcomm.com>
+Acked-by: Martin K. Petersen <martin.petersen@oracle.com>
+Signed-off-by: Abhinaba Rakshit <abhinaba.rakshit@oss.qualcomm.com>
+
+[ from qualcomm-linux/kernel qcom-next 6469fafd8dee (FROMLIST, v12 2/2) ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/ufs/host/ufs-qcom.c | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
+index 3ee3e920dc1c..babeda2e6f3c 100644
+--- a/drivers/ufs/host/ufs-qcom.c
++++ b/drivers/ufs/host/ufs-qcom.c
+@@ -315,6 +315,15 @@ static int ufs_qcom_ice_prepare_key(struct blk_crypto_profile *profile,
+ 	return qcom_ice_prepare_key(host->ice, lt_key, lt_key_size, eph_key);
+ }
+ 
++static int ufs_qcom_ice_scale_clk(struct ufs_qcom_host *host, unsigned long target_freq,
++				  bool round_ceil)
++{
++	if (host->hba->caps & UFSHCD_CAP_CRYPTO)
++		return qcom_ice_scale_clk(host->ice, target_freq, round_ceil);
++
++	return 0;
++}
++
+ static const struct blk_crypto_ll_ops ufs_qcom_crypto_ops = {
+ 	.keyslot_program	= ufs_qcom_ice_keyslot_program,
+ 	.keyslot_evict		= ufs_qcom_ice_keyslot_evict,
+@@ -350,6 +359,12 @@ static void ufs_qcom_config_ice_allocator(struct ufs_qcom_host *host)
+ {
+ }
+ 
++static int ufs_qcom_ice_scale_clk(struct ufs_qcom_host *host, unsigned long target_freq,
++				  bool round_ceil)
++{
++	return 0;
++}
++
+ #endif
+ 
+ static void ufs_qcom_disable_lane_clks(struct ufs_qcom_host *host)
+@@ -1998,6 +2013,12 @@ static int ufs_qcom_clk_scale_notify(struct ufs_hba *hba, bool scale_up,
+ 			return err;
+ 		}
+ 
++		err = ufs_qcom_ice_scale_clk(host, target_freq, !scale_up);
++		if (err && err != -EOPNOTSUPP) {
++			ufshcd_uic_hibern8_exit(hba);
++			return err;
++		}
++
+ 		ufs_qcom_icc_update_bw(host);
+ 		ufshcd_uic_hibern8_exit(hba);
+ 	}
