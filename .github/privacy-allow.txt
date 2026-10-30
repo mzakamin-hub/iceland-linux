@@ -12,6 +12,8 @@ skip email *COPYING*
 #
 # Upstream patch authors named in the provenance notes (their addresses are public on lore.kernel.org).
 value 26rote@gmail.com
+# The lore Message-ID of the qrtr re-announce fix v3 (net, 29 Oct 2026), quoted in the q90z queue commit.
+value 20261029105142.2503-1-26rote@gmail.com
 #
 # A section number of the IEEE 802.11be standard quoted in an upstream mac80211 patch (0019-q90r/0008), not an address.
 value 10.3.2.14
