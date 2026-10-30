@@ -12,7 +12,7 @@ This repository is one part of the project. The boot chain and the install are d
 ## Current kernel
 
 - **Branch:** [`iceland-7.3-rc7-next`](https://github.com/mzakamin-hub/iceland-linux/tree/iceland-7.3-rc7-next). Build from this branch.
-- **Queue:** q90x (tag `q90x`), kernel release `7.3.0-next-20261020-iceland-00555-gbc55efdfac46`, packaged as
+- **Queue:** q90z (tag `q90z`), kernel release `7.3.0-next-20261020-iceland-00572-ga7adbdc40113`, packaged as
   `kernel-iceland`. The branch name is kept from the v7.3-rc7 queues; since q90b the queue applies onto linux-next
   `next-20261020` and moves to 7.4-rc1 once it is out.
 - **New since q90i:**
@@ -54,25 +54,34 @@ This repository is one part of the project. The boot chain and the install are d
     address, no forced class-H IQ while the flyback runs, the WCD939x codec version read after the SoundWire
     device attached, and the vendor bandgap fine adjust on codec v1.1 and later.
   - q90x: the backlight starts at stock's default brightness (1417 of 4095) when no brightness has been saved yet.
+  - q90y: the qrtr name service keeps announcing after a failed send (Igor Opaniuk); the dwc3-qcom VBUS override
+    follows the role being entered; a battery charge current cooling device and a weighted thermal sensor (both
+    unused by the device tree). q90y had no release download of its own.
+  - q90z: the CPU and LLCC bandwidth monitors lower their vote after 3 sample windows instead of 16; the video
+    decoder waits for its NoC to reach low power before power-off; the inline crypto engine clock scales with the UFS
+    clocks (with a kaanapali ICE OPP table); the qrtr re-announce fix in its v3; USB 2.0 keeps working when
+    DisplayPort takes all four lanes (the controller as a Type-C mode switch); L2F stays on (the camera I2C pull-up
+    supply). Config: a 2 MB bounce-buffer pool that grows on demand (was 64 MB) and a 128 MB CMA area (was 32 MB).
 - **`main`** holds the older queue q89g, the kernel of the first install image. Later queues are only on
   `iceland-7.3-rc7-next`.
 
 ## Download
 
-The newest release download is q90x: the [`q90x` release](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90x)
+The newest release download is q90z: the [`q90z` release](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90z)
 has:
 
-- `kernel-iceland-7.3.0.next.20261020.iceland.00555.gbc55efdfac46-1.fc44.aarch64.rpm`, the Fedora 44 package for the
+- `kernel-iceland-7.3.0.next.20261020.iceland.00572.ga7adbdc40113-1.fc44.aarch64.rpm`, the Fedora 44 package for the
   tablet;
 - the source RPM, which carries this repository's queue, and `SHA256SUMS`.
 
 Check the files with `sha256sum -c SHA256SUMS`. On the tablet's Fedora 44 system, install the package with dnf:
 
 ```bash
-sudo dnf install ./kernel-iceland-7.3.0.next.20261020.iceland.00555.gbc55efdfac46-1.fc44.aarch64.rpm
+sudo dnf install ./kernel-iceland-7.3.0.next.20261020.iceland.00572.ga7adbdc40113-1.fc44.aarch64.rpm
 ```
 
-Earlier releases: [q90w2](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90w2),
+Earlier releases: [q90x](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90x),
+[q90w2](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90w2),
 [q90v](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90v),
 [q90u](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90u),
 [q90r](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90r),
@@ -91,8 +100,8 @@ The counts below are for `iceland-7.3-rc7-next`.
 | `kernel.pin` | the upstream tag and commit, the tree hash expected after each series, the kernel release of each queue |
 | `patches/0001-infiniti/` | 110 patches from infiniti-mainline/linux (OnePlus 15, the same SoC), rebased onto `next-20261020` |
 | `patches/0002-iceland/` | 304 patches: the OnePlus Pad 4 series, numbered with gaps up to 0412 |
-| `patches/0003-glitchfix/` to `patches/0025-q90x/` | 141 patches: the display-timing switches of q89z, then one series per queue q90b to q90x (upstream picks and our fixes; there is no q90j series: q90j only removed patches) |
-| `configs/` | `distro-neutral.config`, `q90b.config`, `q90i.config`, `q90i-shipped.config`, `q90m.config` to `q90r.config`, `q90s.config` and `q90t.config` (merged into the build, in that order) and `required.config` (options the build checks) |
+| `patches/0003-glitchfix/` to `patches/0027-q90z/` | 158 patches: the display-timing switches of q89z, then one series per queue q90b to q90z (upstream picks and our fixes; there is no q90j series: q90j only removed patches) |
+| `configs/` | `distro-neutral.config`, `q90b.config`, `q90i.config`, `q90i-shipped.config`, `q90m.config` to `q90r.config`, `q90s.config`, `q90t.config`, `q90y.config` and `q90z.config` (merged into the build, in that order) and `required.config` (options the build checks) |
 | `scripts/prepare.sh` | clones the upstream tag, checks its commit, applies every series with `git am`, checks the tree hashes |
 | `scripts/build.sh` | configures and builds the kernel; writes `out/dist/` with `BUILD_INFO` and `SHA256SUMS` |
 | `packaging/fedora/` | `kernel-iceland.spec`, `build-rpm.sh` and the kernel-install plugin for the Fedora 44 package |
@@ -114,9 +123,9 @@ scripts/build.sh ./src ./out    # Image, Image.gz, the DTB and the modules; writ
 
 - `scripts/build.sh` runs `defconfig`, merges `arch/arm64/configs/sm8850.config` (map220v's fragment; drift is reported
   but not fatal), `configs/distro-neutral.config`, `q90b.config`, `q90i.config`, `q90i-shipped.config` and
-  `q90m.config` to `q90r.config`, `q90s.config` and `q90t.config`, then checks `q90i.config`, `q90i-shipped.config`,
-  `q90m.config`, `q90p.config`, `q90s.config`, `q90t.config` and `required.config` strictly. The result is the same
-  `.config` as the kernel-iceland q90x package's.
+  `q90m.config` to `q90r.config`, `q90s.config`, `q90t.config`, `q90y.config` and `q90z.config`, then checks `q90i.config`, `q90i-shipped.config`,
+  `q90m.config`, `q90p.config`, `q90s.config`, `q90t.config`, `q90y.config`, `q90z.config` and `required.config` strictly. The result is the same
+  `.config` as the kernel-iceland q90z package's.
   A failed strict check stops the build unless `ALLOW_CONFIG_DRIFT=1` is set.
 - `out/dist/` holds `Image`, `Image.gz`, `kaanapali-oneplus-iceland.dtb`, the config, `modules-<release>.tar.zst`,
   `BUILD_INFO` (kernel release, source commit, queue commit, compiler) and `SHA256SUMS`.
