@@ -33,7 +33,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 1af140298172..31851f4f22fa 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1398,6 +1398,27 @@
+@@ -1398,6 +1398,27 @@ &qup_i2c9_data_clk {
  	drive-strength = <8>;
  };
  
@@ -61,7 +61,7 @@ index 1af140298172..31851f4f22fa 100644
  &i2c14 {
  	status = "okay";
  
-@@ -1421,6 +1442,27 @@
+@@ -1421,6 +1442,27 @@ backlight@11 {
  	};
  };
  
@@ -89,7 +89,7 @@ index 1af140298172..31851f4f22fa 100644
  &i2c_hub_1 {
  	/* the vendor I2C driver's default; the vendor tree sets no other rate for this bus */
  	clock-frequency = <400000>;
-@@ -2173,6 +2215,22 @@
+@@ -2173,6 +2215,22 @@ &tlmm {
  	/* stock's qcom,gpios-reserved: 36-43, 74, 119, 120, 144-147 */
  	gpio-reserved-ranges = <36 8>, <74 1>, <119 2>, <144 4>;
  

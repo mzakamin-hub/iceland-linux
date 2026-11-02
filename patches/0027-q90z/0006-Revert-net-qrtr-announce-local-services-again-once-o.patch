@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 30 Oct 2026 08:19:24 +0200
-Subject: [PATCH 06/11] Revert "net: qrtr: announce local services again once
- our HELLO is sent"
+Subject: [PATCH] Revert "net: qrtr: announce local services again once our
+ HELLO is sent"
 
 This reverts commit 73d520a4bd36 (series 0019-q90r, patch 0007), the
 first posting of the patch. Its v3 follows.

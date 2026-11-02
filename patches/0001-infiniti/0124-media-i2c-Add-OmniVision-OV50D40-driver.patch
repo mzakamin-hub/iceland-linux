@@ -15,7 +15,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  create mode 100644 drivers/media/i2c/ov50d40.c
 
 diff --git a/drivers/media/i2c/Kconfig b/drivers/media/i2c/Kconfig
-index cdd533eccbeb..ef41e6a73d76 100644
+index 0bbf222c8704..2f4649b1da3c 100644
 --- a/drivers/media/i2c/Kconfig
 +++ b/drivers/media/i2c/Kconfig
 @@ -611,6 +611,17 @@ config VIDEO_OV4689

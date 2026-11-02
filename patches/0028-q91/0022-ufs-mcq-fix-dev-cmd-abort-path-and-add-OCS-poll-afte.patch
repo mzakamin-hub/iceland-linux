@@ -1,0 +1,102 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Kiwoong Kim <kwmad.kim@samsung.com>
+Date: Fri, 30 Oct 2026 20:10:45 +0900
+Subject: [PATCH 22/32] ufs: mcq: fix dev cmd abort path and add OCS poll after
+ sq cleanup
+
+In MCQ mode, ufshcd_mcq_abort() falls through to ufshcd_try_to_abort_task()
+for all timed-out commands. However, device management commands (query, NOP)
+use reserved requests and are not SCSI I/O commands. The ABORT TASK task
+management function is designed for SCSI I/O UPIUs and is not applicable to
+device management UPIUs.
+
+Fix this by checking ufshcd_is_scsi_cmd() in ufshcd_try_to_abort_task(). When
+the request is a reserved (device management) command, skip the TM path and
+call ufshcd_clear_cmd() directly instead.
+
+Additionally, extend ufshcd_mcq_sq_cleanup() to poll the OCS field in the
+UTRD of a device management command after a successful SQ_CUS poll. UFSHCI
+does not specify the order between the OCS update and the SQ_CUS update, so
+OCS may still be stale when cleanup returns. Without this poll, a late
+response to a timed-out query can arrive while a retry is already in flight,
+leaving the host with two query contexts and raising IS.UTPES.
+
+The poll is limited to device management commands because
+ufshcd_compl_one_cqe() copies the OCS from the CQE into the UTRD only for
+them. For SCSI commands, the OCS in the UTRD stays
+OCS_INVALID_COMMAND_STATUS, so polling it would always time out.
+
+The poll waits until OCS is no longer OCS_INVALID_COMMAND_STATUS or
+MCQ_POLL_US elapses. -ETIMEDOUT is returned only if OCS is still
+OCS_INVALID_COMMAND_STATUS after the poll. Any other value, such as
+OCS_ABORTED reported by the host controller for the cleaned-up request,
+means the cleanup has completed.
+
+[mzak: applied with one line of context: the hunk sits next to ufshcd_mcq_cmd_completed() from pw 1196728; no code change]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/ufs/core/ufs-mcq.c | 21 +++++++++++++++++++++
+ drivers/ufs/core/ufshcd.c  |  4 ++++
+ 2 files changed, 25 insertions(+)
+
+diff --git a/drivers/ufs/core/ufs-mcq.c b/drivers/ufs/core/ufs-mcq.c
+index b130a2dfc88a..b4b86999b93d 100644
+--- a/drivers/ufs/core/ufs-mcq.c
++++ b/drivers/ufs/core/ufs-mcq.c
+@@ -567,6 +567,13 @@ static bool ufshcd_mcq_cmd_completed(struct ufs_hba *hba,
+ 	return test_bit(UFSHCD_LRB_COMPLETED, &lrbp->flags);
+ }
+ 
++static enum utp_ocs ufshcd_mcq_read_ocs(struct ufs_hw_queue *hwq,
++					struct ufshcd_lrb *lrbp)
++{
++	guard(spinlock_irqsave)(&hwq->cq_lock);
++	return READ_ONCE(lrbp->utr_descriptor_ptr->header.ocs);
++}
++
+ /**
+  * ufshcd_mcq_sq_cleanup - Clean up submission queue resources
+  * associated with the pending command.
+@@ -627,6 +634,20 @@ int ufshcd_mcq_sq_cleanup(struct ufs_hba *hba, int task_tag)
+ 			 __func__, id,
+ 			 FIELD_GET(SQ_ICU_ERR_CODE_MASK, readl(reg)));
+ 
++	/*
++	 * For device management commands, there is no order guaranteed between
++	 * OCS update and CUS update, which is why we need to wait here. SCSI
++	 * commands are excluded because the OCS in their UTRD is not updated
++	 * from the CQE.
++	 */
++	if (!err && blk_mq_is_reserved_rq(rq)) {
++		enum utp_ocs ocs;
++
++		err = read_poll_timeout(ufshcd_mcq_read_ocs, ocs,
++					ocs != OCS_INVALID_COMMAND_STATUS, 20,
++					MCQ_POLL_US, false, hwq, lrbp);
++	}
++
+ 	if (ufshcd_mcq_sq_start(hba, hwq))
+ 		err = -ETIMEDOUT;
+ 
+diff --git a/drivers/ufs/core/ufshcd.c b/drivers/ufs/core/ufshcd.c
+index f9c24e8d2ed7..5eb79302bee0 100644
+--- a/drivers/ufs/core/ufshcd.c
++++ b/drivers/ufs/core/ufshcd.c
+@@ -8121,6 +8121,9 @@ int ufshcd_try_to_abort_task(struct ufs_hba *hba, int tag)
+ 
+ 	lrbp = scsi_cmd_priv(cmd);
+ 
++	if (!ufshcd_is_scsi_cmd(cmd))
++		goto clear_cmd;
++
+ 	for (poll_cnt = 100; poll_cnt; poll_cnt--) {
+ 		err = ufshcd_issue_tm_cmd(hba, lrbp->lun, tag, UFS_QUERY_TASK,
+ 					  &resp);
+@@ -8166,6 +8169,7 @@ int ufshcd_try_to_abort_task(struct ufs_hba *hba, int tag)
+ 		return err;
+ 	}
+ 
++clear_cmd:
+ 	err = ufshcd_clear_cmd(hba, tag);
+ 	if (err)
+ 		dev_err(hba->dev, "%s: Failed clearing cmd at tag %d, err %d\n",

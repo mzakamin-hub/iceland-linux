@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sun, 25 Oct 2026 16:57:03 +0300
-Subject: [PATCH 2/6] usb: typec: ucsi: glink: Quiesce notifications across
- system sleep
+Subject: [PATCH] usb: typec: ucsi: glink: Quiesce notifications across system
+ sleep
 
 The glink UCSI driver has no PM callbacks. A USB-C notification that
 arrives while the system is going to sleep schedules notify_work, which

@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Stanley Jhu <stanleyjhu@google.com>
 Date: Sun, 25 Oct 2026 09:34:46 +0800
-Subject: [PATCH 04/11] scsi: ufs: hwmon, debugfs: Propagate runtime PM resume
- errors
+Subject: [PATCH] scsi: ufs: hwmon, debugfs: Propagate runtime PM resume errors
 
 ufs_hwmon_read(), ufs_hwmon_write(), and ufs_debugfs_get_user_access()
 ignore the return value of ufshcd_rpm_get_sync():

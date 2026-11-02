@@ -1,0 +1,59 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 2 Nov 2026 10:54:27 +0200
+Subject: [PATCH 27/32] drm/panel: nt36536: add 50 and 48 Hz modes for the
+ iceland panel
+
+The stock software switches the OnePlus Pad 4 panel to 50 and 48 Hz for
+25 / 50 fps and 24 fps video. Add both rates, derived from our 90 Hz
+timing by stretching the vertical front porch at the same pixel clock,
+the rule the 60 and 30 Hz modes already follow for the 120 Hz timing:
+vtotal = 2480 * 90 / rate, so a vertical front porch of 2010 lines at
+50 Hz and 2196 at 48 Hz.
+
+The values match SuperTurtleDev / Yibo Wang's commit 2fe9301e73fa,
+which took them from the vendor DFPS lists; that commit was used as a
+cross-check only. The 144 Hz mode stays.
+
+Based-on: SuperTurtleDev iceland kernel 2fe9301e73fa (Yibo Wang; mode values cross-checked only)
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/panel/panel-novatek-nt36536.c | 24 +++++++++++++++++++
+ 1 file changed, 24 insertions(+)
+
+diff --git a/drivers/gpu/drm/panel/panel-novatek-nt36536.c b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
+index 61f0c2621bfd..458e899d23b3 100644
+--- a/drivers/gpu/drm/panel/panel-novatek-nt36536.c
++++ b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
+@@ -853,6 +853,30 @@ static const struct drm_display_mode csot_iceland_modes[] = {
+ 		.vsync_end = 2400 + 2726 + 2,
+ 		.vtotal = 2400 + 2726 + 2 + 272,
+ 	},
++	{
++		/* 50Hz: the 90 Hz timing, vertical front porch 2010 (same pixel clock) */
++		.clock = (3392 + 420 + 160 + 320) * (2400 + 2010 + 2 + 52) * 50 / 1000,
++		.hdisplay = 3392,
++		.hsync_start = 3392 + 420,
++		.hsync_end = 3392 + 420 + 160,
++		.htotal = 3392 + 420 + 160 + 320,
++		.vdisplay = 2400,
++		.vsync_start = 2400 + 2010,
++		.vsync_end = 2400 + 2010 + 2,
++		.vtotal = 2400 + 2010 + 2 + 52,
++	},
++	{
++		/* 48Hz: the 90 Hz timing, vertical front porch 2196 (same pixel clock) */
++		.clock = (3392 + 420 + 160 + 320) * (2400 + 2196 + 2 + 52) * 48 / 1000,
++		.hdisplay = 3392,
++		.hsync_start = 3392 + 420,
++		.hsync_end = 3392 + 420 + 160,
++		.htotal = 3392 + 420 + 160 + 320,
++		.vdisplay = 2400,
++		.vsync_start = 2400 + 2196,
++		.vsync_end = 2400 + 2196 + 2,
++		.vtotal = 2400 + 2196 + 2 + 52,
++	},
+ 	{
+ 		/* 30Hz */
+ 		.clock = (3392 + 100 + 64 + 104) * (2400 + 8126 + 2 + 272) * 30 / 1000,

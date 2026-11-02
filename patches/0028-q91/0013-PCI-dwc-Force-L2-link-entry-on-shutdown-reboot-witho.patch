@@ -1,0 +1,199 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Krishna Chaitanya Chundru <krishna.chundru@oss.qualcomm.com>
+Date: Thu, 29 Oct 2026 09:49:28 +0530
+Subject: [PATCH 13/32] PCI: dwc: Force L2 link entry on shutdown/reboot
+ without D3cold check
+
+dw_pcie_suspend_noirq() normally calls pci_host_common_d3cold_possible()
+to check whether every downstream endpoint can be put into D3cold before
+bothering to move the link to L2. If no endpoint supports it, the
+function returns early and leaves the link up.
+
+Querying D3cold support during shutdown is actively harmful, not just
+slow: pci_host_common_d3cold_possible() requires every active endpoint
+to already be in PCI_D3hot, and returns false otherwise. If any endpoint
+is still in D0 -- which is common, since endpoint drivers aren't
+guaranteed to have suspended by the time the host's shutdown path runs
+the check fails and dw_pcie_suspend_noirq() returns early without ever
+moving the link to L2, leaving it up right up to the point where the
+system cuts power/clocks to the controller.
+
+Add a force parameter to dw_pcie_suspend_noirq() that callers set
+explicitly to force this behavior, still call
+pci_host_common_d3cold_possible() unconditionally, since it's also how
+pme_capable gets set, but ignore its return value and force L2 entry
+regardless when force is set.
+
+Signed-off-by: Krishna Chaitanya Chundru <krishna.chundru@oss.qualcomm.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/pci/controller/dwc/pci-imx6.c             | 2 +-
+ drivers/pci/controller/dwc/pci-layerscape.c       | 2 +-
+ drivers/pci/controller/dwc/pcie-designware-host.c | 9 ++++-----
+ drivers/pci/controller/dwc/pcie-designware.h      | 4 ++--
+ drivers/pci/controller/dwc/pcie-eswin.c           | 2 +-
+ drivers/pci/controller/dwc/pcie-nxp-s32g.c        | 2 +-
+ drivers/pci/controller/dwc/pcie-qcom.c            | 2 +-
+ drivers/pci/controller/dwc/pcie-rcar-gen4.c       | 2 +-
+ drivers/pci/controller/dwc/pcie-stm32.c           | 2 +-
+ drivers/pci/controller/dwc/pcie-ultrarisc.c       | 2 +-
+ 10 files changed, 14 insertions(+), 15 deletions(-)
+
+diff --git a/drivers/pci/controller/dwc/pci-imx6.c b/drivers/pci/controller/dwc/pci-imx6.c
+index 83fbd998551d..1f2b942e8423 100644
+--- a/drivers/pci/controller/dwc/pci-imx6.c
++++ b/drivers/pci/controller/dwc/pci-imx6.c
+@@ -1788,7 +1788,7 @@ static int imx_pcie_suspend_noirq(struct device *dev)
+ 		imx_pcie_assert_perst(imx_pcie, true);
+ 		imx_pcie->drvdata->enable_ref_clk(imx_pcie, false);
+ 	} else {
+-		return dw_pcie_suspend_noirq(imx_pcie->pci);
++		return dw_pcie_suspend_noirq(imx_pcie->pci, false);
+ 	}
+ 
+ 	return 0;
+diff --git a/drivers/pci/controller/dwc/pci-layerscape.c b/drivers/pci/controller/dwc/pci-layerscape.c
+index 7f37a0537159..bfed194834d4 100644
+--- a/drivers/pci/controller/dwc/pci-layerscape.c
++++ b/drivers/pci/controller/dwc/pci-layerscape.c
+@@ -382,7 +382,7 @@ static int ls_pcie_suspend_noirq(struct device *dev)
+ 	if (!pcie->drvdata->pm_support)
+ 		return 0;
+ 
+-	return dw_pcie_suspend_noirq(pcie->pci);
++	return dw_pcie_suspend_noirq(pcie->pci, false);
+ }
+ 
+ static int ls_pcie_resume_noirq(struct device *dev)
+diff --git a/drivers/pci/controller/dwc/pcie-designware-host.c b/drivers/pci/controller/dwc/pcie-designware-host.c
+index 869a39107a81..e4d47999613c 100644
+--- a/drivers/pci/controller/dwc/pcie-designware-host.c
++++ b/drivers/pci/controller/dwc/pcie-designware-host.c
+@@ -1235,23 +1235,22 @@ static int dw_pcie_pme_turn_off(struct dw_pcie *pci)
+ 	return 0;
+ }
+ 
+-int dw_pcie_suspend_noirq(struct dw_pcie *pci)
++int dw_pcie_suspend_noirq(struct dw_pcie *pci, bool force)
+ {
+-	bool d3cold, pme_capable = false;
++	bool d3cold_possible, pme_capable = false;
+ 	int ret = 0;
+ 	u32 val;
+ 
+ 	if (!dw_pcie_link_up(pci))
+ 		goto stop_link;
+ 
+-	d3cold = pci_host_common_d3cold_possible(pci->pp.bridge, &pme_capable);
+-
+ 	/*
+ 	 * Enter L2 if D3cold is possible, or if the platform loses RC power
+ 	 * during suspend (in which case L2 entry is required to notify
+ 	 * endpoints before power loss, regardless of D3cold support).
+ 	 */
+-	if (!d3cold && !pci->pp.suspend_poweroff)
++	d3cold_possible = pci_host_common_d3cold_possible(pci->pp.bridge, &pme_capable);
++	if (!d3cold_possible && !force && !pci->pp.suspend_poweroff)
+ 		return 0;
+ 
+ 	if (pci->pp.ops->pme_turn_off) {
+diff --git a/drivers/pci/controller/dwc/pcie-designware.h b/drivers/pci/controller/dwc/pcie-designware.h
+index 6d788aa00011..4905932cfaf9 100644
+--- a/drivers/pci/controller/dwc/pcie-designware.h
++++ b/drivers/pci/controller/dwc/pcie-designware.h
+@@ -861,7 +861,7 @@ static inline enum dw_pcie_ltssm dw_pcie_get_ltssm(struct dw_pcie *pci)
+ const char *dw_pcie_ltssm_status_string(enum dw_pcie_ltssm ltssm);
+ 
+ #ifdef CONFIG_PCIE_DW_HOST
+-int dw_pcie_suspend_noirq(struct dw_pcie *pci);
++int dw_pcie_suspend_noirq(struct dw_pcie *pci, bool force);
+ int dw_pcie_resume_noirq(struct dw_pcie *pci);
+ void dw_handle_msi_irq(struct dw_pcie_rp *pp);
+ void dw_pcie_msi_init(struct dw_pcie_rp *pp);
+@@ -874,7 +874,7 @@ int dw_pcie_allocate_msi_domains(struct dw_pcie_rp *pp);
+ void __iomem *dw_pcie_own_conf_map_bus(struct pci_bus *bus, unsigned int devfn,
+ 				       int where);
+ #else
+-static inline int dw_pcie_suspend_noirq(struct dw_pcie *pci)
++static inline int dw_pcie_suspend_noirq(struct dw_pcie *pci, bool force)
+ {
+ 	return 0;
+ }
+diff --git a/drivers/pci/controller/dwc/pcie-eswin.c b/drivers/pci/controller/dwc/pcie-eswin.c
+index 1bb44696057e..21d077172724 100644
+--- a/drivers/pci/controller/dwc/pcie-eswin.c
++++ b/drivers/pci/controller/dwc/pcie-eswin.c
+@@ -367,7 +367,7 @@ static int eswin_pcie_suspend_noirq(struct device *dev)
+ {
+ 	struct eswin_pcie *pcie = dev_get_drvdata(dev);
+ 
+-	return dw_pcie_suspend_noirq(&pcie->pci);
++	return dw_pcie_suspend_noirq(&pcie->pci, false);
+ }
+ 
+ static int eswin_pcie_resume_noirq(struct device *dev)
+diff --git a/drivers/pci/controller/dwc/pcie-nxp-s32g.c b/drivers/pci/controller/dwc/pcie-nxp-s32g.c
+index 386e44dd0477..cb9cc9327d85 100644
+--- a/drivers/pci/controller/dwc/pcie-nxp-s32g.c
++++ b/drivers/pci/controller/dwc/pcie-nxp-s32g.c
+@@ -365,7 +365,7 @@ static int s32g_pcie_suspend_noirq(struct device *dev)
+ 	struct s32g_pcie *s32g_pp = dev_get_drvdata(dev);
+ 	struct dw_pcie *pci = &s32g_pp->pci;
+ 
+-	return dw_pcie_suspend_noirq(pci);
++	return dw_pcie_suspend_noirq(pci, false);
+ }
+ 
+ static int s32g_pcie_resume_noirq(struct device *dev)
+diff --git a/drivers/pci/controller/dwc/pcie-qcom.c b/drivers/pci/controller/dwc/pcie-qcom.c
+index 877d43358207..77c05dbb3c4f 100644
+--- a/drivers/pci/controller/dwc/pcie-qcom.c
++++ b/drivers/pci/controller/dwc/pcie-qcom.c
+@@ -2488,7 +2488,7 @@ static int qcom_pcie_suspend_noirq(struct device *dev)
+ 	if (!pcie)
+ 		return 0;
+ 
+-	ret = dw_pcie_suspend_noirq(pcie->pci);
++	ret = dw_pcie_suspend_noirq(pcie->pci, false);
+ 	if (ret)
+ 		return ret;
+ 
+diff --git a/drivers/pci/controller/dwc/pcie-rcar-gen4.c b/drivers/pci/controller/dwc/pcie-rcar-gen4.c
+index fceecbd16355..045d33ac61ea 100644
+--- a/drivers/pci/controller/dwc/pcie-rcar-gen4.c
++++ b/drivers/pci/controller/dwc/pcie-rcar-gen4.c
+@@ -1071,7 +1071,7 @@ static int rcar_gen4_pcie_suspend_noirq(struct device *dev)
+ 	if (rcar->drvdata->mode != DW_PCIE_RC_TYPE)
+ 		return 0;
+ 
+-	return dw_pcie_suspend_noirq(&rcar->dw);
++	return dw_pcie_suspend_noirq(&rcar->dw, false);
+ }
+ 
+ static int rcar_gen4_pcie_resume_noirq(struct device *dev)
+diff --git a/drivers/pci/controller/dwc/pcie-stm32.c b/drivers/pci/controller/dwc/pcie-stm32.c
+index 349618ea5b9c..7b3a8c1b04a4 100644
+--- a/drivers/pci/controller/dwc/pcie-stm32.c
++++ b/drivers/pci/controller/dwc/pcie-stm32.c
+@@ -78,7 +78,7 @@ static int stm32_pcie_suspend_noirq(struct device *dev)
+ 	struct stm32_pcie *stm32_pcie = dev_get_drvdata(dev);
+ 	int ret;
+ 
+-	ret = dw_pcie_suspend_noirq(&stm32_pcie->pci);
++	ret = dw_pcie_suspend_noirq(&stm32_pcie->pci, false);
+ 	if (ret)
+ 		return ret;
+ 
+diff --git a/drivers/pci/controller/dwc/pcie-ultrarisc.c b/drivers/pci/controller/dwc/pcie-ultrarisc.c
+index 523f454c6c52..59341682213c 100644
+--- a/drivers/pci/controller/dwc/pcie-ultrarisc.c
++++ b/drivers/pci/controller/dwc/pcie-ultrarisc.c
+@@ -193,7 +193,7 @@ static int ultrarisc_pcie_suspend_noirq(struct device *dev)
+ 	if (pci->suspended)
+ 		return 0;
+ 
+-	ret = dw_pcie_suspend_noirq(pci);
++	ret = dw_pcie_suspend_noirq(pci, false);
+ 	if (ret)
+ 		return ret;
+ 

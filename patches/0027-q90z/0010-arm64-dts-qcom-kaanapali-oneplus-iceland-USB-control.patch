@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 30 Oct 2026 08:19:25 +0200
-Subject: [PATCH 10/11] arm64: dts: qcom: kaanapali-oneplus-iceland: USB
- controller as a mode switch
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: USB controller
+ as a mode switch
 
 The QMP USB3-DP combo PHY stops the USB3 PIPE clock when DisplayPort
 takes all four lanes (pin assignments C and E). Mark the controller
@@ -25,7 +25,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 5ed53e5b6547..cf5758dcba37 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -2489,6 +2489,13 @@
+@@ -2489,6 +2489,13 @@ &usb {
  	 */
  	/delete-property/ wakeup-source;
  

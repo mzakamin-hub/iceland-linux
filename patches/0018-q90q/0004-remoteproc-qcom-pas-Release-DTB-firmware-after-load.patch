@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Anup Vishwakarma <anup.vishwakarma@oss.qualcomm.com>
 Date: Thu, 22 Oct 2026 20:24:25 +0530
-Subject: [PATCH 04/11] remoteproc: qcom: pas: Release DTB firmware after load
+Subject: [PATCH] remoteproc: qcom: pas: Release DTB firmware after load
 
 qcom_pas_load() releases the DTB firmware only when
 qcom_mdt_pas_load() fails. On success the firmware is never released,
@@ -21,7 +21,7 @@ Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/remoteproc/qcom_q6v5_pas.c b/drivers/remoteproc/qcom_q6v5_pas.c
-index 04ee5050faf6..9fc92205a62b 100644
+index 0f23038138cd..a1ea271051e2 100644
 --- a/drivers/remoteproc/qcom_q6v5_pas.c
 +++ b/drivers/remoteproc/qcom_q6v5_pas.c
 @@ -279,9 +279,10 @@ static int qcom_pas_load(struct rproc *rproc, const struct firmware *fw)

@@ -23,7 +23,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 226050e78304..5a044fb69f91 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -3875,3 +3875,31 @@
+@@ -3875,3 +3875,31 @@ map1 {
  		};
  	};
  };

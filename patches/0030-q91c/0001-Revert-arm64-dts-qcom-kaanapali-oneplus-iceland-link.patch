@@ -1,0 +1,56 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 2 Nov 2026 12:41:36 +0200
+Subject: [PATCH 1/2] Revert "arm64: dts: qcom: kaanapali-oneplus-iceland: link
+ the rear camera to its flash"
+
+With flash-leds on the rear sensor, v4l2_async_register_subdev_sensor()
+adds both flash LEDs as async connections of the sensor's notifier. The
+LEDs only become V4L2 subdevices through v4l2-flash, and our config has
+CONFIG_V4L2_FLASH_LED_CLASS unset, so leds-qcom-flash never registers
+them: the sensor's notifier never completes, CAMSS never reaches its
+complete callback, no /dev/v4l-subdev* nodes or sensor entities are
+created, and libcamera finds no camera at all (q91b: "No sensor found
+for /dev/media0", 0 / 20 captures; front and rear, since CAMSS registers
+the subdevice nodes only when every sensor is bound).
+
+Take the link out. It can come back together with
+CONFIG_V4L2_FLASH_LED_CLASS (and a test that the flash LED subdevices
+register before CAMSS completes).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index ca276839c010..7ac40870b192 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1367,7 +1367,6 @@ camera@36 {
+ 		rotation = <0>;
+ 
+ 		lens-focus = <&vcm>;
+-		flash-leds = <&rear_flash_yellow>, <&rear_flash_white>;
+ 
+ 		port {
+ 			cam_rear_out: endpoint {
+@@ -1715,7 +1714,7 @@ &pmh0101_flash {
+ 	status = "okay";
+ 
+ 	/* two dies, each on two channels (stock: 500 mA torch, 2 A flash, 1.28 s per die) */
+-	rear_flash_yellow: led-0 {
++	led-0 {
+ 		function = LED_FUNCTION_FLASH;
+ 		function-enumerator = <0>;
+ 		color = <LED_COLOR_ID_YELLOW>;
+@@ -1725,7 +1724,7 @@ rear_flash_yellow: led-0 {
+ 		flash-max-timeout-us = <1280000>;
+ 	};
+ 
+-	rear_flash_white: led-1 {
++	led-1 {
+ 		function = LED_FUNCTION_FLASH;
+ 		function-enumerator = <1>;
+ 		color = <LED_COLOR_ID_WHITE>;

@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sun, 25 Oct 2026 20:12:07 +0300
-Subject: [PATCH 5/6] virt: gunyah: Never release memory that may still be
- donated or assigned
+Subject: [PATCH] virt: gunyah: Never release memory that may still be donated
+ or assigned
 
 Several error paths hand memory back to the page allocator although it
 may still belong to a guest or to the secure world:
@@ -99,7 +99,7 @@ diff --git a/drivers/virt/gunyah/vm_mgr_mem.c b/drivers/virt/gunyah/vm_mgr_mem.c
 index f6fe84517af6..c48d3ba4489e 100644
 --- a/drivers/virt/gunyah/vm_mgr_mem.c
 +++ b/drivers/virt/gunyah/vm_mgr_mem.c
-@@ -239,21 +239,38 @@ memextent_reclaim:
+@@ -239,21 +239,38 @@ int gunyah_vm_provide_folio(struct gunyah_vm *ghvm, struct folio *folio,
  	gunyah_error = gunyah_hypercall_memextent_donate(
  		reclaim_flags(share, true), guest_extent->capid,
  		host_extent->capid, pa, size);

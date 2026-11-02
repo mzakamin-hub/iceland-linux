@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Birk Skyum <birk.skyum@pm.me>
 Date: Tue, 20 Oct 2026 19:39:53 +0000
-Subject: [PATCH 10/17] i2c: qcom-cci: Reset the controller when it resumes
+Subject: [PATCH] i2c: qcom-cci: Reset the controller when it resumes
 
 A CCI master can stop starting transfers after a target on its bus was
 powered down and up again while the controller kept its clocks running.

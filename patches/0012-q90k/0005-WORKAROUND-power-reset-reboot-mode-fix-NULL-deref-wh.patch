@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Salendarsingh Gaud <sgaud@qti.qualcomm.com>
 Date: Fri, 8 May 2026 09:36:34 +0530
-Subject: [PATCH 05/17] WORKAROUND: power: reset: reboot-mode: fix NULL deref
- when dev is not set
+Subject: [PATCH] WORKAROUND: power: reset: reboot-mode: fix NULL deref when
+ dev is not set
 
 reboot_mode_create_device() and reboot_mode_unregister_device()
 unconditionally dereference reboot->dev->driver->name to name the

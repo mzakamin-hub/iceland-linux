@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jie Zhang <jie.zhang@oss.qualcomm.com>
 Date: Sat, 24 Oct 2026 16:00:11 +0530
-Subject: [PATCH 05/13] drm/msm: Fix sched_prio inversion within a ring
+Subject: [PATCH] drm/msm: Fix sched_prio inversion within a ring
 
 Commit 38f922a563aa ("drm/sched: Reverse run-queue priority enumeration")
 reversed the values of each sched priority. But it didn't update

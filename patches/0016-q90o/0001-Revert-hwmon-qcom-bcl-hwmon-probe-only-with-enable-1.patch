@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 24 Oct 2026 09:51:22 +0300
-Subject: [PATCH 1/4] Revert "hwmon: qcom-bcl-hwmon: probe only with enable=1
+Subject: [PATCH] Revert "hwmon: qcom-bcl-hwmon: probe only with enable=1
  (default off)"
 
 The base tree already has the PMIC BCL alarms: the built-in thermal driver

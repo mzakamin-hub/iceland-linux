@@ -33,7 +33,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  create mode 100644 drivers/media/i2c/sc820cs-regs.h
 
 diff --git a/drivers/media/i2c/Kconfig b/drivers/media/i2c/Kconfig
-index a6b87d7433ee..623429aabb1e 100644
+index f91e789922f3..a001be13676f 100644
 --- a/drivers/media/i2c/Kconfig
 +++ b/drivers/media/i2c/Kconfig
 @@ -912,6 +912,16 @@ config VIDEO_S5KJN5

@@ -119,7 +119,7 @@ index 3bffd5abd09d..69078dc25a38 100644
  {
  	struct wcd939x_priv *wcd939x = dev_get_drvdata(component->dev);
  	unsigned int reg0, reg1, reg2, reg3, reg4;
-@@ -2311,6 +2341,30 @@ zdet_complete:
+@@ -2311,6 +2341,30 @@ static void wcd939x_wcd_mbhc_calc_impedance(struct snd_soc_component *component,
  					      WCD939X_MBHC_ELECT_FSM_EN, true);
  }
  

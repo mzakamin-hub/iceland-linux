@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Wed, 28 Oct 2026 12:48:54 +0300
-Subject: [PATCH 2/6] usb: dwc3: qcom: Set the VBUS override for the role being
+Subject: [PATCH] usb: dwc3: qcom: Set the VBUS override for the role being
  entered
 
 dwc3_qcom_set_role_notifier() chooses the VBUS override from the role

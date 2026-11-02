@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Joonhoe Kim <26rote@gmail.com>
 Date: Fri, 23 Oct 2026 21:35:12 +0900
-Subject: [PATCH 11/13] phy: qcom: qmp-combo: Leave the USB PCS alone in
- DP-only mode
+Subject: [PATCH] phy: qcom: qmp-combo: Leave the USB PCS alone in DP-only mode
 
 In DP-only mode (DisplayPort pin assignments C and E) all four lanes
 belong to the DisplayPort PHY and the USB PCS stays powered down.

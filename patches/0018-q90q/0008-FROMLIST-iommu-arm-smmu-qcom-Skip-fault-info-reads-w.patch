@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Bibek Kumar Patro <bibek.patro@oss.qualcomm.com>
 Date: Sat, 12 Sep 2026 03:55:38 +0530
-Subject: [PATCH 08/11] FROMLIST: iommu: arm-smmu-qcom: Skip fault-info reads
- when suspended
+Subject: [PATCH] FROMLIST: iommu: arm-smmu-qcom: Skip fault-info reads when
+ suspended
 
 qcom_adreno_smmu_get_fault_info() accesses SMMU registers without
 holding a runtime PM reference. A fault is raised while the SMMU is

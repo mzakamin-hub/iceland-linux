@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 26 Oct 2026 18:09:15 +0300
-Subject: [PATCH 2/5] usb: typec: mux: wcd939x-usbss: Fix the MG2_MISC register
+Subject: [PATCH] usb: typec: mux: wcd939x-usbss: Fix the MG2_MISC register
  address
 
 The probe enables the 2x dynamic boost of the MG1 and MG2 OVP

@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Kuldeep Singh <kuldeep.singh@oss.qualcomm.com>
 Date: Thu, 22 Oct 2026 15:21:51 +0530
-Subject: [PATCH 05/11] ufs: ufs-qcom: Enable ICE before enabling crypto
- support
+Subject: [PATCH] ufs: ufs-qcom: Enable ICE before enabling crypto support
 
 ufs-qcom currently exposes UFS crypto profile and sets UFSHCD_CAP_CRYPTO
 before enabling ICE. This leaves a window where blk-crypto can issue
@@ -30,10 +29,10 @@ Signed-off-by: Kuldeep Singh <kuldeep.singh@oss.qualcomm.com>
  1 file changed, 20 insertions(+), 9 deletions(-)
 
 diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
-index ea2a106cbe26..3ee3e920dc1c 100644
+index 47fc785612ad..be23d20c29c1 100644
 --- a/drivers/ufs/host/ufs-qcom.c
 +++ b/drivers/ufs/host/ufs-qcom.c
-@@ -158,13 +158,15 @@ static void ufs_qcom_config_ice_allocator(struct ufs_qcom_host *host)
+@@ -157,13 +157,15 @@ static void ufs_qcom_config_ice_allocator(struct ufs_qcom_host *host)
  	ufshcd_writel(hba, config, REG_UFS_MEM_ICE_NUM_CORE);
  }
  
@@ -53,7 +52,7 @@ index ea2a106cbe26..3ee3e920dc1c 100644
  
  static int ufs_qcom_ice_init(struct ufs_qcom_host *host)
  {
-@@ -188,6 +190,12 @@ static int ufs_qcom_ice_init(struct ufs_qcom_host *host)
+@@ -187,6 +189,12 @@ static int ufs_qcom_ice_init(struct ufs_qcom_host *host)
  
  	host->ice = ice;
  
@@ -66,7 +65,7 @@ index ea2a106cbe26..3ee3e920dc1c 100644
  	/* Initialize the blk_crypto_profile */
  
  	caps.reg_val = cpu_to_le32(ufshcd_readl(hba, REG_UFS_CCAP));
-@@ -318,11 +326,12 @@ static const struct blk_crypto_ll_ops ufs_qcom_crypto_ops = {
+@@ -317,11 +325,12 @@ static const struct blk_crypto_ll_ops ufs_qcom_crypto_ops = {
  
  #else
  
@@ -81,7 +80,7 @@ index ea2a106cbe26..3ee3e920dc1c 100644
  {
  	return 0;
  }
-@@ -636,12 +645,15 @@ static int ufs_qcom_hce_enable_notify(struct ufs_hba *hba,
+@@ -635,12 +644,15 @@ static int ufs_qcom_hce_enable_notify(struct ufs_hba *hba,
  		 * is initialized.
  		 */
  		err = ufs_qcom_enable_lane_clks(host);
@@ -98,7 +97,7 @@ index ea2a106cbe26..3ee3e920dc1c 100644
  		ufs_qcom_config_ice_allocator(host);
  		break;
  	default:
-@@ -660,10 +672,9 @@ static int ufs_qcom_fw_managed_hce_enable_notify(struct ufs_hba *hba,
+@@ -659,10 +671,9 @@ static int ufs_qcom_fw_managed_hce_enable_notify(struct ufs_hba *hba,
  	switch (status) {
  	case PRE_CHANGE:
  		ufs_qcom_select_unipro_mode(host);

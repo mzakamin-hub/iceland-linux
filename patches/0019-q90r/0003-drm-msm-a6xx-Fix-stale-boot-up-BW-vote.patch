@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jie Zhang <jie.zhang@oss.qualcomm.com>
 Date: Sat, 24 Oct 2026 16:00:09 +0530
-Subject: [PATCH 03/13] drm/msm/a6xx: Fix stale boot up BW vote
+Subject: [PATCH] drm/msm/a6xx: Fix stale boot up BW vote
 
 An initial bus bandwidth is voted during boot to bring up the GMU. In GPUs
 where the GMU drives bandwidth scaling, this boot-time BW vote is

@@ -63,7 +63,7 @@ index 5410a0e38355..c0231bc866cd 100644
  	unsigned long gauge_time;
  
  	/*
-@@ -628,6 +633,14 @@ out_unlock:
+@@ -628,6 +633,14 @@ static int qcom_battmgr_bat_sc8280xp_update(struct qcom_battmgr *battmgr,
  	return ret;
  }
  
@@ -367,7 +367,7 @@ index 5410a0e38355..c0231bc866cd 100644
  		setup_charger = battmgr->usb.online && !battmgr->charger_configured;
  		battmgr->charger_configured = battmgr->usb.online;
  		next = OPLUS_CID_IDLE_POLL_MS;
-@@ -1969,7 +2200,7 @@ out_unlock:
+@@ -1969,7 +2200,7 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
  static void qcom_battmgr_oplus_enable(struct qcom_battmgr *battmgr)
  {
  	mutex_lock(&battmgr->lock);

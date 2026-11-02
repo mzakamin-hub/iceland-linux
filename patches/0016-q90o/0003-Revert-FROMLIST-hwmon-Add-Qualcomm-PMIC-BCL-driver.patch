@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 24 Oct 2026 09:51:22 +0300
-Subject: [PATCH 3/4] Revert "FROMLIST: hwmon: Add Qualcomm PMIC BCL driver"
+Subject: [PATCH] Revert "FROMLIST: hwmon: Add Qualcomm PMIC BCL driver"
 
 The base tree already has the PMIC BCL alarms: the built-in thermal driver
 qcom-spmi-bcl (98ed81efec18) binds the existing bcl@4700 nodes of pmh0101 and

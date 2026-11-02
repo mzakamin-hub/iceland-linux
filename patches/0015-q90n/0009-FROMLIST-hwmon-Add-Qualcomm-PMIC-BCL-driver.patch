@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Manaf Meethalavalappu Pallikunhi <manaf.pallikunhi@oss.qualcomm.com>
 Date: Wed, 22 Jul 2026 00:00:07 +0530
-Subject: [PATCH 09/12] FROMLIST: hwmon: Add Qualcomm PMIC BCL driver
+Subject: [PATCH] FROMLIST: hwmon: Add Qualcomm PMIC BCL driver
 
 Add driver for Qualcomm SPMI PMIC Battery Current Limiting (BCL)
 hardware monitor. The driver exposes battery voltage and current

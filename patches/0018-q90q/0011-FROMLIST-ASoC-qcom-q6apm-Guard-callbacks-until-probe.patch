@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Mohit Sharma <mohit.sharma@oss.qualcomm.com>
 Date: Thu, 22 Oct 2026 17:49:29 +0530
-Subject: [PATCH 11/11] FROMLIST: ASoC: qcom: q6apm: Guard callbacks until
- probe data is ready
+Subject: [PATCH] FROMLIST: ASoC: qcom: q6apm: Guard callbacks until probe data
+ is ready
 
 The GPR bus needs to make response callbacks available before invoking a
 client probe because clients can issue synchronous commands from probe.

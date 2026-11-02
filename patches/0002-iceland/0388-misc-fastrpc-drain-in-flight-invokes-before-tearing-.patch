@@ -140,7 +140,7 @@ index 49aa1ce14b4c..da60d1d16093 100644
  
  	err = fastrpc_get_args(kernel, ctx);
  	if (err)
-@@ -1432,6 +1463,10 @@ bail:
+@@ -1432,6 +1463,10 @@ static int fastrpc_internal_invoke(struct fastrpc_user *fl,  u32 kernel,
  
  	if (err)
  		dev_dbg(fl->sctx->dev, "Error: Invoke Failed %d\n", err);

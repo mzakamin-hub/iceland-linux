@@ -135,7 +135,7 @@ index 7be9b8524f48..ef1a53fe54e9 100644
  static int dw9719_power_up(struct dw9719_device *dw9719, bool detect)
  {
  	u32 reg_pwr = dw9719->model == DW9718S ? DW9718S_PD : DW9719_CONTROL;
-@@ -212,10 +287,8 @@ props:
+@@ -212,10 +287,8 @@ static int dw9719_power_up(struct dw9719_device *dw9719, bool detect)
  
  	switch (dw9719->model) {
  	case DW9800K:

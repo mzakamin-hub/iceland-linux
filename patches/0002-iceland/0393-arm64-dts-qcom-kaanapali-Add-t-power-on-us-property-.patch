@@ -25,7 +25,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/
 index d0197736ecec..18c7c815d765 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -2718,6 +2718,8 @@
+@@ -2718,6 +2718,8 @@ pcie_port0: pcie@0 {
  				#size-cells = <2>;
  				ranges;
  				phys = <&pcie0_phy>;

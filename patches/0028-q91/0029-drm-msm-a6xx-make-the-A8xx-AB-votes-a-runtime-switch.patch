@@ -1,0 +1,48 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 2 Nov 2026 11:09:59 +0200
+Subject: [PATCH 29/32] drm/msm/a6xx: make the A8xx AB votes a runtime switch
+
+Konrad Dybcio's "Send AB GMU votes on A8xx" (pw 1197017) changes the
+DDR votes of every GPU level. Keep it in the kernel but behind
+msm.a8xx_ab_vote (default off, the previous behaviour), so that one
+Pad 4 kernel can compare both in a single test run (vkmark, idle power,
+DDR residency) before it becomes the default.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/adreno/a6xx_gmu.c | 13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
+index 099a6ed397ff..fcb567ec9078 100644
+--- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
++++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
+@@ -217,6 +217,16 @@ bool a8xx_gmu_gx_is_on(struct adreno_gpu *adreno_gpu)
+ 		 A8XX_GMU_PWR_CLK_STATUS_GX_HM_CLK_OFF));
+ }
+ 
++/*
++ * A8xx AB (average bandwidth) votes with each GPU level, as A750 does
++ * (pw 1197017). Off by default on this queue until the Pad 4 rows (vkmark,
++ * idle power, DDR residency) have compared both: msm.a8xx_ab_vote=1 turns
++ * them on. Read at each frequency change.
++ */
++static bool a8xx_ab_vote;
++MODULE_PARM_DESC(a8xx_ab_vote, "Send AB (average bandwidth) GMU votes on A8xx (0=off (default), 1=on)");
++module_param(a8xx_ab_vote, bool, 0600);
++
+ void a6xx_gmu_set_freq(struct msm_gpu *gpu, struct dev_pm_opp *opp,
+ 		       bool suspended)
+ {
+@@ -247,7 +257,8 @@ void a6xx_gmu_set_freq(struct msm_gpu *gpu, struct dev_pm_opp *opp,
+ 		}
+ 
+ 		/* Vote AB as a fraction of the max bandwidth, starting from A750 */
+-		if (bw && (adreno_is_a750_family(adreno_gpu) || adreno_is_a8xx(adreno_gpu))) {
++		if (bw && (adreno_is_a750_family(adreno_gpu) ||
++			   (a8xx_ab_vote && adreno_is_a8xx(adreno_gpu)))) {
+ 			u64 tmp;
+ 
+ 			/* For now, vote for 25% of the bandwidth */

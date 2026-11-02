@@ -41,7 +41,7 @@ Signed-off-by: Wang Haoran <haoranwangsec@gmail.com>
  1 file changed, 5 insertions(+)
 
 diff --git a/drivers/ufs/core/ufshcd.c b/drivers/ufs/core/ufshcd.c
-index 87f78ffc8cbd..8c8c85a2e3f8 100644
+index ee643830a57a..5cbbebcd148b 100644
 --- a/drivers/ufs/core/ufshcd.c
 +++ b/drivers/ufs/core/ufshcd.c
 @@ -1874,6 +1874,11 @@ static ssize_t ufshcd_clkscale_enable_store(struct device *dev,

@@ -35,7 +35,7 @@ diff --git a/drivers/gpu/drm/msm/dp/dp_ctrl.c b/drivers/gpu/drm/msm/dp/dp_ctrl.c
 index 656316650c3e..a3510ce4b0ba 100644
 --- a/drivers/gpu/drm/msm/dp/dp_ctrl.c
 +++ b/drivers/gpu/drm/msm/dp/dp_ctrl.c
-@@ -2106,6 +2106,15 @@ end:
+@@ -2106,6 +2106,15 @@ static int msm_dp_ctrl_link_maintenance(struct msm_dp_ctrl_private *ctrl,
  	return ret;
  }
  

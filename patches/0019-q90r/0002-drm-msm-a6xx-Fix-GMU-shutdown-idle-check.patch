@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jie Zhang <jie.zhang@oss.qualcomm.com>
 Date: Sat, 24 Oct 2026 16:00:08 +0530
-Subject: [PATCH 02/13] drm/msm/a6xx: Fix GMU shutdown idle check
+Subject: [PATCH] drm/msm/a6xx: Fix GMU shutdown idle check
 
 GPUBUSYIGNAHB only indicates GPU hardware busy status and does not cover
 the whole GPU subsystem. Use CXGXCPUBUSYIGNAHB instead so GMU shutdown

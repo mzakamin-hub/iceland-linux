@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 23 Oct 2026 14:19:39 +0300
-Subject: [PATCH 13/17] drm/msm/a8xx: optional KGSL hardware workaround values
- for A840
+Subject: [PATCH] drm/msm/a8xx: optional KGSL hardware workaround values for
+ A840
 
 Qualcomm's KGSL driver (qualcomm-linux/kgsl, gfx-kernel.le.0.0 2b2d762,
 GPL-2.0, gen8_2_0_nonctxt_regs for the A840 chip id 0x44050a01) programs

@@ -27,7 +27,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 64a38d2ff3c6..4b48032187c9 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -2379,6 +2379,38 @@
+@@ -2379,6 +2379,38 @@ usb-temp-r-hot {
  	};
  };
  

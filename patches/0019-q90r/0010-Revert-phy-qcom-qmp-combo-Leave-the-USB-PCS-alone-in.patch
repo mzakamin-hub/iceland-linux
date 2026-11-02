@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 24 Oct 2026 16:46:00 +0300
-Subject: [PATCH 10/13] Revert "phy: qcom: qmp-combo: Leave the USB PCS alone
- in DP-only mode"
+Subject: [PATCH] Revert "phy: qcom: qmp-combo: Leave the USB PCS alone in
+ DP-only mode"
 
 The v1 of this fix (q90n) is replaced by its v2 (pw 1192123), which also
 covers an orientation flip while in DP-only mode and the power-off path

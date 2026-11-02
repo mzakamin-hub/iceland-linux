@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 23 Oct 2026 23:00:00 +0300
-Subject: [PATCH 17/17] media: iris: signal EOS only for the drain LAST buffer
+Subject: [PATCH] media: iris: signal EOS only for the drain LAST buffer
 
 The driver queues V4L2_EVENT_EOS and marks the m2m context stopped for
 every capture buffer with V4L2_BUF_FLAG_LAST, including the PSC_LAST

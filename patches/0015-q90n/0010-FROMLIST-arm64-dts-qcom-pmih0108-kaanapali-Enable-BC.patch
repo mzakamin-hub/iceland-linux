@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Manaf Meethalavalappu Pallikunhi <manaf.pallikunhi@oss.qualcomm.com>
 Date: Wed, 22 Jul 2026 00:00:13 +0530
-Subject: [PATCH 10/12] FROMLIST: arm64: dts: qcom: pmih0108-kaanapali: Enable
- BCL sensor node
+Subject: [PATCH] FROMLIST: arm64: dts: qcom: pmih0108-kaanapali: Enable BCL
+ sensor node
 
 Add Battery Current Limiting (BCL) hardware monitor node for pmih0108
 PMIC. The BCL monitors battery voltage and current, providing hardware
@@ -21,7 +21,7 @@ diff --git a/arch/arm64/boot/dts/qcom/pmih0108-kaanapali.dtsi b/arch/arm64/boot/
 index c0958e8d6114..4c1dc1991de6 100644
 --- a/arch/arm64/boot/dts/qcom/pmih0108-kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/pmih0108-kaanapali.dtsi
-@@ -81,6 +81,15 @@
+@@ -81,6 +81,15 @@ pmih0108_e1_temp_alarm_lite: temp-alarm@c00 {
  			#thermal-sensor-cells = <0>;
  		};
  

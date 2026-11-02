@@ -1,0 +1,98 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Yongxing Mou <yongxing.mou@oss.qualcomm.com>
+Date: Sun, 2 Aug 2026 16:57:34 +0800
+Subject: [PATCH 30/32] FROMLIST: dt-bindings: display: msm: Allow two MDSS
+ power domains
+
+Kaanapali (SM8750) and Glymur use two display power domains.
+CORE_GDSC powers the main display hardware while INT2_GDSC
+powers a subset of SSPP blocks.
+
+Allow the MDSS bindings to describe both power domains and
+their corresponding power-domain-names values.
+
+Signed-off-by: Yongxing Mou <yongxing.mou@oss.qualcomm.com>
+Link: https://lore.kernel.org/all/20260720-msm_gdsc2-v1-1-4687866d6cb0@oss.qualcomm.com/
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ .../bindings/display/msm/mdss-common.yaml           |  3 ++-
+ .../bindings/display/msm/qcom,glymur-mdss.yaml      | 13 ++++++++++++-
+ .../bindings/display/msm/qcom,kaanapali-mdss.yaml   | 13 ++++++++++++-
+ 3 files changed, 26 insertions(+), 3 deletions(-)
+
+diff --git a/Documentation/devicetree/bindings/display/msm/mdss-common.yaml b/Documentation/devicetree/bindings/display/msm/mdss-common.yaml
+index c6305a6e0334..c0b650ffd9ef 100644
+--- a/Documentation/devicetree/bindings/display/msm/mdss-common.yaml
++++ b/Documentation/devicetree/bindings/display/msm/mdss-common.yaml
+@@ -31,7 +31,8 @@ properties:
+     const: mdss
+ 
+   power-domains:
+-    maxItems: 1
++    minItems: 1
++    maxItems: 2
+ 
+   clocks:
+     minItems: 2
+diff --git a/Documentation/devicetree/bindings/display/msm/qcom,glymur-mdss.yaml b/Documentation/devicetree/bindings/display/msm/qcom,glymur-mdss.yaml
+index 64dde43373ac..685bedb26a12 100644
+--- a/Documentation/devicetree/bindings/display/msm/qcom,glymur-mdss.yaml
++++ b/Documentation/devicetree/bindings/display/msm/qcom,glymur-mdss.yaml
+@@ -38,6 +38,16 @@ properties:
+       - const: mdp0-mem
+       - const: cpu-cfg
+ 
++  power-domains:
++    items:
++      - description: MDSS core GDSC power domain
++      - description: MDSS INT2 GDSC power domain
++
++  power-domain-names:
++    items:
++      - const: core
++      - const: int2
++
+ patternProperties:
+   "^display-controller@[0-9a-f]+$":
+     type: object
+@@ -95,7 +105,8 @@ examples:
+ 
+             resets = <&disp_cc_mdss_core_bcr>;
+ 
+-            power-domains = <&mdss_gdsc>;
++            power-domains = <&mdss_gdsc>, <&mdss_int2_gdsc>;
++            power-domain-names = "core", "int2";
+ 
+             iommus = <&apps_smmu 0x1c00 0x2>;
+ 
+diff --git a/Documentation/devicetree/bindings/display/msm/qcom,kaanapali-mdss.yaml b/Documentation/devicetree/bindings/display/msm/qcom,kaanapali-mdss.yaml
+index ccaaee8bdc74..f64204daf0c5 100644
+--- a/Documentation/devicetree/bindings/display/msm/qcom,kaanapali-mdss.yaml
++++ b/Documentation/devicetree/bindings/display/msm/qcom,kaanapali-mdss.yaml
+@@ -40,6 +40,16 @@ properties:
+       - const: mdp0-mem
+       - const: cpu-cfg
+ 
++  power-domains:
++    items:
++      - description: MDSS core GDSC power domain
++      - description: MDSS INT2 GDSC power domain
++
++  power-domain-names:
++    items:
++      - const: core
++      - const: int2
++
+ patternProperties:
+   "^display-controller@[0-9a-f]+$":
+     type: object
+@@ -97,7 +107,8 @@ examples:
+                  <&disp_cc_mdss_ahb_swi_clk>;
+         resets = <&disp_cc_mdss_core_bcr>;
+ 
+-        power-domains = <&mdss_gdsc>;
++        power-domains = <&mdss_gdsc>, <&mdss_int2_gdsc>;
++        power-domain-names = "core", "int2";
+ 
+         iommus = <&apps_smmu 0x800 0x2>;
+ 

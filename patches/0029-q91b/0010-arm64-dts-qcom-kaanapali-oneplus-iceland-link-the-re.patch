@@ -1,0 +1,46 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 2 Nov 2026 11:48:26 +0200
+Subject: [PATCH 10/24] arm64: dts: qcom: kaanapali-oneplus-iceland: link the
+ rear camera to its flash
+
+The rear camera module's flash is the two-die LED of the PMH0101 flash
+block. Name both dies in the sensor's flash-leds, so that userspace (and
+the V4L2 async framework) can associate the flash with the rear camera.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 7ac40870b192..ca276839c010 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1367,6 +1367,7 @@ camera@36 {
+ 		rotation = <0>;
+ 
+ 		lens-focus = <&vcm>;
++		flash-leds = <&rear_flash_yellow>, <&rear_flash_white>;
+ 
+ 		port {
+ 			cam_rear_out: endpoint {
+@@ -1714,7 +1715,7 @@ &pmh0101_flash {
+ 	status = "okay";
+ 
+ 	/* two dies, each on two channels (stock: 500 mA torch, 2 A flash, 1.28 s per die) */
+-	led-0 {
++	rear_flash_yellow: led-0 {
+ 		function = LED_FUNCTION_FLASH;
+ 		function-enumerator = <0>;
+ 		color = <LED_COLOR_ID_YELLOW>;
+@@ -1724,7 +1725,7 @@ led-0 {
+ 		flash-max-timeout-us = <1280000>;
+ 	};
+ 
+-	led-1 {
++	rear_flash_white: led-1 {
+ 		function = LED_FUNCTION_FLASH;
+ 		function-enumerator = <1>;
+ 		color = <LED_COLOR_ID_WHITE>;

@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Toke=20H=C3=B8iland-J=C3=B8rgensen?= <toke@toke.dk>
 Date: Fri, 23 Oct 2026 13:00:51 +0200
-Subject: [PATCH 09/13] wifi: mac80211: reinstate IEEE80211_TX_CTL_AMPDU flag
- in ieee80211_tx_prep_agg()
+Subject: [PATCH] wifi: mac80211: reinstate IEEE80211_TX_CTL_AMPDU flag in
+ ieee80211_tx_prep_agg()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

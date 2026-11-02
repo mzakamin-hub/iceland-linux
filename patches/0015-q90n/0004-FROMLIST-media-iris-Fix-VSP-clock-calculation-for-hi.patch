@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Venkata Siva Pavan KumarVenkatapatigari <venvenk@qti.qualcomm.com>
 Date: Tue, 29 Sep 2026 17:21:21 +0530
-Subject: [PATCH 04/12] FROMLIST: media: iris: Fix VSP clock calculation for
- high bitrate streams
+Subject: [PATCH] FROMLIST: media: iris: Fix VSP clock calculation for high
+ bitrate streams
 
 Frame drops were observed during high-resolution streams decoded at high
 bitrates, as well as concurrent decode sessions. Analysis showed that the

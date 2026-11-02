@@ -417,7 +417,7 @@ index 4f8d0b2f6826..f06f8d2c7e34 100644
  		next = OPLUS_CID_IDLE_POLL_MS;
  		goto out_unlock;
  	}
-@@ -2902,6 +3090,8 @@ out_unlock:
+@@ -2902,6 +3090,8 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
  
  	if (setup_charger)
  		qcom_battmgr_oplus_setup_charger(battmgr);

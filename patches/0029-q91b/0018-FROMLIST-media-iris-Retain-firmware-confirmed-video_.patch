@@ -1,0 +1,81 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Vishnu Reddy <busanna.reddy@oss.qualcomm.com>
+Date: Sat, 5 Sep 2026 19:27:23 +0530
+Subject: [PATCH 18/24] FROMLIST: media: iris: Retain firmware confirmed
+ video_format across GOP restarts
+
+During speed-based rewind, the client restarts the decoder queues once per
+group of pictures (GOP). This is because playing a GOP-based stream in
+reverse requires decoding each group forward first and then showing its
+frames in reverse order. Each restart makes the driver resend the colour
+info property on the bitstream port, which firmware always treats as a
+sign that the stream's properties may have changed. The driver never
+stored the video_format value that firmware had last confirmed, so it
+resent colour info with a fixed unspecified value instead of the real one,
+and the value firmware received kept differing from what it already had.
+
+On every restart during rewind, this looked to firmware like a real change
+on the bitstream port, so firmware sent a settings-change notification,
+and the driver treated it as a dynamic resolution change and paused the
+port. The client then removed its buffers and built new ones for a
+resolution that had not actually changed, stalling playback once per GOP.
+
+Store and send back the same video_format value firmware already confirmed
+so both sides stay in agreement across every restart, avoiding the false
+settings-change notification.
+
+Link: https://lore.kernel.org/all/20260905-read_video_format_from_firmware-v2-1-21a606cdd288@oss.qualcomm.com/
+Signed-off-by: Vishnu Reddy <busanna.reddy@oss.qualcomm.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/media/platform/qcom/iris/iris_hfi_common.h        | 1 +
+ drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c  | 3 ++-
+ drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c | 2 ++
+ 3 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_hfi_common.h b/drivers/media/platform/qcom/iris/iris_hfi_common.h
+index 16099f9a25b6..9bc5221bd0a9 100644
+--- a/drivers/media/platform/qcom/iris/iris_hfi_common.h
++++ b/drivers/media/platform/qcom/iris/iris_hfi_common.h
+@@ -142,6 +142,7 @@ struct hfi_subscription_params {
+ 	u32	fw_min_count;
+ 	u32	pic_order_cnt;
+ 	u32	color_info;
++	u32	video_format;
+ 	u32	profile;
+ 	u32	level;
+ 	u32	tier;
+diff --git a/drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c b/drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c
+index 3715ff73e902..1a1ca9c01ee1 100644
+--- a/drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c
++++ b/drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c
+@@ -358,7 +358,7 @@ static int iris_hfi_gen2_set_colorspace(struct iris_inst *inst, u32 plane)
+ 	struct v4l2_pix_format_mplane *pixmp = &inst->fmt_src->fmt.pix_mp;
+ 	u32 video_signal_type_present_flag = 0, color_info;
+ 	u32 matrix_coeff = HFI_MATRIX_COEFF_RESERVED;
+-	u32 video_format = UNSPECIFIED_COLOR_FORMAT;
++	u32 video_format = inst_hfi_gen2->src_subcr_params.video_format;
+ 	u32 full_range = V4L2_QUANTIZATION_DEFAULT;
+ 	u32 transfer_char = HFI_TRANSFER_RESERVED;
+ 	u32 port = iris_hfi_gen2_get_port(inst, plane);
+@@ -836,6 +836,7 @@ static int iris_hfi_gen2_session_open(struct iris_inst *inst)
+ 
+ 	inst_hfi_gen2->ipsc_properties_set = false;
+ 	inst_hfi_gen2->opsc_properties_set = false;
++	inst_hfi_gen2->src_subcr_params.video_format = UNSPECIFIED_COLOR_FORMAT;
+ 
+ 	inst_hfi_gen2->packet = kzalloc(4096, GFP_KERNEL);
+ 	if (!inst_hfi_gen2->packet)
+diff --git a/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c b/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
+index 96aefb4aa055..7b0ffe28e77a 100644
+--- a/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
++++ b/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
+@@ -618,6 +618,8 @@ static void iris_hfi_gen2_read_input_subcr_params(struct iris_inst *inst)
+ 	full_range = (subsc_params.color_info & 0x2000000) >> 25;
+ 	video_signal_type_present_flag =
+ 		(subsc_params.color_info & 0x20000000) >> 29;
++	inst_hfi_gen2->src_subcr_params.video_format =
++		(subsc_params.color_info & 0x1C000000) >> 26;
+ 
+ 	pixmp_op->colorspace = V4L2_COLORSPACE_DEFAULT;
+ 	pixmp_op->xfer_func = V4L2_XFER_FUNC_DEFAULT;

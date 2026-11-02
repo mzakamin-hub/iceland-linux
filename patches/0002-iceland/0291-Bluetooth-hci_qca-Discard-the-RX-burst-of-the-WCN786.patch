@@ -71,7 +71,7 @@ index 042f9df6ce4d..b36387322d28 100644
  		default:
  			break;
  		}
-@@ -1586,6 +1606,11 @@ error:
+@@ -1586,6 +1606,11 @@ static int qca_set_speed(struct hci_uart *hu, enum qca_speed_type speed_type)
  			break;
  		}
  

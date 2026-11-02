@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sun, 25 Oct 2026 16:59:18 +0300
-Subject: [PATCH 3/6] wifi: ath12k: Add opt-in cold boot calibration for PCI
+Subject: [PATCH] wifi: ath12k: Add opt-in cold boot calibration for PCI
  devices
 
 Qualcomm's downstream cnss2 driver runs a cold boot calibration (CBC)
@@ -154,7 +154,7 @@ index d4efde426c52..9e7d54189c7c 100644
  static const struct qmi_elem_info qmi_wlanfw_wlan_ini_req_msg_v01_ei[] = {
  	{
  		.data_type	= QMI_OPT_FLAG,
-@@ -3864,6 +3873,67 @@ out:
+@@ -3864,6 +3873,67 @@ static int ath12k_qmi_wlanfw_wlan_ini_send(struct ath12k_base *ab)
  	return ret;
  }
  

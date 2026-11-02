@@ -31,10 +31,10 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  create mode 100644 include/linux/scmi_qcom_protocol.h
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index f58a305de664..5bc9614ea131 100644
+index 93abbb315065..4dfc61cda402 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -27266,6 +27266,16 @@ S:	Maintained
+@@ -27284,6 +27284,16 @@ S:	Maintained
  F:	Documentation/devicetree/bindings/firmware/nxp,*scmi.yaml
  F:	drivers/firmware/arm_scmi/vendors/imx/
  
@@ -52,7 +52,7 @@ index f58a305de664..5bc9614ea131 100644
  M:	Sebastian Reichel <sre@kernel.org>
  L:	linux-pm@vger.kernel.org
 diff --git a/drivers/firmware/arm_scmi/Kconfig b/drivers/firmware/arm_scmi/Kconfig
-index 9f6241efd592..2c1429252503 100644
+index 783c24a20e29..3918aa2e7140 100644
 --- a/drivers/firmware/arm_scmi/Kconfig
 +++ b/drivers/firmware/arm_scmi/Kconfig
 @@ -84,6 +84,7 @@ config ARM_SCMI_QUIRKS

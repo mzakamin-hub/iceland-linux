@@ -25,7 +25,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/
 index e37e59f88bdf..f188ba29c392 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -6749,6 +6749,8 @@
+@@ -6749,6 +6749,8 @@ tpdm_pcie_rscc_out: endpoint {
  		tn@111b8000 {
  			compatible = "qcom,coresight-tnoc", "arm,primecell";
  			reg = <0x0 0x111b8000 0x0 0x4200>;

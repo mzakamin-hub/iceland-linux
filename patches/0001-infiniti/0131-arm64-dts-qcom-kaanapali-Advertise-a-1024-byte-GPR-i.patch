@@ -14,7 +14,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/
 index 8d729c3945d2..0fdedb240e09 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -3231,7 +3231,7 @@
+@@ -3231,7 +3231,7 @@ gpr {
  					compatible = "qcom,gpr";
  					qcom,glink-channels = "adsp_apps";
  					qcom,domain = <GPR_DOMAIN_ID_ADSP>;

@@ -59,7 +59,7 @@ index a82738e7cb7d..37cd8ba5b079 100644
  	phy_deinit = msm_dp_display_host_phy_init(priv);
  
  	msm_dp_aux_enable_xfers(priv->aux, true);
-@@ -997,6 +999,12 @@ end:
+@@ -997,6 +999,12 @@ enum drm_connector_status msm_dp_bridge_detect(struct drm_bridge *bridge,
  		}
  
  		pm_runtime_put_sync(&dp->pdev->dev);

@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Wed, 28 Oct 2026 12:48:55 +0300
-Subject: [PATCH 5/6] dt-bindings: thermal: Add a weighted average of thermal
- zones
+Subject: [PATCH] dt-bindings: thermal: Add a weighted average of thermal zones
 
 Vendor thermal policies of phones and tablets throttle on estimated
 temperatures of surfaces that carry no thermistor, such as the back

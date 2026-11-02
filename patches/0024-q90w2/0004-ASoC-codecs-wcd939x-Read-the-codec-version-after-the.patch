@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 26 Oct 2026 19:24:01 +0300
-Subject: [PATCH 4/5] ASoC: codecs: wcd939x: Read the codec version after the
- TX device attached
+Subject: [PATCH] ASoC: codecs: wcd939x: Read the codec version after the TX
+ device attached
 
 wcd939x_bind() reads DIGITAL_CHIP_ID1 and EAR_STATUS_REG_1 to tell
 v1.0, v1.1 and v2.0 apart. At that point the TX SoundWire device is

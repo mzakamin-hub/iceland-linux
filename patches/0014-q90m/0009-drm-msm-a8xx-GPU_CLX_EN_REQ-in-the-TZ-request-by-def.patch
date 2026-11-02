@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 24 Oct 2026 00:48:12 +0300
-Subject: [PATCH 09/10] drm/msm/a8xx: GPU_CLX_EN_REQ in the TZ request by
- default
+Subject: [PATCH] drm/msm/a8xx: GPU_CLX_EN_REQ in the TZ request by default
 
 msm.a8xx_clx_tz_flag (q90k) defaults to on. It still acts only with
 msm.enable_clx=1, and a TZ refusal still falls back to the plain request.

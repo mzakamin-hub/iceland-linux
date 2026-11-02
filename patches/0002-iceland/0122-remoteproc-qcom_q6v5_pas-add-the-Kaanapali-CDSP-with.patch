@@ -23,7 +23,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 32 insertions(+)
 
 diff --git a/drivers/remoteproc/qcom_q6v5_pas.c b/drivers/remoteproc/qcom_q6v5_pas.c
-index 2e1e39826ffa..ced8fb5fbaad 100644
+index f37b77ae187e..a05c14d4ce9d 100644
 --- a/drivers/remoteproc/qcom_q6v5_pas.c
 +++ b/drivers/remoteproc/qcom_q6v5_pas.c
 @@ -1095,6 +1095,13 @@ static const struct tmd_name modem_tmd_name[] = {
@@ -40,7 +40,7 @@ index 2e1e39826ffa..ced8fb5fbaad 100644
  static const struct qcom_pas_data adsp_resource_init = {
  	.crash_reason_smem = 423,
  	.firmware_name = "adsp.mdt",
-@@ -1897,6 +1904,30 @@ static const struct qcom_pas_data sm8750_mpss_resource = {
+@@ -1903,6 +1910,30 @@ static const struct qcom_pas_data sm8750_mpss_resource = {
  	.region_assign_vmid = QCOM_SCM_VMID_MSS_MSA,
  };
  
@@ -71,7 +71,7 @@ index 2e1e39826ffa..ced8fb5fbaad 100644
  static const struct qcom_pas_data kaanapali_soccp_resource = {
  	.crash_reason_smem = 656,
  	.firmware_name = "soccp.mbn",
-@@ -1989,6 +2020,7 @@ static const struct of_device_id qcom_pas_of_match[] = {
+@@ -1995,6 +2026,7 @@ static const struct of_device_id qcom_pas_of_match[] = {
  	{ .compatible = "qcom,eliza-cdsp-pas", .data = &eliza_cdsp_resource },
  	{ .compatible = "qcom,glymur-soccp-pas", .data = &glymur_soccp_resource },
  	{ .compatible = "qcom,hawi-cdsp-pas", .data = &hawi_cdsp_resource },

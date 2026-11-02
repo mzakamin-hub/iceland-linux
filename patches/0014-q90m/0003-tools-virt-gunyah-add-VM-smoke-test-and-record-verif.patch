@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: iceland-dev <dev@iceland.local>
 Date: Sun, 4 Oct 2026 05:16:15 +0800
-Subject: [PATCH 03/10] tools: virt: gunyah: add VM smoke test and record
+Subject: [PATCH] tools: virt: gunyah: add VM smoke test and record
  verification results
 
 gh_vmtest.py drives /dev/gunyah directly (python3, no dependencies): it

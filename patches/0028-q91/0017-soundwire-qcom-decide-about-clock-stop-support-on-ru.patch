@@ -1,0 +1,95 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Marek Szyprowski <m.szyprowski@samsung.com>
+Date: Wed, 28 Oct 2026 23:38:49 +0100
+Subject: [PATCH 17/32] soundwire: qcom: decide about clock stop support on
+ runtime suspend
+
+The controller decides whether to use the clock stop mode for runtime PM
+based on the clk_stop_mode1 property of the attached peripherals, but
+evaluates it only in qcom_swrm_enumerate(). This is racy and wrong:
+
+- The property is set by the peripheral driver in its probe, which may
+  run after the device has been enumerated on the bus. On Qualcomm RB5
+  both WSA8815 amplifiers share a single powerdown GPIO, so probing the
+  first amplifier powers up the second one too, which then attaches and
+  gets enumerated before its own driver has set clk_stop_mode1.
+  wsa881x_probe() also de-asserts the powerdown GPIO before setting the
+  property, so the race exists even for a single amplifier.
+- The flag is reset for each enumerated device, so only the last one
+  is taken into account.
+- The flag is never re-evaluated once the peripheral drivers probe, as
+  the slave status doesn't change then.
+
+When it ends up false, the controller enters clock stop on runtime
+suspend, disables its clock and loses its state together with the WSA
+macro. The clock stop exit path in runtime resume doesn't reinitialise
+the controller, so the link never comes up again and the playback
+fails:
+
+  qcom-soundwire 3250000.soundwire: swrm_wait_for_frame_gen_enabled: link status not disconnected
+  qcom-soundwire 3250000.soundwire: link failed to connect
+  wsa881x-codec sdw:1:0:0217:2110:00:3: Initialization not complete
+  wsa881x-codec sdw:1:0:0217:2110:00:3: ASoC error (-110): at snd_soc_pcm_component_pm_runtime_get() on sdw:1:0:0217:2110:00:3
+
+Evaluate the clk_stop_mode1 property of all peripherals on the bus at
+runtime suspend instead, when their drivers had a chance to set it, and
+use the same decision in the matching runtime resume.
+
+Fixes: 74e79da9fd46 ("soundwire: qcom: add runtime pm support")
+Signed-off-by: Marek Szyprowski <m.szyprowski@samsung.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/soundwire/qcom.c | 23 +++++++++++++++++++----
+ 1 file changed, 19 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/soundwire/qcom.c b/drivers/soundwire/qcom.c
+index bc7fcd6b905f..d4d807363cc0 100644
+--- a/drivers/soundwire/qcom.c
++++ b/drivers/soundwire/qcom.c
+@@ -723,14 +723,10 @@ static int qcom_swrm_enumerate(struct sdw_bus *bus)
+ 
+ 		sdw_extract_slave_id(bus, addr, &id);
+ 		found = false;
+-		ctrl->clock_stop_not_supported = false;
+ 		/* Now compare with entries */
+ 		list_for_each_entry_safe(slave, _s, &bus->slaves, node) {
+ 			if (sdw_compare_devid(slave, id) == 0) {
+ 				qcom_swrm_set_slave_dev_num(bus, slave, i);
+-				if (slave->prop.clk_stop_mode1)
+-					ctrl->clock_stop_not_supported = true;
+-
+ 				found = true;
+ 				break;
+ 			}
+@@ -1867,12 +1863,31 @@ static int __maybe_unused swrm_runtime_resume(struct device *dev)
+ 	return 0;
+ }
+ 
++static bool qcom_swrm_clock_stop_not_supported(struct qcom_swrm_ctrl *ctrl)
++{
++	struct sdw_slave *slave;
++
++	list_for_each_entry(slave, &ctrl->bus.slaves, node) {
++		if (slave->prop.clk_stop_mode1)
++			return true;
++	}
++
++	return false;
++}
++
+ static int __maybe_unused swrm_runtime_suspend(struct device *dev)
+ {
+ 	struct qcom_swrm_ctrl *ctrl = dev_get_drvdata(dev);
+ 	int ret;
+ 
+ 	swrm_wait_for_wr_fifo_done(ctrl);
++
++	/*
++	 * Decide here and not at enumeration time: the properties are set by
++	 * the peripheral drivers on probe, which may happen after the device
++	 * has been enumerated. The matching resume uses the same decision.
++	 */
++	ctrl->clock_stop_not_supported = qcom_swrm_clock_stop_not_supported(ctrl);
+ 	if (!ctrl->clock_stop_not_supported) {
+ 		/* Mask bus clash interrupt */
+ 		ctrl->intr_mask &= ~SWRM_INTERRUPT_STATUS_MASTER_CLASH_DET;

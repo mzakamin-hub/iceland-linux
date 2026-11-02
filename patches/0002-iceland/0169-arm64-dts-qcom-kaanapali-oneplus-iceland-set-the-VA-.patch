@@ -19,7 +19,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index ccae84bf9513..c503109a9244 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1437,6 +1437,11 @@
+@@ -1437,6 +1437,11 @@ &i2c_master_hub {
  	status = "okay";
  };
  

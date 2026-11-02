@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Wed, 21 Oct 2026 21:05:08 +0300
-Subject: [PATCH 1/2] dt-bindings: clock: qcom,sm8550-dispcc: Add the MX power
+Subject: [PATCH] dt-bindings: clock: qcom,sm8550-dispcc: Add the MX power
  domain on Kaanapali
 
 The display clock controller of Kaanapali (SM8850) has its PLLs on the MX

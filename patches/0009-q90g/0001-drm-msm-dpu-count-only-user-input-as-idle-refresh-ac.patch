@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Thu, 22 Oct 2026 13:18:44 +0300
-Subject: [PATCH 1/2] drm/msm/dpu: count only user input as idle refresh
- activity
+Subject: [PATCH] drm/msm/dpu: count only user input as idle refresh activity
 
 The idle refresh rate (msm.dpu_idle_refresh_ms) returns to the mode rate
 on every input event other than EV_SYN and EV_MSC. Its handler is

@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Ajay Kumar Nandam <ajay.nandam@oss.qualcomm.com>
 Date: Mon, 28 Sep 2026 16:14:50 +0530
-Subject: [PATCH 08/12] FROMLIST: ASoC: codecs: lpass-wsa-macro: manage clocks
- in runtime PM
+Subject: [PATCH] FROMLIST: ASoC: codecs: lpass-wsa-macro: manage clocks in
+ runtime PM
 
 Replace PM clock framework usage with explicit clock prepare/enable and
 disable/unprepare operations from runtime PM callbacks. This keeps the WSA
@@ -100,7 +100,7 @@ index 899c8bee4645..de9add321153 100644
  	pm_runtime_set_autosuspend_delay(dev, 100);
  	pm_runtime_use_autosuspend(dev);
  	ret = devm_pm_runtime_enable(dev);
-@@ -2847,16 +2885,9 @@ err_rpm_put:
+@@ -2847,16 +2885,9 @@ static int wsa_macro_probe(struct platform_device *pdev)
  static int wsa_macro_runtime_suspend(struct device *dev)
  {
  	struct wsa_macro *wsa = dev_get_drvdata(dev);

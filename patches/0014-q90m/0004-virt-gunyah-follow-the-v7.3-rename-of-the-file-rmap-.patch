@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 17 Oct 2026 11:39:16 +0300
-Subject: [PATCH 04/10] virt: gunyah: follow the v7.3 rename of the file rmap
+Subject: [PATCH] virt: gunyah: follow the v7.3 rename of the file rmap
  interval tree
 
 v7.3 renamed vma_interval_tree_foreach(vma, &mapping->i_mmap, ...) to

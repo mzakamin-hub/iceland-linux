@@ -114,7 +114,7 @@ index 8991ff090579..a0507860a21c 100644
  
  #endif
 diff --git a/drivers/remoteproc/qcom_q6v5_pas.c b/drivers/remoteproc/qcom_q6v5_pas.c
-index 6b25ba72abed..04ee5050faf6 100644
+index d3caa53ad508..0f23038138cd 100644
 --- a/drivers/remoteproc/qcom_q6v5_pas.c
 +++ b/drivers/remoteproc/qcom_q6v5_pas.c
 @@ -562,10 +562,13 @@ static int qcom_pas_attach(struct rproc *rproc)

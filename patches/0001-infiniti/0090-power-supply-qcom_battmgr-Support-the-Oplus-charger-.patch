@@ -330,7 +330,7 @@ index 636d6f6acecc..277c94d8d545 100644
  	default:
  		dev_warn(battmgr->dev, "unknown message %#x\n", opcode);
  		break;
-@@ -1596,6 +1793,33 @@ out_complete:
+@@ -1596,6 +1793,33 @@ static void qcom_battmgr_sm8350_callback(struct qcom_battmgr *battmgr,
  	complete(&battmgr->ack);
  }
  

@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Akhil P Oommen <akhilpo@oss.qualcomm.com>
 Date: Sat, 24 Oct 2026 16:00:07 +0530
-Subject: [PATCH 01/13] drm/msm/a6xx: Check BX dependency vote index
+Subject: [PATCH] drm/msm/a6xx: Check BX dependency vote index
 
 a6xx_gmu_rpmh_arc_index() returns a signed error value. Check the result
 before passing it to FIELD_MODIFY(), which rejects a compiler-propagated

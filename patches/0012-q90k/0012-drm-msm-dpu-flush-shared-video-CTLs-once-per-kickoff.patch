@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 23 Oct 2026 14:17:40 +0300
-Subject: [PATCH 12/17] drm/msm/dpu: flush shared video CTLs once per kickoff
+Subject: [PATCH] drm/msm/dpu: flush shared video CTLs once per kickoff
  (switch)
 
 Bonded video interfaces on DPU 5 and newer share an active CTL, but the

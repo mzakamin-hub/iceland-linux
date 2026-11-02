@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Shivendra Pratap <shivendra.pratap@oss.qualcomm.com>
 Date: Sun, 9 Nov 2025 20:07:15 +0530
-Subject: [PATCH 02/17] power: reset: reboot-mode: Add firmware node based
+Subject: [PATCH] power: reset: reboot-mode: Add firmware node based
  registration
 
 The reboot-mode driver does not have a strict requirement for
@@ -24,7 +24,7 @@ diff --git a/drivers/power/reset/reboot-mode.c b/drivers/power/reset/reboot-mode
 index 3611bed341e1..a8ef487a1be4 100644
 --- a/drivers/power/reset/reboot-mode.c
 +++ b/drivers/power/reset/reboot-mode.c
-@@ -164,18 +164,26 @@ error:
+@@ -164,18 +164,26 @@ static int reboot_mode_create_device(struct reboot_mode_driver *reboot)
  /**
   * reboot_mode_register - register a reboot mode driver
   * @reboot: reboot mode driver

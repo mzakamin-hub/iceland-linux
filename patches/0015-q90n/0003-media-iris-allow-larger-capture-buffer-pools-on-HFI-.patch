@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Xilin Wu <sophon@radxa.com>
 Date: Tue, 8 Sep 2026 13:57:16 +0800
-Subject: [PATCH 03/12] media: iris: allow larger capture buffer pools on HFI
- gen2
+Subject: [PATCH] media: iris: allow larger capture buffer pools on HFI gen2
 
 Threaded video clients can retain more than 32 decoded surfaces before
 returning them to the decoder. For example, VLC using VA-API can request

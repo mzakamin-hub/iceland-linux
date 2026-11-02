@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Yibo Wang <wyibo6109@gmail.com>
 Date: Sat, 17 Oct 2026 05:28:13 -0500
-Subject: [PATCH 08/10] virt: gunyah: Add runtime protected share (GuestAccept)
+Subject: [PATCH] virt: gunyah: Add runtime protected share (GuestAccept)
  ioctls
 
 The host cannot map memory into a protected guest's stage-2 (the

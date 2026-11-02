@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: HOYOUNG SEO <hy50.seo@samsung.com>
 Date: Fri, 23 Oct 2026 20:34:52 +0900
-Subject: [PATCH 13/13] scsi: ufs: core: add is_sys_suspended state before
- recovery
+Subject: [PATCH] scsi: ufs: core: add is_sys_suspended state before recovery
 
 If a LINERESET is reported and the hibern8 exit fails in
 __ufshcd_wl_resume() during system resume, the link is recovered twice:
@@ -33,10 +32,10 @@ Signed-off-by: HOYOUNG SEO <hy50.seo@samsung.com>
  1 file changed, 6 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/ufs/core/ufshcd.c b/drivers/ufs/core/ufshcd.c
-index 4e402df754fb..308b69e47caf 100644
+index a9e07ae286a1..cc5b0090e0c5 100644
 --- a/drivers/ufs/core/ufshcd.c
 +++ b/drivers/ufs/core/ufshcd.c
-@@ -7083,9 +7083,14 @@ static void ufshcd_err_handler(struct work_struct *work)
+@@ -7088,9 +7088,14 @@ static void ufshcd_err_handler(struct work_struct *work)
  		 * runtime resume. This avoids potential deadlocks that could
  		 * happen if we tried to resume the device while a PM operation
  		 * is already in progress.

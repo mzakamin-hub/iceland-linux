@@ -22,7 +22,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/
 index f188ba29c392..586ddec24ba0 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -313,6 +313,20 @@
+@@ -313,6 +313,20 @@ scmi_perf: protocol@13 {
  				#power-domain-cells = <1>;
  			};
  		};
@@ -43,7 +43,7 @@ index f188ba29c392..586ddec24ba0 100644
  	};
  
  	clk_virt: interconnect-0 {
-@@ -7379,6 +7393,13 @@
+@@ -7379,6 +7393,13 @@ pdp0_mbox: mailbox@17610000 {
  			#mbox-cells = <1>;
  		};
  
@@ -57,7 +57,7 @@ index f188ba29c392..586ddec24ba0 100644
  		timer@17810000 {
  			compatible = "arm,armv7-timer-mem";
  			reg = <0x0 0x17810000 0x0 0x1000>;
-@@ -7600,6 +7621,26 @@
+@@ -7600,6 +7621,26 @@ gpu_speed_bin: gpu-speed-bin@142 {
  			};
  		};
  

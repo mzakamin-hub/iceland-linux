@@ -153,7 +153,7 @@ index 817bd820623d..d4efde426c52 100644
  static const struct qmi_elem_info qmi_wlanfw_m3_info_req_msg_v01_ei[] = {
  	{
  		.data_type	= QMI_UNSIGNED_8_BYTE,
-@@ -3482,6 +3589,94 @@ out:
+@@ -3482,6 +3589,94 @@ int ath12k_qmi_wlanfw_aux_uc_info_send(struct ath12k_base *ab)
  	return ret;
  }
  

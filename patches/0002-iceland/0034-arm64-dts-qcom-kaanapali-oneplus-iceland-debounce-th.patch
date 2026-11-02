@@ -16,7 +16,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 32300636767a..792664acc9dd 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -175,6 +175,7 @@
+@@ -175,6 +175,7 @@ switch-lid {
  			gpios = <&tlmm 98 GPIO_ACTIVE_LOW>;
  			linux,input-type = <EV_SW>;
  			linux,code = <SW_LID>;

@@ -49,6 +49,8 @@ install -m 0644 Image $m/vmlinuz
 install -m 0644 System.map $m/System.map
 install -m 0644 config $m/config
 install -m 0644 kaanapali-oneplus-iceland.dtb $m/dtb/qcom/kaanapali-oneplus-iceland.dtb
+# optional device trees (headset / int2dt / thermaldt): shipped, never installed to the ESP
+if [ -d variants ]; then install -d $m/dtb/qcom/variants; install -m 0644 variants/*.dtb $m/dtb/qcom/variants/; fi
 install -m 0644 %{SOURCE2} $m/BUILD_INFO
 install -m 0755 %{SOURCE1} %{buildroot}/usr/lib/kernel/install.d/90-iceland-dtb.install
 

@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Prashanth K <prashanth.k@oss.qualcomm.com>
 Date: Thu, 22 Oct 2026 10:56:02 +0530
-Subject: [PATCH 06/11] usb: dwc3: qcom: check for hcd in
- dwc3_qcom_read_usb2_speed
+Subject: [PATCH] usb: dwc3: qcom: check for hcd in dwc3_qcom_read_usb2_speed
 
 Currently dwc->xhci is not cleared if xhci_plat_probe() fails. During
 system suspend, dwc3_qcom_read_usb2_speed() checks dwc->xhci and assumes

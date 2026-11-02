@@ -180,7 +180,7 @@ index 7e7c2867f056..e46c914f039b 100644
  
  	if (!is_decrypted || rx_info->is_mcbc)
  		return 0;
-@@ -1071,9 +1074,12 @@ mic_fail:
+@@ -1071,9 +1074,12 @@ static int ath12k_wifi7_dp_rx_h_verify_tkip_mic(struct ath12k_pdev_dp *dp_pdev,
  	}
  
  	ath12k_dp_rx_h_ppdu(dp_pdev, rx_info);

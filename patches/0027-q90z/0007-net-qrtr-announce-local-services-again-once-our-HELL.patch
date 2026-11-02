@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Joonhoe Kim <26rote@gmail.com>
 Date: Thu, 29 Oct 2026 19:51:42 +0900
-Subject: [PATCH 07/11] net: qrtr: announce local services again once our HELLO
- is sent
+Subject: [PATCH] net: qrtr: announce local services again once our HELLO is
+ sent
 
 Since commit 544d85de4dc2 ("net: qrtr: Send HELLO message on endpoint
 register"), qrtr_node_enqueue() drops every packet but HELLO with

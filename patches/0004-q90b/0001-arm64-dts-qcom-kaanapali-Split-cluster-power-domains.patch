@@ -25,7 +25,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/
 index 3ef7aed55926..68a0f953efb7 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -358,53 +358,59 @@
+@@ -358,53 +358,59 @@ psci {
  
  		cpu_pd0: power-domain-cpu0 {
  			#power-domain-cells = <0>;

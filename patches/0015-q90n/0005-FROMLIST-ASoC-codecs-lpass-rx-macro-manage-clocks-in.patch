@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Ajay Kumar Nandam <ajay.nandam@oss.qualcomm.com>
 Date: Mon, 28 Sep 2026 15:41:40 +0530
-Subject: [PATCH 05/12] FROMLIST: ASoC: codecs: lpass-rx-macro: manage clocks
- in runtime PM
+Subject: [PATCH] FROMLIST: ASoC: codecs: lpass-rx-macro: manage clocks in
+ runtime PM
 
 Replace PM clock framework usage with explicit clock prepare/enable and
 disable/unprepare operations from runtime PM callbacks. This keeps the RX

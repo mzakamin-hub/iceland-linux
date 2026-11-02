@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 30 Oct 2026 08:19:24 +0200
-Subject: [PATCH 05/11] arm64: dts: qcom: kaanapali: Add the ICE OPP table
+Subject: [PATCH] arm64: dts: qcom: kaanapali: Add the ICE OPP table
 
 The UFS host scales its clocks with the UFS OPP table (75, 100 and
 403 MHz). With ICE clock scaling the inline crypto engine follows it,
@@ -23,7 +23,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/
 index 28cfa0bdbf10..39667f09a19a 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -2894,6 +2894,27 @@
+@@ -2894,6 +2894,27 @@ ice: crypto@1d88000 {
  			clock-names = "core",
  				      "iface";
  			power-domains = <&gcc GCC_UFS_PHY_GDSC>;

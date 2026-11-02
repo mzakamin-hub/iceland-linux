@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sun, 25 Oct 2026 18:00:00 +0200
-Subject: [PATCH 4/6] media: iris: add opt-in decode-order output for HFI gen2
+Subject: [PATCH] media: iris: add opt-in decode-order output for HFI gen2
  decoders
 
 VA-API style clients (for example the iris-vaapi driver) decode one

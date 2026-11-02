@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 24 Oct 2026 04:04:30 +0300
-Subject: [PATCH 12/12] virt: gunyah: build the Gunyah vCPU timer as
- gunyah_timer.ko
+Subject: [PATCH] virt: gunyah: build the Gunyah vCPU timer as gunyah_timer.ko
 
 arch/arm64/gunyah/timer.c was built as timer.ko, a module name that says
 nothing and could clash with any other "timer" module. Name the module

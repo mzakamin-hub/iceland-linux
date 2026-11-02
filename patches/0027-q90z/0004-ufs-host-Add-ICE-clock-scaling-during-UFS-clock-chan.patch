@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Abhinaba Rakshit <abhinaba.rakshit@oss.qualcomm.com>
 Date: Wed, 18 Feb 2026 14:08:31 +0530
-Subject: [PATCH 04/11] ufs: host: Add ICE clock scaling during UFS clock
- changes
+Subject: [PATCH] ufs: host: Add ICE clock scaling during UFS clock changes
 
 Implement ICE (Inline Crypto Engine) clock scaling in sync with
 UFS controller clock scaling. This ensures that the ICE operates at
@@ -29,10 +28,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 21 insertions(+)
 
 diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
-index 3ee3e920dc1c..babeda2e6f3c 100644
+index be23d20c29c1..095aa5870693 100644
 --- a/drivers/ufs/host/ufs-qcom.c
 +++ b/drivers/ufs/host/ufs-qcom.c
-@@ -315,6 +315,15 @@ static int ufs_qcom_ice_prepare_key(struct blk_crypto_profile *profile,
+@@ -314,6 +314,15 @@ static int ufs_qcom_ice_prepare_key(struct blk_crypto_profile *profile,
  	return qcom_ice_prepare_key(host->ice, lt_key, lt_key_size, eph_key);
  }
  
@@ -48,7 +47,7 @@ index 3ee3e920dc1c..babeda2e6f3c 100644
  static const struct blk_crypto_ll_ops ufs_qcom_crypto_ops = {
  	.keyslot_program	= ufs_qcom_ice_keyslot_program,
  	.keyslot_evict		= ufs_qcom_ice_keyslot_evict,
-@@ -350,6 +359,12 @@ static void ufs_qcom_config_ice_allocator(struct ufs_qcom_host *host)
+@@ -349,6 +358,12 @@ static void ufs_qcom_config_ice_allocator(struct ufs_qcom_host *host)
  {
  }
  
@@ -61,7 +60,7 @@ index 3ee3e920dc1c..babeda2e6f3c 100644
  #endif
  
  static void ufs_qcom_disable_lane_clks(struct ufs_qcom_host *host)
-@@ -1998,6 +2013,12 @@ static int ufs_qcom_clk_scale_notify(struct ufs_hba *hba, bool scale_up,
+@@ -1997,6 +2012,12 @@ static int ufs_qcom_clk_scale_notify(struct ufs_hba *hba, bool scale_up,
  			return err;
  		}
  

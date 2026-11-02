@@ -20,7 +20,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/
 index e48a179d0722..46533565eac3 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -2665,6 +2665,144 @@
+@@ -2665,6 +2665,144 @@ tcsr: clock-controller@1fc0000 {
  			#reset-cells = <1>;
  		};
  

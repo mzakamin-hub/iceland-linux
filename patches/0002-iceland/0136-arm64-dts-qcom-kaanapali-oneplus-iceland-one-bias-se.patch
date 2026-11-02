@@ -20,7 +20,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index ac59bcc8ab09..d935ba33c5e9 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1874,19 +1874,21 @@
+@@ -1874,19 +1874,21 @@ channel@275e {
  };
  
  &pmih0108_e1_gpios {
@@ -45,7 +45,7 @@ index ac59bcc8ab09..d935ba33c5e9 100644
  	};
  
  	/* stock svooc_mos_btb_therm_default */
-@@ -1894,7 +1896,6 @@
+@@ -1894,7 +1896,6 @@ chg_cp_therm_default: chg-cp-therm-default-state {
  		pins = "gpio15";
  		function = "normal";
  		bias-high-impedance;

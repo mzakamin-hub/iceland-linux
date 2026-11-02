@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 24 Oct 2026 04:04:15 +0300
-Subject: [PATCH 11/12] hwmon: qcom-bcl-hwmon: probe only with enable=1
- (default off)
+Subject: [PATCH] hwmon: qcom-bcl-hwmon: probe only with enable=1 (default off)
 
 The PMIC BCL monitor programs alarm thresholds and takes interrupts on
 the PMIH0108 BCL block. On the OnePlus Pad 4 it is new and untested, so

@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Vikash Garodia <vikash.garodia@oss.qualcomm.com>
 Date: Fri, 30 Oct 2026 08:19:23 +0200
-Subject: [PATCH 02/11] media: iris: wait for vpu NoC to enter low power during
- power off
+Subject: [PATCH] media: iris: wait for vpu NoC to enter low power during power
+ off
 
 The recommended hardware sequence requires software to wait for vpu NoC
 to enter in low power mode and then deassert the low power idle (LPI)

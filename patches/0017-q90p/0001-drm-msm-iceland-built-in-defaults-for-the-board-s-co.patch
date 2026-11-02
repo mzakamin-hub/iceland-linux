@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 24 Oct 2026 11:39:57 +0300
-Subject: [PATCH 1/4] drm/msm: iceland: built-in defaults for the board's
- command line switches
+Subject: [PATCH] drm/msm: iceland: built-in defaults for the board's command
+ line switches
 
 The OnePlus Pad 4 boots with a long list of msm switches on its kernel
 command line. Most of them already equal the driver defaults; four do

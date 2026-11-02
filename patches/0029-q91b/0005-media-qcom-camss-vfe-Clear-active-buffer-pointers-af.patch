@@ -1,0 +1,51 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Loic Poulain <loic.poulain@oss.qualcomm.com>
+Date: Fri, 30 Oct 2026 10:47:31 +0100
+Subject: [PATCH 05/24] media: qcom: camss: vfe: Clear active buffer pointers
+ after flushing
+
+vfe_flush_buffers() returns all active buffers to vb2 but it leaves
+output->buf[0] and output->buf[1] pointing to the completed buffers
+despite the lost of ownership.
+
+This can lead to subsequent flush or completion paths operating on
+stale state and potentially completing the same buffer more than once.
+
+Clear the buffer pointers explicitly.
+
+Note: vfe_enable_output_v2 is supposed to overwrite those pointers with
+pending buffers when streaming is restarted, but nothing guarantees that
+enough pending buffers will be available to overwrite all entries.
+
+Reported-by: Sashiko <sashiko-bot@kernel.org>
+Closes: https://sashiko.dev/#/bug/linux-e617a776-3d96-47cb-8d60-a769340c25a7
+Signed-off-by: Loic Poulain <loic.poulain@oss.qualcomm.com>
+Fixes: 4c98a5f57f90 ("media: camss: Add VFE files")
+Reviewed-by: Bryan O'Donoghue <bryan.odonoghue@linaro.org>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/media/platform/qcom/camss/camss-vfe.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/media/platform/qcom/camss/camss-vfe.c b/drivers/media/platform/qcom/camss/camss-vfe.c
+index 3acef6ba97dc..26443f0412cf 100644
+--- a/drivers/media/platform/qcom/camss/camss-vfe.c
++++ b/drivers/media/platform/qcom/camss/camss-vfe.c
+@@ -1191,11 +1191,15 @@ int vfe_flush_buffers(struct camss_video *vid,
+ 
+ 	vfe_buf_flush_pending(output, state);
+ 
+-	if (output->buf[0])
++	if (output->buf[0]) {
+ 		vb2_buffer_done(&output->buf[0]->vb.vb2_buf, state);
++		output->buf[0] = NULL;
++	}
+ 
+-	if (output->buf[1])
++	if (output->buf[1]) {
+ 		vb2_buffer_done(&output->buf[1]->vb.vb2_buf, state);
++		output->buf[1] = NULL;
++	}
+ 
+ 	if (output->last_buffer) {
+ 		vb2_buffer_done(&output->last_buffer->vb.vb2_buf, state);

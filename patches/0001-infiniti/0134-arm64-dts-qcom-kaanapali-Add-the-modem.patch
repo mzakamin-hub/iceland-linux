@@ -12,7 +12,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/
 index 46bda86df4dd..3e47df2079fe 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -507,6 +507,43 @@
+@@ -507,6 +507,43 @@ smp2p_cdsp_in: slave-kernel {
  		};
  	};
  
@@ -56,7 +56,7 @@ index 46bda86df4dd..3e47df2079fe 100644
  	smp2p-soccp {
  		compatible = "qcom,smp2p";
  
-@@ -3124,6 +3161,59 @@
+@@ -3124,6 +3161,59 @@ adreno_smmu: iommu@3da0000 {
  			dma-coherent;
  		};
  

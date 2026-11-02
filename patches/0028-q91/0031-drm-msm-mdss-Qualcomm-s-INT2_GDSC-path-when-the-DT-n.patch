@@ -1,0 +1,127 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 2 Nov 2026 11:09:59 +0200
+Subject: [PATCH 31/32] drm/msm/mdss: Qualcomm's INT2_GDSC path when the DT
+ names the domains
+
+Qualcomm's "drm/msm/mdss: Enable INT2_GDSC alongside CORE_GDSC"
+(Yongxing Mou, qualcomm-linux kernel-topics 4262c30940f7, posted to
+the list) attaches the "core" and "int2" domains without device links
+and enables / releases them in msm_mdss_enable() / msm_mdss_disable().
+Our queue attaches all MDSS domains with device links instead.
+
+Carry both and choose by the device tree: with power-domain-names in
+the MDSS node, Qualcomm's path (its code, hand-applied here because our
+msm_mdss.c differs in context); without names, the existing form. The
+default Pad 4 DTB has no names, so nothing changes unless the opt-in
+DTB is booted.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/msm_mdss.c | 56 ++++++++++++++++++++++++++++++++--
+ 1 file changed, 54 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/msm_mdss.c b/drivers/gpu/drm/msm/msm_mdss.c
+index 797868e3ab5c..cf560e23be78 100644
+--- a/drivers/gpu/drm/msm/msm_mdss.c
++++ b/drivers/gpu/drm/msm/msm_mdss.c
+@@ -46,6 +46,7 @@ struct msm_mdss {
+ 	struct icc_path *mdp_path[2];
+ 	u32 num_mdp_paths;
+ 	struct icc_path *reg_bus_path;
++	struct dev_pm_domain_list *pd_list;
+ 	struct reset_control *splash_reset;
+ };
+ 
+@@ -272,6 +273,21 @@ static int msm_mdss_enable(struct msm_mdss *msm_mdss)
+ {
+ 	int ret, i;
+ 
++	/*
++	 * Platforms with two power domains (e.g. Kaanapali, Glymur) need both
++	 * GDSCs enabled explicitly; the core framework only auto-attaches a
++	 * single power domain.
++	 */
++	if (msm_mdss->pd_list) {
++		ret = pm_runtime_resume_and_get(msm_mdss->pd_list->pd_devs[0]);
++		if (ret < 0)
++			return ret;
++
++		ret = pm_runtime_resume_and_get(msm_mdss->pd_list->pd_devs[1]);
++		if (ret < 0)
++			goto err_put_core;
++	}
++
+ 	/*
+ 	 * Several components have AXI clocks that can only be turned on if
+ 	 * the interconnect is enabled (non-zero bandwidth). Let's make sure
+@@ -294,12 +310,20 @@ static int msm_mdss_enable(struct msm_mdss *msm_mdss)
+ 	ret = clk_bulk_prepare_enable(msm_mdss->num_clocks, msm_mdss->clocks);
+ 	if (ret) {
+ 		dev_err(msm_mdss->dev, "clock enable failed, ret:%d\n", ret);
+-		return ret;
++		goto err_put_int2;
+ 	}
+ 
+ 	msm_mdss_setup_ubwc(msm_mdss);
+ 
+ 	return 0;
++
++err_put_int2:
++	if (msm_mdss->pd_list)
++		pm_runtime_put_sync(msm_mdss->pd_list->pd_devs[1]);
++err_put_core:
++	if (msm_mdss->pd_list)
++		pm_runtime_put_sync(msm_mdss->pd_list->pd_devs[0]);
++	return ret;
+ }
+ 
+ static int msm_mdss_disable(struct msm_mdss *msm_mdss)
+@@ -314,6 +338,11 @@ static int msm_mdss_disable(struct msm_mdss *msm_mdss)
+ 	if (msm_mdss->reg_bus_path)
+ 		icc_set_bw(msm_mdss->reg_bus_path, 0, 0);
+ 
++	if (msm_mdss->pd_list) {
++		pm_runtime_put_sync(msm_mdss->pd_list->pd_devs[1]);
++		pm_runtime_put_sync(msm_mdss->pd_list->pd_devs[0]);
++	}
++
+ 	return 0;
+ }
+ 
+@@ -507,10 +536,33 @@ static struct msm_mdss *msm_mdss_init(struct platform_device *pdev, bool is_mdp5
+ 	 */
+ 	if (of_count_phandle_with_args(pdev->dev.of_node, "power-domains",
+ 				       "#power-domain-cells") > 1) {
+-		ret = devm_pm_domain_attach_list(&pdev->dev, &mdss_pd_data, &pd_list);
++		/*
++		 * With power-domain-names "core" and "int2" (the opt-in DTB):
++		 * Qualcomm's form, both domains without device links, enabled
++		 * and released in msm_mdss_enable() / msm_mdss_disable().
++		 * Without names (the default DTB): attach them all with device
++		 * links, powered now and then with the device.
++		 */
++		if (of_property_present(pdev->dev.of_node, "power-domain-names")) {
++			static const char * const mdss_pd_names[] = { "core", "int2" };
++			static const struct dev_pm_domain_attach_data pd_data = {
++				.pd_names = mdss_pd_names,
++				.num_pd_names = ARRAY_SIZE(mdss_pd_names),
++				.pd_flags = PD_FLAG_NO_DEV_LINK,
++			};
++
++			ret = devm_pm_domain_attach_list(&pdev->dev, &pd_data,
++							 &msm_mdss->pd_list);
++		} else {
++			ret = devm_pm_domain_attach_list(&pdev->dev, &mdss_pd_data,
++							 &pd_list);
++		}
+ 		if (ret < 0)
+ 			return ERR_PTR(dev_err_probe(&pdev->dev, ret,
+ 						     "failed to attach power domains\n"));
++		if (msm_mdss->pd_list && msm_mdss->pd_list->num_pds != 2)
++			return ERR_PTR(dev_err_probe(&pdev->dev, -EINVAL,
++						     "need the core and int2 domains\n"));
+ 	}
+ 
+ 	ret = msm_mdss_reset(msm_mdss);

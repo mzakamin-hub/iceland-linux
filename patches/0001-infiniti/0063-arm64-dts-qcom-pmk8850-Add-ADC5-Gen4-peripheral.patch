@@ -26,7 +26,7 @@ index c7ba72fd48bc..44d1d1957f8a 100644
  
  &spmi_bus0 {
  	pmic@0 {
-@@ -45,6 +46,30 @@
+@@ -45,6 +46,30 @@ pmk8850_gpios: gpio@b800 {
  			#interrupt-cells = <2>;
  		};
  

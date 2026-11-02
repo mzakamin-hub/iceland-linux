@@ -322,7 +322,7 @@ index 48d09bdb1483..0557cc96205b 100644
  
  		setup_charger = battmgr->usb.online && !battmgr->charger_configured;
  		battmgr->charger_configured = battmgr->usb.online;
-@@ -2337,7 +2484,7 @@ out_unlock:
+@@ -2337,7 +2484,7 @@ static void qcom_battmgr_oplus_cid_work(struct work_struct *work)
  static void qcom_battmgr_oplus_enable(struct qcom_battmgr *battmgr)
  {
  	mutex_lock(&battmgr->lock);

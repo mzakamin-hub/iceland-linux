@@ -27,7 +27,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 31851f4f22fa..64589cbb4dfc 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -56,6 +56,8 @@
+@@ -56,6 +56,8 @@ aliases {
  	battery: battery {
  		compatible = "simple-battery";
  		charge-full-design-microamp-hours = <13380000>;

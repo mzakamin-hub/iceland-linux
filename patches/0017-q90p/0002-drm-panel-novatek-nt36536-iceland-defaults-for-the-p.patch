@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 24 Oct 2026 11:39:58 +0300
-Subject: [PATCH 2/4] drm/panel: novatek-nt36536: iceland defaults for the
- power timing switches
+Subject: [PATCH] drm/panel: novatek-nt36536: iceland defaults for the power
+ timing switches
 
 The OnePlus Pad 4 sets panel_novatek_nt36536.stock_power_timing=1 and
 panel_novatek_nt36536.bl_after_video=1 on its command line. Both switches

@@ -70,7 +70,7 @@ index 37199cb50744..a7bb2b7b2139 100644
  		if (src_nents < 0) {
  			ret = src_nents;
  			goto error_unmap_dst;
-@@ -478,9 +478,9 @@ error_terminate:
+@@ -478,9 +478,9 @@ qce_aead_async_req_handle(struct crypto_async_request *async_req)
  	qce_dma_terminate_all(&qce->dma);
  error_unmap_src:
  	if (diff_dst)
@@ -264,7 +264,7 @@ index 5b1bf7a50f88..31f1ad8938ab 100644
  
  	ret = clk_prepare_enable(qce->iface);
  	if (ret)
-@@ -325,8 +320,7 @@ err_bus:
+@@ -325,8 +320,7 @@ static int qce_runtime_resume(struct device *dev)
  	clk_disable_unprepare(qce->iface);
  err_iface:
  	clk_disable_unprepare(qce->core);
@@ -406,7 +406,7 @@ index 7abc1d7b1cf0..37c16fbfe245 100644
  		if (!src_nents) {
  			ret = -EIO;
  			goto error_unmap_dst;
-@@ -175,9 +175,9 @@ error_terminate:
+@@ -175,9 +175,9 @@ qce_skcipher_async_req_handle(struct crypto_async_request *async_req)
  	qce_dma_terminate_all(&qce->dma);
  error_unmap_src:
  	if (diff_dst)

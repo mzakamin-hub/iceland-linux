@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Wed, 28 Oct 2026 12:48:55 +0300
-Subject: [PATCH 6/6] thermal: Add a sensor that averages thermal zones with
+Subject: [PATCH] thermal: Add a sensor that averages thermal zones with
  weights
 
 Add a driver for weighted-thermal-sensor: a thermal sensor whose

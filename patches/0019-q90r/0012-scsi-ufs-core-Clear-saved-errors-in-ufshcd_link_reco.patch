@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: HOYOUNG SEO <hy50.seo@samsung.com>
 Date: Fri, 23 Oct 2026 20:34:51 +0900
-Subject: [PATCH 12/13] scsi: ufs: core: Clear saved errors in
- ufshcd_link_recovery
+Subject: [PATCH] scsi: ufs: core: Clear saved errors in ufshcd_link_recovery
 
 ufshcd_link_recovery() resets both the device and the host and then
 re-establishes the link. Unlike ufshcd_reset_and_restore(), however, it
@@ -27,10 +26,10 @@ Signed-off-by: HOYOUNG SEO <hy50.seo@samsung.com>
  1 file changed, 14 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/ufs/core/ufshcd.c b/drivers/ufs/core/ufshcd.c
-index d0d8687168f8..4e402df754fb 100644
+index 5cbbebcd148b..a9e07ae286a1 100644
 --- a/drivers/ufs/core/ufshcd.c
 +++ b/drivers/ufs/core/ufshcd.c
-@@ -4695,10 +4695,20 @@ EXPORT_SYMBOL_GPL(ufshcd_uic_change_pwr_mode);
+@@ -4700,10 +4700,20 @@ EXPORT_SYMBOL_GPL(ufshcd_uic_change_pwr_mode);
  
  int ufshcd_link_recovery(struct ufs_hba *hba)
  {
@@ -51,7 +50,7 @@ index d0d8687168f8..4e402df754fb 100644
  	hba->ufshcd_state = UFSHCD_STATE_RESET;
  	ufshcd_set_eh_in_progress(hba);
  	spin_unlock_irqrestore(&hba->host->host_lock, flags);
-@@ -4709,8 +4719,11 @@ int ufshcd_link_recovery(struct ufs_hba *hba)
+@@ -4714,8 +4724,11 @@ int ufshcd_link_recovery(struct ufs_hba *hba)
  	ret = ufshcd_host_reset_and_restore(hba);
  
  	spin_lock_irqsave(&hba->host->host_lock, flags);

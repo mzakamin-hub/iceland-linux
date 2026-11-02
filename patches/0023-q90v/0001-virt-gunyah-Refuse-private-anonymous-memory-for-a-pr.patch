@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 26 Oct 2026 11:57:40 +0300
-Subject: [PATCH 1/1] virt: gunyah: Refuse private anonymous memory for a
- protected VM's shared region
+Subject: [PATCH] virt: gunyah: Refuse private anonymous memory for a protected
+ VM's shared region
 
 A protected VM's shared (not lent) memory is handed to the guest one
 folio at a time when the guest first touches it: the host asks the

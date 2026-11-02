@@ -41,10 +41,10 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  create mode 100644 drivers/devfreq/scmi-qcom-memlat-devfreq.c
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 5bc9614ea131..de36f1b5ea9c 100644
+index 4dfc61cda402..8527be96422a 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -23155,6 +23155,14 @@ F:	Documentation/networking/device_drivers/cellular/qualcomm/rmnet.rst
+@@ -23159,6 +23159,14 @@ F:	Documentation/networking/device_drivers/cellular/qualcomm/rmnet.rst
  F:	drivers/net/ethernet/qualcomm/rmnet/
  F:	include/linux/if_rmnet.h
  

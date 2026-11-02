@@ -199,7 +199,7 @@ index 587f14ce71d2..202f215de00c 100644
  
  /*
 diff --git a/sound/soc/qcom/qdsp6/q6apm.c b/sound/soc/qcom/qdsp6/q6apm.c
-index 1e07c42e3d72..640157dcc45a 100644
+index f592ddeda492..894302dcd108 100644
 --- a/sound/soc/qcom/qdsp6/q6apm.c
 +++ b/sound/soc/qcom/qdsp6/q6apm.c
 @@ -90,7 +90,8 @@ static struct audioreach_graph *q6apm_get_audioreach_graph(struct q6apm *apm, ui
@@ -213,10 +213,10 @@ index 1e07c42e3d72..640157dcc45a 100644
  	return graph;
  }
 diff --git a/sound/soc/qcom/qdsp6/topology.c b/sound/soc/qcom/qdsp6/topology.c
-index faafbc5c0ad0..874404ae13bb 100644
+index 612d8f03e6e9..715f2890d2b9 100644
 --- a/sound/soc/qcom/qdsp6/topology.c
 +++ b/sound/soc/qcom/qdsp6/topology.c
-@@ -771,6 +771,9 @@ static int audioreach_widget_audio_if_module_load(struct audioreach_module *mod,
+@@ -792,6 +792,9 @@ static int audioreach_widget_audio_if_module_load(struct audioreach_module *mod,
  		case AR_TKN_U32_MODULE_FMT_DATA:
  			mod->data_format = val;
  			break;
@@ -226,7 +226,7 @@ index faafbc5c0ad0..874404ae13bb 100644
  		case AR_TKN_U16_MODULE_SYNC_SRC:
  			if (val > U16_MAX)
  				return -EINVAL;
-@@ -903,6 +906,8 @@ static int audioreach_widget_load_buffer(struct snd_soc_component *component,
+@@ -924,6 +927,8 @@ static int audioreach_widget_load_buffer(struct snd_soc_component *component,
  	case MODULE_ID_I2S_SOURCE:
  		audioreach_widget_i2s_module_load(mod, mod_array);
  		break;

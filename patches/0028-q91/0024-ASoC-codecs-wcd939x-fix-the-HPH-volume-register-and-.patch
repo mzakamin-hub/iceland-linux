@@ -1,0 +1,63 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 2 Nov 2026 09:19:08 +0200
+Subject: [PATCH 24/32] ASoC: codecs: wcd939x: fix the HPH volume register and
+ scale
+
+The "HPHL Volume" and "HPHR Volume" controls write bits 4:0 of HPH_L_EN /
+HPH_R_EN, the layout of the WCD938x. On the WCD939x those bits are spare
+(WCD939X_L_EN_SPARE_BITS); the headphone PA gain is in bits 4:0 of
+HPH_NEW_INT_PA_GAIN_CTL_L / _R, which is also where HPH_L_EN's
+GAIN_SOURCE_SEL bit points when the gain comes from a register (the
+compander is off). The controls therefore never changed the gain, and
+their dB metadata (0.07 dB per step with a mute at the bottom) was not
+the hardware's either.
+
+Move both controls to the PA gain registers and describe the PA's scale:
+register 0 is +6 dB and every step is 1.5 dB less, down to -30 dB at
+0x18, with no mute. This is the scale of the vendor driver for this
+codec (hph_analog_gain, 0x00..0x18 from +6 dB to -30 dB, 0x04 = 0 dB) and
+the same as the WCD938x HPH controls. The control stays inverted, so a
+higher value is louder: 24 is +6 dB, 20 is 0 dB, 0 is -30 dB. The bits
+above the gain field (2 Vpk mode, supply level, DAC boost) are not
+touched.
+
+The step size is taken from the vendor driver, not measured on a
+headphone load. While the compander runs, the gain source is the
+compander and these controls have no audible effect, as before.
+
+Fixes: 10f514bd172a ("ASoC: codecs: Add WCD939x Codec driver")
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ sound/soc/codecs/wcd939x.c | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/sound/soc/codecs/wcd939x.c b/sound/soc/codecs/wcd939x.c
+index 974ca92aabca..7bc5c6f30771 100644
+--- a/sound/soc/codecs/wcd939x.c
++++ b/sound/soc/codecs/wcd939x.c
+@@ -222,7 +222,8 @@ static const char * const wcd939x_supplies[] = {
+ };
+ 
+ static const SNDRV_CTL_TLVD_DECLARE_DB_MINMAX(ear_pa_gain, 600, -1800);
+-static const DECLARE_TLV_DB_SCALE(line_gain, 0, 7, 1);
++/* HPH PA gain: register 0 = +6 dB, 1.5 dB less per step, 24 = -30 dB */
++static const DECLARE_TLV_DB_SCALE(hph_gain, -3000, 150, 0);
+ static const DECLARE_TLV_DB_SCALE(analog_gain, 0, 150, 0);
+ 
+ static const struct wcd_mbhc_field wcd_mbhc_fields[WCD_MBHC_REG_FUNC_MAX] = {
+@@ -2601,8 +2602,10 @@ static const struct snd_kcontrol_new wcd939x_snd_controls[] = {
+ 		       wcd939x_get_swr_port, wcd939x_set_swr_port),
+ 	SOC_SINGLE_EXT("DSD_R Switch", WCD939X_DSD_R, 0, 1, 0,
+ 		       wcd939x_get_swr_port, wcd939x_set_swr_port),
+-	SOC_SINGLE_TLV("HPHL Volume", WCD939X_HPH_L_EN, 0, 20, 1, line_gain),
+-	SOC_SINGLE_TLV("HPHR Volume", WCD939X_HPH_R_EN, 0, 20, 1, line_gain),
++	SOC_SINGLE_TLV("HPHL Volume", WCD939X_HPH_NEW_INT_PA_GAIN_CTL_L, 0, 0x18, 1,
++		       hph_gain),
++	SOC_SINGLE_TLV("HPHR Volume", WCD939X_HPH_NEW_INT_PA_GAIN_CTL_R, 0, 0x18, 1,
++		       hph_gain),
+ 	SOC_SINGLE_EXT("LDOH Enable Switch", SND_SOC_NOPM, 0, 1, 0,
+ 		       wcd939x_ldoh_get, wcd939x_ldoh_put),
+ 

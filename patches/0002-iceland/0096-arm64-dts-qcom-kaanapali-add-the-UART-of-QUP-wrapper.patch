@@ -18,7 +18,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/
 index 451e9f2ca1d0..903df4793533 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -2217,6 +2217,28 @@
+@@ -2217,6 +2217,28 @@ &clk_virt SLAVE_QUP_CORE_3 QCOM_ICC_TAG_ALWAYS>,
  				status = "disabled";
  			};
  
@@ -47,7 +47,7 @@ index 451e9f2ca1d0..903df4793533 100644
  			uart18: serial@1994000 {
  				compatible = "qcom,geni-uart";
  				reg = <0x0 0x01994000 0x0 0x4000>;
-@@ -5948,6 +5970,14 @@
+@@ -5948,6 +5970,14 @@ qup_uart7_default: qup-uart7-state {
  				bias-disable;
  			};
  

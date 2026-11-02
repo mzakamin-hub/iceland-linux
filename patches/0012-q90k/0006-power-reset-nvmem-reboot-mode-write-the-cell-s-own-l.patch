@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 23 Oct 2026 14:15:13 +0300
-Subject: [PATCH 06/17] power: reset: nvmem-reboot-mode: write the cell's own
- length again
+Subject: [PATCH] power: reset: nvmem-reboot-mode: write the cell's own length
+ again
 
 "power: reset: reboot-mode: Add support for 64 bit magic" changed the
 cell write to sizeof(u32) bytes. nvmem_cell_write() only accepts the

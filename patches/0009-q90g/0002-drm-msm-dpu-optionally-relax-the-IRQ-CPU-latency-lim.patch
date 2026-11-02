@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Thu, 22 Oct 2026 13:20:49 +0300
-Subject: [PATCH 2/2] drm/msm/dpu: optionally relax the IRQ CPU latency limit
- at the idle refresh rate
+Subject: [PATCH] drm/msm/dpu: optionally relax the IRQ CPU latency limit at
+ the idle refresh rate
 
 While a CRTC is enabled, msm.dpu_irq_cpu_latency_us (default 500 us)
 keeps the CPU that takes the MDSS interrupt, and with it its cluster and
@@ -213,7 +213,7 @@ index 8d01ac5be62c..2e53bb503c62 100644
  		WRITE_ONCE(dpu_irq_cpu_latency_cpu, -1);
  		DRM_DEBUG_KMS("cpu resume latency limit released\n");
  	}
-@@ -1508,6 +1547,30 @@ out:
+@@ -1508,6 +1547,30 @@ void dpu_kms_irq_cpu_latency_put(struct dpu_kms *dpu_kms)
  	mutex_unlock(&dpu_kms->irq_cpu_lock);
  }
  

@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Miaoqing Pan <miaoqing.pan@oss.qualcomm.com>
+Date: Tue, 1 Sep 2026 16:35:23 +0800
+Subject: [PATCH 03/24] FROMLIST: wifi: ath12k: fix incorrect channel survey
+ index
+
+A wrong channel survey index was introduced in
+ath12k_mac_op_get_survey by [1], which can cause ACS to fail.
+
+The index is decremented before being used, resulting in an
+incorrect value when accessing the channel survey data.
+
+Fix the index handling to ensure the correct survey entry is
+used and avoid ACS failures.
+
+Tested-on: WCN7850 hw2.0 PCI WLAN.HMT.1.1.c5-00302-QCAHMTSWPL_V1.0_V2.0_SILICONZ-1.115823.3
+
+Fixes: 4f242b1d6996 ("wifi: ath12k: support get_survey mac op for single wiphy") # [1]
+Signed-off-by: Yingying Tang <yingying.tang@oss.qualcomm.com>
+Link: https://lore.kernel.org/linux-wireless/20260210024440.3422264-1-yingying.tang@oss.qualcomm.com/
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/net/wireless/ath/ath12k/mac.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/ath/ath12k/mac.c b/drivers/net/wireless/ath/ath12k/mac.c
+index 484bc6d2dbd8..2acfa065a147 100644
+--- a/drivers/net/wireless/ath/ath12k/mac.c
++++ b/drivers/net/wireless/ath/ath12k/mac.c
+@@ -13885,7 +13885,7 @@ int ath12k_mac_op_get_survey(struct ieee80211_hw *hw, int idx,
+ 		return -ENOENT;
+ 	}
+ 
+-	ah_survey = &ah->survey[idx];
++	ah_survey = &ah->survey[sband_idx];
+ 
+ 	ath12k_mac_update_bss_chan_survey(ar, &sband->channels[sband_idx]);
+ 

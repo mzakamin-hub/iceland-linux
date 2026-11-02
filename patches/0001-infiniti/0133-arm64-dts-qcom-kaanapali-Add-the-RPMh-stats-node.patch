@@ -12,7 +12,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/
 index 0fdedb240e09..46bda86df4dd 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -4698,6 +4698,12 @@
+@@ -4698,6 +4698,12 @@ IPCC_MPROC_SIGNAL_GLINK_QMP
  			#clock-cells = <0>;
  		};
  

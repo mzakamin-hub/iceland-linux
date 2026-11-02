@@ -254,10 +254,10 @@ index 261254ebac47..4255b8addd60 100644
  		return;
  	}
 diff --git a/drivers/gpu/drm/msm/msm_fb.c b/drivers/gpu/drm/msm/msm_fb.c
-index ba3a08b4b972..b2785f6a10ed 100644
+index cc71c42d4e12..8fe726f000e7 100644
 --- a/drivers/gpu/drm/msm/msm_fb.c
 +++ b/drivers/gpu/drm/msm/msm_fb.c
-@@ -13,6 +13,8 @@
+@@ -11,6 +11,8 @@
  #include <drm/drm_gem_framebuffer_helper.h>
  #include <drm/drm_probe_helper.h>
  
@@ -266,7 +266,7 @@ index ba3a08b4b972..b2785f6a10ed 100644
  #include "msm_drv.h"
  #include "msm_kms.h"
  #include "msm_gem.h"
-@@ -145,6 +147,16 @@ void msm_framebuffer_unpin(struct drm_framebuffer *fb)
+@@ -143,6 +145,16 @@ void msm_framebuffer_unpin(struct drm_framebuffer *fb)
  	msm_framebuffer_unpin_planes(fb, fb->format->num_planes);
  }
  
@@ -283,7 +283,7 @@ index ba3a08b4b972..b2785f6a10ed 100644
  void msm_framebuffer_cleanup(struct drm_framebuffer *fb, struct drm_crtc *crtc,
  			     bool needed_dirtyfb)
  {
-@@ -153,7 +165,8 @@ void msm_framebuffer_cleanup(struct drm_framebuffer *fb, struct drm_crtc *crtc,
+@@ -151,7 +163,8 @@ void msm_framebuffer_cleanup(struct drm_framebuffer *fb, struct drm_crtc *crtc,
  	if (needed_dirtyfb)
  		refcount_dec(&msm_fb->dirtyfb);
  

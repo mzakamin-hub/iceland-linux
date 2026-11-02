@@ -1,0 +1,35 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Vishnu Reddy <busanna.reddy@oss.qualcomm.com>
+Date: Sat, 31 Oct 2026 01:43:06 +0530
+Subject: [PATCH 17/24] media: iris: Fix encoder reference buffer size
+ calculation
+
+For frame widths that are not multiples of 128, such as 864, the
+encoder reference buffer size is underestimated. As a result, the
+firmware reports a session error when starting the encode session.
+
+The encoder requires the reference buffer width to be aligned to 128,
+but the current calculation aligns it to only 32. Align the width to
+128 when calculating the reference buffer size.
+
+Fixes: 61528e86687e ("media: iris: Allocate and queue internal buffers for encoder video device")
+Cc: stable@vger.kernel.org
+Signed-off-by: Vishnu Reddy <busanna.reddy@oss.qualcomm.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/media/platform/qcom/iris/iris_vpu_buffer.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
+index 04f1fd3e97d2..7b78e461cb86 100644
+--- a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
++++ b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
+@@ -1517,7 +1517,7 @@ u32 size_enc_ref_buffer(u32 frame_width, u32 frame_height)
+ {
+ 	u32 u_chroma_buffer_height = ALIGN(frame_height >> 1, 32);
+ 	u32 u_buffer_height = ALIGN(frame_height, 32);
+-	u32 u_buffer_width = ALIGN(frame_width, 32);
++	u32 u_buffer_width = ALIGN(frame_width, 128);
+ 
+ 	return (u_buffer_height + u_chroma_buffer_height) * u_buffer_width;
+ }

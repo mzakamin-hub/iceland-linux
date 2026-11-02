@@ -27,7 +27,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/
 index 586ddec24ba0..d0197736ecec 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -4021,6 +4021,7 @@
+@@ -4021,6 +4021,7 @@ usb_dp_qmpphy: phy@88e8000 {
  			#clock-cells = <1>;
  			#phy-cells = <1>;
  

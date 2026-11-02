@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Igor Opaniuk <igor.opaniuk@oss.qualcomm.com>
 Date: Mon, 19 Oct 2026 13:12:01 +0200
-Subject: [PATCH 1/6] net: qrtr: ns: keep going when an announcement cannot be
- sent
+Subject: [PATCH] net: qrtr: ns: keep going when an announcement cannot be sent
 
 announce_servers() answers a HELLO by announcing every local server to
 the new node, and stops at the first send error: the node then never

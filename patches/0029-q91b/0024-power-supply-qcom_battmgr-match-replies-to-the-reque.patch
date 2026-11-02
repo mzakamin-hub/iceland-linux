@@ -1,0 +1,235 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 2 Nov 2026 11:48:26 +0200
+Subject: [PATCH 24/24] power: supply: qcom_battmgr: match replies to the
+ request in flight
+
+Every request shares one completion, and any reply other than a
+notification completed it: a late reply to a request that had timed out,
+or an unsolicited firmware message (the OPLUS charger firmware sends
+0x10009, which fell into "unknown message" and still completed the
+waiter), answered the next request with someone else's data.
+
+- Record the opcode of the request in flight (and the property of a
+  standard BAT / USB / WLS property read, whose reply echoes it) under a
+  new spinlock, and drop replies that do not match. OPLUS and SET
+  replies are matched by opcode only, so no charger write can start to
+  time out where it worked before.
+- A read the firmware answers with a nonzero result code returns
+  -EREMOTEIO instead of a positive value that callers testing for a
+  negative errno take as success. Writes keep their return values.
+- When the firmware service stops (PDR), fail the request in flight
+  with -ENOTCONN at once instead of after its one-second timeout.
+- The enable worker takes the request lock like every other caller.
+
+Battery reporting robustness only: no charging behaviour, current,
+voltage or limit changes.
+
+The analysis and the ideas are denialwm's linux-perpetua commits
+43f077801a5f, 8e4d9494bd65 and ff4b551ee8f7; this is our own code for
+the OPLUS battmgr of the Pad 4 queue.
+
+Suggested-by: Doctor Logix <doctor.logix@gmail.com>
+Based-on: denialwm/linux-perpetua 43f077801a5f, 8e4d9494bd65, ff4b551ee8f7 (analysis; our code)
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/power/supply/qcom_battmgr.c | 115 +++++++++++++++++++++++++---
+ 1 file changed, 103 insertions(+), 12 deletions(-)
+
+diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
+index bc36d0496581..bd6b467026b4 100644
+--- a/drivers/power/supply/qcom_battmgr.c
++++ b/drivers/power/supply/qcom_battmgr.c
+@@ -18,6 +18,7 @@
+ #include <linux/property.h>
+ #include <linux/soc/qcom/pdr.h>
+ #include <linux/soc/qcom/pmic_glink.h>
++#include <linux/spinlock.h>
+ #include <linux/suspend.h>
+ #include <linux/thermal.h>
+ #include <linux/math.h>
+@@ -421,6 +422,18 @@ struct qcom_battmgr {
+ 	int error;
+ 	struct completion ack;
+ 
++	/*
++	 * The request in flight (opcode, and the property of a standard
++	 * property read), under @rx_lock, so that only its reply completes
++	 * @ack: a late reply to a timed-out request or an unsolicited firmware
++	 * message is dropped instead of answering the next request.
++	 */
++	spinlock_t rx_lock;
++	bool pending;
++	u32 pending_opcode;
++	u32 pending_property;
++	bool pending_match_property;
++
+ 	bool service_up;
+ 
+ 	struct qcom_battmgr_info info;
+@@ -491,24 +504,57 @@ struct qcom_battmgr {
+ 	struct mutex lock;
+ };
+ 
++/* the standard property reads echo the property in their reply (the callbacks dispatch on it) */
++static bool qcom_battmgr_property_read(u32 opcode)
++{
++	return opcode == BATTMGR_BAT_PROPERTY_GET || opcode == BATTMGR_USB_PROPERTY_GET ||
++	       opcode == BATTMGR_WLS_PROPERTY_GET;
++}
++
++/* requests that only read: a firmware result code is returned as -EREMOTEIO */
++static bool qcom_battmgr_read_request(u32 opcode)
++{
++	return qcom_battmgr_property_read(opcode) || opcode == OPLUS_PROPERTY_GET ||
++	       opcode == OPLUS_GAUGE_READ;
++}
++
+ static int qcom_battmgr_request(struct qcom_battmgr *battmgr, void *data, size_t len)
+ {
+-	unsigned long left;
++	const struct qcom_battmgr_property_request *req = data;
++	u32 opcode = le32_to_cpu(req->hdr.opcode);
++	unsigned long flags, left;
+ 	int ret;
+ 
++	spin_lock_irqsave(&battmgr->rx_lock, flags);
+ 	reinit_completion(&battmgr->ack);
+-
+ 	battmgr->error = 0;
++	battmgr->pending_opcode = opcode;
++	battmgr->pending_match_property = qcom_battmgr_property_read(opcode) &&
++					  len >= sizeof(*req);
++	if (battmgr->pending_match_property)
++		battmgr->pending_property = le32_to_cpu(req->property);
++	battmgr->pending = true;
++	spin_unlock_irqrestore(&battmgr->rx_lock, flags);
+ 
+ 	ret = pmic_glink_send(battmgr->client, data, len);
+-	if (ret < 0)
+-		return ret;
++	if (!ret) {
++		left = wait_for_completion_timeout(&battmgr->ack, HZ);
++		ret = left ? battmgr->error : -ETIMEDOUT;
++	}
++
++	spin_lock_irqsave(&battmgr->rx_lock, flags);
++	battmgr->pending = false;
++	spin_unlock_irqrestore(&battmgr->rx_lock, flags);
+ 
+-	left = wait_for_completion_timeout(&battmgr->ack, HZ);
+-	if (!left)
+-		return -ETIMEDOUT;
++	/*
++	 * A read the firmware answered with a nonzero result code failed: say
++	 * so with an errno instead of a positive value that callers testing for
++	 * a negative errno take as success. Writes keep their return values.
++	 */
++	if (ret > 0 && qcom_battmgr_read_request(opcode))
++		ret = -EREMOTEIO;
+ 
+-	return battmgr->error;
++	return ret;
+ }
+ 
+ static int qcom_battmgr_request_property(struct qcom_battmgr *battmgr, int opcode,
+@@ -2442,21 +2488,50 @@ static void qcom_battmgr_oplus_gauge_callback(struct qcom_battmgr *battmgr,
+ 	complete(&battmgr->ack);
+ }
+ 
++/* Called with @battmgr->rx_lock held. */
++static bool qcom_battmgr_expected(struct qcom_battmgr *battmgr, const void *data, size_t len)
++{
++	const struct qcom_battmgr_message *resp = data;
++
++	if (!battmgr->pending || le32_to_cpu(resp->hdr.opcode) != battmgr->pending_opcode)
++		return false;
++	if (!battmgr->pending_match_property)
++		return true;
++
++	return len >= sizeof(resp->hdr) + sizeof(resp->intval.property) &&
++	       le32_to_cpu(resp->intval.property) == battmgr->pending_property;
++}
++
+ static void qcom_battmgr_callback(const void *data, size_t len, void *priv)
+ {
+ 	const struct pmic_glink_hdr *hdr = data;
+ 	struct qcom_battmgr *battmgr = priv;
+ 	unsigned int opcode = le32_to_cpu(hdr->opcode);
+ 
+-	if (opcode == BATTMGR_NOTIFICATION)
++	unsigned long flags;
++
++	if (opcode == BATTMGR_NOTIFICATION) {
+ 		qcom_battmgr_notification(battmgr, data, len);
+-	else if (battmgr->variant == QCOM_BATTMGR_OPLUS && opcode == OPLUS_GAUGE_READ)
++		return;
++	}
++
++	/* only the reply of the request in flight completes it */
++	spin_lock_irqsave(&battmgr->rx_lock, flags);
++	if (!qcom_battmgr_expected(battmgr, data, len)) {
++		spin_unlock_irqrestore(&battmgr->rx_lock, flags);
++		dev_dbg_ratelimited(battmgr->dev, "dropped message %#x: no request waits for it\n", opcode);
++		return;
++	}
++
++	if (battmgr->variant == QCOM_BATTMGR_OPLUS && opcode == OPLUS_GAUGE_READ)
+ 		qcom_battmgr_oplus_gauge_callback(battmgr, data, len);
+ 	else if (battmgr->variant == QCOM_BATTMGR_SC8280XP ||
+ 		 battmgr->variant == QCOM_BATTMGR_X1E80100)
+ 		qcom_battmgr_sc8280xp_callback(battmgr, data, len);
+ 	else
+ 		qcom_battmgr_sm8350_callback(battmgr, data, len);
++	battmgr->pending = false;
++	spin_unlock_irqrestore(&battmgr->rx_lock, flags);
+ }
+ 
+ static int qcom_battmgr_oplus_set(struct qcom_battmgr *battmgr, int property, u32 value)
+@@ -3366,7 +3441,10 @@ static void qcom_battmgr_enable_worker(struct work_struct *work)
+ 	};
+ 	int ret;
+ 
++	/* every request shares @ack: take the request lock like the other callers */
++	mutex_lock(&battmgr->lock);
+ 	ret = qcom_battmgr_request(battmgr, &req, sizeof(req));
++	mutex_unlock(&battmgr->lock);
+ 	if (ret)
+ 		dev_err(battmgr->dev, "failed to request power notifications\n");
+ 
+@@ -3387,12 +3465,24 @@ static void qcom_battmgr_pdr_notify(void *priv, int state)
+ {
+ 	struct qcom_battmgr *battmgr = priv;
+ 
++	unsigned long flags;
++
+ 	if (state == SERVREG_SERVICE_STATE_UP) {
+ 		battmgr->service_up = true;
+ 		schedule_work(&battmgr->enable_work);
+-	} else {
+-		battmgr->service_up = false;
++		return;
++	}
++
++	battmgr->service_up = false;
++
++	/* a stopped service never answers: fail the request in flight now, not after its timeout */
++	spin_lock_irqsave(&battmgr->rx_lock, flags);
++	if (battmgr->pending) {
++		battmgr->error = -ENOTCONN;
++		battmgr->pending = false;
++		complete(&battmgr->ack);
+ 	}
++	spin_unlock_irqrestore(&battmgr->rx_lock, flags);
+ }
+ 
+ static const struct of_device_id qcom_battmgr_of_variants[] = {
+@@ -3478,6 +3568,7 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
+ 	psy_cfg_supply.num_supplicants = 1;
+ 
+ 	mutex_init(&battmgr->lock);
++	spin_lock_init(&battmgr->rx_lock);
+ 	init_completion(&battmgr->ack);
+ 
+ 	match = of_match_device(qcom_battmgr_of_variants, dev->parent);

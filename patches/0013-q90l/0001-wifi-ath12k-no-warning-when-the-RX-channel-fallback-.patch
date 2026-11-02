@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 23 Oct 2026 23:46:14 +0300
-Subject: [PATCH 1/1] wifi: ath12k: no warning when the RX channel fallback is
- the expected one
+Subject: [PATCH] wifi: ath12k: no warning when the RX channel fallback is the
+ expected one
 
 On a WCN7860 station on 5 GHz (channel 36, VHT80), once station power
 save has been applied in the boot (also after it is switched off again

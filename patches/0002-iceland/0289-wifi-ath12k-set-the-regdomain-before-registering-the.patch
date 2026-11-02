@@ -84,7 +84,7 @@ index ae40430b73f8..63a57145e41e 100644
  		if (this_ab->hw_params->current_cc_support) {
  			struct wmi_set_current_country_arg current_cc = {};
  			struct ieee80211_regdomain *default_regd;
-@@ -15189,12 +15194,6 @@ fw_stats_init:
+@@ -15189,12 +15194,6 @@ static int ath12k_mac_hw_register(struct ath12k_hw *ah)
  
  	return 0;
  

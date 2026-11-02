@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sun, 25 Oct 2026 20:12:07 +0300
-Subject: [PATCH 6/6] virt: gunyah: qcom: Log failed demand-page assigns and
- probe the owner
+Subject: [PATCH] virt: gunyah: qcom: Log failed demand-page assigns and probe
+ the owner
 
 A failed SCM assign of a demand-paged folio is reported only as the
 generic "Failed to provide folio" error, without the page. Log the pfn,

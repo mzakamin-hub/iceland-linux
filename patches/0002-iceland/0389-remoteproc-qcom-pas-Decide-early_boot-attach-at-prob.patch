@@ -46,7 +46,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 32 insertions(+), 30 deletions(-)
 
 diff --git a/drivers/remoteproc/qcom_q6v5_pas.c b/drivers/remoteproc/qcom_q6v5_pas.c
-index ced8fb5fbaad..6b25ba72abed 100644
+index a05c14d4ce9d..d3caa53ad508 100644
 --- a/drivers/remoteproc/qcom_q6v5_pas.c
 +++ b/drivers/remoteproc/qcom_q6v5_pas.c
 @@ -550,9 +550,7 @@ static unsigned long qcom_pas_panic(struct rproc *rproc)

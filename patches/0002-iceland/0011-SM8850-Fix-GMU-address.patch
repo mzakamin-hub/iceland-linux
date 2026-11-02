@@ -12,7 +12,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/
 index 1cd72c084d54..47d3fd46b245 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -3150,10 +3150,10 @@
+@@ -3150,10 +3150,10 @@ opp-1300000000 {
  			};
  		};
  

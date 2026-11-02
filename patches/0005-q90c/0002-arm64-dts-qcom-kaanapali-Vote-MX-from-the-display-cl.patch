@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Wed, 21 Oct 2026 21:05:09 +0300
-Subject: [PATCH 2/2] arm64: dts: qcom: kaanapali: Vote MX from the display
- clock controller
+Subject: [PATCH] arm64: dts: qcom: kaanapali: Vote MX from the display clock
+ controller
 
 The display clock controller voted MMCX only. Its PLLs run on MX
 (vendor tree: dispcc vdd_mm + vdd_mx), and nothing else on the display
@@ -31,7 +31,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/
 index 68a0f953efb7..f39f3dac2a08 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -4967,8 +4967,10 @@
+@@ -4967,8 +4967,10 @@ dispcc: clock-controller@9ba2000 {
  				 <&mdss_dsi1_phy DSI_BYTE_PLL_CLK>,
  				 <&mdss_dsi1_phy DSI_PIXEL_PLL_CLK>;
  

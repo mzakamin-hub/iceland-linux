@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: iceland-dev <dev@iceland.local>
 Date: Sun, 4 Oct 2026 04:28:40 +0800
-Subject: [PATCH 02/10] virt: gunyah: adapt to mainline 7.2
+Subject: [PATCH] virt: gunyah: adapt to mainline 7.2
 
 Logic is unchanged; the edits are API-form adaptations, each listed in
 Documentation/virt/gunyah/port_adaptations.md:

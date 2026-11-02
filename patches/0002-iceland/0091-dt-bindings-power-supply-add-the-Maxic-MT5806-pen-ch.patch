@@ -118,10 +118,10 @@ index 000000000000..98e8fcd540eb
 +        };
 +    };
 diff --git a/Documentation/devicetree/bindings/vendor-prefixes.yaml b/Documentation/devicetree/bindings/vendor-prefixes.yaml
-index c981a133753e..52276ab1ab80 100644
+index 5471a06f93f1..31c5ed04ba35 100644
 --- a/Documentation/devicetree/bindings/vendor-prefixes.yaml
 +++ b/Documentation/devicetree/bindings/vendor-prefixes.yaml
-@@ -1047,6 +1047,8 @@ patternProperties:
+@@ -1045,6 +1045,8 @@ patternProperties:
      description: Marvell Technology Group Ltd.
    "^maxbotix,.*":
      description: MaxBotix Inc.

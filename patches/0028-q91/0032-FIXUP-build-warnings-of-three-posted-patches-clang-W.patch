@@ -1,0 +1,72 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 2 Nov 2026 11:18:57 +0200
+Subject: [PATCH 32/32] FIXUP: build warnings of three posted patches (clang
+ -Wsometimes-uninitialized / -Wunused)
+
+- PCI: qcom: Implement shutdown() callback (pw 1195891 v7 3/3): pcie
+  stays uninitialised on the firmware-managed path but is tested later;
+  initialise it to NULL.
+- drm/msm: preemption aware hangcheck (pw 1196541 v2): unused ret in
+  check_ring_timeout(); last_active_ctxcycles is uninitialised when the
+  postamble is built without a ring (the CP_NOP payload then carries
+  whatever was on the stack): initialise it to 0.
+- the same hangcheck patch also leaves dev unused in a6xx_preempt_timer().
+
+To be reported on the lists with the review; squash into the picks when
+the series are refreshed.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/adreno/a6xx_preempt.c | 3 +--
+ drivers/gpu/drm/msm/msm_gpu.c             | 1 -
+ drivers/pci/controller/dwc/pcie-qcom.c    | 2 +-
+ 3 files changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/adreno/a6xx_preempt.c b/drivers/gpu/drm/msm/adreno/a6xx_preempt.c
+index c5877a21fc20..cc9cf4031299 100644
+--- a/drivers/gpu/drm/msm/adreno/a6xx_preempt.c
++++ b/drivers/gpu/drm/msm/adreno/a6xx_preempt.c
+@@ -15,7 +15,6 @@ static void a6xx_preempt_timer(struct timer_list *t)
+ 	struct a6xx_gpu *a6xx_gpu = timer_container_of(a6xx_gpu, t,
+ 						       preempt_timer);
+ 	struct msm_gpu *gpu = &a6xx_gpu->base.base;
+-	struct drm_device *dev = gpu->dev;
+ 
+ 	if (!try_preempt_state(a6xx_gpu, PREEMPT_TRIGGERED, PREEMPT_FAULTED))
+ 		return;
+@@ -26,7 +25,7 @@ static void a6xx_preempt_timer(struct timer_list *t)
+ static void preempt_prepare_postamble(struct a6xx_gpu *a6xx_gpu, struct msm_ringbuffer *ring)
+ {
+ 	u32 *postamble = a6xx_gpu->preempt_postamble_ptr;
+-	uint64_t last_active_ctxcycles;
++	uint64_t last_active_ctxcycles = 0;
+ 	u32 count = 0;
+ 
+ 	if (ring)
+diff --git a/drivers/gpu/drm/msm/msm_gpu.c b/drivers/gpu/drm/msm/msm_gpu.c
+index 0bd9b465cfb1..da89ed49e435 100644
+--- a/drivers/gpu/drm/msm/msm_gpu.c
++++ b/drivers/gpu/drm/msm/msm_gpu.c
+@@ -659,7 +659,6 @@ static bool check_ring_timeout(struct msm_ringbuffer *ring, unsigned long timeou
+ {
+ 	struct msm_gpu *gpu = ring->gpu;
+ 	u64 start, end;
+-	int ret;
+ 
+ 	if (!gpu->funcs->get_ctx_timestamp)
+ 		return !made_progress(gpu, ring);
+diff --git a/drivers/pci/controller/dwc/pcie-qcom.c b/drivers/pci/controller/dwc/pcie-qcom.c
+index a975385434ed..03a6070ce148 100644
+--- a/drivers/pci/controller/dwc/pcie-qcom.c
++++ b/drivers/pci/controller/dwc/pcie-qcom.c
+@@ -2481,7 +2481,7 @@ static int qcom_pcie_probe(struct platform_device *pdev)
+ static void qcom_pcie_shutdown(struct platform_device *pdev)
+ {
+ 	const struct qcom_pcie_cfg *pcie_cfg = of_device_get_match_data(&pdev->dev);
+-	struct qcom_pcie *pcie;
++	struct qcom_pcie *pcie = NULL;
+ 	struct dw_pcie *pci;
+ 
+ 	if (pcie_cfg && pcie_cfg->firmware_managed) {

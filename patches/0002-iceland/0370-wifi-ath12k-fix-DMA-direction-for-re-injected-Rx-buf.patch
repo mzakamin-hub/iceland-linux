@@ -223,7 +223,7 @@ diff --git a/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c b/drivers/net/wireles
 index 4846f56ff512..7e7c2867f056 100644
 --- a/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
 +++ b/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
-@@ -741,11 +741,7 @@ try_again:
+@@ -741,11 +741,7 @@ int ath12k_wifi7_dp_rx_process(struct ath12k_dp *dp, int ring_id,
  
  		list_add_tail(&desc_info->list, &rx_desc_used_list[device_id]);
  
@@ -236,7 +236,7 @@ index 4846f56ff512..7e7c2867f056 100644
  		num_buffs_reaped[device_id]++;
  		dp->device_stats.reo_rx[ring_id][dp->device_id]++;
  
-@@ -761,6 +757,7 @@ try_again:
+@@ -761,6 +757,7 @@ int ath12k_wifi7_dp_rx_process(struct ath12k_dp *dp, int ring_id,
  		msdu_info = &desc->rx_msdu_info;
  		mpdu_info = &desc->rx_mpdu_info;
  
@@ -276,7 +276,7 @@ index 4846f56ff512..7e7c2867f056 100644
  	ath12k_wifi7_hal_rx_buf_addr_info_set(&msdu0->buf_addr_info, buf_paddr,
  					      desc_info->cookie,
  					      HAL_RX_BUF_RBM_SW3_BM);
-@@ -1003,8 +1002,8 @@ err_free_desc:
+@@ -1003,8 +1002,8 @@ static int ath12k_wifi7_dp_rx_h_defrag_reo_reinject(struct ath12k_dp *dp,
  	list_add_tail(&desc_info->list, &dp->rx_desc_free_list);
  	spin_unlock_bh(&dp->rx_desc_lock);
  err_unmap_dma:

@@ -26,7 +26,7 @@ index 4b75e424f7e3..9da2d9733e5c 100644
  
  /delete-node/ &pdp_mem;
  /delete-node/ &adspslpi_mem;
-@@ -1333,6 +1334,25 @@
+@@ -1333,6 +1334,25 @@ &pmih0108_e1_eusb2_repeater {
  	vdd3-supply = <&vreg_l5b_3p1>;
  };
  
@@ -52,7 +52,7 @@ index 4b75e424f7e3..9da2d9733e5c 100644
  &pon_resin {
  	linux,code = <KEY_VOLUMEUP>;
  
-@@ -1604,6 +1624,37 @@
+@@ -1604,6 +1624,37 @@ &usb_dp_qmpphy {
  	status = "okay";
  };
  

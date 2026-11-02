@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: iceland-dev <dev@iceland.local>
 Date: Sun, 4 Oct 2026 04:04:44 +0800
-Subject: [PATCH 01/10] virt: gunyah: import Gunyah hypervisor drivers from
+Subject: [PATCH] virt: gunyah: import Gunyah hypervisor drivers from
  android17-6.18
 
 Pristine copy of the Gunyah driver stack from the Android common kernel,

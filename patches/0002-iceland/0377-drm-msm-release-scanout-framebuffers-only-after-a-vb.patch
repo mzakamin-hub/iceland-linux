@@ -194,10 +194,10 @@ index 3cef7aae2440..1df4fc111509 100644
  struct drm_gem_object *msm_framebuffer_bo(struct drm_framebuffer *fb, int plane);
  const struct msm_format *msm_framebuffer_format(struct drm_framebuffer *fb);
 diff --git a/drivers/gpu/drm/msm/msm_fb.c b/drivers/gpu/drm/msm/msm_fb.c
-index 0a8be26143b4..ba3a08b4b972 100644
+index 792d47b4acc4..cc71c42d4e12 100644
 --- a/drivers/gpu/drm/msm/msm_fb.c
 +++ b/drivers/gpu/drm/msm/msm_fb.c
-@@ -132,13 +132,10 @@ int msm_framebuffer_prepare(struct drm_framebuffer *fb, bool needs_dirtyfb)
+@@ -130,13 +130,10 @@ int msm_framebuffer_prepare(struct drm_framebuffer *fb, bool needs_dirtyfb)
  	return 0;
  }
  
@@ -212,7 +212,7 @@ index 0a8be26143b4..ba3a08b4b972 100644
  	guard(mutex)(&msm_fb->lock);
  
  	if (--msm_fb->prepare_count)
-@@ -148,6 +145,20 @@ void msm_framebuffer_cleanup(struct drm_framebuffer *fb, bool needed_dirtyfb)
+@@ -146,6 +143,20 @@ void msm_framebuffer_cleanup(struct drm_framebuffer *fb, bool needed_dirtyfb)
  	msm_framebuffer_unpin_planes(fb, fb->format->num_planes);
  }
  

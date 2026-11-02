@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Michael McAllister <me@michaelmcallister.org>
 Date: Thu, 22 Oct 2026 20:36:39 +0100
-Subject: [PATCH 05/11] serial: qcom-geni: Set UPSTAT_AUTOCTS for hardware flow
+Subject: [PATCH] serial: qcom-geni: Set UPSTAT_AUTOCTS for hardware flow
  control
 
 qcom_geni_serial_set_termios() clears UART_CTS_MASK when CRTSCTS is set,

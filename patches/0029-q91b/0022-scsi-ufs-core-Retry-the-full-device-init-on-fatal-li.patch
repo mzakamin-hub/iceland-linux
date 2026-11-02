@@ -1,0 +1,119 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Shawn Lin <shawn.lin@rock-chips.com>
+Date: Wed, 28 Oct 2026 15:31:29 +0800
+Subject: [PATCH 22/24] scsi: ufs: core: Retry the full device init on fatal
+ link loss
+
+On an RK3576 board the UFS device is rarely reported dead during the
+initialization at boot: DEVICE_FATAL_ERROR | UIC_LINK_LOST is latched and
+the following UIC query fails with -EIO, leaving the device unusable.
+
+Recover by resetting the device and the controller and redoing the whole
+initialization sequence, up to three times with a 100 ms settle delay in
+between. The retry covers the link startup, the device verification, the
+completion of the device initialization and the device parameters setup,
+since any of them can fail once the link has been lost.
+
+This is done in ufshcd_init() rather than in the platform driver's probe.
+A host driver only reaches its private data through ufshcd_get_variant(),
+which is set from the ->init callback that ufshcd_pltfrm_init() invokes
+on the caller's behalf, so the resources needed to reset the device are
+not available before or after that call. More importantly, retrying
+ufshcd_pltfrm_init() would request the interrupt, clocks and regulators a
+second time without any of the earlier registrations being rolled back:
+ufshcd_pltfrm_init() returns the error as-is, it does not undo what the
+previous attempt already set up. That leaves the controller with leaked
+resources and makes the retry fail on the interrupt registration.
+
+Doing the retry inside ufshcd_init() avoids both problems: the host data
+is already reachable through hba->priv, and the interrupt, clocks and
+regulators are acquired only once.
+
+The failure looks like this on RK3576:
+
+  ufshcd-rockchip 29e00000.ufs: ufshcd_check_errors: saved_err 0x880 saved_uic_err 0x0
+  host_regs: 00000000: 0187011f 00000000 00000200 00000000
+  host_regs: 00000010: 00000000 000005e6 00000000 00000000
+  host_regs: 00000020: 00000000 00031ef5 00000000 00000000
+  host_regs: 00000030: 00000008 00000001 00000000 00000000
+  host_regs: 00000040: 00000000 00000000 00000000 00000000
+  host_regs: 00000050: 02dd3000 00000001 00000000 00000000
+  host_regs: 00000060: 00000000 00000000 00000000 00000000
+  host_regs: 00000070: 02dd4000 00000001 00000000 00000000
+  host_regs: 00000080: 00000000 00000000 00000000 00000000
+  host_regs: 00000090: 00000016 00000000 00000000 00000000
+  ufshcd-rockchip 29e00000.ufs: ufshcd_err_handler started; HBA state eh_fatal; powered 1; shutting down 0; saved_err = 2176; saved_uic_err = 0; force_reset = 0
+  ufshcd-rockchip 29e00000.ufs: ufshcd_query_flag: Sending flag query for idn 1 failed, err = 5
+
+Signed-off-by: Shawn Lin <shawn.lin@rock-chips.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/ufs/core/ufshcd.c | 29 +++++++++++++++++++++++++----
+ 1 file changed, 25 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/ufs/core/ufshcd.c b/drivers/ufs/core/ufshcd.c
+index 5eb79302bee0..cc3b4b160a51 100644
+--- a/drivers/ufs/core/ufshcd.c
++++ b/drivers/ufs/core/ufshcd.c
+@@ -11469,12 +11469,14 @@ int ufshcd_init(struct ufs_hba *hba, void __iomem *mmio_base, unsigned int irq)
+ 
+ 	/* Initialize hba, detect and initialize UFS device */
+ 	ktime_t probe_start = ktime_get();
++	int retries = 3;
+ 
++retry_init:
+ 	hba->ufshcd_state = UFSHCD_STATE_RESET;
+ 
+ 	err = ufshcd_link_startup(hba);
+ 	if (err)
+-		goto out_release;
++		goto retry_device_init;
+ 
+ 	if (hba->mcq_enabled)
+ 		ufshcd_config_mcq(hba);
+@@ -11491,16 +11493,16 @@ int ufshcd_init(struct ufs_hba *hba, void __iomem *mmio_base, unsigned int irq)
+ 	/* Verify device initialization by sending NOP OUT UPIU */
+ 	err = ufshcd_verify_dev_init(hba);
+ 	if (err)
+-		goto out_release;
++		goto retry_device_init;
+ 
+ 	/* Initiate UFS initialization, and waiting until completion */
+ 	err = ufshcd_complete_dev_init(hba);
+ 	if (err)
+-		goto out_release;
++		goto retry_device_init;
+ 
+ 	err = ufshcd_device_params_init(hba);
+ 	if (err)
+-		goto out_release;
++		goto retry_device_init;
+ 
+ 	err = ufshcd_post_device_init(hba);
+ 
+@@ -11518,6 +11520,25 @@ int ufshcd_init(struct ufs_hba *hba, void __iomem *mmio_base, unsigned int irq)
+ 	ufshcd_pm_qos_init(hba);
+ 	return 0;
+ 
++retry_device_init:
++	if (retries--) {
++		dev_warn(hba->dev, "UFS init failed %d, full retry (%d left)\n",
++			 err, retries);
++
++		ufshcd_device_reset(hba);
++		ufs_put_device_desc(hba);
++		ufshcd_hba_stop(hba);
++		if (ufshcd_hba_enable(hba)) {
++			dev_err(hba->dev, "Host controller enable failed\n");
++			ufshcd_print_evt_hist(hba);
++			ufshcd_print_host_state(hba);
++			goto out_release;
++		}
++
++		msleep(100);
++		goto retry_init;
++	}
++
+ out_release:
+ 	ufshcd_release(hba);
+ out_disable:

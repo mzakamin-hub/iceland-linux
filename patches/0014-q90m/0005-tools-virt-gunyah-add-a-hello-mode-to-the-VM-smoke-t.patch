@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 17 Oct 2026 11:39:16 +0300
-Subject: [PATCH 05/10] tools: virt: gunyah: add a "hello" mode to the VM smoke
- test
+Subject: [PATCH] tools: virt: gunyah: add a "hello" mode to the VM smoke test
 
 The guest writes a short text byte by byte to the unmapped GPA 0x10000000;
 every store is an MMIO exit that the host collects, then the guest powers

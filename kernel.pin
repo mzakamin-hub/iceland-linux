@@ -1,8 +1,8 @@
 # Upstream base the patch queue applies to (sourced by scripts/prepare.sh).
-UPSTREAM_URL=https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git
-UPSTREAM_TAG=next-20261020
-UPSTREAM_COMMIT=8f7df005a7564bd7ffa75da9c3085d5b996f1e16
-UPSTREAM_TREE=ecf74a2e66593fa7e1465ac3c2cbe0fdbbf5f6e2
+UPSTREAM_URL=https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
+UPSTREAM_TAG=v7.4-rc1
+UPSTREAM_COMMIT=6628e7d4c6b25c8d18f1345e3a20d21829aae7e4
+UPSTREAM_TREE=7edfdd0dec052f7d7336ba6b65a1a9cc78df95ca
 
 # Tree hash expected after each series (proves the queue reproduces the source exactly).
 # 0001-infiniti = infiniti-mainline/linux master (OnePlus 15, same SoC) at this commit, rebased onto v7.3-rc6, then onto v7.3-rc7 (q89e: 132 of 135 kept)
@@ -12,7 +12,6 @@ INFINITI_COMMIT=10650ae7bef447d04eb820bfc0c2d5a98d83e4e2
 # q89y (TRIAL) drops 0132 (split cluster power domain): 131 of the 132 kept; q89x's 0001 tree was b0efb1679372
 # q90b (TRIAL, 21 Oct 2026): the q89z queue rebased onto linux-next next-20261020 (7.4 content before 7.4-rc1;
 # 88 + 19 patches upstream there dropped, numbers kept with gaps) + 0004-q90b (the 21 Oct scan additions):
-TREE_AFTER_0001_infiniti=f2bf8ad883fe41773f3860b7c8a3a63ca0e548d2
 # 0002-iceland = OnePlus Pad 4 series (map220v/sm8850-mainline iceland-7.2 ported + our fixes + upstream picks),
 # kernel q89b = 7.3.0-rc6-iceland-00377-g8e90101870e4 (see docs/Q89B-QUEUE.md) had f1c7fa5d8607;
 # kernel q89c-tb = q89b + 0255-0265 (tb323fu-linux), 7.3.0-rc6-iceland-00388-g9093690257a0 (docs/Q89C-TB-QUEUE.md) had 71601a654760;
@@ -42,32 +41,22 @@ TREE_AFTER_0001_infiniti=f2bf8ad883fe41773f3860b7c8a3a63ca0e548d2
 # kernel q89w (TRIAL) = q89v + 0395-0402 (DP lanes from the Type-C pin assignment, link-training fallback, modes vs the trained link, link-status BAD, msm.dp_max_lanes; vtotal write window; + the USB-C device fragment section), 7.3.0-rc7-iceland-00519-gec0a0e306dd9 had f755e421b3f5;
 # kernel q89x (TRIAL) = q89w - 0349 (Gen2 limit) - 0357 (UFS v1) + 0404 0406-0412 (DSI PLL_SYSTEM_MUXES at PHY enable + msm.dsi_phy_muxes_first, codec DMA channel map reset, devfreq after the GPU init, UFS outstanding_reqs v2), 7.3.0-rc7-iceland-00529-g2968dd8b437e had ea9fec590a90;
 # kernel q89y (TRIAL) = q89x - 0001-infiniti 0132 (one cluster power domain for all 8 CPUs, the upstream / SuperTurtleDev topology), 7.3.0-rc7-iceland-00530-g242d83c86fe0:
-TREE_AFTER_0002_iceland=d007cfbcba12a0c1ba6be4512bc8490cb9a0cce3
-TREE_AFTER_0003_glitchfix=0dc80ac37f671559282384206e0fab7c5fa959d4
-TREE_AFTER_0004_q90b=a4721eaa34fbd1eb4a7ee8deed03d67884c7ffcb
 # q90c (TRIAL, 21 Oct 2026) = q90b + 0005-q90c: the display clock controller's own MX vote (dt-bindings + kaanapali.dtsi;
 # docs/DISPLAY-CX-VOTE-FIX-2026-10-21.md). No C change: q90b's Image and modules, new device trees only.
-TREE_AFTER_0005_q90c=471975f6f3caf444641d1bd0467669a8cfe931df
 # q90d (TRIAL, 22 Oct 2026) = q90c + 0006-q90d: dwc3-qcom keeps the interconnect votes across runtime suspend on
 # Kaanapali (the display glitch fix; dwc3_qcom.keep_icc_runtime=0 = upstream), serial: qcom-geni: Clear pending IRQs
 # while suspended (pw 1190182). docs/DISPLAY-CX-VOTE-FIX-2026-10-21.md.
-TREE_AFTER_0006_q90d=dabe7cd7e3c84e45041d87b8b813d373b5be6f51
 # q90e (TRIAL, 22 Oct 2026) = q90d + 0007-q90e: drm/msm/a8xx crash state capture opt-in (msm.a8xx_crashstate, default
 # off): the capture's GMU CX register read raised a synchronous external abort and GPU recovery never ran.
-TREE_AFTER_0007_q90e=b356e67ae99279a6a99fe505feea18c4592a6349
 # q90f (TRIAL, 22 Oct 2026) = q90e + 0008-q90f: A840 Kaanapali protect table (msm.a8xx_legacy_protect), no submit
 # replay on a GPU that was not reset (msm.a8xx_safe_recover).
-TREE_AFTER_0008_q90f=3f3cf595d698a45fff3ce146c0918cb155201672
 # q90g (TRIAL, 22 Oct 2026) = q90f + 0009-q90g: idle refresh round (input activity filter,
 # msm.dpu_idle_rr_qos_release: relax the 0335 latency request at the idle rate, default off).
-TREE_AFTER_0009_q90g=8f233c5792820f51db2a808fd44eeab7251782b8
 # q90h (TRIAL, 22 Oct 2026) = q90g + 0010-q90h: qcom_battmgr OPLUS power_now at the nominal voltage of
 # energy_now (qcom_battmgr.oplus_power_nominal, default Y), so that energy_now / power_now = charge_now / current_now.
-TREE_AFTER_0010_q90h=dca32f9e9e4bc5649af3993a447674a2ac0919e2
 # q90i (TRIAL, 22 Oct 2026) = q90h + 0011-q90i: memlat devfreq read-back polling off by default (B1), and
 # configs/q90i.config (VA_BITS 48, HZ 250, PREEMPT_DYNAMIC with full preemption by default, ATH12K_DEBUG /
 # CoreSight / STM off; config only, no tree change).
-TREE_AFTER_0011_q90i=774795ac228285cceff8584e4790d278598bd508
 # q90j (TRIAL, 22 Oct 2026) = q90i without its six diagnostics-only patches: 0002-iceland 0353 (smp2p_sleepstate
 # A/B switches), 0003-glitchfix 0003 / 0004 (GLITCH-DIAG debugfs files), 0006-q90d rpmhpd.kaanapali_mmcx_cx_parent,
 # 0008-q90f msm.dpu_intf_diag, 0009-q90g raise_commit counters. Every TREE_AFTER from 0002 on is q90j's
@@ -81,75 +70,98 @@ TREE_AFTER_0011_q90i=774795ac228285cceff8584e4790d278598bd508
 # off), GPU_CLX_EN_REQ in the TZ request (msm.a8xx_clx_tz_flag, default off, only with msm.enable_clx=1),
 # iris: EOS only for the drain LAST buffer (seek fix for FFmpeg v4l2m2m). Config = q90j's.
 # Kernel 7.3.0-next-20261020-iceland-00474-g9bd5b02f1103.
-TREE_AFTER_0012_q90k=da112382c0d85ddcbd54fa581f12da1939825a68
 # q90l (TRIAL, 23 Oct 2026) = q90k + 0013-q90l: ath12k no 'sband is NULL' warning when the RX channel fallback
 # is the expected one (invalid PHY-metadata channel number, centre frequency within 160 MHz of the RX channel;
 # dev_dbg_ratelimited instead). Config = q90k's. Kernel 7.3.0-next-20261020-iceland-00475-g80df3fcf6e51.
-TREE_AFTER_0013_q90l=57e56198995dc2a87eece4b8009fc9f0323bce3b
 # q90m (TRIAL, 24 Oct 2026) = q90l + 0014-q90m: the Gunyah host stack as in-tree modules (android17-6.18 import,
 # adapted to 7.3, unload, vCPU status, GuestAccept; configs/q90m.config: CONFIG_GUNYAH and friends =m, nothing loads at
 # boot), msm.a8xx_clx_tz_flag default Y and the C binder + binderfs (revert of its removal). Kernel 7.3.0-next-20261020-iceland-00485-g317e59a58503.
-TREE_AFTER_0014_q90m=20038efd69193fc9f9fd8a25d4cf19a6beccd44f
 # q90n (TRIAL, 24 Oct 2026) = q90m + 0015-q90n: qmp-combo DP-only PCS + UFS ESI after reset (pw 1191470 /
 # 1191467), iris 64 capture buffers + VSP clock for high bitrates, lpass rx/tx/va/wsa macro clocks under runtime PM,
 # the PMIC BCL hwmon driver + pmih0108 node (probes only with qcom_bcl_hwmon.enable=1), gunyah_timer.ko; configs/q90n.config:
 # ANON_VMA_NAME, soft + buddy hard-lockup detectors, ARM64_PSEUDO_NMI (off until irqchip.gicv3_pseudo_nmi=1), BCL =m.
 # Kernel 7.3.0-next-20261020-iceland-00497-gd0cd8dc8fa4d.
-TREE_AFTER_0015_q90n=f78a906b0ce420c70b65fc09083335b1f2845ad0
 # q90o (TRIAL, 24 Oct 2026) = q90n + 0016-q90o: the q90n BCL hwmon driver, its pmih0108 node and switch
 # reverted (the built-in thermal qcom-spmi-bcl already binds the bcl@4700 nodes), gunyah rsc_mgr unregisters its PM
 # notifier on unload (suspend oops after modprobe -r). configs/q90o.config: no symbol (BCL gone with the driver).
 # Kernel 7.3.0-next-20261020-iceland-00501-g93375214c848.
-TREE_AFTER_0016_q90o=3b52377bdb38661ab09f674be32468be8eca8e60
 # q90p (TRIAL, 24 Oct 2026) = q90o + 0017-q90p: the iceland built-in defaults of the msm / panel
 # switches (CONFIG_DRM_MSM_ICELAND_DEFAULTS; preemption / CLX only with the vendor533 GPU pair), a
 # configurable default cpuidle governor, a build-time s2idle default. configs/q90p.config: those +
 # RCU_NOCB_CPU_DEFAULT_ALL, lazy RCU on by default. Kernel 7.3.0-next-20261020-iceland-00505-gd18e14392cfc.
-TREE_AFTER_0017_q90p=05f751ce7eefad597b7b598d9d5cb7f8a38c0c99
 # q90q (TRIAL, 24 Oct 2026) = q90p + 0018-q90q: gunyah vm_mgr no WARN on unload, qmp-combo / qmp-usb system
 # PM callbacks, remoteproc pas DTB release, geni AUTOCTS, dwc3-qcom hcd check, ucsi_glink no suspend in a
 # notification, arm-smmu-qcom suspended fault-info, fastrpc duplicate maps, cpucp readq, q6apm guard.
 # configs/q90q.config: no symbol. Kernel 7.3.0-next-20261020-iceland-00516-g1d3dd350d42e.
-TREE_AFTER_0018_q90q=33208048442be03723d6e23bd82650157fc270ca
 # q90r (TRIAL, 24 Oct 2026) = q90q + 0019-q90r: drm/msm Assorted fixes Oct 1-6 (pw 1192617), qrtr re-announce
 # (1191447), mac80211 MLO multicast dedup (1192424) + TX_CTL_AMPDU (1192062), qmp-combo DP-only v1 reverted + v2
 # (1192123), ufs core link recovery (1192082). configs/q90r.config: no symbol. Kernel 7.3.0-next-20261020-iceland-00529-gb04181fcf88f.
-TREE_AFTER_0019_q90r=a14cfe5c10f38ca8371938f88614e08bfc674237
 # q90s4 (25 Oct 2026) = q90r + 0020-q90s: 0001 the gunyah-cma-mem binding made valid YAML / schema;
 # 0002 ucsi_glink: notifications quiesced across system sleep; 0003 ath12k: opt-in cold boot calibration
 # (ath12k.cold_boot_cal, default off); 0004 iris: opt-in decode-order output (qcom_iris.decode_order_output,
 # default off); 0005 gunyah: no release of still-donated / assigned memory; 0006 gunyah_qcom: failed demand-page
 # assign logging (debug_assign, default off). configs/q90s.config: CONFIG_VHOST_NET=m. Kernel 7.3.0-next-20261020-iceland-00535-ge0ecda4a8eb6.
-TREE_AFTER_0020_q90s=c2b6782009c5f6d6d442a71e356c9b472dc2f193
 # q90t (25 Oct 2026) = q90s4 + 0021-q90t: UFS device-management timeouts in jiffies + runtime
 # resume errors propagated (pw 1192856 1/2/3/5), ICE enable order + runtime PM (pw 1191193 2/3, 3/3) and
 # optional tunables, all off by default: ICE power/control (auto), scmi_qcom_memlat_devfreq.stock_gating,
 # panel_novatek_nt36536.cabc_mode, ath12k.pcie_ltr_off, spi_geni_qcom.gpi_cpu_latency_us.
 # configs/q90t.config: BLK_WBT (not on by default), ZRAM_BACKEND_LZ4. Kernel 7.3.0-next-20261020-iceland-00546-gd4ae0205473d.
-TREE_AFTER_0021_q90t=f96bb4b23aca5d930c89650404327eeadd330e70
 # q90u (26 Oct 2026) = q90t + 0022-q90u: ath12k creates its device debugfs files once with their
 # directory; gunyah reports a missing resource manager log at info level. Every tunable stays at its
 # default (off). Kernel 7.3.0-next-20261020-iceland-00548-g18ffc096fcee.
-TREE_AFTER_0022_q90u=0d8a6f33b250c441be51996b24a7f81bd13308bb
 # q90v (26 Oct 2026) = q90u + 0023-q90v: gunyah refuses a protected VM whose shared guest memory
 # is private anonymous memory (clear message at VM start instead of an endless fault loop) and
 # keeps the start error. Every tunable stays at its default (off). Kernel 7.3.0-next-20261020-iceland-00549-g9bf8752f1b8a.
-TREE_AFTER_0023_q90v=cc809decff41f7d06a008e4fbb013556b14d0485
 # q90w2 (26 Oct 2026) = q90v + 0024-q90w2: dwc3 resume-hs-terminations on Kaanapali (Peter Chen's
 # patch), the wcd939x-usbss MG2_MISC address, wcd-clsh-v2 force IQ only without flyback users,
 # the wcd939x version read after the TX device attached, and the v1.1+ bandgap fine adjust.
 # Every tunable stays at its default (off). Kernel 7.3.0-next-20261020-iceland-00554-g87174e7e291d.
-TREE_AFTER_0024_q90w2=e2cfded664a165c0b0e467edfa27919851f96f3e
 # q90x (27 Oct 2026) = q90w2 + 0025-q90x: ktz8869_iceland starts at stock's default brightness
 # (1417 of 4095) instead of 2047. Config and device tree as q90w2. Kernel 7.3.0-next-20261020-iceland-00555-gbc55efdfac46.
-TREE_AFTER_0025_q90x=8aa54b80de2ef358d62f68d2ffb17b81ab1bae52
 # q90y (28 Oct 2026) = q90x + 0026-q90y: Perpetua review picks - qrtr ns keeps announcing after a failed
 # send (Igor Opaniuk), dwc3-qcom VBUS override for the role entered, the battmgr charge current cooling
 # device and the weighted thermal sensor (neither used by the device tree). Config: + configs/q90y.config.
 # Kernel 7.3.0-next-20261020-iceland-00561-g94aa2d05027c.
-TREE_AFTER_0026_q90y=fc7da0370f23bdc3f2a2aad2e205dac1cbac4637
 # q90z (30 Oct 2026) = q90y + 0027-q90z: bwmon zone1 3, iris NoC LPI poll, ICE OPP clock scaling with UFS +
 # the kaanapali ICE OPP table, qrtr re-announce v3 (replaces v1), dwc3 UTMI pipe clock in DP-only modes,
 # L2F always on. Config: + configs/q90z.config (SWIOTLB 2 MB dynamic, CMA 128 MB).
 # Kernel 7.3.0-next-20261020-iceland-00572-ga7adbdc40113.
-TREE_AFTER_0027_q90z=a89ee3eb7d82fdcf2bc11d64ac1793e634afdcf1
+# q91c (2 Nov 2026): the queue re-based onto v7.4-rc1 (6628e7d4c6b2). Every series 0001-0027 is regenerated
+# from its rc1 replay (same file names); 12 patches merged upstream by rc1 are gone (numbers kept with gaps: three
+# q6apm unmap fixes, the nt36536 Kconfig fix, the cpucp readq, seven UFS fixes; 0023 replaced by upstream
+# 7cfdfdd65579). New: 0028-q91 (GPU, CPU boost, GENI, USB, robustness, audio and panel picks; runtime switches
+# msm.a8xx_ab_vote / msm.gmu_hfi_irq_fix default off; Qualcomm's INT2 path only with an opt-in DTB), 0029-q91b
+# (BT, ath12k, CAMSS, iris, DPU, UFS, dma-buf heap, battmgr reply matching), 0030-q91c (two reverts).
+# Config: + configs/q91c.config. Kernel 7.4.0-rc1-iceland-00618-g0ec14bab11a0.
+
+# Tree hash expected after each series on v7.4-rc1 (scripts/prepare.sh checks them):
+TREE_AFTER_0001_infiniti=bb91771cc3af5b0da66e7363a225d3d7cd53b2ee
+TREE_AFTER_0002_iceland=f896bedd279985e4777544d3063f4c77c899fe1e
+TREE_AFTER_0003_glitchfix=342ef4e10a3595ae0fbc779e9361823b3ed40e22
+TREE_AFTER_0004_q90b=f9e63f0832fe6f51f2fd493a19c3a4165b3586a1
+TREE_AFTER_0005_q90c=50c428b1ce315f119cd099be9a452a3afab46c73
+TREE_AFTER_0006_q90d=16c54eca991f5574c306cf81646ec2c1733c6945
+TREE_AFTER_0007_q90e=22dfee3a92b4bc060acffb60f21957b11ff414a9
+TREE_AFTER_0008_q90f=bcf63f5f6c95c6235e3889ed3f1c9d884924bdb1
+TREE_AFTER_0009_q90g=379b5e8fa4d29163e03c208ffead35ac2a0f0424
+TREE_AFTER_0010_q90h=55d09e431ee2d8b302e710b2d341900a1c7c7a35
+TREE_AFTER_0011_q90i=02e41b89ed244c9d4c5f782f10e18774429b5188
+TREE_AFTER_0012_q90k=e081f85f133b3f87f25bdd1e50488354ebe6b1bb
+TREE_AFTER_0013_q90l=d54a2ab08dfd9c3d4582276be466138219824964
+TREE_AFTER_0014_q90m=883e0404d5ff7d7c27052baaa69c823ae350ff49
+TREE_AFTER_0015_q90n=14c32eb47b2041bbf37b1ee6f6ebb874921b078d
+TREE_AFTER_0016_q90o=b95899324a712e57c818e008f73f249562be7668
+TREE_AFTER_0017_q90p=58db416e3ea846c05aa0dc8473ac100604477d48
+TREE_AFTER_0018_q90q=c8b278ee8076124e04b844891e78459419b5a66f
+TREE_AFTER_0019_q90r=6ebc316c37d7a95f2dc3fdeebb430bfada9aa6de
+TREE_AFTER_0020_q90s=17858b2b542280f3379dbc8641ac30c268075ac8
+TREE_AFTER_0021_q90t=f36a90e311d2ee5b69e76f56520c81d3fb080af7
+TREE_AFTER_0022_q90u=857de25211da53b5f95cdb1a956b798fc3989707
+TREE_AFTER_0023_q90v=4ab547e44c4e24ecebcb0c74fad618c993dc7ca7
+TREE_AFTER_0024_q90w2=47d9730f3415357f0b665f4a324ff9ca3ea92b9e
+TREE_AFTER_0025_q90x=7dabf228883583305280b92e3d4ac90f44972940
+TREE_AFTER_0026_q90y=1d47f943fb74e1cbb9a7ab6e039ad78718892c31
+TREE_AFTER_0027_q90z=5b95d2d8afcaa4258612cfca8017ccfbe792d9ef
+TREE_AFTER_0028_q91=7fec2c1054c9ee4e399a3cb9a2bd62efdda31f92
+TREE_AFTER_0029_q91b=2b604f559d8c87149eb635603edff595f537cc82
+TREE_AFTER_0030_q91c=c1e6089cb38ffdc61ba6fb82afd9ffc0237747e9

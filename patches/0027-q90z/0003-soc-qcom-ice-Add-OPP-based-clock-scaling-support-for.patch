@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Abhinaba Rakshit <abhinaba.rakshit@oss.qualcomm.com>
 Date: Fri, 30 Oct 2026 08:19:23 +0200
-Subject: [PATCH 03/11] soc: qcom: ice: Add OPP-based clock scaling support for
- ICE
+Subject: [PATCH] soc: qcom: ice: Add OPP-based clock scaling support for ICE
 
 Register optional operation-points-v2 table for ICE device
 during device probe. Attach the OPP-table with only the ICE

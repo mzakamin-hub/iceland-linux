@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Stanley Jhu <stanleyjhu@google.com>
 Date: Sun, 25 Oct 2026 09:34:43 +0800
-Subject: [PATCH 02/11] scsi: ufs: core: Introduce ufshcd_rpm_resume_and_get()
- helper
+Subject: [PATCH] scsi: ufs: core: Introduce ufshcd_rpm_resume_and_get() helper
 
 ufshcd_clkscale_enable_store() and ufshcd_auto_hibern8_update() call
 ufshcd_rpm_get_sync() without checking its return value:
@@ -47,7 +46,7 @@ index e55c2a02c1f5..99f654b79035 100644
  {
  	return pm_runtime_get_if_active(&hba->ufs_device_wlun->sdev_gendev);
 diff --git a/drivers/ufs/core/ufshcd.c b/drivers/ufs/core/ufshcd.c
-index 557382964005..32a5fee8f70e 100644
+index 76f433a49fc4..b521e1d75d90 100644
 --- a/drivers/ufs/core/ufshcd.c
 +++ b/drivers/ufs/core/ufshcd.c
 @@ -1864,7 +1864,9 @@ static ssize_t ufshcd_clkscale_enable_store(struct device *dev,
@@ -61,7 +60,7 @@ index 557382964005..32a5fee8f70e 100644
  	ufshcd_hold(hba);
  
  	hba->clk_scaling.is_enabled = value;
-@@ -4805,7 +4807,8 @@ void ufshcd_auto_hibern8_update(struct ufs_hba *hba, u32 ahit)
+@@ -4810,7 +4812,8 @@ void ufshcd_auto_hibern8_update(struct ufs_hba *hba, u32 ahit)
  
  	WRITE_ONCE(hba->ahit, ahit);
  	if (!pm_runtime_suspended(&hba->ufs_device_wlun->sdev_gendev)) {

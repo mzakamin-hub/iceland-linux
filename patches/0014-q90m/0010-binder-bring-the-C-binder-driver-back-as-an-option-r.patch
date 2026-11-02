@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 24 Oct 2026 01:03:32 +0300
-Subject: [PATCH 10/10] binder: bring the C binder driver back as an option
- (revert its removal)
+Subject: [PATCH] binder: bring the C binder driver back as an option (revert
+ its removal)
 
 linux-next removed the C binder driver ("binder: rm -f binder.c",
 fd2bc059ed46, and the Kconfig fix-up 315860c4f912), leaving only Rust
@@ -7347,7 +7347,7 @@ diff --git a/drivers/android/binder/rust_binder_main.rs b/drivers/android/binder
 index 56c786475237..a9c939c21976 100644
 --- a/drivers/android/binder/rust_binder_main.rs
 +++ b/drivers/android/binder/rust_binder_main.rs
-@@ -81,7 +81,7 @@ mod binderfs {
+@@ -81,7 +81,7 @@ fn default() -> Self {
  
  module! {
      type: BinderModule,

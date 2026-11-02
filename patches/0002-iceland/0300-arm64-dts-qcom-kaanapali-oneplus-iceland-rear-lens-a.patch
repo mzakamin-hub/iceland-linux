@@ -19,7 +19,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index a47dbae0c661..476baa53359a 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1336,6 +1336,8 @@
+@@ -1336,6 +1336,8 @@ vcm: actuator@c {
  
  		dongwoon,sac-mode = <2>;
  		dongwoon,vcm-prescale = <0x79>;

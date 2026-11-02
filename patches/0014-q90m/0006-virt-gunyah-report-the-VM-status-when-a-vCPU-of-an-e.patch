@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 17 Oct 2026 11:42:30 +0300
-Subject: [PATCH 06/10] virt: gunyah: report the VM status when a vCPU of an
- exiting VM is re-entered
+Subject: [PATCH] virt: gunyah: report the VM status when a vCPU of an exiting
+ VM is re-entered
 
 A protected VM that powers off through PSCI SYSTEM_OFF exits from the
 vCPU run loop only after the resource manager's VM_EXITED notification

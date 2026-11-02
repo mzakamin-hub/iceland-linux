@@ -94,7 +94,7 @@ index 52e8391deb53..e09afae16756 100644
  		if (msm_host->dsc)
  			dsi_update_dsc_timing(msm_host, false);
  
-@@ -2586,6 +2594,78 @@ unlock_ret:
+@@ -2586,6 +2594,78 @@ int msm_dsi_host_power_off(struct mipi_dsi_host *host)
  	return 0;
  }
  

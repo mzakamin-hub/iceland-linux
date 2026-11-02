@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 24 Oct 2026 09:51:22 +0300
-Subject: [PATCH 2/4] Revert "FROMLIST: arm64: dts: qcom: pmih0108-kaanapali:
+Subject: [PATCH] Revert "FROMLIST: arm64: dts: qcom: pmih0108-kaanapali:
  Enable BCL sensor node"
 
 The base tree already has the PMIC BCL alarms: the built-in thermal driver
@@ -20,7 +20,7 @@ diff --git a/arch/arm64/boot/dts/qcom/pmih0108-kaanapali.dtsi b/arch/arm64/boot/
 index 4c1dc1991de6..c0958e8d6114 100644
 --- a/arch/arm64/boot/dts/qcom/pmih0108-kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/pmih0108-kaanapali.dtsi
-@@ -81,15 +81,6 @@
+@@ -81,15 +81,6 @@ pmih0108_e1_temp_alarm_lite: temp-alarm@c00 {
  			#thermal-sensor-cells = <0>;
  		};
  

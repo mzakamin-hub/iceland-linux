@@ -20,7 +20,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index a478016d4ac9..b77376fd00a0 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1223,7 +1223,10 @@
+@@ -1223,7 +1223,10 @@ wcd_usbss: typec-mux@e {
  		reg = <0xe>;
  
  		vdd-supply = <&vreg_l15b_1p8>;
@@ -32,7 +32,7 @@ index a478016d4ac9..b77376fd00a0 100644
  
  		mode-switch;
  		orientation-switch;
-@@ -2062,6 +2065,15 @@
+@@ -2062,6 +2065,15 @@ wake-n-pins {
  		};
  	};
  

@@ -31,7 +31,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/
 index 18c7c815d765..3ef7aed55926 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -7878,7 +7878,7 @@
+@@ -7878,7 +7878,7 @@ pmu@310b3400 {
  			interrupts = <GIC_SPI 581 IRQ_TYPE_LEVEL_HIGH>;
  
  			interconnects = <&gem_noc MASTER_APPSS_PROC QCOM_ICC_TAG_ACTIVE_ONLY
@@ -40,7 +40,7 @@ index 18c7c815d765..3ef7aed55926 100644
  
  			operating-points-v2 = <&cpu_bwmon_opp_table>;
  
-@@ -7886,47 +7886,39 @@
+@@ -7886,47 +7886,39 @@ cpu_bwmon_opp_table: opp-table {
  				compatible = "operating-points-v2";
  
  				opp-0 {
@@ -97,7 +97,7 @@ index 18c7c815d765..3ef7aed55926 100644
  				};
  			};
  		};
-@@ -7939,7 +7931,7 @@
+@@ -7939,7 +7931,7 @@ pmu@310b7400 {
  			interrupts = <GIC_SPI 581 IRQ_TYPE_LEVEL_HIGH>;
  
  			interconnects = <&gem_noc MASTER_APPSS_PROC QCOM_ICC_TAG_ACTIVE_ONLY

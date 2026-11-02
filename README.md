@@ -1,8 +1,7 @@
 # iceland-linux
 
 The Linux kernel for the OnePlus Pad 4 (`iceland`, Qualcomm SM8850P "kaanapali"). The kernel is kept as a patch queue
-on an upstream tag, linux-next `next-20261020` (Linux 7.3 plus the trees queued for 7.4), so every commit keeps its
-original author. This is the same approach as the
+on an upstream tag, Linux `v7.4-rc1`, so every commit keeps its original author. This is the same approach as the
 postmarketOS kernel packages and other tablet ports.
 
 This repository is one part of the project. The boot chain and the install are described in the hub,
@@ -11,97 +10,66 @@ This repository is one part of the project. The boot chain and the install are d
 
 ## Current kernel
 
-- **Branch:** [`iceland-7.3-rc7-next`](https://github.com/mzakamin-hub/iceland-linux/tree/iceland-7.3-rc7-next). Build from this branch.
-- **Queue:** q90z (tag `q90z`), kernel release `7.3.0-next-20261020-iceland-00572-ga7adbdc40113`, packaged as
-  `kernel-iceland`. The branch name is kept from the v7.3-rc7 queues; since q90b the queue applies onto linux-next
-  `next-20261020` and moves to 7.4-rc1 once it is out.
-- **New since q90i:**
-  - q90j: the debugfs files, log lines and test switches that only served the display-flicker investigation are gone.
-  - q90k / q90l: the A840 hardware workaround values, battery current limiter and CLX request of Qualcomm's KGSL
-    driver as switches (default off), PSCI SYSTEM_RESET2 vendor resets as reboot modes, ath12k station power save and
-    a quieter RX channel fallback, CCI reset on runtime resume, an optional single flush of the shared dual-DSI video
-    CTL, and iris EOS only for the drain's last buffer (a seek no longer ends an FFmpeg stream).
-  - q90m: the Gunyah hypervisor's VM manager in the tree (built as modules; used by the protected virtual machines of
-    [iceland-gvm](https://github.com/mzakamin-hub/iceland-gvm) and [iceland-vms](https://github.com/mzakamin-hub/iceland-vms))
-    and the C binder driver back as an option (binderfs, for Android containers).
-  - q90n / q90o: named anonymous mappings, the soft and buddy hard-lockup detectors, the Gunyah vCPU timer as a module,
-    the resource manager's PM notifier removed on unload (suspend after a VM no longer oopses).
-  - q90n also brings iris capture buffer pools and VSP clock fixes, the LPASS macro clocks under runtime PM, the
-    qmp-combo DP-only mode and UFS ESI after a host controller reset.
-  - q90p: the board's kernel command line as built-in defaults for the OnePlus Pad 4 only (display and panel
-    switches; GPU preemption and CLX only with the vendor GPU firmware pair), teo as the default cpuidle governor,
-    suspend-to-idle by default, RCU callbacks offloaded with lazy RCU. A value given on the command line still wins.
-  - q90q / q90r: upstream fixes for qmp-combo / qmp-usb system sleep, remoteproc, the geni UART, dwc3-qcom, ucsi_glink,
-    arm-smmu-qcom, fastrpc, q6apm and qcom-cpucp; drm/msm's October fixes (GMU shutdown idle check, stale boot
-    bandwidth vote, devfreq idle time, scheduler priority inversion, preemption records reset across suspend), qrtr
-    service re-announce, mac80211 MLO multicast duplicate detection, the qmp-combo DP-only mode v2 and UFS link
-    recovery.
-  - q90s4 / q90t / q90u: ucsi_glink quiet across system sleep; the Gunyah VM manager never hands memory that may still
-    belong to a guest back to the page allocator (fewer failed VM page assigns after a VM stop); UFS device-management
-    timeouts in jiffies again and runtime-resume errors reported; the inline crypto engine enabled before crypto use,
-    with runtime PM support; vhost-net as a module (for virtio-net in VMs); writeback throttling and the LZ4 zram
-    backend available; ath12k no longer re-creates its debugfs files on a firmware restart; a quieter Gunyah log probe.
-  - **Optional tunables, all off by default** (the kernel behaves as without them until one is set):
-    `ath12k.cold_boot_cal` (Wi-Fi cold-boot calibration), `qcom_iris.decode_order_output` (decode-order output for
-    VA-API style clients), `scmi_qcom_memlat_devfreq.stock_gating` (the vendor's memory-latency ceilings),
-    `panel_novatek_nt36536.cabc_mode` (panel CABC 0-3), `ath12k.pcie_ltr_off` (Wi-Fi PCIe LTR off),
-    `spi_geni_qcom.gpi_cpu_latency_us` (CPU latency limit during GPI DMA SPI transfers), the inline crypto engine's
-    `power/control` (`auto` = runtime PM), `/sys/block/<dev>/queue/wbt_lat_usec` (writeback throttling) and
-    `gunyah_qcom.debug_assign` (debug logging).
-  - q90v: protected VMs whose shared memory is private anonymous memory are now refused cleanly at start (a clear
-    kernel message, use a memfd) instead of faulting.
-  - q90w2: USB 2 host resume with the eUSB2 PHY (resume-hs-terminations), the headset switch's MG2 OVP register
-    address, no forced class-H IQ while the flyback runs, the WCD939x codec version read after the SoundWire
-    device attached, and the vendor bandgap fine adjust on codec v1.1 and later.
-  - q90x: the backlight starts at stock's default brightness (1417 of 4095) when no brightness has been saved yet.
-  - q90y: the qrtr name service keeps announcing after a failed send (Igor Opaniuk); the dwc3-qcom VBUS override
-    follows the role being entered; a battery charge current cooling device and a weighted thermal sensor (both
-    unused by the device tree). q90y had no release download of its own.
-  - q90z: the CPU and LLCC bandwidth monitors lower their vote after 3 sample windows instead of 16; the video
-    decoder waits for its NoC to reach low power before power-off; the inline crypto engine clock scales with the UFS
-    clocks (with a kaanapali ICE OPP table); the qrtr re-announce fix in its v3; USB 2.0 keeps working when
-    DisplayPort takes all four lanes (the controller as a Type-C mode switch); L2F stays on (the camera I2C pull-up
-    supply). Config: a 2 MB bounce-buffer pool that grows on demand (was 64 MB) and a 128 MB CMA area (was 32 MB).
-- **`main`** holds the older queue q89g, the kernel of the first install image. Later queues are only on
-  `iceland-7.3-rc7-next`.
+- **Branch:** [`release/q91c`](https://github.com/mzakamin-hub/iceland-linux/tree/release/q91c) (tag `q91c`). Build from
+  this branch.
+- **Queue:** q91c, kernel release `7.4.0-rc1-iceland-00618-g0ec14bab11a0`, packaged as `kernel-iceland`, on Linux `v7.4-rc1`.
+- **New in q91c** (since q90z):
+  - The queue applies onto Linux v7.4-rc1. Twelve patches that were merged upstream by rc1 are gone (numbers kept with
+    gaps), among them three q6apm unmap fixes and seven UFS fixes; one UFS abort fix is replaced by its upstream form.
+  - GPU: preemption-aware hang detection, the A8xx GMEM base fix and a bounded wait in GPU recovery.
+  - CPU: the frequency-invariance reference follows the boost frequencies, schedutil returns below the boost steps when
+    boost is switched off, and the energy model ranks boost and non-boost steps separately.
+  - Cameras: CAMSS fixes (active buffer pointers cleared after a flush, CSID power-on unwind, DMA-contiguous buffer
+    check) and the CSIPHY held in reset between streams.
+  - Video (iris): deblocking controls, timestamps kept on error buffers, buffer recycling for non-display pictures,
+    fewer redundant decoder parameter writes, the encoder reference buffer size, the video format kept across GOP
+    restarts.
+  - Display: 50 and 48 Hz panel modes; DPU cleanup fixes on mode changes.
+  - Sound: the RX codec DMA runs at 24 bit (headphones), 32-bit capture, the WCD939x headphone volume on its real gain
+    register (1.5 dB steps, +6 to -30 dB).
+  - Robustness: fastrpc use-after-free, UFS MCQ abort and full re-init after a fatal link loss, LPASS RX macro PM
+    reference leak, SoundWire clock stop, Bluetooth (CIS host feature, RX work drain, L2CAP waits for the key size),
+    ath12k EHT fixes, the GENI SE resource handling, the battery manager matching replies to their requests, the
+    dma-buf system heap allocation orders, USB UTMI clock selection restored after resume.
+  - Config: CMA dma-buf heap, VM sockets (vsock / vhost-vsock), idle-injection cooling, the Gunyah watchdog; QCOM_LMH
+    is no longer built (Kaanapali's CPU limits come through SCMI).
+  - **Optional, off by default:** `msm.a8xx_ab_vote=1` (average-bandwidth DDR votes with each GPU level) and
+    `msm.gmu_hfi_irq_fix=1` (the GMU interrupt handled as the vendor driver does), plus the earlier tunables of q90u.
+  - **Optional device trees** (shipped in the package under `dtb/qcom/variants/` and as release files, never installed
+    by default): `headset` (the USB-C analog headset path of the codec), `int2dt` (the display's INT2 power domain
+    under display runtime PM) and `thermaldt` (the skin temperature policy as a kernel thermal zone plus a 95 C CPU
+    backstop).
+- **`main`** holds the older queue q89g, the kernel of the first install image.
 
 ## Download
 
-The newest release download is q90z: the [`q90z` release](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90z)
-has:
+The newest release is q91c: the [`q91c` release](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q91c) has:
 
-- `kernel-iceland-7.3.0.next.20261020.iceland.00572.ga7adbdc40113-1.fc44.aarch64.rpm`, the Fedora 44 package for the
-  tablet;
-- the source RPM, which carries this repository's queue, and `SHA256SUMS`.
+- `kernel-iceland-7.4.0~rc1.iceland.00618.g0ec14bab11a0-2.fc44.aarch64.rpm`, the Fedora 44 package for the tablet;
+- the three optional device trees, the source RPM, which carries this repository's queue, and `SHA256SUMS`.
 
 Check the files with `sha256sum -c SHA256SUMS`. On the tablet's Fedora 44 system, install the package with dnf:
 
 ```bash
-sudo dnf install ./kernel-iceland-7.3.0.next.20261020.iceland.00572.ga7adbdc40113-1.fc44.aarch64.rpm
+sudo dnf install ./kernel-iceland-7.4.0~rc1.iceland.00618.g0ec14bab11a0-2.fc44.aarch64.rpm
 ```
 
-Earlier releases: [q90x](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90x),
-[q90w2](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90w2),
-[q90v](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90v),
+Earlier releases: [q90z](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90z),
 [q90u](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90u),
 [q90r](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90r),
-[q90i](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90i),
-[q89w](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89w),
-[q89m](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89m),
-[q89l](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89l) and
-[q89k](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89k).
+[q90i](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90i) and older.
 
 ## What is in the repository
 
-The counts below are for `iceland-7.3-rc7-next`.
+The counts below are for `release/q91c`.
 
 | Path | Content |
 |---|---|
 | `kernel.pin` | the upstream tag and commit, the tree hash expected after each series, the kernel release of each queue |
-| `patches/0001-infiniti/` | 110 patches from infiniti-mainline/linux (OnePlus 15, the same SoC), rebased onto `next-20261020` |
-| `patches/0002-iceland/` | 304 patches: the OnePlus Pad 4 series, numbered with gaps up to 0412 |
+| `patches/0001-infiniti/` | the patches from infiniti-mainline/linux (OnePlus 15, the same SoC), rebased onto `v7.4-rc1` |
+| `patches/0002-iceland/` | the OnePlus Pad 4 series, numbered with gaps up to 0412 |
 | `patches/0003-glitchfix/` to `patches/0027-q90z/` | 158 patches: the display-timing switches of q89z, then one series per queue q90b to q90z (upstream picks and our fixes; there is no q90j series: q90j only removed patches) |
-| `configs/` | `distro-neutral.config`, `q90b.config`, `q90i.config`, `q90i-shipped.config`, `q90m.config` to `q90r.config`, `q90s.config`, `q90t.config`, `q90y.config` and `q90z.config` (merged into the build, in that order) and `required.config` (options the build checks) |
+| `configs/` | `distro-neutral.config`, then one fragment per queue up to `q91c.config` (merged into the build in the order of `scripts/build.sh`) and `required.config` (options the build checks) |
 | `scripts/prepare.sh` | clones the upstream tag, checks its commit, applies every series with `git am`, checks the tree hashes |
 | `scripts/build.sh` | configures and builds the kernel; writes `out/dist/` with `BUILD_INFO` and `SHA256SUMS` |
 | `packaging/fedora/` | `kernel-iceland.spec`, `build-rpm.sh` and the kernel-install plugin for the Fedora 44 package |
@@ -115,9 +83,9 @@ Packages needed on Ubuntu 24.04 (the list the GitHub workflow installs): `clang 
 libelf-dev device-tree-compiler zstd cpio`. The build uses LLVM (`LLVM=1`).
 
 ```bash
-git clone --branch iceland-7.3-rc7-next https://github.com/mzakamin-hub/iceland-linux
+git clone --branch release/q91c https://github.com/mzakamin-hub/iceland-linux
 cd iceland-linux
-scripts/prepare.sh ./src        # clones next-20261020, checks the commit, applies every series, checks the tree hashes
+scripts/prepare.sh ./src        # clones v7.4-rc1, checks the commit, applies every series, checks the tree hashes
 scripts/build.sh ./src ./out    # Image, Image.gz, the DTB and the modules; writes out/dist/
 ```
 
@@ -158,5 +126,5 @@ stored here; the generic firmware is in [iceland-firmware](https://github.com/mz
   the device package and the [list of working features](https://github.com/mzakamin-hub/iceland-mainline/blob/main/docs/FEATURES.md).
 - [iceland-u-boot](https://github.com/mzakamin-hub/iceland-u-boot): the U-Boot that starts this kernel.
 - [iceland-firmware](https://github.com/mzakamin-hub/iceland-firmware): the generic firmware files.
-- Upstream: [linux-next](https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git) (`next-20261020`) and
+- Upstream: [Linux](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git) (`v7.4-rc1`) and
   [infiniti-mainline/linux](https://github.com/infiniti-mainline/linux) (the first series).

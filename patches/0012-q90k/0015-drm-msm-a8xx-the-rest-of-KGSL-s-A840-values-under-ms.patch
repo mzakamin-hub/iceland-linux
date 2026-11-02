@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 23 Oct 2026 22:31:51 +0300
-Subject: [PATCH 15/17] drm/msm/a8xx: the rest of KGSL's A840 values under
+Subject: [PATCH] drm/msm/a8xx: the rest of KGSL's A840 values under
  msm.a8xx_kgsl_eco
 
 KGSL's gen8_2_0_nonctxt_regs also sets six registers that

@@ -48,7 +48,7 @@ index 1ec7fd9e239d..e1850fc15fe8 100644
  		}
  
  		input_sync(ts->pen_input_dev);
-@@ -1210,6 +1216,21 @@ Description:
+@@ -1210,6 +1216,21 @@ static void nvt_resume_work(struct work_struct *work)
  return:
  	Executive outcomes. 0---succeed. negative---failed
  *******************************************************/

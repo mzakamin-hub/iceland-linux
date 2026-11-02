@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 23 Oct 2026 14:16:38 +0300
-Subject: [PATCH 08/17] firmware: psci: switch for the vendor reboot modes,
- plain reset fallback
+Subject: [PATCH] firmware: psci: switch for the vendor reboot modes, plain
+ reset fallback
 
 The PSCI reboot-mode node turns "reboot bootloader" into a SYSTEM_RESET2
 vendor reset. Keep the previous behaviour reachable without another

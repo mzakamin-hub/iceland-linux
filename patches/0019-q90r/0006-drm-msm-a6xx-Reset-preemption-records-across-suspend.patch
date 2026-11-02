@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Akhil P Oommen <akhilpo@oss.qualcomm.com>
 Date: Sat, 24 Oct 2026 16:00:12 +0530
-Subject: [PATCH 06/13] drm/msm/a6xx: Reset preemption records across suspend
+Subject: [PATCH] drm/msm/a6xx: Reset preemption records across suspend
 
 The preemption records are initialised only once at probe time. On every
 resume, a6xx_preempt_hw_init() and a8xx_preempt_hw_init() refresh only a

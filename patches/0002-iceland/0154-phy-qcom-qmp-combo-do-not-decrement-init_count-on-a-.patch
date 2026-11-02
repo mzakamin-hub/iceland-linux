@@ -42,7 +42,7 @@ diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c b/drivers/phy/qualcomm/ph
 index 08c8eb2e6029..b4365193c3d1 100644
 --- a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
 +++ b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
-@@ -4271,7 +4271,8 @@ err_assert_reset:
+@@ -4271,7 +4271,8 @@ static int qmp_combo_com_init(struct qmp_combo *qmp, bool force)
  err_disable_regulators:
  	regulator_bulk_disable(cfg->num_vregs, qmp->vregs);
  err_decrement_count:

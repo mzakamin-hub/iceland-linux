@@ -12,7 +12,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/
 index 3e47df2079fe..d9874f8d08f3 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -3821,6 +3821,7 @@
+@@ -3821,6 +3821,7 @@ port@2 {
  					reg = <2>;
  
  					usb_dp_qmpphy_dp_in: endpoint {
@@ -20,7 +20,7 @@ index 3e47df2079fe..d9874f8d08f3 100644
  					};
  				};
  			};
-@@ -4388,6 +4389,7 @@
+@@ -4388,6 +4389,7 @@ port@2 {
  						reg = <2>;
  
  						dpu_intf0_out: endpoint {
@@ -28,7 +28,7 @@ index 3e47df2079fe..d9874f8d08f3 100644
  						};
  					};
  				};
-@@ -4540,6 +4542,87 @@
+@@ -4540,6 +4542,87 @@ mdss_dsi0_phy: phy@9ac1000 {
  
  				status = "disabled";
  			};
@@ -116,7 +116,7 @@ index 3e47df2079fe..d9874f8d08f3 100644
  		};
  
  		dispcc: clock-controller@9ba2000 {
-@@ -4549,8 +4632,8 @@
+@@ -4549,8 +4632,8 @@ dispcc: clock-controller@9ba2000 {
  				 <&bi_tcxo_ao_div2>,
  				 <&gcc GCC_DISP_AHB_CLK>,
  				 <&sleep_clk>,

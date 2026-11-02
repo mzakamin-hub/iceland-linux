@@ -30,7 +30,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index a20feecdedab..64a38d2ff3c6 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1584,7 +1584,7 @@
+@@ -1584,7 +1584,7 @@ cam_front_mclk_default: cam-front-mclk-default-state {
  };
  
  &pmk8850_vadc {
@@ -39,7 +39,7 @@ index a20feecdedab..64a38d2ff3c6 100644
  	pinctrl-names = "default";
  
  	/* PMH0101 (SID 1) thermistors, 100k pull-up (stock: pmh0101_board_therm, pmh0101_flash_therm) */
-@@ -1604,6 +1604,26 @@
+@@ -1604,6 +1604,26 @@ channel@14a {
  		qcom,adc-tm;
  	};
  
@@ -66,7 +66,7 @@ index a20feecdedab..64a38d2ff3c6 100644
  	/* stock: pmh0101_skin_therm (sys-therm-2), the skin thermistor */
  	channel@144 {
  		reg = <ADC5_GEN4_AMUX1_THM_100K_PU(0, 1)>;
-@@ -1661,6 +1681,14 @@
+@@ -1661,6 +1681,14 @@ usbtemp_r_default: usbtemp-r-default-state {
  		bias-high-impedance;
  		bias-disable;
  	};
@@ -81,7 +81,7 @@ index a20feecdedab..64a38d2ff3c6 100644
  };
  
  &pon_resin {
-@@ -2021,6 +2049,30 @@
+@@ -2021,6 +2049,30 @@ flash-hot {
  		};
  	};
  

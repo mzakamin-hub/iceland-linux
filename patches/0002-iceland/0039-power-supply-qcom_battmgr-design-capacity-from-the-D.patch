@@ -20,7 +20,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index e6dab93ef31a..16066d23d8f3 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -44,6 +44,11 @@
+@@ -44,6 +44,11 @@ aliases {
  		serial1 = &uart18;
  	};
  
@@ -32,7 +32,7 @@ index e6dab93ef31a..16066d23d8f3 100644
  	chosen {
  		#address-cells = <2>;
  		#size-cells = <2>;
-@@ -184,6 +189,9 @@
+@@ -184,6 +189,9 @@ switch-lid {
  	pmic-glink {
  		compatible = "oneplus,iceland-pmic-glink", "qcom,kaanapali-pmic-glink",
  			     "qcom,pmic-glink";

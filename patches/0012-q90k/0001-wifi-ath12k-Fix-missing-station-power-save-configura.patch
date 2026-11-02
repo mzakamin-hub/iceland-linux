@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Miaoqing Pan <miaoqing.pan@oss.qualcomm.com>
 Date: Mon, 8 Sep 2025 09:50:25 +0800
-Subject: [PATCH 01/17] wifi: ath12k: Fix missing station power save
- configuration
+Subject: [PATCH] wifi: ath12k: Fix missing station power save configuration
 
 Commit afbab6e4e88d ("wifi: ath12k: modify ath12k_mac_op_bss_info_changed()
 for MLO") replaced the bss_info_changed() callback with vif_cfg_changed()
@@ -181,7 +180,7 @@ index 63a57145e41e..d8d233eb90ce 100644
  	struct ath12k_link_vif *tx_arvif;
  	struct cfg80211_chan_def def;
  	u32 param_id, param_value;
-@@ -5110,12 +5128,6 @@ skip_vdev_up:
+@@ -5110,12 +5128,6 @@ static void ath12k_mac_bss_info_changed(struct ath12k *ar,
  	}
  
  	ath12k_mac_fils_discovery(arvif, info);

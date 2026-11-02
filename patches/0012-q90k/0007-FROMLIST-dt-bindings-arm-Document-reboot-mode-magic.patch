@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Shivendra Pratap <shivendra.pratap@oss.qualcomm.com>
 Date: Thu, 14 May 2026 19:55:47 +0530
-Subject: [PATCH 07/17] FROMLIST: dt-bindings: arm: Document reboot mode magic
+Subject: [PATCH] FROMLIST: dt-bindings: arm: Document reboot mode magic
 
 Add bindings to describe vendor-specific reboot modes. Values here
 correspond to valid parameters to vendor-specific reset types in PSCI

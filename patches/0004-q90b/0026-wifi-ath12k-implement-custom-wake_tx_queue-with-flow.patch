@@ -78,7 +78,7 @@ diff --git a/drivers/net/wireless/ath/ath12k/wifi7/hw.c b/drivers/net/wireless/a
 index 8e97db8a46dd..d3bedc3dd1ed 100644
 --- a/drivers/net/wireless/ath/ath12k/wifi7/hw.c
 +++ b/drivers/net/wireless/ath/ath12k/wifi7/hw.c
-@@ -1261,9 +1261,76 @@ skip_peer_find:
+@@ -1261,9 +1261,76 @@ static void ath12k_wifi7_mac_op_tx(struct ieee80211_hw *hw,
  	}
  }
  

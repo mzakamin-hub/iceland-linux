@@ -31,7 +31,7 @@ index 46533565eac3..7db0a375de3d 100644
  #include <dt-bindings/phy/phy-qcom-qmp.h>
  #include <dt-bindings/power/qcom-rpmpd.h>
  #include <dt-bindings/regulator/qcom,rpmh-regulator.h>
-@@ -3735,6 +3736,355 @@
+@@ -3735,6 +3736,355 @@ usb_dp_qmpphy_dp_in: endpoint {
  			};
  		};
  
@@ -387,7 +387,7 @@ index 46533565eac3..7db0a375de3d 100644
  		camcc: clock-controller@956d000 {
  			compatible = "qcom,kaanapali-camcc";
  			reg = <0x0 0x0956d000 0x0 0x80000>;
-@@ -6686,6 +7036,28 @@
+@@ -6686,6 +7036,28 @@ pdp_tx: scp-sram-section@100 {
  		};
  	};
  

@@ -15,7 +15,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  create mode 100644 drivers/media/i2c/imx906.c
 
 diff --git a/drivers/media/i2c/Kconfig b/drivers/media/i2c/Kconfig
-index ef41e6a73d76..a6b87d7433ee 100644
+index 2f4649b1da3c..f91e789922f3 100644
 --- a/drivers/media/i2c/Kconfig
 +++ b/drivers/media/i2c/Kconfig
 @@ -321,6 +321,17 @@ config VIDEO_IMX576

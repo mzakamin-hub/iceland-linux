@@ -236,7 +236,7 @@ index 36be543b7c50..b6b9440da07d 100644
  
  		rx_desc->skb = skb;
  		cookie = rx_desc->cookie;
-@@ -163,6 +185,7 @@ fail_free_skb:
+@@ -163,6 +185,7 @@ int ath12k_dp_rx_bufs_replenish(struct ath12k_dp *dp,
  	dev_kfree_skb_any(skb);
  out:
  	ath12k_hal_srng_access_end(ab, srng);
@@ -244,7 +244,7 @@ index 36be543b7c50..b6b9440da07d 100644
  
  	if (!list_empty(used_list))
  		ath12k_dp_rx_enqueue_free(dp, used_list);
-@@ -173,6 +196,83 @@ out:
+@@ -173,6 +196,83 @@ int ath12k_dp_rx_bufs_replenish(struct ath12k_dp *dp,
  }
  EXPORT_SYMBOL(ath12k_dp_rx_bufs_replenish);
  
@@ -375,7 +375,7 @@ diff --git a/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c b/drivers/net/wireles
 index a32c804403e8..7687295b5b30 100644
 --- a/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
 +++ b/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
-@@ -801,9 +801,9 @@ try_again:
+@@ -801,9 +801,9 @@ int ath12k_wifi7_dp_rx_process(struct ath12k_dp *dp, int ring_id,
  
  	spin_unlock_bh(&srng->lock);
  
@@ -388,7 +388,7 @@ index a32c804403e8..7687295b5b30 100644
  	for (device_id = 0; device_id < ATH12K_MAX_DEVICES; device_id++) {
  		if (!num_buffs_reaped[device_id])
  			continue;
-@@ -814,6 +814,14 @@ try_again:
+@@ -814,6 +814,14 @@ int ath12k_wifi7_dp_rx_process(struct ath12k_dp *dp, int ring_id,
  		ath12k_dp_rx_bufs_replenish(partner_dp, rx_ring,
  					    &rx_desc_used_list[device_id],
  					    num_buffs_reaped[device_id]);

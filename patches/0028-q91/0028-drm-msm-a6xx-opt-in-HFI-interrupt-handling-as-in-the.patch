@@ -1,0 +1,156 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 2 Nov 2026 10:54:28 +0200
+Subject: [PATCH 28/32] drm/msm/a6xx: opt-in HFI interrupt handling as in the
+ downstream driver
+
+a6xx_hfi_irq() unmasks bit 23 of GMU2HOST_INTR_INFO as the CM3 fault and
+writes every status bit back to GMU2HOST_INTR_CLR. That is the layout of
+the legacy GMU firmware. Later firmware, the A8xx GMU included, raises
+the CM3 fault on bit 15 and uses bits 16-31 for OOB requests and
+acknowledges. KGSL's gen8 driver unmasks and clears only its own bits
+(HFI_IRQ_CM3_FAULT_MASK = BIT(15), HFI_IRQ_OOB_MASK = GENMASK(31, 16)).
+So on the A840 the handler unmasks an OOB acknowledge position, never
+sees a firmware fault, and can clear a message-queue or OOB bit that
+a6xx_hfi_wait_for_msg_interrupt() or a6xx_gmu_set_oob() is polling: the
+waiter then times out although the GMU answered.
+
+Behind the new parameter msm.gmu_hfi_irq_fix=1 (default off):
+- unmask and acknowledge only the CM3 fault, on bit 15 for non-legacy
+  GMU firmware, and report other interrupts as not handled;
+- bound the waits for a fault devcoredump in the OOB and HFI paths to
+  one second, so that a GMU timeout during recovery cannot deadlock
+  against the fault handler.
+
+The analysis and the idea are denialwm's linux-perpetua commits
+6e05869b966d, 1cdc91f508a2 and 16b0b620cb99 (seen on an A740); this is
+our own code, with the bit layout checked against KGSL gen8.
+
+Suggested-by: Doctor Logix <doctor.logix@gmail.com>
+Based-on: denialwm/linux-perpetua 6e05869b966d, 1cdc91f508a2, 16b0b620cb99 (analysis; our code)
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/adreno/a6xx_gmu.c | 55 ++++++++++++++++++++++++---
+ drivers/gpu/drm/msm/adreno/a6xx_gpu.h |  1 +
+ drivers/gpu/drm/msm/adreno/a6xx_hfi.c |  3 +-
+ 3 files changed, 53 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
+index cefdd4246c9e..099a6ed397ff 100644
+--- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
++++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
+@@ -57,11 +57,58 @@ static irqreturn_t a6xx_gmu_irq(int irq, void *data)
+ 	return IRQ_HANDLED;
+ }
+ 
++/*
++ * gmu_hfi_irq_fix=1 (opt-in): handle the HFI interrupt the way the downstream
++ * driver does. Non-legacy GMU firmware (A640 on, A8xx included) raises the CM3
++ * fault on bit 15 and uses bits 16-31 for OOB requests / acknowledges, so bit 23
++ * (the legacy fault bit) is an OOB acknowledge there. Unmask and acknowledge the
++ * fault bit only: the message-queue and OOB bits of the same register belong to
++ * the pollers in a6xx_hfi_wait_for_msg_interrupt() and a6xx_gmu_set_oob(), and
++ * clearing them here makes a waiter time out although the GMU answered. Also
++ * bound the waits for a fault devcoredump to 1 s.
++ */
++static bool gmu_hfi_irq_fix;
++MODULE_PARM_DESC(gmu_hfi_irq_fix, "Ack only the GMU CM3 fault in the HFI IRQ, bit 15 on non-legacy GMU firmware; bounded coredump waits (0=off (default), 1=on)");
++module_param(gmu_hfi_irq_fix, bool, 0400);
++
++static u32 a6xx_gmu_hfi_irq_mask(struct a6xx_gmu *gmu)
++{
++	if (gmu_hfi_irq_fix && !gmu->legacy)
++		return BIT(15);
++
++	return A6XX_GMU_GMU2HOST_INTR_INFO_CM3_FAULT;
++}
++
++/* wait for a fault devcoredump that may be wedging the GMU; false = give up */
++bool a6xx_gmu_wait_fault_coredump(struct a6xx_gpu *a6xx_gpu)
++{
++	if (!gmu_hfi_irq_fix) {
++		wait_for_completion(&a6xx_gpu->base.fault_coredump_done);
++		return true;
++	}
++
++	return wait_for_completion_timeout(&a6xx_gpu->base.fault_coredump_done,
++					   msecs_to_jiffies(1000));
++}
++
+ static irqreturn_t a6xx_hfi_irq(int irq, void *data)
+ {
+ 	struct a6xx_gmu *gmu = data;
+ 	u32 status;
+ 
++	if (gmu_hfi_irq_fix) {
++		status = gmu_read(gmu, REG_A6XX_GMU_GMU2HOST_INTR_INFO) &
++			 a6xx_gmu_hfi_irq_mask(gmu);
++		if (!status)
++			return IRQ_NONE;
++
++		gmu_write(gmu, REG_A6XX_GMU_GMU2HOST_INTR_CLR, status);
++		dev_err_ratelimited(gmu->dev, "GMU firmware fault\n");
++		a6xx_gmu_fault(gmu);
++
++		return IRQ_HANDLED;
++	}
++
+ 	status = gmu_read(gmu, REG_A6XX_GMU_GMU2HOST_INTR_INFO);
+ 	gmu_write(gmu, REG_A6XX_GMU_GMU2HOST_INTR_CLR, status);
+ 
+@@ -491,7 +538,8 @@ int a6xx_gmu_set_oob(struct a6xx_gmu *gmu, enum a6xx_gmu_oob_state state)
+ 		 * cannot complete while recovery holds gpu->lock, so don't
+ 		 * wait for one then.
+ 		 */
+-		wait_for_completion(&a6xx_gpu->base.fault_coredump_done);
++		if (!a6xx_gmu_wait_fault_coredump(a6xx_gpu))
++			break;
+ 	} while (true);
+ 
+ 	if (ret)
+@@ -1122,9 +1170,6 @@ static int a6xx_gmu_fw_start(struct a6xx_gmu *gmu, unsigned int state)
+ 	return 0;
+ }
+ 
+-#define A6XX_HFI_IRQ_MASK \
+-	(A6XX_GMU_GMU2HOST_INTR_INFO_CM3_FAULT)
+-
+ #define A6XX_GMU_IRQ_MASK \
+ 	(A6XX_GMU_AO_HOST_INTERRUPT_STATUS_WDOG_BITE | \
+ 	 A6XX_GMU_AO_HOST_INTERRUPT_STATUS_HOST_AHB_BUS_ERROR | \
+@@ -1462,7 +1507,7 @@ int a6xx_gmu_resume(struct a6xx_gpu *a6xx_gpu)
+ 	 * sequence is successful
+ 	 */
+ 	gmu_write(gmu, REG_A6XX_GMU_GMU2HOST_INTR_CLR, ~0);
+-	gmu_write(gmu, REG_A6XX_GMU_GMU2HOST_INTR_MASK, ~A6XX_HFI_IRQ_MASK);
++	gmu_write(gmu, REG_A6XX_GMU_GMU2HOST_INTR_MASK, ~a6xx_gmu_hfi_irq_mask(gmu));
+ 	enable_irq(gmu->hfi_irq);
+ 
+ 	/* Set the GPU to the current freq */
+diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
+index 71a00de9cbfa..ffc60814c5a0 100644
+--- a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
++++ b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
+@@ -302,6 +302,7 @@ int a6xx_gmu_wait_for_active(struct a6xx_gmu *gmu);
+ 
+ bool a6xx_gmu_isidle(struct a6xx_gmu *gmu);
+ 
++bool a6xx_gmu_wait_fault_coredump(struct a6xx_gpu *a6xx_gpu);
+ int a6xx_gmu_set_oob(struct a6xx_gmu *gmu, enum a6xx_gmu_oob_state state);
+ void a6xx_gmu_clear_oob(struct a6xx_gmu *gmu, enum a6xx_gmu_oob_state state);
+ 
+diff --git a/drivers/gpu/drm/msm/adreno/a6xx_hfi.c b/drivers/gpu/drm/msm/adreno/a6xx_hfi.c
+index 8518e9abcff4..580ac27e54c3 100644
+--- a/drivers/gpu/drm/msm/adreno/a6xx_hfi.c
++++ b/drivers/gpu/drm/msm/adreno/a6xx_hfi.c
+@@ -132,7 +132,8 @@ static int a6xx_hfi_wait_for_msg_interrupt(struct a6xx_gmu *gmu, u32 id, u32 seq
+ 		 * cannot complete while recovery holds gpu->lock, so don't
+ 		 * wait for one then.
+ 		 */
+-		wait_for_completion(&a6xx_gpu->base.fault_coredump_done);
++		if (!a6xx_gmu_wait_fault_coredump(a6xx_gpu))
++			break;
+ 	} while (true);
+ 
+ 	if (ret) {

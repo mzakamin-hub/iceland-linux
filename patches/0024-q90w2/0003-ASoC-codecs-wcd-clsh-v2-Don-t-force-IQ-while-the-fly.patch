@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 26 Oct 2026 18:09:16 +0300
-Subject: [PATCH 3/5] ASoC: codecs: wcd-clsh-v2: Don't force IQ while the
- flyback is on
+Subject: [PATCH] ASoC: codecs: wcd-clsh-v2: Don't force IQ while the flyback
+ is on
 
 On class-H v3 codecs every HPH L, HPH R or EAR enable forces the IQ
 bias first (FLYBACK_VNEGDAC_CTRL_2 = 0xa0, CLASSH_MODE_3 bit 1,

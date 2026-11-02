@@ -19,7 +19,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index f2c3acb8be5d..df2ac127ba99 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -1939,7 +1939,8 @@
+@@ -1939,7 +1939,8 @@ wcd_tx: codec@0,3 {
  };
  
  &tlmm {

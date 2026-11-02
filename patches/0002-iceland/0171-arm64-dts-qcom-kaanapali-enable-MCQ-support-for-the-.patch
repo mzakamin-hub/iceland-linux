@@ -22,7 +22,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/
 index 03865b947d33..e37e59f88bdf 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-@@ -2767,7 +2767,10 @@
+@@ -2767,7 +2767,10 @@ ufs_mem_hc: ufs@1d84000 {
  			compatible = "qcom,kaanapali-ufshc",
  				     "qcom,ufshc",
  				     "jedec,ufs-2.0";
@@ -34,7 +34,7 @@ index 03865b947d33..e37e59f88bdf 100644
  
  			interrupts = <GIC_SPI 265 IRQ_TYPE_LEVEL_HIGH>;
  
-@@ -2806,6 +2809,8 @@
+@@ -2806,6 +2809,8 @@ &mc_virt SLAVE_EBI1 QCOM_ICC_TAG_ALWAYS>,
  			iommus = <&apps_smmu 0x60 0x0>;
  			dma-coherent;
  

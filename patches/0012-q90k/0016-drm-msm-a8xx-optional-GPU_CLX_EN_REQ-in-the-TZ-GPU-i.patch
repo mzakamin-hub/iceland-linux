@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 23 Oct 2026 22:31:52 +0300
-Subject: [PATCH 16/17] drm/msm/a8xx: optional GPU_CLX_EN_REQ in the TZ GPU
- init request
+Subject: [PATCH] drm/msm/a8xx: optional GPU_CLX_EN_REQ in the TZ GPU init
+ request
 
 KGSL asks TZ for GPU_BCL_EN_REQ and GPU_CLX_EN_REQ together with the
 always-on and TSENSE requests when it initialises an A8xx GPU; we only

@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Joonhoe Kim <26rote@gmail.com>
 Date: Fri, 23 Oct 2026 01:50:06 +0900
-Subject: [PATCH 02/12] scsi: ufs: qcom: Reprogram ESI after a host controller
- reset
+Subject: [PATCH] scsi: ufs: qcom: Reprogram ESI after a host controller reset
 
 ufs_qcom_config_esi() returns early once the ESI interrupts are set up.
 ufshcd_config_mcq() also calls it after every host controller reset,
@@ -22,10 +21,10 @@ Signed-off-by: Joonhoe Kim <26rote@gmail.com>
  2 files changed, 11 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
-index fee9b54ba5e1..ea2a106cbe26 100644
+index 27c87e62f8e9..47fc785612ad 100644
 --- a/drivers/ufs/host/ufs-qcom.c
 +++ b/drivers/ufs/host/ufs-qcom.c
-@@ -2414,7 +2414,9 @@ static void ufs_qcom_write_msi_msg(struct msi_desc *desc, struct msi_msg *msg)
+@@ -2413,7 +2413,9 @@ static void ufs_qcom_write_msi_msg(struct msi_desc *desc, struct msi_msg *msg)
  {
  	struct device *dev = msi_desc_to_dev(desc);
  	struct ufs_hba *hba = dev_get_drvdata(dev);
@@ -35,7 +34,7 @@ index fee9b54ba5e1..ea2a106cbe26 100644
  	ufshcd_mcq_config_esi(hba, msg);
  }
  
-@@ -2442,8 +2444,10 @@ static int ufs_qcom_config_esi(struct ufs_hba *hba)
+@@ -2441,8 +2443,10 @@ static int ufs_qcom_config_esi(struct ufs_hba *hba)
  	struct ufs_qcom_irq *qi;
  	int nr_irqs, ret;
  
@@ -48,7 +47,7 @@ index fee9b54ba5e1..ea2a106cbe26 100644
  
  	/*
  	 * 1. We only handle CQs as of now.
-@@ -2481,12 +2485,14 @@ static int ufs_qcom_config_esi(struct ufs_hba *hba)
+@@ -2480,12 +2484,14 @@ static int ufs_qcom_config_esi(struct ufs_hba *hba)
  		}
  	}
  

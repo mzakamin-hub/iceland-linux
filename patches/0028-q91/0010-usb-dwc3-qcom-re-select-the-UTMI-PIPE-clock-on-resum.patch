@@ -1,0 +1,58 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 2 Nov 2026 10:54:26 +0200
+Subject: [PATCH 10/32] usb: dwc3: qcom: re-select the UTMI PIPE clock on
+ resume
+
+QSCRATCH_GENERAL_CFG loses its contents when the controller's power
+domain collapses during system suspend. With the UTMI clock selected as
+the PIPE clock (a DisplayPort-only Type-C mode, or
+qcom,select-utmi-as-pipe-clk) the core then runs without a PIPE clock
+after resume. Select it again in dwc3_qcom_resume().
+
+dwc3_qcom_mux_set() holds pipe_clk_lock while it resumes the device, so
+the resume path re-applies the recorded state without taking the lock.
+
+The idea is from Filippo Falezza's "usb: dwc3: qcom: Restore UTMI PIPE
+clock on resume" (patchwork series 1194165); this is our own form for
+the DP-only switching the Pad 4 queue carries.
+
+Suggested-by: Filippo Falezza <effeffe99@gmail.com>
+Based-on: "usb: dwc3: qcom: Restore UTMI PIPE clock on resume" (lore 20261027-dwc3-utmi-resume-v1-1-ca9f0aa65783@gmail.com, patchwork 1194165; idea only)
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/usb/dwc3/dwc3-qcom.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/drivers/usb/dwc3/dwc3-qcom.c b/drivers/usb/dwc3/dwc3-qcom.c
+index 9bed3400a328..50ca097b99f2 100644
+--- a/drivers/usb/dwc3/dwc3-qcom.c
++++ b/drivers/usb/dwc3/dwc3-qcom.c
+@@ -540,6 +540,8 @@ static int dwc3_qcom_suspend(struct dwc3_qcom *qcom, bool wakeup, bool runtime)
+ 	return 0;
+ }
+ 
++static void dwc3_qcom_select_utmi_clk(struct dwc3_qcom *qcom, bool utmi);
++
+ static int dwc3_qcom_resume(struct dwc3_qcom *qcom, bool wakeup)
+ {
+ 	int ret;
+@@ -557,6 +559,17 @@ static int dwc3_qcom_resume(struct dwc3_qcom *qcom, bool wakeup)
+ 
+ 	dwc3_qcom_icc_on(qcom);
+ 
++	/*
++	 * QSCRATCH_GENERAL_CFG loses its contents when the controller's power
++	 * domain collapses in system suspend. Select the UTMI clock as the
++	 * PIPE clock again if it was selected (a DisplayPort-only mode, or
++	 * qcom,select-utmi-as-pipe-clk): the core cannot run without a PIPE
++	 * clock otherwise. No pipe_clk_lock here: dwc3_qcom_mux_set() holds it
++	 * while it resumes the device.
++	 */
++	if (qcom->utmi_pipe_clk)
++		dwc3_qcom_select_utmi_clk(qcom, true);
++
+ 	/* Clear existing events from PHY related to L2 in/out */
+ 	for (i = 0; i < qcom->num_ports; i++) {
+ 		dwc3_qcom_setbits(qcom->qscratch_base,

@@ -1,0 +1,57 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 2 Nov 2026 11:48:25 +0200
+Subject: [PATCH 09/24] media: qcom: camss: csiphy-3ph: leave the PHY in reset
+ after a stream
+
+csiphy_lanes_disable() only switches the lanes and the common power-down
+off; the PHY itself keeps running. The vendor driver ends every stream by
+putting the CSIPHY into software reset. Do the same, and take the PHY out
+of reset when the next stream configures its lanes (csiphy_reset() runs
+only at power-on, so the release cannot be left to it).
+
+denialwm saw the failure this avoids on Kaanapali: after a D-PHY stream
+on one CSIPHY stopped, a stream on another CSIPHY reached the CSID only
+about half the time until the camera power domain went down
+(linux-perpetua cc2de7a37a7c, written for the phy-qcom-mipi-csi2 driver
+of CAMSS v23). This is our own form for the CAMSS v21 CSIPHY code the
+Pad 4 runs (front <-> rear switches).
+
+Suggested-by: Doctor Logix <doctor.logix@gmail.com>
+Based-on: denialwm/linux-perpetua cc2de7a37a7c (finding; our form for CAMSS v21)
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ .../media/platform/qcom/camss/camss-csiphy-3ph-1-0.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/drivers/media/platform/qcom/camss/camss-csiphy-3ph-1-0.c b/drivers/media/platform/qcom/camss/camss-csiphy-3ph-1-0.c
+index dac8d2ecf799..5673fd8e015f 100644
+--- a/drivers/media/platform/qcom/camss/camss-csiphy-3ph-1-0.c
++++ b/drivers/media/platform/qcom/camss/camss-csiphy-3ph-1-0.c
+@@ -1160,6 +1160,9 @@ static void csiphy_lanes_enable(struct csiphy_device *csiphy,
+ 
+ 	settle_cnt = csiphy_settle_cnt_calc(link_freq, csiphy->timer_clk_rate);
+ 
++	/* out of the software reset that csiphy_lanes_disable() left the PHY in */
++	writel(0, csiphy->base + CSIPHY_3PH_CMN_CSI_COMMON_CTRLn(regs->offset, 0));
++
+ 	val = CSIPHY_3PH_CMN_CSI_COMMON_CTRL5_CLK_ENABLE;
+ 	for (i = 0; i < c->num_data; i++)
+ 		val |= BIT(c->data[i].pos * 2);
+@@ -1201,6 +1204,15 @@ static void csiphy_lanes_disable(struct csiphy_device *csiphy,
+ 
+ 	writel_relaxed(0, csiphy->base +
+ 			  CSIPHY_3PH_CMN_CSI_COMMON_CTRLn(regs->offset, 6));
++
++	/*
++	 * Hold the PHY in software reset until its next stream, as the vendor
++	 * driver ends every stream: a CSIPHY left running after a stream stops
++	 * can keep the next stream on another CSIPHY from reaching the CSID
++	 * while the camera power domain stays up.
++	 */
++	writel(0x1, csiphy->base + CSIPHY_3PH_CMN_CSI_COMMON_CTRLn(regs->offset, 0));
++	usleep_range(20, 40);
+ }
+ 
+ static int csiphy_init(struct csiphy_device *csiphy)

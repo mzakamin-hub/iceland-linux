@@ -1,0 +1,36 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Xi Zhang <xz.ca.cn@gmail.com>
+Date: Mon, 26 Oct 2026 17:25:47 -0300
+Subject: [PATCH 21/24] drm/msm/dpu: reset DSC_CMN_MAIN_CNF in dsc disable
+
+From observation, DSC_CMN_MAIN_CNF has hardware restriction on
+differing values between paired even/odd dsc.
+
+Reset it to 0 when dsc disable to avoid issues when a dsc pair
+is later used individually for each of its dsc.
+
+Note that currently dpu always assigns dsc in pairs if possible
+for power saving. In the future, it may be desired to assign
+singular dsc if possible to support high display count. e.g.
+when dsc for DisplayPort support is added.
+
+Tested on Ayaneo Pocket DS (SM8550 Kalama)
+
+Signed-off-by: Xi Zhang <xz.ca.cn@gmail.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_hw_dsc_1_2.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_dsc_1_2.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_dsc_1_2.c
+index 7228ed31c8e1..8b6bcc8f7d59 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_dsc_1_2.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_dsc_1_2.c
+@@ -78,6 +78,7 @@ static void dpu_hw_dsc_disable_1_2(struct dpu_hw_dsc *hw_dsc)
+ 
+ 	hw = &hw_dsc->hw;
+ 	sblk = hw_dsc->caps->sblk;
++	DPU_REG_WRITE(hw, DSC_CMN_MAIN_CNF, 0);
+ 	DPU_REG_WRITE(hw, sblk->ctl.base + DSC_CFG, 0);
+ 
+ 	DPU_REG_WRITE(hw, sblk->enc.base + ENC_DF_CTRL, 0);

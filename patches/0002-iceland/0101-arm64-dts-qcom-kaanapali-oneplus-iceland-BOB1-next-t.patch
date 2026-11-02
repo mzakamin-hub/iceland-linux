@@ -25,7 +25,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64
 index 073eaee1fd56..f2c3acb8be5d 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-@@ -520,9 +520,13 @@
+@@ -520,9 +520,13 @@ regulators-0 {
  		vdd-l17-supply = <&vreg_bob2>;
  		vdd-l18-supply = <&vreg_s7f_1p2>;
  

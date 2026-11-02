@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 26 Oct 2026 01:22:30 +0300
-Subject: [PATCH 1/2] wifi: ath12k: Create the device debugfs files with their
+Subject: [PATCH] wifi: ath12k: Create the device debugfs files with their
  directory
 
 simulate_fw_crash and device_dp_stats are created in
