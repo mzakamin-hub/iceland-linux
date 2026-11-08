@@ -1,0 +1,49 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Christian Loehle <christian.loehle@arm.com>
+Date: Thu, 5 Nov 2026 21:52:23 +0000
+Subject: [PATCH 03/27] cpufreq: Serialize global boost updates
+
+Concurrent global boost sysfs writes can interleave their global flag
+and per-policy updates. An enabling write can set the global flag, then
+a disabling write can clear it and finish before the enabling write
+updates the policies. Both writes succeed, leaving boost enabled on
+the policies while the global flag is disabled.
+
+Serialize the complete global boost update, including rollback on
+failure, with a mutex.
+
+Fixes: 6f19efc0a1ca ("cpufreq: Add boost frequency support in core")
+Signed-off-by: Christian Loehle <christian.loehle@arm.com>
+Reviewed-by: Pengjie Zhang <zhangpengjie2@huawei.com>
+Reviewed-by: Zhongqiu Han <zhongqiu.han@oss.qualcomm.com>
+Reviewed-by: Sumit Gupta <sumitg@nvidia.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/cpufreq/cpufreq.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/cpufreq/cpufreq.c b/drivers/cpufreq/cpufreq.c
+index 9e4ca4fcf..521b21ec4 100644
+--- a/drivers/cpufreq/cpufreq.c
++++ b/drivers/cpufreq/cpufreq.c
+@@ -2826,6 +2826,8 @@ int cpufreq_boost_set_sw(struct cpufreq_policy *policy, int state)
+ }
+ EXPORT_SYMBOL_GPL(cpufreq_boost_set_sw);
+ 
++static DEFINE_MUTEX(cpufreq_boost_mutex);
++
+ static int cpufreq_boost_trigger_state(int state)
+ {
+ 	struct cpufreq_policy *policy;
+@@ -2833,6 +2835,8 @@ static int cpufreq_boost_trigger_state(int state)
+ 	bool boost_enabled;
+ 	int ret = -EOPNOTSUPP;
+ 
++	guard(mutex)(&cpufreq_boost_mutex);
++
+ 	/*
+ 	 * Don't compare 'cpufreq_driver->boost_enabled' with 'state' here to
+ 	 * make sure all policies are in sync with global boost flag.
+-- 
+2.43.0
+

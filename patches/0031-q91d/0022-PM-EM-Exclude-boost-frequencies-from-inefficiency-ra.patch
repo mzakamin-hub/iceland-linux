@@ -1,0 +1,119 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Guo Chen <guo.chen@oss.qualcomm.com>
+Date: Tue, 3 Nov 2026 19:21:28 +0800
+Subject: [PATCH 22/27] PM: EM: Exclude boost frequencies from inefficiency
+ ranking
+
+em_compute_costs() ranks all the frequencies of the table, boost ones
+included. A non-boost frequency can be marked inefficient only because
+a faster boost frequency has a lower or equal cost, e.g.
+
+  3.9 GHz  4.0 GHz (cost C)  4.1 GHz (boost, cost C)
+
+With boost disabled 4.1 GHz cannot be selected, but 4.0 GHz is still
+skipped by governors rounding down to efficient frequencies (e.g.
+ondemand with CPUFREQ_RELATION_HE), which land on 3.9 GHz instead of
+the best selectable frequency. Several frequencies can be affected.
+
+Exclude the boost frequencies from the ranking in em_compute_costs() and
+keep them all efficient, using the highest non-boost frequency of the
+CPUFreq table, returned by the new helper
+cpufreq_table_max_nonboost_freq(), as the boundary.
+
+Fixes: c8ed99533dbc ("PM: EM: Mark inefficient states")
+Signed-off-by: Guo Chen <guo.chen@oss.qualcomm.com>
+Reviewed-by: Lukasz Luba <lukasz.luba@arm.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ include/linux/cpufreq.h     | 24 ++++++++++++++++++++++++
+ kernel/power/energy_model.c | 16 ++++++++++++++++
+ 2 files changed, 40 insertions(+)
+
+diff --git a/include/linux/cpufreq.h b/include/linux/cpufreq.h
+index 2b34a9ff7..5a7590a5f 100644
+--- a/include/linux/cpufreq.h
++++ b/include/linux/cpufreq.h
+@@ -1157,6 +1157,24 @@ cpufreq_table_set_inefficient(struct cpufreq_policy *policy,
+ 	return -EINVAL;
+ }
+ 
++static inline unsigned int
++cpufreq_table_max_nonboost_freq(struct cpufreq_policy *policy)
++{
++	struct cpufreq_frequency_table *pos;
++	unsigned int max = 0;
++
++	if (!policy->freq_table)
++		return 0;
++
++	/* The table may be unsorted, scan all of it for the highest one. */
++	cpufreq_for_each_valid_entry(pos, policy->freq_table) {
++		if (!(pos->flags & CPUFREQ_BOOST_FREQ) && pos->frequency > max)
++			max = pos->frequency;
++	}
++
++	return max;
++}
++
+ static inline int parse_perf_domain(int cpu, const char *list_name,
+ 				    const char *cell_name,
+ 				    struct of_phandle_args *args)
+@@ -1221,6 +1239,12 @@ cpufreq_table_set_inefficient(struct cpufreq_policy *policy,
+ 	return -EINVAL;
+ }
+ 
++static inline unsigned int
++cpufreq_table_max_nonboost_freq(struct cpufreq_policy *policy)
++{
++	return 0;
++}
++
+ static inline int of_perf_domain_get_sharing_cpumask(int pcpu, const char *list_name,
+ 						     const char *cell_name, struct cpumask *cpumask,
+ 						     struct of_phandle_args *pargs)
+diff --git a/kernel/power/energy_model.c b/kernel/power/energy_model.c
+index d19a65461..5b1d095fd 100644
+--- a/kernel/power/energy_model.c
++++ b/kernel/power/energy_model.c
+@@ -255,15 +255,24 @@ static int em_compute_costs(struct device *dev, struct em_perf_state *table,
+ 			    unsigned long flags)
+ {
+ 	unsigned long prev_cost = ULONG_MAX;
++	struct cpufreq_policy *policy;
++	unsigned int max_nonboost = 0;
+ 	int i, ret;
+ 
+ 	/* This is needed only for CPUs and EAS skip other devices */
+ 	if (!_is_cpu_device(dev))
+ 		return 0;
+ 
++	policy = cpufreq_cpu_get(dev->id);
++	if (policy) {
++		max_nonboost = cpufreq_table_max_nonboost_freq(policy);
++		cpufreq_cpu_put(policy);
++	}
++
+ 	/* Compute the cost of each performance state. */
+ 	for (i = nr_states - 1; i >= 0; i--) {
+ 		unsigned long power_res, cost;
++		bool boost = max_nonboost && table[i].frequency > max_nonboost;
+ 
+ 		if ((flags & EM_PERF_DOMAIN_ARTIFICIAL) && cb->get_cost) {
+ 			ret = cb->get_cost(dev, table[i].frequency, &cost);
+@@ -284,6 +293,13 @@ static int em_compute_costs(struct device *dev, struct em_perf_state *table,
+ 			table[i].flags = EM_PERF_STATE_INEFFICIENT;
+ 			dev_dbg(dev, "EM: OPP:%lu is inefficient\n",
+ 				table[i].frequency);
++		} else if (boost) {
++			/*
++			 * Keep all boost states efficient. Resetting prev_cost
++			 * also keeps the highest non-boost state efficient,
++			 * then rank the rest on their own.
++			 */
++			prev_cost = ULONG_MAX;
+ 		} else {
+ 			prev_cost = table[i].cost;
+ 		}
+-- 
+2.43.0
+

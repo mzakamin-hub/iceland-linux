@@ -1,0 +1,174 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Joonhoe Kim <26rote@gmail.com>
+Date: Fri, 6 Nov 2026 23:32:01 +0200
+Subject: [PATCH 26/27] usb: dwc3: qcom: Leave DP-only mode from the mux
+ callback
+
+Switching back to the PIPE clock only on a role change misses a replug
+where the role notification comes before the mux state. A change of pin
+assignment from C/E to D/F while DisplayPort is active cleared dp_only
+although the PHY keeps DP-only mode then, so the next role change
+selected the stopped PIPE clock.
+
+Set dp_only only on the first DisplayPort state after the safe state,
+clear it on a USB state after the safe state, and switch the clock in
+both directions from the mux callback. The PHY also delays its switch
+while DisplayPort is still powered, which the controller does not see,
+so a very quick replug can still leave them apart.
+
+The mux can be called while the glue is suspended for system sleep,
+e.g. from the UCSI connector change work. Then only record the state
+and select the clock on resume, before the core resumes.
+
+The mux needs the Type-C class, so depend on TYPEC || TYPEC=n and do not
+register the mux without it.
+
+Signed-off-by: Joonhoe Kim <26rote@gmail.com>
+[mzak: merged from tb323fu-linux 0149 into the iceland dwc3-qcom.c, which
+ already re-selects the UTMI clock in dwc3_qcom_resume() after a power
+ collapse (kept; pm_resume now holds pipe_clk_lock around it), and drops
+ the ICC votes in pm_suspend (kept outside the lock's scope order). The
+ probe whitespace hunk is left out.]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/usb/dwc3/Kconfig     |  1 +
+ drivers/usb/dwc3/dwc3-qcom.c | 52 ++++++++++++++++++++----------------
+ 2 files changed, 30 insertions(+), 23 deletions(-)
+
+diff --git a/drivers/usb/dwc3/Kconfig b/drivers/usb/dwc3/Kconfig
+index 18169727a..282f366de 100644
+--- a/drivers/usb/dwc3/Kconfig
++++ b/drivers/usb/dwc3/Kconfig
+@@ -132,6 +132,7 @@ config USB_DWC3_QCOM
+ 	depends on ARCH_QCOM || COMPILE_TEST
+ 	depends on EXTCON || !EXTCON
+ 	depends on OF
++	depends on TYPEC || TYPEC=n
+ 	default USB_DWC3
+ 	help
+ 	  Some Qualcomm SoCs use DesignWare Core IP for USB2/3
+diff --git a/drivers/usb/dwc3/dwc3-qcom.c b/drivers/usb/dwc3/dwc3-qcom.c
+index 50ca097b9..6a2d1a616 100644
+--- a/drivers/usb/dwc3/dwc3-qcom.c
++++ b/drivers/usb/dwc3/dwc3-qcom.c
+@@ -122,6 +122,7 @@ struct dwc3_qcom {
+ 	bool			dp_active;
+ 	bool			dp_only;
+ 	bool			utmi_pipe_clk;
++	/* protects dp_active, dp_only, utmi_pipe_clk and pm_suspended */
+ 	struct mutex		pipe_clk_lock;
+ 	struct typec_mux_dev	*mux;
+ 
+@@ -565,7 +566,8 @@ static int dwc3_qcom_resume(struct dwc3_qcom *qcom, bool wakeup)
+ 	 * PIPE clock again if it was selected (a DisplayPort-only mode, or
+ 	 * qcom,select-utmi-as-pipe-clk): the core cannot run without a PIPE
+ 	 * clock otherwise. No pipe_clk_lock here: dwc3_qcom_mux_set() holds it
+-	 * while it resumes the device.
++	 * while it resumes the device, and dwc3_qcom_pm_resume() holds it
++	 * around this call.
+ 	 */
+ 	if (qcom->utmi_pipe_clk)
+ 		dwc3_qcom_select_utmi_clk(qcom, true);
+@@ -624,14 +626,6 @@ static void dwc3_qcom_select_utmi_clk(struct dwc3_qcom *qcom, bool utmi)
+ 	qcom->utmi_pipe_clk = utmi;
+ }
+ 
+-static void dwc3_qcom_update_pipe_clk(struct dwc3_qcom *qcom)
+-{
+-	if (qcom->ignore_pipe_clk || qcom->dp_only == qcom->utmi_pipe_clk)
+-		return;
+-
+-	dwc3_qcom_select_utmi_clk(qcom, qcom->dp_only);
+-}
+-
+ static int dwc3_qcom_mux_set(struct typec_mux_dev *mux, struct typec_mux_state *state)
+ {
+ 	struct dwc3_qcom *qcom = typec_mux_get_drvdata(mux);
+@@ -639,20 +633,27 @@ static int dwc3_qcom_mux_set(struct typec_mux_dev *mux, struct typec_mux_state *
+ 	guard(mutex)(&qcom->pipe_clk_lock);
+ 
+ 	if (state->alt && state->alt->svid == USB_TYPEC_DP_SID) {
++		if (!qcom->dp_active)
++			qcom->dp_only = state->mode == TYPEC_DP_STATE_C ||
++					state->mode == TYPEC_DP_STATE_E;
+ 		qcom->dp_active = true;
+-		qcom->dp_only = state->mode == TYPEC_DP_STATE_C ||
+-				state->mode == TYPEC_DP_STATE_E;
+ 	} else if (state->mode == TYPEC_STATE_SAFE) {
+ 		qcom->dp_active = false;
+ 	} else if (!qcom->dp_active) {
+ 		qcom->dp_only = false;
+ 	}
+ 
+-	/* The PHY stops the PIPE clock right after this in DP-only mode */
+-	if (!qcom->dp_only || pm_runtime_resume_and_get(qcom->dev))
++	/*
++	 * Switch the clock both ways here. While the glue is suspended for
++	 * system sleep only record the state: dwc3_qcom_pm_resume() selects
++	 * the clock before the core resumes.
++	 */
++	if (qcom->ignore_pipe_clk || qcom->pm_suspended ||
++	    qcom->dp_only == qcom->utmi_pipe_clk ||
++	    pm_runtime_resume_and_get(qcom->dev))
+ 		return 0;
+ 
+-	dwc3_qcom_update_pipe_clk(qcom);
++	dwc3_qcom_select_utmi_clk(qcom, qcom->dp_only);
+ 	pm_runtime_put_autosuspend(qcom->dev);
+ 
+ 	return 0;
+@@ -662,7 +663,8 @@ static int dwc3_qcom_mux_register(struct dwc3_qcom *qcom)
+ {
+ 	struct typec_mux_desc desc = {};
+ 
+-	if (!device_property_present(qcom->dev, "mode-switch"))
++	if (!IS_ENABLED(CONFIG_TYPEC) ||
++	    !device_property_present(qcom->dev, "mode-switch"))
+ 		return 0;
+ 
+ 	desc.drvdata = qcom;
+@@ -814,10 +816,6 @@ static void dwc3_qcom_set_role_notifier(struct dwc3 *dwc, enum usb_role next_rol
+ 		return;
+ 	}
+ 
+-	mutex_lock(&qcom->pipe_clk_lock);
+-	dwc3_qcom_update_pipe_clk(qcom);
+-	mutex_unlock(&qcom->pipe_clk_lock);
+-
+ 	/*
+ 	 * The override tells the controller that a host supplies VBUS, so it
+ 	 * belongs to the device role only: leaving host mode for "none" must
+@@ -1036,6 +1034,8 @@ static int dwc3_qcom_pm_suspend(struct device *dev)
+ 	if (ret)
+ 		return ret;
+ 
++	guard(mutex)(&qcom->pipe_clk_lock);
++
+ 	ret = dwc3_qcom_suspend(qcom, wakeup, false);
+ 	if (ret)
+ 		return ret;
+@@ -1055,11 +1055,17 @@ static int dwc3_qcom_pm_resume(struct device *dev)
+ 	bool wakeup = device_may_wakeup(dev);
+ 	int ret;
+ 
+-	ret = dwc3_qcom_resume(qcom, wakeup);
+-	if (ret)
+-		return ret;
++	scoped_guard(mutex, &qcom->pipe_clk_lock) {
++		ret = dwc3_qcom_resume(qcom, wakeup);
++		if (ret)
++			return ret;
+ 
+-	qcom->pm_suspended = false;
++		if (!qcom->ignore_pipe_clk &&
++		    qcom->dp_only != qcom->utmi_pipe_clk)
++			dwc3_qcom_select_utmi_clk(qcom, qcom->dp_only);
++
++		qcom->pm_suspended = false;
++	}
+ 
+ 	ret = dwc3_pm_resume(&qcom->dwc);
+ 	if (ret)
+-- 
+2.43.0
+

@@ -1,0 +1,52 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Stanley Jhu <stanleyjhu@google.com>
+Date: Thu, 29 Oct 2026 15:08:39 +0800
+Subject: [PATCH 15/27] scsi: ufs: bsg: Abort ufs_bsg_request() when runtime
+ resume fails
+
+ufs_bsg_request() resumes the UFS device W-LUN with ufshcd_rpm_get_sync()
+and ignores its return value:
+
+ 1. The W-LUN is runtime suspended.
+ 2. User space submits a BSG request.
+ 3. ufs_bsg_request() calls ufshcd_rpm_get_sync().
+ 4. The W-LUN runtime resume fails and the W-LUN stays suspended.
+ 5. ufshcd_rpm_get_sync() returns a negative errno, which is ignored.
+ 6. ufs_bsg_request() dispatches the BSG command while the W-LUN is
+    still suspended.
+
+Use ufshcd_rpm_resume_and_get() and jump to out_complete on error so the
+BSG job is completed via bsg_job_done() with the failure code without
+dropping an unacquired runtime PM reference.
+
+Fixes: b294ff3e3449 ("scsi: ufs: core: Enable power management for wlun")
+Cc: stable@vger.kernel.org # needs "scsi: ufs: core: Introduce ufshcd_rpm_resume_and_get() helper"
+Signed-off-by: Stanley Jhu <stanleyjhu@google.com>
+Reviewed-by: Bart Van Assche <bvanassche@acm.org>
+Reviewed-by: Peter Wang <peter.wang@mediatek.com>
+Link: https://patch.msgid.link/20261029040003.2100003-5-stanleyjhu@google.com
+Signed-off-by: Martin K. Petersen (Oracle) <mkp@kernel.org>
+(cherry picked from commit 2b8541edf7c43f0294c45d2e687bbc1288292f4e)
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/ufs/core/ufs_bsg.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/ufs/core/ufs_bsg.c b/drivers/ufs/core/ufs_bsg.c
+index baf6ae917..8df1a2c6a 100644
+--- a/drivers/ufs/core/ufs_bsg.c
++++ b/drivers/ufs/core/ufs_bsg.c
+@@ -150,7 +150,9 @@ static int ufs_bsg_request(struct bsg_job *job)
+ 		goto out_complete;
+ 	}
+ 
+-	ufshcd_rpm_get_sync(hba);
++	ret = ufshcd_rpm_resume_and_get(hba);
++	if (ret)
++		goto out_complete;
+ 
+ 	msgcode = bsg_request->msgcode;
+ 	switch (msgcode) {
+-- 
+2.43.0
+

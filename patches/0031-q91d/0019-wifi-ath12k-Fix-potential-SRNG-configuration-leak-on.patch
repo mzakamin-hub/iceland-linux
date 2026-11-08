@@ -1,0 +1,51 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Guangshuo Li <liguangshuo@mail.sdu.edu.cn>
+Date: Wed, 4 Nov 2026 10:33:44 +0800
+Subject: [PATCH 19/27] wifi: ath12k: Fix potential SRNG configuration leak on
+ init failure
+
+If either DMA pointer-buffer allocation fails after the SRNG
+configuration is copied, HAL initialization returns without freeing
+the copy. Its callers skip HAL deinitialization on this error.
+
+Free the configuration on both allocation failure paths and clear
+its pointer before returning.
+
+This issue was found by our static analysis tool under development.
+
+Fixes: d889913205cf ("wifi: ath12k: driver for Qualcomm Wi-Fi 7 devices")
+Signed-off-by: Guangshuo Li <liguangshuo@mail.sdu.edu.cn>
+Reviewed-by: Rameshkumar Sundaram <rameshkumar.sundaram@oss.qualcomm.com>
+Reviewed-by: Baochen Qiang <baochen.qiang@oss.qualcomm.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/net/wireless/ath/ath12k/hal.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/net/wireless/ath/ath12k/hal.c b/drivers/net/wireless/ath/ath12k/hal.c
+index fbe4dc41e..0b931953c 100644
+--- a/drivers/net/wireless/ath/ath12k/hal.c
++++ b/drivers/net/wireless/ath/ath12k/hal.c
+@@ -745,7 +745,7 @@ int ath12k_hal_srng_init(struct ath12k_base *ab)
+ 
+ 	ret = ath12k_hal_alloc_cont_rdp(hal);
+ 	if (ret)
+-		goto err_hal;
++		goto err_free_config;
+ 
+ 	ret = ath12k_hal_alloc_cont_wrp(hal);
+ 	if (ret)
+@@ -757,7 +757,9 @@ int ath12k_hal_srng_init(struct ath12k_base *ab)
+ 
+ err_free_cont_rdp:
+ 	ath12k_hal_free_cont_rdp(hal);
+-
++err_free_config:
++	kfree(hal->srng_config);
++	hal->srng_config = NULL;
+ err_hal:
+ 	return ret;
+ }
+-- 
+2.43.0
+

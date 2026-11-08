@@ -133,6 +133,8 @@ INFINITI_COMMIT=10650ae7bef447d04eb820bfc0c2d5a98d83e4e2
 # msm.a8xx_ab_vote / msm.gmu_hfi_irq_fix default off; Qualcomm's INT2 path only with an opt-in DTB), 0029-q91b
 # (BT, ath12k, CAMSS, iris, DPU, UFS, dma-buf heap, battmgr reply matching), 0030-q91c (two reverts).
 # Config: + configs/q91c.config. Kernel 7.4.0-rc1-iceland-00618-g0ec14bab11a0.
+# q91d (7 Nov 2026) = q91c + 0031-q91d: cpufreq boost locking, EM boost ranking (upstream form), msm VM_BIND fixes, UCSI / dwc3 / DP PHY alt-mode fixes, pmic_glink_altmode, rpmh, UFS, ath12k, wcd939x / SoundWire, nt36536 pen reports, GMU interrupts masked before boot. Config: + configs/q91d.config.
+# Kernel 7.4.0-rc1-iceland-00645-ge71b4b12aba6.
 
 # Tree hash expected after each series on v7.4-rc1 (scripts/prepare.sh checks them):
 TREE_AFTER_0001_infiniti=bb91771cc3af5b0da66e7363a225d3d7cd53b2ee
@@ -165,3 +167,4 @@ TREE_AFTER_0027_q90z=5b95d2d8afcaa4258612cfca8017ccfbe792d9ef
 TREE_AFTER_0028_q91=7fec2c1054c9ee4e399a3cb9a2bd62efdda31f92
 TREE_AFTER_0029_q91b=2b604f559d8c87149eb635603edff595f537cc82
 TREE_AFTER_0030_q91c=c1e6089cb38ffdc61ba6fb82afd9ffc0237747e9
+TREE_AFTER_0031_q91d=62f2af873b0a09867ad62ba788f5a1397adb8e96

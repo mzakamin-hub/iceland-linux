@@ -1,0 +1,39 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Rob Clark <robin.clark@oss.qualcomm.com>
+Date: Mon, 2 Nov 2026 09:20:00 -0800
+Subject: [PATCH 08/27] drm/msm/gem: Clear nr_ops in lookup_ops() failure path
+
+We've already dropped the references taken in the handle lookup loop, so
+we don't want to drop them again in msm_vma_job_free().
+
+Signed-off-by: Rob Clark <robin.clark@oss.qualcomm.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/msm_gem_vma.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/msm/msm_gem_vma.c b/drivers/gpu/drm/msm/msm_gem_vma.c
+index 3177461d7..8b7024220 100644
+--- a/drivers/gpu/drm/msm/msm_gem_vma.c
++++ b/drivers/gpu/drm/msm/msm_gem_vma.c
+@@ -1088,7 +1088,6 @@ vm_bind_job_lookup_ops(struct msm_vm_bind_job *job, struct drm_msm_vm_bind *args
+ 	}
+ 
+ 	if (ret) {
+-		job->nr_ops = 0;
+ 		goto out;
+ 	}
+ 
+@@ -1143,6 +1142,9 @@ vm_bind_job_lookup_ops(struct msm_vm_bind_job *job, struct drm_msm_vm_bind *args
+ 		}
+ 	}
+ out:
++	if (ret)
++		job->nr_ops = 0;
++
+ 	return ret;
+ }
+ 
+-- 
+2.43.0
+

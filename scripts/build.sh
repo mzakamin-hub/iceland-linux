@@ -21,7 +21,7 @@ mk defconfig
 frags=("$top/configs/distro-neutral.config" "$top/configs/q90b.config" "$top/configs/q90i.config"
 	"$top/configs/q90i-shipped.config" "$top/configs/q90m.config" "$top/configs/q90n.config"
 	"$top/configs/q90o.config" "$top/configs/q90p.config" "$top/configs/q90q.config" "$top/configs/q90r.config"
-	"$top/configs/q90s.config" "$top/configs/q90t.config" "$top/configs/q90y.config" "$top/configs/q90z.config" "$top/configs/q91c.config")
+	"$top/configs/q90s.config" "$top/configs/q90t.config" "$top/configs/q90y.config" "$top/configs/q90z.config" "$top/configs/q91c.config" "$top/configs/q91d.config")
 "$src/scripts/kconfig/merge_config.sh" -m -O "$out" "$out/.config" 	"$src/arch/arm64/configs/sm8850.config" "${frags[@]}" >/dev/null
 mk olddefconfig
 
@@ -49,6 +49,7 @@ check "$top/configs/q90i.config" 1 && check "$top/configs/q90i-shipped.config" 1
 	check "$top/configs/q90y.config" 1 &&
 	check "$top/configs/q90z.config" 1 &&
 	check "$top/configs/q91c.config" 1 &&
+	check "$top/configs/q91d.config" 1 &&
 	check "$top/configs/required.config" 1 || {
 	echo "config check failed (fix fragment dependencies)"; [ "${ALLOW_CONFIG_DRIFT:-0}" = 1 ] || exit 1; }
 

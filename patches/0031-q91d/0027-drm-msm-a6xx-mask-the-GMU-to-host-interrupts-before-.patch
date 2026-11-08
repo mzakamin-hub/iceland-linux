@@ -1,0 +1,54 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Fri, 6 Nov 2026 23:32:25 +0200
+Subject: [PATCH 27/27] drm/msm/a6xx: mask the GMU-to-host interrupts before
+ the GMU boots
+
+GMU2HOST_INTR_MASK resets to 0 when the GMU power domain goes off, and
+a6xx_gmu_resume() programs it only after a6xx_hfi_start(). Until then
+every HFI reply during the boot raises the HFI interrupt line. The line
+is disabled at that point, but lazily, so a resume nearly always
+delivers it once and the flow handler masks it. When the target CPU
+sits in an idle state that is slow to leave, the delivery can arrive
+after enable_irq(hfi_irq), and a6xx_hfi_irq() then runs while
+a6xx_gmu_set_initial_freq() and the GPU_SET OOB request poll their own
+bits in the same status register.
+
+Mask all GMU-to-host interrupts before the GMU boots. The write after
+a6xx_hfi_start() still unmasks the ones we handle (the CM3 fault, and
+the HFI message bit when msm.gmu_hfi_irq_fix is on).
+
+Re-implemented from the idea of armada-os PR 662 (SuperTurtleDev
+iceland-mainline-kernel-linux e04a83af3cce, posted without a
+Signed-off-by); no code was copied.
+
+Based-on: SuperTurtleDev iceland-mainline-kernel-linux e04a83af3cce (idea only; armada-os PR 662)
+Link: https://github.com/armada-os/armada/pull/662
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/adreno/a6xx_gmu.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
+index fcb567ec9..b85734e5a 100644
+--- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
++++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
+@@ -1485,6 +1485,14 @@ int a6xx_gmu_resume(struct a6xx_gpu *a6xx_gpu)
+ 	/* Set the bus quota to a reasonable value for boot */
+ 	a6xx_gmu_set_initial_bw(gpu, gmu);
+ 
++	/*
++	 * GMU2HOST_INTR_MASK reads 0 again after the GMU power domain was off.
++	 * Mask it before the GMU boots, so that HFI replies during the boot do
++	 * not raise the (lazily disabled) HFI interrupt; it is unmasked after
++	 * a6xx_hfi_start() below.
++	 */
++	gmu_write(gmu, REG_A6XX_GMU_GMU2HOST_INTR_MASK, ~0);
++
+ 	/* Enable the GMU interrupt */
+ 	gmu_write(gmu, REG_A6XX_GMU_AO_HOST_INTERRUPT_CLR, ~0);
+ 	gmu_write(gmu, REG_A6XX_GMU_AO_HOST_INTERRUPT_MASK, ~A6XX_GMU_IRQ_MASK);
+-- 
+2.43.0
+
