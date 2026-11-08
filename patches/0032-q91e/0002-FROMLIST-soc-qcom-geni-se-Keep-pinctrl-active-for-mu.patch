@@ -1,0 +1,76 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mukesh Kumar Savaliya <mukesh.savaliya@oss.qualcomm.com>
+Date: Tue, 31 Mar 2026 17:17:41 +0530
+Subject: [PATCH 2/8] FROMLIST: soc: qcom: geni-se: Keep pinctrl active for
+ multi-owner controllers
+
+On platforms where a GENI Serial Engine is shared with another system
+processor, selecting the "sleep" pinctrl state can disrupt ongoing
+transfers initiated by the other processor.
+
+Teach geni_se_resources_off() to skip selecting the pinctrl sleep state
+when the Serial Engine is marked as shared, while still allowing the
+rest of the resource shutdown sequence to proceed.
+
+This is required for multi-owner configurations (described via DeviceTree
+with qcom,qup-multi-owner on the protocol controller node).
+
+Link: https://lore.kernel.org/all/20260331114742.2896317-4-mukesh.savaliya@oss.qualcomm.com/
+Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
+Signed-off-by: Mukesh Kumar Savaliya <mukesh.savaliya@oss.qualcomm.com>
+(cherry picked from commit ab15ff4046f15c94c619027b1452773dabc65b11)
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/soc/qcom/qcom-geni-se.c  | 15 +++++++++++----
+ include/linux/soc/qcom/geni-se.h |  2 ++
+ 2 files changed, 13 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/soc/qcom/qcom-geni-se.c b/drivers/soc/qcom/qcom-geni-se.c
+index ebca60c84..147e0b29a 100644
+--- a/drivers/soc/qcom/qcom-geni-se.c
++++ b/drivers/soc/qcom/qcom-geni-se.c
+@@ -613,10 +613,17 @@ int geni_se_resources_off(struct geni_se *se)
+ 
+ 	if (has_acpi_companion(se->dev))
+ 		return 0;
+-
+-	ret = pinctrl_pm_select_sleep_state(se->dev);
+-	if (ret)
+-		return ret;
++	/*
++	 * Select the "sleep" pinctrl state only when the serial engine is
++	 * exclusively owned by this system processor. For shared controller
++	 * configurations, another system processor may still be using the pins,
++	 * and switching them to "sleep" can disrupt ongoing transfers.
++	 */
++	if (!se->multi_owner) {
++		ret = pinctrl_pm_select_sleep_state(se->dev);
++		if (ret)
++			return ret;
++	}
+ 
+ 	geni_se_clks_off(se);
+ 	return 0;
+diff --git a/include/linux/soc/qcom/geni-se.h b/include/linux/soc/qcom/geni-se.h
+index b3372a314..6b1204074 100644
+--- a/include/linux/soc/qcom/geni-se.h
++++ b/include/linux/soc/qcom/geni-se.h
+@@ -66,6 +66,7 @@ struct geni_icc_path {
+  * @icc_paths:		Array of ICC paths for SE
+  * @pd_list:		Power domain list for managing power domains
+  * @has_opp:		Indicates if OPP is supported
++ * @multi_owner:	True if SE is shared between multiprocessors.
+  */
+ struct geni_se {
+ 	void __iomem *base;
+@@ -78,6 +79,7 @@ struct geni_se {
+ 	struct geni_icc_path icc_paths[3];
+ 	struct dev_pm_domain_list *pd_list;
+ 	bool has_opp;
++	bool multi_owner;
+ };
+ 
+ /* Common SE registers */
+-- 
+2.43.0
+

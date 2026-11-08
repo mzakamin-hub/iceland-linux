@@ -1,0 +1,386 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 7 Nov 2026 00:18:35 +0200
+Subject: [PATCH 5/8] thermal: add the OnePlus Pad 4 shell temperature estimate
+ (stock Horae model)
+
+The stock thermal daemon of the OnePlus Pad 4 (Horae) estimates the shell
+temperature of each surface with a linear model of a few board sensors
+over the present sample and the three before it, five seconds apart,
+plus a constant, and takes the hottest surface; until a model has its
+history, the battery temperature plus a bias stands in. Our userspace
+iceland-thermal implements that model from the decoded stock
+configuration (iceland-firmware thermal-model.json). Add the same
+estimate as a read-only, tripless thermal zone "horae-shell", so the
+thermal core and tools can read it next to the daemon's value.
+
+The models come from the device tree (child nodes: zone-names,
+coefficients-micro, constant-micro-celsius); the battery may be a thermal
+zone or the power supply. The sensor is not bound by default: only the
+opt-in device tree describes it.
+
+The idea of an in-kernel Horae estimator comes from SuperTurtleDev's
+oplus_shell_temp.c (iceland-mainline-kernel-linux f3e9d0fe7ac7, posted
+without a Signed-off-by); this driver is a separate implementation, no
+code was copied.
+
+Based-on: SuperTurtleDev iceland-mainline-kernel-linux f3e9d0fe7ac7, oplus_shell_temp.c (idea only)
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/thermal/Kconfig               |  12 +
+ drivers/thermal/Makefile              |   1 +
+ drivers/thermal/iceland_horae_shell.c | 306 ++++++++++++++++++++++++++
+ 3 files changed, 319 insertions(+)
+ create mode 100644 drivers/thermal/iceland_horae_shell.c
+
+diff --git a/drivers/thermal/Kconfig b/drivers/thermal/Kconfig
+index e18ec7418..deed5a608 100644
+--- a/drivers/thermal/Kconfig
++++ b/drivers/thermal/Kconfig
+@@ -489,6 +489,18 @@ config THERMAL_WEIGHTED_SENSOR
+ 	  To compile this driver as a module, choose M here: the module
+ 	  will be called thermal-weighted.
+ 
++config ICELAND_HORAE_SHELL
++	tristate "OnePlus Pad 4 shell temperature (stock Horae model)"
++	depends on THERMAL && OF && POWER_SUPPLY
++	help
++	  A read-only thermal sensor that estimates the shell (skin)
++	  temperature of the OnePlus Pad 4 with the stock thermal daemon's
++	  linear model over the present and three earlier samples of a few
++	  board sensors, as the device tree describes it.
++
++	  To compile this driver as a module, choose M here: the module
++	  will be called iceland_horae_shell.
++
+ config GENERIC_ADC_THERMAL
+ 	tristate "Generic ADC based thermal sensor"
+ 	depends on IIO
+diff --git a/drivers/thermal/Makefile b/drivers/thermal/Makefile
+index a44b3baef..eda925d1c 100644
+--- a/drivers/thermal/Makefile
++++ b/drivers/thermal/Makefile
+@@ -64,6 +64,7 @@ obj-$(CONFIG_HISI_THERMAL)     += hisi_thermal.o
+ obj-y				+= mediatek/
+ obj-$(CONFIG_GENERIC_ADC_THERMAL)	+= thermal-generic-adc.o
+ obj-$(CONFIG_THERMAL_WEIGHTED_SENSOR)	+= thermal-weighted.o
++obj-$(CONFIG_ICELAND_HORAE_SHELL)	+= iceland_horae_shell.o
+ obj-$(CONFIG_UNIPHIER_THERMAL)	+= uniphier_thermal.o
+ obj-$(CONFIG_AMLOGIC_THERMAL)     += amlogic_thermal.o
+ obj-y				+= spacemit/
+diff --git a/drivers/thermal/iceland_horae_shell.c b/drivers/thermal/iceland_horae_shell.c
+new file mode 100644
+index 000000000..c1c40d10c
+--- /dev/null
++++ b/drivers/thermal/iceland_horae_shell.c
+@@ -0,0 +1,306 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Shell (skin) temperature of the OnePlus Pad 4 as the stock thermal daemon
++ * (Horae) estimates it, as a read-only thermal sensor.
++ *
++ * Stock fits the shell temperature of each surface with a linear model of a
++ * few board sensors over the present sample and the three before it, taken
++ * a fixed period apart, plus a constant; the surfaces report the hottest
++ * model. Until a model has its full history, and after a gap in the
++ * samples, the battery temperature plus a bias stands in. The userspace
++ * daemon iceland-thermal implements the same model from the decoded stock
++ * configuration; this sensor makes the same estimate available to the
++ * thermal core.
++ *
++ * Device tree: one child node per model with "zone-names" (thermal zones,
++ * looked up by name), "coefficients-micro" (rows of one coefficient per
++ * zone, newest sample first, in millionths) and "constant-micro-celsius".
++ * The parent carries "period-ms" and "battery-bias-millicelsius" and, if no
++ * thermal zone is named after it, the battery is read from the power supply
++ * named in "battery-supply-name".
++ */
++#include <linux/jiffies.h>
++#include <linux/math64.h>
++#include <linux/module.h>
++#include <linux/mutex.h>
++#include <linux/of.h>
++#include <linux/platform_device.h>
++#include <linux/power_supply.h>
++#include <linux/slab.h>
++#include <linux/thermal.h>
++#include <linux/workqueue.h>
++
++#define HS_INPUTS	8	/* distinct zones over all models */
++#define HS_ROWS		4	/* samples per model */
++#define HS_MODELS	6
++#define HS_MIN_MC	(-40000)
++#define HS_MAX_MC	150000
++
++struct hs_model {
++	const char *name;
++	unsigned int nz, rows;
++	u8 idx[HS_INPUTS];			/* model zone -> input slot */
++	s32 coef[HS_ROWS][HS_INPUTS];		/* millionths */
++	s32 const_uc;				/* micro-celsius */
++};
++
++struct hs_sensor {
++	struct device *dev;
++	struct mutex lock;
++	struct delayed_work work;
++	struct thermal_zone_device *tz;
++	const char *in_name[HS_INPUTS];
++	struct thermal_zone_device *in_tz[HS_INPUTS];
++	unsigned int nin;
++	int bat_slot;				/* input slot of the battery, -1: none named */
++	const char *bat_supply;
++	struct hs_model model[HS_MODELS];
++	unsigned int nmodels;
++	int hist[HS_ROWS][HS_INPUTS];		/* millicelsius, [0] = newest */
++	bool hist_ok[HS_ROWS][HS_INPUTS];
++	unsigned int nhist;
++	unsigned long last;			/* jiffies of the newest sample */
++	unsigned int period_ms;
++	int bat_bias_mc;
++	int temp_mc;
++	bool have_temp;
++};
++
++static int hs_battery_mc(struct hs_sensor *hs, int *mc)
++{
++	union power_supply_propval v;
++	struct power_supply *psy;
++	int ret;
++
++	if (!hs->bat_supply)
++		return -ENODEV;
++	psy = power_supply_get_by_name(hs->bat_supply);
++	if (!psy)
++		return -ENODEV;
++	ret = power_supply_get_property(psy, POWER_SUPPLY_PROP_TEMP, &v);
++	power_supply_put(psy);
++	if (!ret)
++		*mc = v.intval * 100;		/* tenths of a degree */
++	return ret;
++}
++
++static void hs_sample(struct hs_sensor *hs)
++{
++	unsigned long now = jiffies;
++	unsigned int i, k, m;
++	int bat = 0;
++	bool bat_ok;
++
++	if (hs->nhist && time_after(now, hs->last + 3 * msecs_to_jiffies(hs->period_ms)))
++		hs->nhist = 0;			/* a gap: the history starts over */
++
++	memmove(&hs->hist[1], &hs->hist[0], sizeof(hs->hist[0]) * (HS_ROWS - 1));
++	memmove(&hs->hist_ok[1], &hs->hist_ok[0], sizeof(hs->hist_ok[0]) * (HS_ROWS - 1));
++	for (i = 0; i < hs->nin; i++) {
++		int t;
++
++		hs->hist_ok[0][i] = hs->in_tz[i] && !thermal_zone_get_temp(hs->in_tz[i], &t);
++		if (!hs->hist_ok[0][i] && (int)i == hs->bat_slot)
++			hs->hist_ok[0][i] = !hs_battery_mc(hs, &t);
++		hs->hist[0][i] = hs->hist_ok[0][i] ? t : 0;
++	}
++	hs->nhist = min(hs->nhist + 1, (unsigned int)HS_ROWS);
++	hs->last = now;
++
++	hs->have_temp = false;
++	for (m = 0; m < hs->nmodels; m++) {
++		struct hs_model *md = &hs->model[m];
++		s64 sum = 0;
++		bool ok = hs->nhist >= md->rows;
++		int t;
++
++		for (k = 0; ok && k < md->rows; k++)
++			for (i = 0; ok && i < md->nz; i++) {
++				ok = hs->hist_ok[k][md->idx[i]];
++				sum += (s64)md->coef[k][i] * hs->hist[k][md->idx[i]];
++			}
++		if (!ok)
++			continue;
++		/* millionths x millicelsius + micro-celsius x 1000 -> millicelsius */
++		t = div_s64(sum + (s64)md->const_uc * 1000, 1000000);
++		if (t <= HS_MIN_MC || t >= HS_MAX_MC)
++			continue;
++		if (!hs->have_temp || t > hs->temp_mc)
++			hs->temp_mc = t;
++		hs->have_temp = true;
++	}
++	if (hs->have_temp)
++		return;
++	/* no model complete: the battery temperature plus the bias, as stock */
++	bat_ok = hs->bat_slot >= 0 ? hs->hist_ok[0][hs->bat_slot] : !hs_battery_mc(hs, &bat);
++	if (hs->bat_slot >= 0)
++		bat = hs->hist[0][hs->bat_slot];
++	if (bat_ok) {
++		hs->temp_mc = bat + hs->bat_bias_mc;
++		hs->have_temp = true;
++	}
++}
++
++static void hs_work(struct work_struct *work)
++{
++	struct hs_sensor *hs = container_of(to_delayed_work(work), struct hs_sensor, work);
++
++	mutex_lock(&hs->lock);
++	hs_sample(hs);
++	mutex_unlock(&hs->lock);
++	queue_delayed_work(system_freezable_wq, &hs->work, msecs_to_jiffies(hs->period_ms));
++}
++
++static int hs_get_temp(struct thermal_zone_device *tz, int *temp)
++{
++	struct hs_sensor *hs = thermal_zone_device_priv(tz);
++	int ret = -EAGAIN;
++
++	mutex_lock(&hs->lock);
++	if (hs->have_temp) {
++		*temp = hs->temp_mc;
++		ret = 0;
++	}
++	mutex_unlock(&hs->lock);
++	return ret;
++}
++
++static const struct thermal_zone_device_ops hs_ops = {
++	.get_temp = hs_get_temp,
++};
++
++static int hs_slot(struct hs_sensor *hs, const char *name)
++{
++	unsigned int i;
++
++	for (i = 0; i < hs->nin; i++)
++		if (!strcmp(hs->in_name[i], name))
++			return i;
++	if (hs->nin == HS_INPUTS)
++		return -E2BIG;
++	hs->in_name[hs->nin] = name;
++	return hs->nin++;
++}
++
++static int hs_parse(struct hs_sensor *hs)
++{
++	struct device_node *np = hs->dev->of_node;
++	const char *bat_zone = NULL;
++	s32 c[HS_ROWS * HS_INPUTS];
++	int n, i, k, s;
++
++	hs->period_ms = 5000;
++	of_property_read_u32(np, "period-ms", &hs->period_ms);
++	hs->period_ms = clamp(hs->period_ms, 1000U, 60000U);
++	of_property_read_s32(np, "battery-bias-millicelsius", &hs->bat_bias_mc);
++	of_property_read_string(np, "battery-supply-name", &hs->bat_supply);
++	of_property_read_string(np, "battery-zone-name", &bat_zone);
++	hs->bat_slot = -1;
++
++	for_each_available_child_of_node_scoped(np, child) {
++		struct hs_model *md;
++
++		if (hs->nmodels == HS_MODELS)
++			return dev_err_probe(hs->dev, -E2BIG, "too many models\n");
++		md = &hs->model[hs->nmodels];
++		md->name = child->name;
++		n = of_property_count_strings(child, "zone-names");
++		if (n <= 0 || n > HS_INPUTS)
++			return dev_err_probe(hs->dev, -EINVAL, "%s: bad zone-names\n", md->name);
++		md->nz = n;
++		k = of_property_count_u32_elems(child, "coefficients-micro");
++		if (k <= 0 || k % n || k / n > HS_ROWS)
++			return dev_err_probe(hs->dev, -EINVAL, "%s: bad coefficients-micro\n", md->name);
++		md->rows = k / n;
++		if (of_property_read_u32_array(child, "coefficients-micro", (u32 *)c, k) ||
++		    of_property_read_s32(child, "constant-micro-celsius", &md->const_uc))
++			return dev_err_probe(hs->dev, -EINVAL, "%s: unreadable model\n", md->name);
++		for (i = 0; i < n; i++) {
++			const char *z;
++
++			of_property_read_string_index(child, "zone-names", i, &z);
++			s = hs_slot(hs, z);
++			if (s < 0)
++				return dev_err_probe(hs->dev, s, "too many input zones\n");
++			md->idx[i] = s;
++			for (k = 0; k < md->rows; k++)
++				md->coef[k][i] = c[k * n + i];
++		}
++		hs->nmodels++;
++	}
++	if (!hs->nmodels)
++		return dev_err_probe(hs->dev, -EINVAL, "no model\n");
++	if (bat_zone)
++		hs->bat_slot = hs_slot(hs, bat_zone);
++	return hs->bat_slot == -E2BIG ? -E2BIG : 0;
++}
++
++static int hs_probe(struct platform_device *pdev)
++{
++	struct hs_sensor *hs;
++	unsigned int i;
++	int ret;
++
++	hs = devm_kzalloc(&pdev->dev, sizeof(*hs), GFP_KERNEL);
++	if (!hs)
++		return -ENOMEM;
++	hs->dev = &pdev->dev;
++	mutex_init(&hs->lock);
++	ret = hs_parse(hs);
++	if (ret)
++		return ret;
++
++	for (i = 0; i < hs->nin; i++) {
++		struct thermal_zone_device *tz = thermal_zone_get_zone_by_name(hs->in_name[i]);
++
++		if (!IS_ERR(tz)) {
++			hs->in_tz[i] = tz;
++			continue;
++		}
++		/* the battery may come from its power supply instead of a zone */
++		if ((int)i == hs->bat_slot && hs->bat_supply)
++			continue;
++		return dev_err_probe(hs->dev, -EPROBE_DEFER, "zone %s not there yet\n", hs->in_name[i]);
++	}
++
++	hs->tz = thermal_tripless_zone_device_register("horae-shell", hs, &hs_ops, NULL);
++	if (IS_ERR(hs->tz))
++		return dev_err_probe(hs->dev, PTR_ERR(hs->tz), "zone registration failed\n");
++	ret = thermal_zone_device_enable(hs->tz);
++	if (ret) {
++		thermal_zone_device_unregister(hs->tz);
++		return ret;
++	}
++	platform_set_drvdata(pdev, hs);
++	INIT_DELAYED_WORK(&hs->work, hs_work);
++	queue_delayed_work(system_freezable_wq, &hs->work, 0);
++	dev_info(hs->dev, "%u models over %u zones, %u ms period\n", hs->nmodels, hs->nin, hs->period_ms);
++	return 0;
++}
++
++static void hs_remove(struct platform_device *pdev)
++{
++	struct hs_sensor *hs = platform_get_drvdata(pdev);
++
++	cancel_delayed_work_sync(&hs->work);
++	thermal_zone_device_unregister(hs->tz);
++}
++
++static const struct of_device_id hs_of_match[] = {
++	{ .compatible = "oneplus,iceland-horae-shell" },
++	{ }
++};
++MODULE_DEVICE_TABLE(of, hs_of_match);
++
++static struct platform_driver hs_driver = {
++	.probe = hs_probe,
++	.remove = hs_remove,
++	.driver = {
++		.name = "iceland-horae-shell",
++		.of_match_table = hs_of_match,
++	},
++};
++module_platform_driver(hs_driver);
++
++MODULE_DESCRIPTION("OnePlus Pad 4 shell temperature estimate (stock Horae model)");
++MODULE_LICENSE("GPL");
+-- 
+2.43.0
+

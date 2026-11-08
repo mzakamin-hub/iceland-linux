@@ -1,0 +1,129 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 7 Nov 2026 06:35:43 +0200
+Subject: [PATCH 7/8] clk: qcom: dispcc-kaanapali: don't wait for the DSI
+ branches at disable-unused
+
+The boot chain leaves the DSI pixel, byte and byte interface branches
+enabled with their source, the DSI PHY PLL, already stopped. When
+clk_disable_unused() turns them off, their CLK_OFF status cannot settle
+without a running source, and clk_branch_wait() warns "stuck at 'on'" for
+each of the six branches (and taints the kernel). The enable bit is
+cleared all the same, and the DSI hosts enable the branches cleanly later.
+
+Add clk_branch2_ext_src_ops: clk_branch2_ops plus a .disable_unused hook
+that clears the enable bit without waiting on the halt status, and use it
+for disp_cc_mdss_{pclk0,pclk1,byte0,byte1,byte0_intf,byte1_intf}_clk.
+Normal enable and disable keep their halt checks.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/clk/qcom/clk-branch.c       | 19 +++++++++++++++++++
+ drivers/clk/qcom/clk-branch.h       |  1 +
+ drivers/clk/qcom/dispcc-kaanapali.c | 12 ++++++------
+ 3 files changed, 26 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/clk/qcom/clk-branch.c b/drivers/clk/qcom/clk-branch.c
+index 4304e861c..d99a2b71a 100644
+--- a/drivers/clk/qcom/clk-branch.c
++++ b/drivers/clk/qcom/clk-branch.c
+@@ -184,6 +184,25 @@ const struct clk_ops clk_branch2_ops = {
+ };
+ EXPORT_SYMBOL_GPL(clk_branch2_ops);
+ 
++/*
++ * A branch fed by an external source (e.g. a DSI PHY PLL) can be left enabled
++ * by the boot chain with its source already stopped. Its CLK_OFF status cannot
++ * settle then, so clear the enable bit at the disable-unused sequence without
++ * waiting on the halt status. Normal enable / disable keep their checks.
++ */
++static void clk_branch2_ext_src_disable_unused(struct clk_hw *hw)
++{
++	clk_disable_regmap(hw);
++}
++
++const struct clk_ops clk_branch2_ext_src_ops = {
++	.enable = clk_branch2_enable,
++	.disable = clk_branch2_disable,
++	.disable_unused = clk_branch2_ext_src_disable_unused,
++	.is_enabled = clk_is_enabled_regmap,
++};
++EXPORT_SYMBOL_GPL(clk_branch2_ext_src_ops);
++
+ const struct clk_ops clk_branch2_aon_ops = {
+ 	.enable = clk_branch2_enable,
+ 	.is_enabled = clk_is_enabled_regmap,
+diff --git a/drivers/clk/qcom/clk-branch.h b/drivers/clk/qcom/clk-branch.h
+index 6bc2ba2b5..52a5a5023 100644
+--- a/drivers/clk/qcom/clk-branch.h
++++ b/drivers/clk/qcom/clk-branch.h
+@@ -110,6 +110,7 @@ static inline void qcom_branch_set_clk_en(struct regmap *regmap, u32 cbcr)
+ 
+ extern const struct clk_ops clk_branch_ops;
+ extern const struct clk_ops clk_branch2_ops;
++extern const struct clk_ops clk_branch2_ext_src_ops;
+ extern const struct clk_ops clk_branch_simple_ops;
+ extern const struct clk_ops clk_branch2_aon_ops;
+ extern const struct clk_ops clk_branch2_mem_ops;
+diff --git a/drivers/clk/qcom/dispcc-kaanapali.c b/drivers/clk/qcom/dispcc-kaanapali.c
+index d4301edde..df9ee8d8d 100644
+--- a/drivers/clk/qcom/dispcc-kaanapali.c
++++ b/drivers/clk/qcom/dispcc-kaanapali.c
+@@ -991,7 +991,7 @@ static struct clk_branch disp_cc_mdss_byte0_clk = {
+ 			},
+ 			.num_parents = 1,
+ 			.flags = CLK_SET_RATE_PARENT,
+-			.ops = &clk_branch2_ops,
++			.ops = &clk_branch2_ext_src_ops,
+ 		},
+ 	},
+ };
+@@ -1009,7 +1009,7 @@ static struct clk_branch disp_cc_mdss_byte0_intf_clk = {
+ 			},
+ 			.num_parents = 1,
+ 			.flags = CLK_SET_RATE_PARENT,
+-			.ops = &clk_branch2_ops,
++			.ops = &clk_branch2_ext_src_ops,
+ 		},
+ 	},
+ };
+@@ -1027,7 +1027,7 @@ static struct clk_branch disp_cc_mdss_byte1_clk = {
+ 			},
+ 			.num_parents = 1,
+ 			.flags = CLK_SET_RATE_PARENT,
+-			.ops = &clk_branch2_ops,
++			.ops = &clk_branch2_ext_src_ops,
+ 		},
+ 	},
+ };
+@@ -1045,7 +1045,7 @@ static struct clk_branch disp_cc_mdss_byte1_intf_clk = {
+ 			},
+ 			.num_parents = 1,
+ 			.flags = CLK_SET_RATE_PARENT,
+-			.ops = &clk_branch2_ops,
++			.ops = &clk_branch2_ext_src_ops,
+ 		},
+ 	},
+ };
+@@ -1657,7 +1657,7 @@ static struct clk_branch disp_cc_mdss_pclk0_clk = {
+ 			},
+ 			.num_parents = 1,
+ 			.flags = CLK_SET_RATE_PARENT,
+-			.ops = &clk_branch2_ops,
++			.ops = &clk_branch2_ext_src_ops,
+ 		},
+ 	},
+ };
+@@ -1675,7 +1675,7 @@ static struct clk_branch disp_cc_mdss_pclk1_clk = {
+ 			},
+ 			.num_parents = 1,
+ 			.flags = CLK_SET_RATE_PARENT,
+-			.ops = &clk_branch2_ops,
++			.ops = &clk_branch2_ext_src_ops,
+ 		},
+ 	},
+ };
+-- 
+2.43.0
+

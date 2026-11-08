@@ -1,0 +1,146 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 7 Nov 2026 06:35:43 +0200
+Subject: [PATCH 8/8] usb: dwc3: qcom: optionally keep a smaller usb-ddr vote
+ across runtime suspend
+
+On Kaanapali, keep_icc_runtime keeps the full usb-ddr vote (1000 / 2500
+MBps for SuperSpeed) while the controller is runtime-suspended, because
+dropping it lets the display scan out torn frames. That peak alone holds
+DDR at its 1353 MHz level while the tablet idles.
+
+Add two runtime-writable parameters, rpm_icc_avg_kbps and
+rpm_icc_peak_kbps (default 0). With keep_icc_runtime set and at least one
+of them non-zero, runtime suspend sets the usb-ddr path to (avg, peak)
+instead of keeping the active vote, so the path stays enabled at a lower
+level; runtime resume restores the active vote. 0 / 0 keeps today's
+behaviour. The apps-usb path is unchanged, system suspend still drops all
+votes, and new values apply from the next runtime suspend.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/usb/dwc3/dwc3-qcom.c | 69 +++++++++++++++++++++++++++++++++---
+ 1 file changed, 65 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/usb/dwc3/dwc3-qcom.c b/drivers/usb/dwc3/dwc3-qcom.c
+index 6a2d1a616..79a70fbf2 100644
+--- a/drivers/usb/dwc3/dwc3-qcom.c
++++ b/drivers/usb/dwc3/dwc3-qcom.c
+@@ -80,6 +80,22 @@ module_param(keep_icc_runtime, bool, 0644);
+ MODULE_PARM_DESC(keep_icc_runtime,
+ 		 "Keep the interconnect votes during runtime suspend on SoCs that need it (default on)");
+ 
++/*
++ * With keep_icc_runtime set, the usb-ddr vote that runtime suspend keeps.
++ * 0 / 0 keeps the full active vote. Any non-zero value sets the usb-ddr path
++ * to (avg, peak) instead, which keeps the path enabled at a lower level; the
++ * apps-usb path is left alone. Read at each runtime suspend.
++ */
++static unsigned int rpm_icc_avg_kbps;
++module_param(rpm_icc_avg_kbps, uint, 0644);
++MODULE_PARM_DESC(rpm_icc_avg_kbps,
++		 "usb-ddr average vote (kBps) kept during runtime suspend with keep_icc_runtime (0 with rpm_icc_peak_kbps 0: the full vote)");
++
++static unsigned int rpm_icc_peak_kbps;
++module_param(rpm_icc_peak_kbps, uint, 0644);
++MODULE_PARM_DESC(rpm_icc_peak_kbps,
++		 "usb-ddr peak vote (kBps) kept during runtime suspend with keep_icc_runtime (0 with rpm_icc_avg_kbps 0: the full vote)");
++
+ /* Qualcomm SoCs with multiport support has up to 4 ports */
+ #define DWC3_QCOM_MAX_PORTS	4
+ 
+@@ -109,7 +125,10 @@ struct dwc3_qcom {
+ 	bool			has_eusb2_phy;
+ 	bool			runtime_keeps_icc;
+ 	bool			icc_off;
++	bool			icc_ddr_reduced;
+ 	u8			num_ports;
++	u32			icc_ddr_avg;
++	u32			icc_ddr_peak;
+ 
+ 	enum usb_dr_mode	mode;
+ 	bool			is_suspended;
+@@ -302,12 +321,13 @@ static int dwc3_qcom_interconnect_init(struct dwc3_qcom *qcom)
+ 
+ 	max_speed = usb_get_maximum_speed(qcom->dwc.dev);
+ 	if (max_speed >= USB_SPEED_SUPER || max_speed == USB_SPEED_UNKNOWN) {
+-		ret = icc_set_bw(qcom->icc_path_ddr,
+-				USB_MEMORY_AVG_SS_BW, USB_MEMORY_PEAK_SS_BW);
++		qcom->icc_ddr_avg = USB_MEMORY_AVG_SS_BW;
++		qcom->icc_ddr_peak = USB_MEMORY_PEAK_SS_BW;
+ 	} else {
+-		ret = icc_set_bw(qcom->icc_path_ddr,
+-				USB_MEMORY_AVG_HS_BW, USB_MEMORY_PEAK_HS_BW);
++		qcom->icc_ddr_avg = USB_MEMORY_AVG_HS_BW;
++		qcom->icc_ddr_peak = USB_MEMORY_PEAK_HS_BW;
+ 	}
++	ret = icc_set_bw(qcom->icc_path_ddr, qcom->icc_ddr_avg, qcom->icc_ddr_peak);
+ 	if (ret) {
+ 		dev_err(dev, "failed to set bandwidth for usb-ddr path: %d\n", ret);
+ 		goto put_path_apps;
+@@ -507,6 +527,44 @@ static void dwc3_qcom_icc_on(struct dwc3_qcom *qcom)
+ 		qcom->icc_off = false;
+ }
+ 
++/* Runtime suspend with the votes kept: lower usb-ddr if the params ask for it */
++static void dwc3_qcom_icc_ddr_reduce(struct dwc3_qcom *qcom)
++{
++	u32 avg = READ_ONCE(rpm_icc_avg_kbps);
++	u32 peak = READ_ONCE(rpm_icc_peak_kbps);
++	int ret;
++
++	if (!avg && !peak)
++		return;
++
++	ret = icc_set_bw(qcom->icc_path_ddr, avg, peak);
++	if (ret) {
++		dev_warn(qcom->dev, "failed to lower the usb-ddr vote: %d\n", ret);
++		return;
++	}
++
++	qcom->icc_ddr_reduced = true;
++	dev_dbg(qcom->dev, "usb-ddr vote %u / %u kBps during runtime suspend\n", avg, peak);
++}
++
++static void dwc3_qcom_icc_ddr_restore(struct dwc3_qcom *qcom)
++{
++	int ret;
++
++	if (!qcom->icc_ddr_reduced)
++		return;
++
++	ret = icc_set_bw(qcom->icc_path_ddr, qcom->icc_ddr_avg, qcom->icc_ddr_peak);
++	if (ret) {
++		dev_warn(qcom->dev, "failed to restore the usb-ddr vote: %d\n", ret);
++		return;
++	}
++
++	qcom->icc_ddr_reduced = false;
++	dev_dbg(qcom->dev, "usb-ddr vote back to %u / %u kBps\n",
++		qcom->icc_ddr_avg, qcom->icc_ddr_peak);
++}
++
+ static int dwc3_qcom_suspend(struct dwc3_qcom *qcom, bool wakeup, bool runtime)
+ {
+ 	u32 val;
+@@ -524,6 +582,8 @@ static int dwc3_qcom_suspend(struct dwc3_qcom *qcom, bool wakeup, bool runtime)
+ 
+ 	if (!runtime || !qcom->runtime_keeps_icc || !READ_ONCE(keep_icc_runtime))
+ 		dwc3_qcom_icc_off(qcom);
++	else
++		dwc3_qcom_icc_ddr_reduce(qcom);
+ 
+ 	/*
+ 	 * The role is stable during suspend as role switching is done from a
+@@ -559,6 +619,7 @@ static int dwc3_qcom_resume(struct dwc3_qcom *qcom, bool wakeup)
+ 		return ret;
+ 
+ 	dwc3_qcom_icc_on(qcom);
++	dwc3_qcom_icc_ddr_restore(qcom);
+ 
+ 	/*
+ 	 * QSCRATCH_GENERAL_CFG loses its contents when the controller's power
+-- 
+2.43.0
+

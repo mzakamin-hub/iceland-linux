@@ -1,0 +1,172 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mukesh Kumar Savaliya <mukesh.savaliya@oss.qualcomm.com>
+Date: Tue, 31 Mar 2026 17:17:40 +0530
+Subject: [PATCH 1/8] FROMLIST: dmaengine: qcom: gpi: Add lock/unlock TREs for
+ multi-owner I2C transfers
+
+Some platforms use a QUP-based I2C controller in a configuration where the
+controller is shared with another system processor (described in DT using
+qcom,qup-multi-owner). In such setups, GPI hardware lock/unlock TREs can be
+used to serialize access to the controller.
+
+Add support to emit lock and unlock TREs around I2C transfers and increase
+the maximum TRE count to account for the additional elements.
+
+Also simplify the client interface by replacing multiple boolean fields
+(shared flag and message position tracking) with a single lock_action
+selector (acquire/release/none), as the GPI driver only needs to know
+whether to emit lock/unlock TREs for a given transfer.
+
+Link: https://lore.kernel.org/all/20260331114742.2896317-3-mukesh.savaliya@oss.qualcomm.com/
+Signed-off-by: Mukesh Kumar Savaliya <mukesh.savaliya@oss.qualcomm.com>
+(cherry picked from commit 902a99d3c32d3adc28a191674e6cc15f32b78e78)
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/dma/qcom/gpi.c           | 44 +++++++++++++++++++++++++++++++-
+ include/linux/dma/qcom-gpi-dma.h | 20 ++++++++++++++-
+ 2 files changed, 62 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/dma/qcom/gpi.c b/drivers/dma/qcom/gpi.c
+index c41bfac65..7eb38c691 100644
+--- a/drivers/dma/qcom/gpi.c
++++ b/drivers/dma/qcom/gpi.c
+@@ -2,6 +2,7 @@
+ /*
+  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+  * Copyright (c) 2020, Linaro Limited
++ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+  */
+ 
+ #include <dt-bindings/dma/qcom-gpi.h>
+@@ -67,6 +68,14 @@
+ #define TRE_DMA_LEN		GENMASK(23, 0)
+ #define TRE_DMA_IMMEDIATE_LEN	GENMASK(3, 0)
+ 
++/* Lock TRE */
++#define TRE_LOCK		BIT(0)
++#define TRE_MINOR_TYPE		GENMASK(19, 16)
++#define TRE_MAJOR_TYPE		GENMASK(23, 20)
++
++/* Unlock TRE */
++#define TRE_UNLOCK		BIT(8)
++
+ /* Register offsets from gpi-top */
+ #define GPII_n_CH_k_CNTXT_0_OFFS(n, k)	(0x20000 + (0x4000 * (n)) + (0x80 * (k)))
+ #define GPII_n_CH_k_CNTXT_0_EL_SIZE	GENMASK(31, 24)
+@@ -518,7 +527,7 @@ struct gpii {
+ 	bool ieob_set;
+ };
+ 
+-#define MAX_TRE 3
++#define MAX_TRE 5
+ 
+ struct gpi_desc {
+ 	struct virt_dma_desc vd;
+@@ -1625,12 +1634,27 @@ static int gpi_create_i2c_tre(struct gchan *chan, struct gpi_desc *desc,
+ 			      unsigned long flags)
+ {
+ 	struct gpi_i2c_config *i2c = chan->config;
++	enum gpi_lock_action lock_action = i2c->lock_action;
+ 	struct device *dev = chan->gpii->gpi_dev->dev;
+ 	unsigned int tre_idx = 0;
+ 	dma_addr_t address;
+ 	struct gpi_tre *tre;
+ 	unsigned int i;
+ 
++	/* Optional lock TRE before transfer */
++	if (lock_action == GPI_LOCK_ACQUIRE) {
++		tre = &desc->tre[tre_idx];
++		tre_idx++;
++
++		tre->dword[0] = 0;
++		tre->dword[1] = 0;
++		tre->dword[2] = 0;
++		tre->dword[3] = u32_encode_bits(1, TRE_LOCK);
++		tre->dword[3] |= u32_encode_bits(1, TRE_FLAGS_IEOB);
++		tre->dword[3] |= u32_encode_bits(0, TRE_MINOR_TYPE);
++		tre->dword[3] |= u32_encode_bits(3, TRE_MAJOR_TYPE);
++	}
++
+ 	/* first create config tre if applicable */
+ 	if (i2c->set_config) {
+ 		tre = &desc->tre[tre_idx];
+@@ -1690,6 +1714,24 @@ static int gpi_create_i2c_tre(struct gchan *chan, struct gpi_desc *desc,
+ 
+ 		if (!(flags & DMA_PREP_INTERRUPT))
+ 			tre->dword[3] |= u32_encode_bits(1, TRE_FLAGS_BEI);
++
++		/* If multi-owner and this is the release boundary, chain it */
++		if (i2c->lock_action == GPI_LOCK_RELEASE)
++			tre->dword[3] |= u32_encode_bits(1, TRE_FLAGS_CHAIN);
++	}
++
++	/* Optional unlock TRE after transfer */
++	if (lock_action == GPI_LOCK_RELEASE && i2c->op != I2C_READ) {
++		tre = &desc->tre[tre_idx];
++		tre_idx++;
++
++		tre->dword[0] = 0;
++		tre->dword[1] = 0;
++		tre->dword[2] = 0;
++		tre->dword[3] = u32_encode_bits(1, TRE_UNLOCK);
++		tre->dword[3] |= u32_encode_bits(1, TRE_FLAGS_IEOB);
++		tre->dword[3] |= u32_encode_bits(1, TRE_MINOR_TYPE);
++		tre->dword[3] |= u32_encode_bits(3, TRE_MAJOR_TYPE);
+ 	}
+ 
+ 	for (i = 0; i < tre_idx; i++)
+diff --git a/include/linux/dma/qcom-gpi-dma.h b/include/linux/dma/qcom-gpi-dma.h
+index 332be2842..f10fa9371 100644
+--- a/include/linux/dma/qcom-gpi-dma.h
++++ b/include/linux/dma/qcom-gpi-dma.h
+@@ -1,6 +1,7 @@
+ /* SPDX-License-Identifier: GPL-2.0 */
+ /*
+  * Copyright (c) 2020, Linaro Limited
++ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+  */
+ 
+ #ifndef QCOM_GPI_DMA_H
+@@ -54,6 +55,21 @@ enum i2c_op {
+ 	I2C_READ,
+ };
+ 
++/**
++ * enum gpi_lock_action - request lock/unlock TRE sequencing
++ * @GPI_LOCK_NONE: No lock/unlock TRE requested for this transfer
++ * @GPI_LOCK_ACQUIRE: Emit a lock TRE before the transfer
++ * @GPI_LOCK_RELEASE: Emit an unlock TRE after the transfer
++ *
++ * Used by protocol drivers for multi-owner controller setups (e.g. when
++ * DeviceTree indicates the controller is shared via qcom,qup-multi-owner).
++ */
++enum gpi_lock_action {
++	GPI_LOCK_NONE = 0,
++	GPI_LOCK_ACQUIRE,
++	GPI_LOCK_RELEASE,
++};
++
+ /**
+  * struct gpi_i2c_config - i2c config for peripheral
+  *
+@@ -67,7 +83,8 @@ enum i2c_op {
+  * @set_config: set peripheral config
+  * @rx_len: receive length for buffer
+  * @op: i2c cmd
+- * @multi_msg: is part of multi i2c r-w msgs
++ * @muli-msg: is part of multi i2c r-w msgs
++ * @lock_action: request lock/unlock TRE sequencing for this transfer
+  */
+ struct gpi_i2c_config {
+ 	u8 set_config;
+@@ -81,6 +98,7 @@ struct gpi_i2c_config {
+ 	u32 rx_len;
+ 	enum i2c_op op;
+ 	bool multi_msg;
++	enum gpi_lock_action lock_action;
+ };
+ 
+ #endif /* QCOM_GPI_DMA_H */
+-- 
+2.43.0
+

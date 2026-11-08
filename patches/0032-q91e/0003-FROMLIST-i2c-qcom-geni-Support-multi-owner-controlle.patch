@@ -1,0 +1,99 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mukesh Kumar Savaliya <mukesh.savaliya@oss.qualcomm.com>
+Date: Tue, 31 Mar 2026 17:17:42 +0530
+Subject: [PATCH 3/8] FROMLIST: i2c: qcom-geni: Support multi-owner controllers
+ in GPI mode
+
+Some platforms use a QUP-based I2C controller in a configuration where the
+controller is shared with another system processor. In this setup the
+operating system must not assume exclusive ownership of the controller or
+its associated pins.
+
+Add support for enabling multi-owner operation when DeviceTree specifies
+qcom,qup-multi-owner. When enabled, mark the underlying serial engine as
+shared so the common GENI resource handling avoids selecting the "sleep"
+pinctrl state, which could disrupt transfers initiated by the other
+processor.
+
+For GPI mode transfers, request lock/unlock TRE sequencing from the GPI
+driver by setting a single lock_action selector per message, emitting lock
+before the first message and unlock after the last message (handling the
+single-message case as well). This serializes access to the shared
+controller without requiring message-position flags to be passed into the
+DMA engine layer.
+
+Link: https://lore.kernel.org/all/20260331114742.2896317-5-mukesh.savaliya@oss.qualcomm.com/
+Signed-off-by: Mukesh Kumar Savaliya <mukesh.savaliya@oss.qualcomm.com>
+(cherry picked from commit 714619ab85544ad2d73456c4811fb42115c54daf)
+Signed-off-by: mzak <mzak.amin@gmail.com>
+
+[mzak: context port to the iceland i2c-qcom-geni.c probe (no ACPI companion lines there)]
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/i2c/busses/i2c-qcom-geni.c | 28 +++++++++++++++++++++++++++-
+ 1 file changed, 27 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/i2c/busses/i2c-qcom-geni.c b/drivers/i2c/busses/i2c-qcom-geni.c
+index f55e878ec..714149724 100644
+--- a/drivers/i2c/busses/i2c-qcom-geni.c
++++ b/drivers/i2c/busses/i2c-qcom-geni.c
+@@ -940,6 +940,14 @@ static int geni_i2c_gpi_xfer(struct geni_i2c_dev *gi2c, struct i2c_msg msgs[], i
+ 		if (i < num - 1)
+ 			peripheral.stretch = 1;
+ 
++		peripheral.lock_action = GPI_LOCK_NONE;
++		if (gi2c->se.multi_owner) {
++			if (i == 0)
++				peripheral.lock_action = GPI_LOCK_ACQUIRE;
++			else if (i == num - 1)
++				peripheral.lock_action = GPI_LOCK_RELEASE;
++		}
++
+ 		peripheral.addr = msgs[i].addr;
+ 		if (i > 0 && (!(msgs[i].flags & I2C_M_RD)))
+ 			peripheral.multi_msg = false;
+@@ -1128,7 +1136,9 @@ static int geni_i2c_init(struct geni_i2c_dev *gi2c)
+ 	}
+ 
+ 	if (fifo_disable) {
+-		/* FIFO is disabled, so we can only use GPI DMA */
++		/* FIFO is disabled, so we can only use GPI DMA.
++		 * SE can be shared in GSI mode between subsystems, each SS owns a GPII.
++		 */
+ 		gi2c->gpi_mode = true;
+ 		ret = setup_gpi_dma(gi2c);
+ 		if (ret)
+@@ -1137,6 +1147,11 @@ static int geni_i2c_init(struct geni_i2c_dev *gi2c)
+ 		dev_dbg(gi2c->se.dev, "Using GPI DMA mode for I2C\n");
+ 	} else {
+ 		gi2c->gpi_mode = false;
++
++		if (gi2c->se.multi_owner)
++			dev_err_probe(gi2c->se.dev, -EINVAL,
++				      "I2C sharing not supported in non GSI mode\n");
++
+ 		tx_depth = geni_se_get_tx_fifo_depth(&gi2c->se);
+ 
+ 		/* I2C Master Hub Serial Elements doesn't have the HW_PARAM_0 register */
+@@ -1206,6 +1221,17 @@ static int geni_i2c_probe(struct platform_device *pdev)
+ 		gi2c->clk_freq_out = I2C_MAX_STANDARD_MODE_FREQ;
+ 	}
+ 
++	if (of_property_read_bool(pdev->dev.of_node, "qcom,qup-multi-owner")) {
++		/*
++		 * Multi-owner controller configuration: the controller may be
++		 * used by another system processor. Mark the SE as shared so
++		 * common GENI resource handling can avoid pin state changes
++		 * that would disrupt the other user.
++		 */
++		gi2c->se.multi_owner = true;
++		dev_dbg(&pdev->dev, "I2C controller is shared with another system processor\n");
++	}
++
+ 	gi2c->irq = platform_get_irq(pdev, 0);
+ 	if (gi2c->irq < 0)
+ 		return gi2c->irq;
+-- 
+2.43.0
+

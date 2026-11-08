@@ -1,0 +1,109 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jizhou Tong <fqwqf@fqwqf.xyz>
+Date: Thu, 5 Nov 2026 19:19:05 +0000
+Subject: [PATCH 4/8] dmaengine: qcom: gpi: match control interrupts to the
+ pending command
+
+Each GPI instance shares one command completion between its two transfer
+channels and event ring. Both control interrupt handlers complete that
+object regardless of which target the pending command addresses. A
+control interrupt for the other channel or event ring can therefore end
+the wait early. During channel deallocation, it also applies the synthetic
+not-allocated state to every channel reported in the interrupt status.
+
+Record the pending command and target under pm_lock before writing the
+command register. Only complete a pending command for the matching target,
+and restrict the deallocation state override to that target. Clear the
+pending flag after the wait, including on timeout. Preserve updates of
+hardware state and the STOP_IN_PROC transition handling for all channels.
+
+The existing ctrl_lock serializes command issuers. This change matches
+the interrupt target, not individual command generations: it does not
+attempt to distinguish late completions for successive commands to the
+same target after a timeout.
+
+Signed-off-by: Jizhou Tong <fqwqf@fqwqf.xyz>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/dma/qcom/gpi.c | 23 ++++++++++++++++++-----
+ 1 file changed, 18 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/dma/qcom/gpi.c b/drivers/dma/qcom/gpi.c
+index 7eb38c691..70209b382 100644
+--- a/drivers/dma/qcom/gpi.c
++++ b/drivers/dma/qcom/gpi.c
+@@ -523,6 +523,8 @@ struct gpii {
+ 	struct tasklet_struct ev_task; /* event processing tasklet */
+ 	struct completion cmd_completion;
+ 	enum gpi_cmd gpi_cmd;
++	u32 cmd_chid;
++	bool cmd_pending;
+ 	u32 cntxt_type_irq_msk;
+ 	bool ieob_set;
+ };
+@@ -693,16 +695,23 @@ static int gpi_send_cmd(struct gpii *gpii, struct gchan *gchan,
+ 	dev_dbg(gpii->gpi_dev->dev,
+ 		"sending cmd: %s:%u\n", TO_GPI_CMD_STR(gpi_cmd), chid);
+ 
+-	/* send opcode and wait for completion */
++	/* Publish the command and its target atomically with respect to IRQs. */
++	write_lock_irq(&gpii->pm_lock);
+ 	reinit_completion(&gpii->cmd_completion);
+ 	gpii->gpi_cmd = gpi_cmd;
++	gpii->cmd_chid = chid;
++	gpii->cmd_pending = true;
+ 
+ 	cmd_reg = IS_CHAN_CMD(gpi_cmd) ? gchan->ch_cmd_reg : gpii->ev_cmd_reg;
+ 	cmd = IS_CHAN_CMD(gpi_cmd) ? GPII_n_CH_CMD(gpi_cmd_info[gpi_cmd].opcode, chid) :
+ 				     GPII_n_EV_CMD(gpi_cmd_info[gpi_cmd].opcode, 0);
+ 	gpi_write_reg(gpii, cmd_reg, cmd);
++	write_unlock_irq(&gpii->pm_lock);
+ 	timeout = wait_for_completion_timeout(&gpii->cmd_completion,
+ 					      msecs_to_jiffies(CMD_TIMEOUT_MS));
++	write_lock_irq(&gpii->pm_lock);
++	gpii->cmd_pending = false;
++	write_unlock_irq(&gpii->pm_lock);
+ 	if (!timeout) {
+ 		dev_err(gpii->gpi_dev->dev, "cmd: %s completion timeout:%u\n",
+ 			TO_GPI_CMD_STR(gpi_cmd), chid);
+@@ -779,7 +788,8 @@ static void gpi_process_ch_ctrl_irq(struct gpii *gpii)
+ 		 * not change hardware status. So overwriting software state
+ 		 * to default state.
+ 		 */
+-		if (gpii->gpi_cmd == GPI_CH_CMD_DE_ALLOC)
++		if (gpii->cmd_pending && gpii->cmd_chid == chid &&
++		    gpii->gpi_cmd == GPI_CH_CMD_DE_ALLOC)
+ 			state = DEFAULT_CH_STATE;
+ 		gchan->ch_state = state;
+ 
+@@ -788,7 +798,9 @@ static void gpi_process_ch_ctrl_irq(struct gpii *gpii)
+ 		 * Stop in process is a transition state and we will wait for
+ 		 * stop interrupt before notifying.
+ 		 */
+-		if (gchan->ch_state != CH_STATE_STOP_IN_PROC)
++		if (gpii->cmd_pending && IS_CHAN_CMD(gpii->gpi_cmd) &&
++		    gpii->cmd_chid == chid &&
++		    gchan->ch_state != CH_STATE_STOP_IN_PROC)
+ 			complete_all(&gpii->cmd_completion);
+ 	}
+ }
+@@ -886,13 +898,14 @@ static irqreturn_t gpi_handle_irq(int irq, void *data)
+ 			 * cmd does not change hardware status. So overwriting
+ 			 * software state to default state.
+ 			 */
+-			if (gpii->gpi_cmd == GPI_EV_CMD_DEALLOC)
++			if (gpii->cmd_pending && gpii->gpi_cmd == GPI_EV_CMD_DEALLOC)
+ 				ev_state = DEFAULT_EV_CH_STATE;
+ 
+ 			gpii->ev_state = ev_state;
+ 			dev_dbg(gpii->gpi_dev->dev, "setting EV state to %s\n",
+ 				TO_GPI_EV_STATE_STR(gpii->ev_state));
+-			complete_all(&gpii->cmd_completion);
++			if (gpii->cmd_pending && !IS_CHAN_CMD(gpii->gpi_cmd))
++				complete_all(&gpii->cmd_completion);
+ 			type &= ~(GPII_n_CNTXT_TYPE_IRQ_MSK_EV_CTRL);
+ 		}
+ 
+-- 
+2.43.0
+

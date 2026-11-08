@@ -1,0 +1,52 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 7 Nov 2026 06:35:41 +0200
+Subject: [PATCH 6/8] arm64: dts: qcom: kaanapali-oneplus-iceland: let the
+ GMU's suppliers sync
+
+No driver binds the GMU device: msm reaches it through
+of_find_device_by_node() from a6xx_gmu_init(). fw_devlink therefore keeps
+its device links to gcc, gpucc and gxclkctl in the "available" state, and
+the genpd sync_state() of those three clock controllers runs only when the
+deferred probe timeout forces it, about 16 s into every boot. Until then
+the GDSCs that were on at handoff (GPU CX, GX and the unvoted gcc ones)
+cannot power off, and the log shows the three sync_state timeouts.
+
+Mark the three controllers as post-init providers of the GMU, so that
+fw_devlink makes no device link for them and their sync_state() runs once
+the bound consumers have probed. The GMU still enables its clocks and
+power domains explicitly before it boots.
+
+This is a local workaround until "drm/msm: Attach a driver to GMU" lands
+upstream; drop it then.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index 7ac40870b..636041daa 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1168,6 +1168,16 @@ csiphy5_out: endpoint {
+ 	};
+ };
+ 
++&gmu {
++	/*
++	 * No driver binds the GMU device (msm reaches it through
++	 * of_find_device_by_node()), so fw_devlink holds the sync_state of
++	 * gcc, gpucc and gxclkctl until the deferred probe timeout. Local
++	 * workaround until "drm/msm: Attach a driver to GMU" is merged.
++	 */
++	post-init-providers = <&gcc>, <&gpucc>, <&gxclkctl>;
++};
++
+ &gpu_opp_table {
+ 	/*
+ 	 * The Pad 4's stock GPU levels (qcom,gpu-pwrlevels for speed bin 0xfc):
+-- 
+2.43.0
+
