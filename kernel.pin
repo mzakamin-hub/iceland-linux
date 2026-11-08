@@ -143,6 +143,8 @@ INFINITI_COMMIT=10650ae7bef447d04eb820bfc0c2d5a98d83e4e2
 # Kernel 7.4.0-rc1-iceland-00665-g50ce2e8e4624.
 # q91h (7 Nov 2026) = q91g + 0035-q91h: smp2p_sleepstate wakeup events only while suspending.
 # Kernel 7.4.0-rc1-iceland-00666-g427d22ea486f.
+# q91i (7 Nov 2026) = q91h + 0036-q91i: iris decode power rescale only with a queued bitstream, tsens low-threshold mask across suspend, UFS hibern8 / RX LineCfg, ath12k suspend-with-device-up warning.
+# Kernel 7.4.0-rc1-iceland-00671-g4375fef7101f.
 
 # Tree hash expected after each series on v7.4-rc1 (scripts/prepare.sh checks them):
 TREE_AFTER_0001_infiniti=bb91771cc3af5b0da66e7363a225d3d7cd53b2ee
@@ -180,3 +182,4 @@ TREE_AFTER_0032_q91e=389071fecbb95c723cbb95b259b52b945b2adad3
 TREE_AFTER_0033_q91f=278196c49f1624bed13832d843b0c02f82e5048b
 TREE_AFTER_0034_q91g=2a803a4c596054b313c35838857b90147674e228
 TREE_AFTER_0035_q91h=03aec4e764be8c128e109f14319519482dc62b21
+TREE_AFTER_0036_q91i=20f5e5578f428f559191939a5828acd21d2fb3bf
