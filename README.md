@@ -10,48 +10,50 @@ This repository is one part of the project. The boot chain and the install are d
 
 ## Current kernel
 
-- **Branch:** [`release/q91c`](https://github.com/mzakamin-hub/iceland-linux/tree/release/q91c) (tag `q91c`). Build from
-  this branch.
-- **Queue:** q91c, kernel release `7.4.0-rc1-iceland-00618-g0ec14bab11a0`, packaged as `kernel-iceland`, on Linux `v7.4-rc1`.
-- **New in q91c** (since q90z):
-  - The queue applies onto Linux v7.4-rc1. Twelve patches that were merged upstream by rc1 are gone (numbers kept with
-    gaps), among them three q6apm unmap fixes and seven UFS fixes; one UFS abort fix is replaced by its upstream form.
-  - GPU: preemption-aware hang detection, the A8xx GMEM base fix and a bounded wait in GPU recovery.
-  - CPU: the frequency-invariance reference follows the boost frequencies, schedutil returns below the boost steps when
-    boost is switched off, and the energy model ranks boost and non-boost steps separately.
-  - Cameras: CAMSS fixes (active buffer pointers cleared after a flush, CSID power-on unwind, DMA-contiguous buffer
-    check) and the CSIPHY held in reset between streams.
-  - Video (iris): deblocking controls, timestamps kept on error buffers, buffer recycling for non-display pictures,
-    fewer redundant decoder parameter writes, the encoder reference buffer size, the video format kept across GOP
-    restarts.
-  - Display: 50 and 48 Hz panel modes; DPU cleanup fixes on mode changes.
-  - Sound: the RX codec DMA runs at 24 bit (headphones), 32-bit capture, the WCD939x headphone volume on its real gain
-    register (1.5 dB steps, +6 to -30 dB).
-  - Robustness: fastrpc use-after-free, UFS MCQ abort and full re-init after a fatal link loss, LPASS RX macro PM
-    reference leak, SoundWire clock stop, Bluetooth (CIS host feature, RX work drain, L2CAP waits for the key size),
-    ath12k EHT fixes, the GENI SE resource handling, the battery manager matching replies to their requests, the
-    dma-buf system heap allocation orders, USB UTMI clock selection restored after resume.
-  - Config: CMA dma-buf heap, VM sockets (vsock / vhost-vsock), idle-injection cooling, the Gunyah watchdog; QCOM_LMH
-    is no longer built (Kaanapali's CPU limits come through SCMI).
-  - **Optional, off by default:** `msm.a8xx_ab_vote=1` (average-bandwidth DDR votes with each GPU level) and
-    `msm.gmu_hfi_irq_fix=1` (the GMU interrupt handled as the vendor driver does), plus the earlier tunables of q90u.
-  - **Optional device trees** (shipped in the package under `dtb/qcom/variants/` and as release files, never installed
-    by default): `headset` (the USB-C analog headset path of the codec), `int2dt` (the display's INT2 power domain
-    under display runtime PM) and `thermaldt` (the skin temperature policy as a kernel thermal zone plus a 95 C CPU
-    backstop).
+- **Branch:** [`iceland-7.4-rc1`](https://github.com/mzakamin-hub/iceland-linux/tree/iceland-7.4-rc1) (tag `q91k`). Build
+  from this branch.
+- **Queue:** q91k, kernel release `7.4.0-rc1-iceland-00704-ga2e1ea44d3c3`, packaged as `kernel-iceland`, on Linux
+  `v7.4-rc1`. Every queue since q91c has its own tag (`q91c` to `q91k`).
+- **New in q91d to q91k** (since q91c):
+  - GPU: GPU recovery frees the crash state asynchronously (no recovery deadlock), the GMU-to-host interrupts are
+    masked before the GMU boots, A8xx 1/2-bit alpha filtering precision, msm VM_BIND and metadata lock fixes.
+  - Display: KWin Night Light works: the Kaanapali DSPP no longer exposes the GC (gamma LUT) block, which this
+    hardware loads only through LUTDMA, so compositors use the colour transform matrix.
+  - Sleep: the cover closes into sleep about a second after the close (the SMP2P sleep-state driver reports wakeup
+    events only while suspending); SoundWire and the LPASS LPI pins are runtime-suspended in system sleep; tsens
+    masks its low-threshold interrupts and bwmon drops its vote across suspend; UFS holds clock gating in system PM.
+  - Bluetooth and Wi-Fi: 100 ms WCN7850 / WCN7860 power-up delay (no lost QCA version read on a Bluetooth-first
+    cold start), hci_qca in-band sleep reset and debugfs fix, MGMT power-on / power-off serialised, ath12k scan
+    unwind, MLO reconnect, PPE thresholds, SRNG and MSDU fixes, the WCN7860 QMI chunk size limit.
+  - USB-C: UCSI and the dwc3 mux leave DisplayPort alt mode to the altmode driver, DP PHY state tracked with the
+    link, pmic_glink_altmode fixes, UCSI init retries only while the PPM is not ready, the dwc3 gadget End Transfer
+    series, and the USB connector temperature (`qcom-battmgr-usb` reports `TEMP`).
+  - Thermal: stock's shell temperature policy as a kernel thermal zone, 95 C CPU and QMX backstops, and the stock
+    Horae shell estimate as the read-only zone `horae-shell` are now in the default device tree; tsens and
+    adc5-gen3 fixes.
+  - Robustness: cpufreq boost locking, rpmh and pmic_glink use-after-free fixes, TPIDR2 kept across CPU suspend, UFS
+    runtime-resume / hibern8 error paths, iris fixes, multi-owner I2C in GPI mode, a 2 MiB ramoops region for
+    pstore, CSD lock wait reporting.
+  - **Optional, off by default:** a smaller dwc3 usb-ddr vote across runtime suspend (`dwc3_qcom` parameters),
+    `ath12k.wow_d0` and `ath12k.wow_flags` for Wake-on-WLAN work (the Wi-Fi root port's wakeup stays disabled by
+    iceland-device), plus the earlier `msm.*` and q90u tunables.
+  - **Optional device tree:** `headset` (the USB-C analog headset path of the codec), shipped in the package under
+    `dtb/qcom/variants/` and as a release file, never installed by default. Its device tree change is
+    `optional/headset/`.
 - **`main`** holds the older queue q89g, the kernel of the first install image.
 
 ## Download
 
-The newest release is q91c: the [`q91c` release](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q91c) has:
+The newest release is q91k: the [`q91k` release](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q91k) has:
 
-- `kernel-iceland-7.4.0~rc1.iceland.00618.g0ec14bab11a0-2.fc44.aarch64.rpm`, the Fedora 44 package for the tablet;
-- the three optional device trees, the source RPM, which carries this repository's queue, and `SHA256SUMS`.
+- `kernel-iceland-7.4.0~rc1.iceland.00704.ga2e1ea44d3c3-1.fc44.aarch64.rpm`, the package for the tablet (built for
+  Fedora 44, installs on Fedora 45);
+- the optional `headset` device tree, the source RPM, which carries this repository's queue, and `SHA256SUMS`.
 
-Check the files with `sha256sum -c SHA256SUMS`. On the tablet's Fedora 44 system, install the package with dnf:
+Check the files with `sha256sum -c SHA256SUMS`. On the tablet, install the package with dnf:
 
 ```bash
-sudo dnf install ./kernel-iceland-7.4.0~rc1.iceland.00618.g0ec14bab11a0-2.fc44.aarch64.rpm
+sudo dnf install ./kernel-iceland-7.4.0~rc1.iceland.00704.ga2e1ea44d3c3-1.fc44.aarch64.rpm
 ```
 
 Earlier releases: [q90z](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90z),
@@ -61,7 +63,7 @@ Earlier releases: [q90z](https://github.com/mzakamin-hub/iceland-linux/releases/
 
 ## What is in the repository
 
-The counts below are for `release/q91c`.
+The counts below are for `iceland-7.4-rc1`.
 
 | Path | Content |
 |---|---|
@@ -69,7 +71,9 @@ The counts below are for `release/q91c`.
 | `patches/0001-infiniti/` | the patches from infiniti-mainline/linux (OnePlus 15, the same SoC), rebased onto `v7.4-rc1` |
 | `patches/0002-iceland/` | the OnePlus Pad 4 series, numbered with gaps up to 0412 |
 | `patches/0003-glitchfix/` to `patches/0027-q90z/` | 158 patches: the display-timing switches of q89z, then one series per queue q90b to q90z (upstream picks and our fixes; there is no q90j series: q90j only removed patches) |
-| `configs/` | `distro-neutral.config`, then one fragment per queue up to `q91c.config` (merged into the build in the order of `scripts/build.sh`) and `required.config` (options the build checks) |
+| `patches/0028-q91/` to `patches/0038-q91k/` | the series of the v7.4-rc1 queues q91 to q91k (upstream and list picks, peer picks and our fixes; one series per queue) |
+| `optional/headset/` | the device tree change of the optional `headset` DTB (not applied by `scripts/prepare.sh`) |
+| `configs/` | `distro-neutral.config`, then one fragment per queue up to `q91e.config` (merged into the build in the order of `scripts/build.sh`) and `required.config` (options the build checks) |
 | `scripts/prepare.sh` | clones the upstream tag, checks its commit, applies every series with `git am`, checks the tree hashes |
 | `scripts/build.sh` | configures and builds the kernel; writes `out/dist/` with `BUILD_INFO` and `SHA256SUMS` |
 | `packaging/fedora/` | `kernel-iceland.spec`, `build-rpm.sh` and the kernel-install plugin for the Fedora 44 package |
@@ -83,7 +87,7 @@ Packages needed on Ubuntu 24.04 (the list the GitHub workflow installs): `clang 
 libelf-dev device-tree-compiler zstd cpio`. The build uses LLVM (`LLVM=1`).
 
 ```bash
-git clone --branch release/q91c https://github.com/mzakamin-hub/iceland-linux
+git clone --branch iceland-7.4-rc1 https://github.com/mzakamin-hub/iceland-linux
 cd iceland-linux
 scripts/prepare.sh ./src        # clones v7.4-rc1, checks the commit, applies every series, checks the tree hashes
 scripts/build.sh ./src ./out    # Image, Image.gz, the DTB and the modules; writes out/dist/
@@ -91,9 +95,9 @@ scripts/build.sh ./src ./out    # Image, Image.gz, the DTB and the modules; writ
 
 - `scripts/build.sh` runs `defconfig`, merges `arch/arm64/configs/sm8850.config` (map220v's fragment; drift is reported
   but not fatal), `configs/distro-neutral.config`, `q90b.config`, `q90i.config`, `q90i-shipped.config` and
-  `q90m.config` to `q90r.config`, `q90s.config`, `q90t.config`, `q90y.config` and `q90z.config`, then checks `q90i.config`, `q90i-shipped.config`,
-  `q90m.config`, `q90p.config`, `q90s.config`, `q90t.config`, `q90y.config`, `q90z.config` and `required.config` strictly. The result is the same
-  `.config` as the kernel-iceland q90z package's.
+  `q90m.config` to `q90r.config`, `q90s.config`, `q90t.config`, `q90y.config`, `q90z.config` and `q91c.config` to `q91e.config`, then checks `q90i.config`, `q90i-shipped.config`,
+  `q90m.config`, `q90p.config`, `q90s.config`, `q90t.config`, `q90y.config`, `q90z.config`, `q91c.config` to `q91e.config` and `required.config` strictly. The result is the
+  same `.config` as the kernel-iceland q91k package's.
   A failed strict check stops the build unless `ALLOW_CONFIG_DRIFT=1` is set.
 - `out/dist/` holds `Image`, `Image.gz`, `kaanapali-oneplus-iceland.dtb`, the config, `modules-<release>.tar.zst`,
   `BUILD_INFO` (kernel release, source commit, queue commit, compiler) and `SHA256SUMS`.
@@ -116,6 +120,11 @@ scripts/build.sh ./src ./out    # Image, Image.gz, the DTB and the modules; writ
   upstream version exists it replaces ours on the next rebase.
 - 0292 (iris colorimetry) is carried in the kernel but is not sent upstream (owner's decision; the kernel requires an
   `Assisted-by` line for it).
+
+- The v7.4-rc1 series keep their authors. Some peer picks carry no `Signed-off-by` of their author in the source:
+  the armada-os picks (author `Armada`, 0033-q91f 0006-0008, 0036-q91i 0001), virtudude's tsens patch (0036-q91i
+  0002) and Yibo Wang's ath12k scan patch (0037-q91j 0005). Our own patches that build on other people's work name
+  them with `Suggested-by:`, `Co-developed-by:` or `Based-on:` lines.
 
 Licence: GPL-2.0 (Linux `COPYING`). Every patch keeps its authorship and SPDX headers. Proprietary firmware is never
 stored here; the generic firmware is in [iceland-firmware](https://github.com/mzakamin-hub/iceland-firmware).
