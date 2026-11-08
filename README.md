@@ -32,11 +32,9 @@ This repository is one part of the project. The boot chain and the install are d
     Horae shell estimate as the read-only zone `horae-shell` are now in the default device tree; tsens and
     adc5-gen3 fixes.
   - Robustness: cpufreq boost locking, rpmh and pmic_glink use-after-free fixes, TPIDR2 kept across CPU suspend, UFS
-    runtime-resume / hibern8 error paths, iris fixes, multi-owner I2C in GPI mode, a 2 MiB ramoops region for
-    pstore, CSD lock wait reporting.
-  - **Optional, off by default:** a smaller dwc3 usb-ddr vote across runtime suspend (`dwc3_qcom` parameters),
-    `ath12k.wow_d0` and `ath12k.wow_flags` for Wake-on-WLAN work (the Wi-Fi root port's wakeup stays disabled by
-    iceland-device), plus the earlier `msm.*` and q90u tunables.
+    runtime-resume / hibern8 error paths, iris fixes, multi-owner I2C in GPI mode, CSD lock wait
+    reporting.
+  - **Optional, off by default:** the earlier `msm.*` and q90u tunables.
   - **Optional device tree:** `headset` (the USB-C analog headset path of the codec), shipped in the package under
     `dtb/qcom/variants/` and as a release file, never installed by default. Its device tree change is
     `optional/headset/`.
