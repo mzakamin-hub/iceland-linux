@@ -1,0 +1,93 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Lezcano <daniel.lezcano@oss.qualcomm.com>
+Date: Wed, 21 Oct 2026 10:57:46 +0200
+Subject: [PATCH 13/30] thermal/drivers/qcom/tsens: Release parent resources on
+ probe failure
+
+On legacy MSM8960/APQ8064 device trees without a separate TSENS child
+node, the Global Clock Controller (GCC) driver creates a qcom-tsens
+platform device without an OF node. TSENS consequently uses the parent
+device for firmware lookups and managed resource allocations.
+
+If probing fails, including calibration returning -EPROBE_DEFER, the
+driver core releases only the child device's managed resources.
+Allocations attached to the parent remain, accumulating across repeated
+probe attempts.
+
+Wrap the parent-bound allocations in a devres group and register a
+cleanup action on the TSENS child. This releases the resources on probe
+failure and unbind while preserving legacy firmware lookups. Keep the
+group handling in a probe wrapper so the existing initialization path
+remains self-contained.
+
+Fixes: 9066073c6c27 ("thermal: qcom: tsens: Add a skeletal TSENS drivers")
+Closes: https://sashiko.dev/#/bug/linux-7dc6dad0-c471-47ca-b493-8402752cf13a
+Signed-off-by: Daniel Lezcano <daniel.lezcano@oss.qualcomm.com>
+Cc: Rajendra Nayak <rajendra.nayak@oss.qualcomm.com>
+
+[mzak: picked from lore <20261021085749.3786101-1-daniel.lezcano@oss.qualcomm.com> (1/3) for q91j, gains #30; applies unchanged]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/thermal/qcom/tsens.c | 37 +++++++++++++++++++++++++++++++++++-
+ 1 file changed, 36 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/thermal/qcom/tsens.c b/drivers/thermal/qcom/tsens.c
+index cc62c0eeb..eeadf6cc5 100644
+--- a/drivers/thermal/qcom/tsens.c
++++ b/drivers/thermal/qcom/tsens.c
+@@ -1403,7 +1403,7 @@ static int tsens_register(struct tsens_priv *priv)
+ 	return ret;
+ }
+ 
+-static int tsens_probe(struct platform_device *pdev)
++static int tsens_probe_common(struct platform_device *pdev)
+ {
+ 	int ret, i;
+ 	struct device *dev;
+@@ -1481,6 +1481,41 @@ static int tsens_probe(struct platform_device *pdev)
+ 	return ret;
+ }
+ 
++static void tsens_release_resources(void *data)
++{
++	struct device *dev = data;
++
++	devres_release_group(dev->parent, dev);
++}
++
++static int tsens_probe(struct platform_device *pdev)
++{
++	struct device *dev = &pdev->dev;
++	int ret;
++
++	/*
++	 * DT-backed devices own their managed resources directly. Legacy devices
++	 * created by the Global Clock Controller (GCC) driver have no OF node and
++	 * use the parent's firmware data and managed resources instead. Group
++	 * those resources so the child releases them on probe failure or unbind.
++	 */
++	if (dev->of_node)
++		return tsens_probe_common(pdev);
++
++	/* Tie resources allocated on the parent to the TSENS lifetime. */
++	if (!devres_open_group(dev->parent, dev, GFP_KERNEL))
++		return -ENOMEM;
++
++	ret = devm_add_action_or_reset(dev, tsens_release_resources, dev);
++	if (ret)
++		return ret;
++
++	ret = tsens_probe_common(pdev);
++	devres_close_group(dev->parent, dev);
++
++	return ret;
++}
++
+ static void tsens_remove(struct platform_device *pdev)
+ {
+ 	struct tsens_priv *priv = platform_get_drvdata(pdev);
+-- 
+2.43.0
+

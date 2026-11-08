@@ -1,0 +1,243 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Cen Zhang <zzzccc427@gmail.com>
+Date: Thu, 22 Oct 2026 20:15:15 +0800
+Subject: [PATCH 19/30] Bluetooth: MGMT: Serialize power-on with power-off
+ completion
+
+mgmt_set_powered_complete() must consume only its own SET_POWERED
+command. __mgmt_power_off() frees that command before its destroy callback
+runs, and mgmt_pending_valid() recognizes pending commands only by address.
+
+The power-on handler can reuse the address, but it is not the only
+allocator. A concurrent set_mesh() can also publish another pending command
+at that address after close drops hdev->lock:
+
+  Close request worker              Management socket
+  --------------------              -----------------
+  __mgmt_power_off(): free cmd
+  hci_dev_close_sync(): unlock
+                                    set_mesh(): allocate replacement
+  completion: claim old address
+                                    submission fails: remove/free cmd
+  completion: access replacement
+
+Serialize power-on publication with req_lock, which the request worker
+holds through its destroy callback. Keep power-off cancellation outside
+that mutex and keep the req_lock -> hdev->lock ordering.
+
+Also hold hdev->lock while finding the pending SET_POWERED command,
+checking its identity, and consuming it. An unrelated command at the old
+address then fails the opcode-specific lookup without being unlinked.
+Power-on cannot reuse a SET_POWERED address until the old callback drops
+req_lock, and power-off allocates no command once the device is down.
+
+Dequeue pending power requests before settings_rsp() frees their command
+data. Their cancellation callback already returns without touching cmd.
+An already-dequeued request can still be waiting for req_lock. Check its
+opcode under mgmt_pending_lock before copying parameters as well, so it
+cannot interpret an unrelated replacement command as power settings.
+
+KASAN report as below:
+
+        BUG: KASAN: slab-use-after-free in
+    mgmt_set_powered_complete+0x450/0x4d0
+    Read of size 2 at addr ffff88810921ab10 by task kworker/u17:0/500
+
+    Workqueue: hci0 hci_cmd_sync_work
+    Call Trace:
+     <TASK>
+     dump_stack_lvl+0x93/0xd0
+     print_report+0xce/0x630
+     ? mgmt_set_powered_complete+0x450/0x4d0
+     ? srso_alias_return_thunk+0x5/0xfbef5
+     ? __virt_addr_valid+0x20d/0x410
+     ? mgmt_set_powered_complete+0x450/0x4d0
+     kasan_report+0xe0/0x110
+     ? mgmt_set_powered_complete+0x450/0x4d0
+     mgmt_set_powered_complete+0x450/0x4d0
+     ? __pfx_mgmt_set_powered_complete+0x10/0x10
+     hci_cmd_sync_work+0x207/0x450
+     ? __pfx_mgmt_set_powered_complete+0x10/0x10
+     process_one_work+0x908/0x19c0
+     ? __pfx_process_one_work+0x10/0x10
+     ? srso_alias_return_thunk+0x5/0xfbef5
+     ? lock_is_held_type+0x8f/0x100
+     ? srso_alias_return_thunk+0x5/0xfbef5
+     worker_thread+0x65c/0xe40
+     ? __pfx_worker_thread+0x10/0x10
+     kthread+0x34f/0x460
+     ? srso_alias_return_thunk+0x5/0xfbef5
+     ? __pfx_kthread+0x10/0x10
+     ret_from_fork+0x659/0x940
+     ? __pfx_ret_from_fork+0x10/0x10
+     ? srso_alias_return_thunk+0x5/0xfbef5
+     ? __switch_to+0x74f/0xf80
+     ? __pfx_kthread+0x10/0x10
+     ret_from_fork_asm+0x1a/0x30
+     </TASK>
+
+    Allocated by task 531:
+     kasan_save_stack+0x33/0x60
+     kasan_save_track+0x14/0x30
+     __kasan_kmalloc+0xaa/0xb0
+     __kmalloc_cache_noprof+0x251/0x610
+     mgmt_pending_new+0x60/0x230
+     mgmt_pending_add+0x3b/0x180
+     set_powered+0x2a8/0x7e0
+     hci_sock_sendmsg+0x128b/0x22e0
+     __sys_sendto+0x425/0x470
+     __x64_sys_sendto+0xe5/0x1c0
+     do_syscall_64+0x115/0x6a0
+     entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+    Freed by task 531:
+     kasan_save_stack+0x33/0x60
+     kasan_save_track+0x14/0x30
+     kasan_save_free_info+0x3b/0x60
+     __kasan_slab_free+0x5f/0x80
+     kfree+0x307/0x580
+     set_powered+0x336/0x7e0
+     hci_sock_sendmsg+0x128b/0x22e0
+     __sys_sendto+0x425/0x470
+     __x64_sys_sendto+0xe5/0x1c0
+     do_syscall_64+0x115/0x6a0
+     entry_SYSCALL_64_after_hwframe+0x77/0x7f
+    ==================================================================
+
+Fixes: eec8d2bcc841 ("Bluetooth: Add support for set_powered management command")
+Assisted-by: LLM
+Signed-off-by: Cen Zhang <zzzccc427@gmail.com>
+
+[mzak: picked from lore <pm-bluetooth-objects-candidate-0063-v15-e728a3f8014489975c69@gmail.com> (v3) for q91j, gains #30; applies unchanged]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ net/bluetooth/mgmt.c | 61 ++++++++++++++++++++++++++++++++++----------
+ 1 file changed, 47 insertions(+), 14 deletions(-)
+
+diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
+index 3b9c82bd2..ada8ba7d1 100644
+--- a/net/bluetooth/mgmt.c
++++ b/net/bluetooth/mgmt.c
+@@ -1342,20 +1342,24 @@ static void mgmt_set_powered_complete(struct hci_dev *hdev, void *data, int err)
+ 	struct mgmt_pending_cmd *cmd = data;
+ 	struct mgmt_mode *cp;
+ 
+-	/* Make sure cmd still outstanding. */
+-	if (err == -ECANCELED || !mgmt_pending_valid(hdev, cmd))
++	if (err == -ECANCELED)
+ 		return;
+ 
++	hci_dev_lock(hdev);
++
++	/* Other management commands may reuse the old command address. */
++	if (pending_find(MGMT_OP_SET_POWERED, hdev) != cmd ||
++	    !mgmt_pending_valid(hdev, cmd))
++		goto unlock;
++
+ 	cp = cmd->param;
+ 
+ 	bt_dev_dbg(hdev, "err %d", err);
+ 
+ 	if (!err) {
+ 		if (cp->val) {
+-			hci_dev_lock(hdev);
+ 			restart_le_actions(hdev);
+ 			hci_update_passive_scan(hdev);
+-			hci_dev_unlock(hdev);
+ 		}
+ 
+ 		send_settings_rsp(cmd->sk, cmd->opcode, hdev);
+@@ -1371,6 +1375,9 @@ static void mgmt_set_powered_complete(struct hci_dev *hdev, void *data, int err)
+ 	}
+ 
+ 	mgmt_pending_free(cmd);
++
++unlock:
++	hci_dev_unlock(hdev);
+ }
+ 
+ static int set_powered_sync(struct hci_dev *hdev, void *data)
+@@ -1380,8 +1387,9 @@ static int set_powered_sync(struct hci_dev *hdev, void *data)
+ 
+ 	mutex_lock(&hdev->mgmt_pending_lock);
+ 
+-	/* Make sure cmd still outstanding. */
+-	if (!__mgmt_pending_listed(hdev, cmd)) {
++	/* A dequeued request may have waited across a controller reset. */
++	if (!__mgmt_pending_listed(hdev, cmd) ||
++	    cmd->opcode != MGMT_OP_SET_POWERED) {
+ 		mutex_unlock(&hdev->mgmt_pending_lock);
+ 		return -ECANCELED;
+ 	}
+@@ -1395,19 +1403,13 @@ static int set_powered_sync(struct hci_dev *hdev, void *data)
+ 	return hci_set_powered_sync(hdev, cp.val);
+ }
+ 
+-static int set_powered(struct sock *sk, struct hci_dev *hdev, void *data,
+-		       u16 len)
++static int __set_powered(struct sock *sk, struct hci_dev *hdev,
++			 void *data, u16 len)
+ {
+ 	struct mgmt_mode *cp = data;
+ 	struct mgmt_pending_cmd *cmd;
+ 	int err;
+ 
+-	bt_dev_dbg(hdev, "sock %p", sk);
+-
+-	if (cp->val != 0x00 && cp->val != 0x01)
+-		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_POWERED,
+-				       MGMT_STATUS_INVALID_PARAMS);
+-
+ 	hci_dev_lock(hdev);
+ 
+ 	if (!cp->val) {
+@@ -1454,6 +1456,32 @@ static int set_powered(struct sock *sk, struct hci_dev *hdev, void *data,
+ 	return err;
+ }
+ 
++static int set_powered(struct sock *sk, struct hci_dev *hdev, void *data,
++		       u16 len)
++{
++	struct mgmt_mode *cp = data;
++	int err;
++
++	bt_dev_dbg(hdev, "sock %p", sk);
++
++	if (cp->val != 0x00 && cp->val != 0x01)
++		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_POWERED,
++				       MGMT_STATUS_INVALID_PARAMS);
++
++	if (!cp->val)
++		return __set_powered(sk, hdev, data, len);
++
++	/*
++	 * Wait for the previous power-off completion before publishing a
++	 * new command that could reuse its freed pending-command address.
++	 */
++	hci_req_sync_lock(hdev);
++	err = __set_powered(sk, hdev, data, len);
++	hci_req_sync_unlock(hdev);
++
++	return err;
++}
++
+ int mgmt_new_settings(struct hci_dev *hdev)
+ {
+ 	return new_settings(hdev, NULL);
+@@ -1469,6 +1497,11 @@ static void settings_rsp(struct mgmt_pending_cmd *cmd, void *data)
+ {
+ 	struct cmd_lookup *match = data;
+ 
++	/* A queued power request must not retain the freed command. */
++	if (cmd->opcode == MGMT_OP_SET_POWERED)
++		hci_cmd_sync_dequeue(match->hdev, set_powered_sync, cmd,
++				     mgmt_set_powered_complete);
++
+ 	send_settings_rsp(cmd->sk, cmd->opcode, match->hdev);
+ 
+ 	if (match->sk == NULL) {
+-- 
+2.43.0
+

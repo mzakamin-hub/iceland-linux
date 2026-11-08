@@ -1,0 +1,61 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Rob Clark <robin.clark@oss.qualcomm.com>
+Date: Wed, 4 Nov 2026 13:20:47 -0800
+Subject: [PATCH 08/30] drm/msm/a8xx: Fix 1/2b alpha filtering precision
+
+Need to set b25 in TPL1_DBG_ECO_CNTL1 on all gen8.
+
+Reported-by: Danylo Piliaiev <dpiliaiev@igalia.com>
+Signed-off-by: Rob Clark <robin.clark@oss.qualcomm.com>
+Reviewed-by: Akhil P Oommen <akhilpo@oss.qualcomm.com>
+Patchwork: https://patchwork.freedesktop.org/patch/766378/
+Message-ID: <20261104212048.21010-1-robin.clark@oss.qualcomm.com>
+
+[mzak: picked from msm-fixes 6e0bbda7b97b for q91j, gains #8; hand port:
+ the A830 / X285 / A810 / A840 tables of the original are not in this
+ tree. The A840 (Kaanapali) values live in two places here, so BIT(25)
+ is set in both: the default kaanapali_nonctxt_regs entry
+ (0x720 -> 0x2000720) and the msm.a8xx_kgsl_eco=1 table
+ (0x4000720 -> 0x6000720).]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/adreno/a8xx_catalog.c             | 7 +++++--
+ drivers/gpu/drm/msm/adreno/catalog/adreno_kaanapali.h | 2 +-
+ 2 files changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/adreno/a8xx_catalog.c b/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
+index 736bfa122..7540e3aed 100644
+--- a/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
++++ b/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
+@@ -670,8 +670,11 @@ static const struct adreno_reglist_pipe a840_kgsl_eco_regs[] = {
+ 	{ REG_A7XX_SP_CHICKEN_BITS_2, 0x00c20800, BIT(PIPE_NONE) },
+ 	/* 0x10000000 -> 0x10100000: BIT(20) disables the alphaOnly feature */
+ 	{ REG_A6XX_TPL1_DBG_ECO_CNTL, 0x10100000, BIT(PIPE_NONE) },
+-	/* 0x720 -> 0x4000720: BIT(26) no final clamp for bicubic filtering */
+-	{ REG_A6XX_TPL1_DBG_ECO_CNTL1, 0x04000720, BIT(PIPE_NONE) },
++	/*
++	 * 0x720 -> 0x6000720: BIT(26) no final clamp for bicubic filtering,
++	 * BIT(25) 1/2-bit alpha filtering precision (all gen8)
++	 */
++	{ REG_A6XX_TPL1_DBG_ECO_CNTL1, 0x06000720, BIT(PIPE_NONE) },
+ 	/* the rest of KGSL's table that kaanapali_nonctxt_regs does not set */
+ 	/* no Dead Draw Merge scheme on RB-HLSQ */
+ 	{ REG_A6XX_RB_RBP_CNTL, BIT(5), BIT(PIPE_BV) | BIT(PIPE_BR) },
+diff --git a/drivers/gpu/drm/msm/adreno/catalog/adreno_kaanapali.h b/drivers/gpu/drm/msm/adreno/catalog/adreno_kaanapali.h
+index 47a818280..dce6fd84a 100644
+--- a/drivers/gpu/drm/msm/adreno/catalog/adreno_kaanapali.h
++++ b/drivers/gpu/drm/msm/adreno/catalog/adreno_kaanapali.h
+@@ -2254,7 +2254,7 @@ static const struct adreno_reglist_pipe kaanapali_nonctxt_regs[] __maybe_unused
+ 	{ 0x0000ae6c /* SP_HLSQ_DBG_ECO_CNTL                */, 0x04000000, BIT(PIPE_NONE) },
+ 	{ 0x0000ae6d /* SP_READ_SEL                         */, 0x0001ff00, BIT(PIPE_NONE) },
+ 	{ 0x0000b600 /* TPL1_DBG_ECO_CNTL                   */, 0x10000000, BIT(PIPE_NONE) },
+-	{ 0x0000b602 /* TPL1_DBG_ECO_CNTL1                  */, 0x00000720, BIT(PIPE_NONE) },
++	{ 0x0000b602 /* TPL1_DBG_ECO_CNTL1                  */, 0x02000720, BIT(PIPE_NONE) },
+ 	{ 0x0001f704 /* GMUCX_QUAL_HIST_PWR_DEPTH           */, 0x00000005, BIT(PIPE_NONE) },
+ 	{ 0x0001f705 /* GMUCX_QUAL_LM_THRESHOLD             */, 0x0000ffff, BIT(PIPE_NONE) },
+ 	{ 0x0001f70c /* GMUCX_QUAL_SHORT_THRESHOLD          */, 0xffffffff, BIT(PIPE_NONE) },
+-- 
+2.43.0
+

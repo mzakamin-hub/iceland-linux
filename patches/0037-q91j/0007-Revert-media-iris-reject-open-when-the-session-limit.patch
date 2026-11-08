@@ -1,0 +1,93 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Vishnu Reddy <busanna.reddy@oss.qualcomm.com>
+Date: Sat, 31 Oct 2026 01:45:48 +0530
+Subject: [PATCH 07/30] Revert "media: iris: reject open() when the session
+ limit is reached"
+
+This reverts commit 397ebadcbc21 ("media: iris: reject open() when the
+session limit is reached").
+
+V4L2 does not allow drivers to impose artificial limits on open().
+Resource limits must be enforced where the resource is actually
+consumed. v4l2-compliance verifies this through testUnlimitedOpens()
+and now fails with:
+
+  fail: v4l2-compliance.cpp(773): !ok
+        test for unlimited opens: FAIL
+
+Link: https://github.com/gjasny/v4l-utils/blob/master/utils/v4l2-compliance/v4l2-compliance.cpp#L747
+
+The session limit is already enforced at the right place. An instance
+that did not fit within max_session_count is not added to
+core->instances, and iris_check_session_supported() rejects it with an
+error from iris_vb2_queue_setup() and from iris_vb2_start_streaming(),
+which is when a firmware session is really needed. Failing open() adds
+nothing over that and breaks the compliance requirement.
+
+Fixes: 397ebadcbc21 ("media: iris: reject open() when the session limit is reached")
+Cc: stable@vger.kernel.org
+Signed-off-by: Vishnu Reddy <busanna.reddy@oss.qualcomm.com>
+
+[mzak: picked from lore <20261031-fix_v4l2_compliance_unlimited_opens-v1-1-f20cc9231ee3@oss.qualcomm.com> for q91j, gains #16; applies unchanged]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/media/platform/qcom/iris/iris_vidc.c | 19 ++++++-------------
+ 1 file changed, 6 insertions(+), 13 deletions(-)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_vidc.c b/drivers/media/platform/qcom/iris/iris_vidc.c
+index 8c96b007b..23562c178 100644
+--- a/drivers/media/platform/qcom/iris/iris_vidc.c
++++ b/drivers/media/platform/qcom/iris/iris_vidc.c
+@@ -56,23 +56,21 @@ void iris_inst_put(struct iris_inst *inst)
+ 	kref_put(&inst->kref, iris_inst_release);
+ }
+ 
+-static int iris_add_session(struct iris_inst *inst)
++static void iris_add_session(struct iris_inst *inst)
+ {
+ 	struct iris_core *core = inst->core;
+ 	struct iris_inst *iter;
+ 	u32 count = 0;
+ 
+-	guard(mutex)(&core->lock);
++	mutex_lock(&core->lock);
+ 
+ 	list_for_each_entry(iter, &core->instances, list)
+ 		count++;
+ 
+-	if (count >= core->iris_platform_data->max_session_count)
+-		return -EBUSY;
+-
+-	list_add_tail(&inst->list, &core->instances);
++	if (count < core->iris_platform_data->max_session_count)
++		list_add_tail(&inst->list, &core->instances);
+ 
+-	return 0;
++	mutex_unlock(&core->lock);
+ }
+ 
+ static void iris_remove_session(struct iris_inst *inst)
+@@ -226,17 +224,12 @@ int iris_open(struct file *filp)
+ 	if (ret)
+ 		goto fail_m2m_ctx_release;
+ 
+-	ret = iris_add_session(inst);
+-	if (ret)
+-		goto fail_inst_deinit;
++	iris_add_session(inst);
+ 
+ 	inst->fh.m2m_ctx = inst->m2m_ctx;
+ 
+ 	return 0;
+ 
+-fail_inst_deinit:
+-	kfree(inst->fmt_src);
+-	kfree(inst->fmt_dst);
+ fail_m2m_ctx_release:
+ 	v4l2_m2m_ctx_release(inst->m2m_ctx);
+ fail_m2m_release:
+-- 
+2.43.0
+

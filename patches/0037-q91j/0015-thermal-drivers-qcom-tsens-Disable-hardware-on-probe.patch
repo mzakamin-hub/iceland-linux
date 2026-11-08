@@ -1,0 +1,90 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Lezcano <daniel.lezcano@oss.qualcomm.com>
+Date: Wed, 21 Oct 2026 10:57:48 +0200
+Subject: [PATCH 15/30] thermal/drivers/qcom/tsens: Disable hardware on probe
+ failure
+
+Hardware initialization enables TSENS interrupts before calibration and
+thermal zone and IRQ registration have completed. If calibration or
+registration fails, probe returns without disabling the hardware. Devres
+then releases any registered IRQ handlers, leaving the interrupt source
+enabled without a handler.
+
+Factor the hardware shutdown sequence out of the remove callback and
+invoke it when calibration or registration fails after successful
+initialization. Disable hardware interrupts and call the optional sensor
+disable callback before devres releases IRQ handlers and register maps.
+
+Fixes: 634e11d5b450 ("drivers: thermal: tsens: Add interrupt support")
+Closes: https://sashiko.dev/#/bug/linux-4b873699-7a0d-46e9-b768-169916c70d1d
+Signed-off-by: Daniel Lezcano <daniel.lezcano@oss.qualcomm.com>
+Cc: Amit Kucheria <amitk@kernel.org>
+
+[mzak: picked from lore <20261021085749.3786101-3-daniel.lezcano@oss.qualcomm.com> (3/3) for q91j, gains #30; applies with a 3-way merge]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/thermal/qcom/tsens.c | 28 ++++++++++++++++++++--------
+ 1 file changed, 20 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/thermal/qcom/tsens.c b/drivers/thermal/qcom/tsens.c
+index 5d59aa1d7..a82148053 100644
+--- a/drivers/thermal/qcom/tsens.c
++++ b/drivers/thermal/qcom/tsens.c
+@@ -1403,6 +1403,13 @@ static int tsens_register(struct tsens_priv *priv)
+ 	return ret;
+ }
+ 
++static void tsens_disable(struct tsens_priv *priv)
++{
++	tsens_disable_irq(priv);
++	if (priv->ops->disable)
++		priv->ops->disable(priv);
++}
++
+ static int tsens_probe_common(struct platform_device *pdev)
+ {
+ 	int ret, i;
+@@ -1479,15 +1486,22 @@ static int tsens_probe_common(struct platform_device *pdev)
+ 
+ 	if (priv->ops->calibrate) {
+ 		ret = priv->ops->calibrate(priv);
+-		if (ret < 0)
+-			return dev_err_probe(dev, ret, "%s: calibration failed\n",
+-					     __func__);
++		if (ret < 0) {
++			dev_err_probe(dev, ret, "%s: calibration failed\n", __func__);
++			goto err_disable;
++		}
+ 	}
+ 
+ 	ret = tsens_register(priv);
+-	if (!ret)
+-		tsens_debug_init(pdev);
++	if (ret)
++		goto err_disable;
++
++	tsens_debug_init(pdev);
++	return 0;
+ 
++err_disable:
++	/* Stop hardware events before devres releases IRQs and register maps. */
++	tsens_disable(priv);
+ 	return ret;
+ }
+ 
+@@ -1531,9 +1545,7 @@ static void tsens_remove(struct platform_device *pdev)
+ 	struct tsens_priv *priv = platform_get_drvdata(pdev);
+ 
+ 	debugfs_remove_recursive(priv->debug_root);
+-	tsens_disable_irq(priv);
+-	if (priv->ops->disable)
+-		priv->ops->disable(priv);
++	tsens_disable(priv);
+ }
+ 
+ static struct platform_driver tsens_driver = {
+-- 
+2.43.0
+

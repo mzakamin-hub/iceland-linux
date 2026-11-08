@@ -145,6 +145,8 @@ INFINITI_COMMIT=10650ae7bef447d04eb820bfc0c2d5a98d83e4e2
 # Kernel 7.4.0-rc1-iceland-00666-g427d22ea486f.
 # q91i (7 Nov 2026) = q91h + 0036-q91i: iris decode power rescale only with a queued bitstream, tsens low-threshold mask across suspend, UFS hibern8 / RX LineCfg, ath12k suspend-with-device-up warning.
 # Kernel 7.4.0-rc1-iceland-00671-g4375fef7101f.
+# q91j (8 Nov 2026) = q91i + 0037-q91j: async GPU crash state, WCN7850 / WCN7860 power-up delay, hci_qca IBS reset + debugfs UAF, MGMT power serialisation, ath12k scan unwind / MLO dp_peer, iris revert + LTR check, A8xx alpha precision, bwmon vote across suspend, msm metadata lock, tsens, adc5-gen3, UCSI, dwc3 End Transfer series, no DSPP GC on Kaanapali (Night Light via CTM).
+# Kernel 7.4.0-rc1-iceland-00701-gfa52dc2e4151.
 
 # Tree hash expected after each series on v7.4-rc1 (scripts/prepare.sh checks them):
 TREE_AFTER_0001_infiniti=bb91771cc3af5b0da66e7363a225d3d7cd53b2ee
@@ -183,3 +185,4 @@ TREE_AFTER_0033_q91f=278196c49f1624bed13832d843b0c02f82e5048b
 TREE_AFTER_0034_q91g=2a803a4c596054b313c35838857b90147674e228
 TREE_AFTER_0035_q91h=03aec4e764be8c128e109f14319519482dc62b21
 TREE_AFTER_0036_q91i=20f5e5578f428f559191939a5828acd21d2fb3bf
+TREE_AFTER_0037_q91j=31540ad655c7a5667cf9b921d4d021dda5aeabb4

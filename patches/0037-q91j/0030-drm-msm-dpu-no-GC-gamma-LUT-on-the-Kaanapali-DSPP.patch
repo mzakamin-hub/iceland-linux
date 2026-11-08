@@ -1,0 +1,92 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sun, 8 Nov 2026 00:28:07 +0200
+Subject: [PATCH 30/30] drm/msm/dpu: no GC (gamma LUT) on the Kaanapali DSPP
+
+Kaanapali (DPU 13.0) reuses sm8750_dspp_sblk, which declares a GC v1.8
+block at 0x17c0. With a GC block the CRTC exposes GAMMA_LUT (1024
+entries), and dpu_setup_dspp_gc() loads it with register writes to
+GC_C0..C2 and enables it.
+
+The stock device tree of the OnePlus Pad 4 declares this block as
+qcom,sde-dspp-gc = <0x17c0 0x20000>, GC v2.0, next to a v4 REG_DMA
+(LUTDMA) engine. armada-os' LUTDMA port, verified on SM8750 (DPU 12),
+reports that GC v2 is a LUT bus block, loaded only through LUTDMA, with
+no memory-mapped write path. If that holds here, a GAMMA_LUT set by a
+compositor (KWin uses it for Night Light and ICC before the CTM) is
+accepted and silently does nothing.
+
+Give Kaanapali its own DSPP sub-block list without GC, so that only the
+CTM (PCC v6, MMIO) is exposed and compositors fall back to it. Other
+DPU 12.x users of sm8750_dspp_sblk are not changed.
+
+VERIFY ON THE TABLET FIRST: this commit is on top of the q91j queue so
+it can be dropped. Keep it only if a GAMMA_LUT written on the current
+kernel shows no effect on screen / on the interface CRC, while a CTM
+does; drop it if the GAMMA_LUT works.
+
+Suggested-by: Armada <noreply@armada.local>
+Based-on: armada-os/armada packages/kernel/patches/0068-drm-msm-dpu-lutdma-dspp-igc-gamut.patch (finding only, no code)
+Link: https://github.com/armada-os/armada/tree/main/packages/kernel/patches (0068-drm-msm-dpu-lutdma-dspp-igc-gamut.patch)
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ .../drm/msm/disp/dpu1/catalog/dpu_13_0_kaanapali.h  |  8 ++++----
+ drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.c      | 13 +++++++++++++
+ 2 files changed, 17 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_13_0_kaanapali.h b/drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_13_0_kaanapali.h
+index a0a8ea822..3d12e0d33 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_13_0_kaanapali.h
++++ b/drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_13_0_kaanapali.h
+@@ -195,19 +195,19 @@ static const struct dpu_dspp_cfg kaanapali_dspp[] = {
+ 	{
+ 		.name = "dspp_0", .id = DSPP_0,
+ 		.base = 0x105000, .len = 0x1800,
+-		.sblk = &sm8750_dspp_sblk,
++		.sblk = &kaanapali_dspp_sblk,
+ 	}, {
+ 		.name = "dspp_1", .id = DSPP_1,
+ 		.base = 0x10d000, .len = 0x1800,
+-		.sblk = &sm8750_dspp_sblk,
++		.sblk = &kaanapali_dspp_sblk,
+ 	}, {
+ 		.name = "dspp_2", .id = DSPP_2,
+ 		.base = 0x115000, .len = 0x1800,
+-		.sblk = &sm8750_dspp_sblk,
++		.sblk = &kaanapali_dspp_sblk,
+ 	}, {
+ 		.name = "dspp_3", .id = DSPP_3,
+ 		.base = 0x11d000, .len = 0x1800,
+-		.sblk = &sm8750_dspp_sblk,
++		.sblk = &kaanapali_dspp_sblk,
+ 	},
+ };
+ 
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.c
+index 107150a85..a6cb64eae 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.c
+@@ -432,6 +432,19 @@ static const struct dpu_dspp_sub_blks sm8750_dspp_sblk = {
+ 		.len = 0x40, .version = 0x10008},
+ };
+ 
++/*
++ * The Kaanapali DSPP carries GC v2.0 (the stock device tree has
++ * qcom,sde-dspp-gc = <0x17c0 0x20000>), a LUT bus block that only the
++ * LUTDMA engine can load: the GC v1.8 register writes of
++ * dpu_setup_dspp_gc() do not reach it. Leave GC out, so that the CRTC
++ * exposes CTM (PCC) only and compositors do not rely on a GAMMA_LUT that
++ * is silently ignored.
++ */
++static const struct dpu_dspp_sub_blks kaanapali_dspp_sblk = {
++	.pcc = {.name = "pcc", .base = 0x1700,
++		.len = 0x90, .version = 0x60000},
++};
++
+ /*************************************************************
+  * PINGPONG sub blocks config
+  *************************************************************/
+-- 
+2.43.0
+

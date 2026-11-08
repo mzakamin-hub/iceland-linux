@@ -1,0 +1,60 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Lezcano <daniel.lezcano@oss.qualcomm.com>
+Date: Wed, 21 Oct 2026 10:57:47 +0200
+Subject: [PATCH 14/30] thermal/drivers/qcom/tsens: Validate the sensor count
+ before initialization
+
+The #qcom,sensors property can override the platform sensor count without
+an upper-bound check. A count exceeding the IP's maximum causes the
+driver to access uninitialized regmap fields when handling interrupts.
+Platforms with an explicit hardware-ID table can also read beyond that
+table, even when the count remains within the IP's hardware limit.
+
+Reject zero counts and counts exceeding the hardware maximum or, when
+present, the hardware-ID table length before allocating the private
+structure and assigning sensor IDs. Preserve the existing fallback to
+the platform default when the property cannot be read, and document
+both the fallback and the sensor-count limits.
+
+Fixes: 6d7c70d1cd65 ("thermal: qcom: tsens: Allow number of sensors to come from DT")
+Closes: https://sashiko.dev/#/bug/linux-d0867095-c131-491e-a6aa-a81debfd0df5
+Signed-off-by: Daniel Lezcano <daniel.lezcano@oss.qualcomm.com>
+Cc: Bjorn Andersson <andersson@kernel.org>
+
+[mzak: picked from lore <20261021085749.3786101-2-daniel.lezcano@oss.qualcomm.com> (2/3) for q91j, gains #30; applies unchanged]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/thermal/qcom/tsens.c | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/thermal/qcom/tsens.c b/drivers/thermal/qcom/tsens.c
+index eeadf6cc5..5d59aa1d7 100644
+--- a/drivers/thermal/qcom/tsens.c
++++ b/drivers/thermal/qcom/tsens.c
+@@ -1428,10 +1428,20 @@ static int tsens_probe_common(struct platform_device *pdev)
+ 
+ 	num_sensors = data->num_sensors;
+ 
++	/*
++	 * DT may override the platform sensor count. A missing, empty or too
++	 * short property leaves num_sensors unchanged, retaining the default.
++	 */
+ 	if (np)
+ 		of_property_read_u32(np, "#qcom,sensors", &num_sensors);
+ 
+-	if (num_sensors <= 0) {
++	/*
++	 * Require at least one sensor and stay within the IP's hardware limit.
++	 * Platforms with an explicit hardware-ID table also limit the count to
++	 * its number of entries, which may be smaller than the hardware limit.
++	 */
++	if (!num_sensors || num_sensors > data->feat->max_sensors ||
++	    (data->hw_ids && num_sensors > data->num_sensors)) {
+ 		dev_err(dev, "%s: invalid number of sensors\n", __func__);
+ 		return -EINVAL;
+ 	}
+-- 
+2.43.0
+

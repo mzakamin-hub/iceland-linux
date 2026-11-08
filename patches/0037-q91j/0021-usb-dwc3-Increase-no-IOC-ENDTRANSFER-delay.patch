@@ -1,0 +1,50 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Elson Serrao <elson.serrao@oss.qualcomm.com>
+Date: Tue, 3 Nov 2026 10:29:53 -0800
+Subject: [PATCH 21/30] usb: dwc3: Increase no-IOC ENDTRANSFER delay
+
+When ENDTRANSFER is issued without CMDIOC, software does not wait for
+command completion and instead relies on a fixed delay before continuing
+request teardown. The DWC3 programming guide recommends using a timeout
+greater than 1 ms for command completion. Increase the post-ENDTRANSFER
+delay to 2 ms to provide additional margin before request teardown. This
+prevents SMMU faults that can occur when the controller accesses unmapped
+requests before ENDTRANSFER processing has completed.
+
+Fixes: d8a2bb4eb758 ("usb: dwc3: gadget: Add 1ms delay after end transfer command without IOC")
+Cc: stable@vger.kernel.org
+Signed-off-by: Elson Serrao <elson.serrao@oss.qualcomm.com>
+
+[mzak: picked from lore <20261103182953.3437202-1-elson.serrao@oss.qualcomm.com> for q91j, gains #30 (gadget path only; dwc3-qcom and its interconnect votes untouched); applies unchanged]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/usb/dwc3/gadget.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/usb/dwc3/gadget.c b/drivers/usb/dwc3/gadget.c
+index ee8372356..dd28514cb 100644
+--- a/drivers/usb/dwc3/gadget.c
++++ b/drivers/usb/dwc3/gadget.c
+@@ -445,7 +445,7 @@ int dwc3_send_gadget_ep_cmd(struct dwc3_ep *dep, unsigned int cmd,
+ 
+ 	if (DWC3_DEPCMD_CMD(cmd) == DWC3_DEPCMD_ENDTRANSFER &&
+ 	    !(cmd & DWC3_DEPCMD_CMDIOC))
+-		mdelay(1);
++		mdelay(2);
+ 
+ 	if (saved_config) {
+ 		reg = dwc3_readl(dwc, DWC3_GUSB2PHYCFG(0));
+@@ -4108,7 +4108,7 @@ void dwc3_stop_active_transfer(struct dwc3_ep *dep, bool force,
+ 	 * returning from this function.
+ 	 *
+ 	 * This mode is NOT available on the DWC_usb31 IP.  In this
+-	 * case, if the IOC bit is not set, then delay by 1ms
++	 * case, if the IOC bit is not set, then delay by 2ms
+ 	 * after issuing the EndTransfer command.  This allows for the
+ 	 * controller to handle the command completely before DWC3
+ 	 * remove requests attempts to unmap USB request buffers.
+-- 
+2.43.0
+

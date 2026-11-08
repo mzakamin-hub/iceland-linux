@@ -1,0 +1,72 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Loic Poulain <loic.poulain@oss.qualcomm.com>
+Date: Sun, 1 Nov 2026 11:09:02 +0800
+Subject: [PATCH 18/30] iio: adc: qcom-spmi-adc5-gen3: Reuse IIO device ID for
+ ADC_TM aux device
+
+adc5_gen3_add_aux_tm_device() never sets the auxiliary device id, so
+every ADC5 Gen3 instance with at least one qcom,adc-tm channel tries
+to register the same device name. With ADC_TM channels on more than
+one PMIC, the second instance to probe fails:
+
+  sysfs: cannot create duplicate filename '/bus/auxiliary/devices/qcom_spmi_adc5_gen3.adc5_tm_gen3.0'
+  ...
+  auxiliary qcom_spmi_adc5_gen3.adc5_tm_gen3.0: adding auxiliary device failed!: -17
+  qcom-spmi-adc5-gen3 c400000.spmi:pmic@8:adc@7200: error -EEXIST: Failed to add auxiliary TM device
+
+The ADC probe then fails as a whole, so that PMIC loses both its IIO
+channels and its thermal zones. This shows up on Nord, which has
+thermistor channels on two PMAU0102 PMICs.
+
+Each ADC instance already has a unique IIO device ID. Use it as the
+auxiliary device id instead of allocating one from a separate driver-wide
+IDA, which removes the custom ID allocation and release handling. The
+ADC_TM driver matches on the device name only, so the instance number
+does not affect binding.
+
+Fixes: baff45179e90 ("iio: adc: Add support for QCOM PMIC5 Gen3 ADC")
+Signed-off-by: Loic Poulain <loic.poulain@oss.qualcomm.com>
+Signed-off-by: Shawn Guo <shengchao.guo@oss.qualcomm.com>
+Signed-off-by: Jonathan Cameron <jonathan.cameron@oss.qualcomm.com>
+
+[mzak: picked from linux-next 25d15b4192b9 for q91j, gains #30; applies unchanged]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/iio/adc/qcom-spmi-adc5-gen3.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/iio/adc/qcom-spmi-adc5-gen3.c b/drivers/iio/adc/qcom-spmi-adc5-gen3.c
+index 74b3e4570..8bb12199c 100644
+--- a/drivers/iio/adc/qcom-spmi-adc5-gen3.c
++++ b/drivers/iio/adc/qcom-spmi-adc5-gen3.c
+@@ -688,7 +688,7 @@ static void adc5_gen3_delete_aux(void *data)
+ 
+ static void adc5_gen3_aux_device_release(struct device *dev) {}
+ 
+-static int adc5_gen3_add_aux_tm_device(struct adc5_chip *adc)
++static int adc5_gen3_add_aux_tm_device(struct adc5_chip *adc, int id)
+ {
+ 	struct tm5_aux_dev_wrapper *aux_device;
+ 	int i, ret, i_tm = 0;
+@@ -698,6 +698,7 @@ static int adc5_gen3_add_aux_tm_device(struct adc5_chip *adc)
+ 		return -ENOMEM;
+ 
+ 	aux_device->aux_dev.name = "adc5_tm_gen3";
++	aux_device->aux_dev.id = id;
+ 	aux_device->aux_dev.dev.parent = adc->dev;
+ 	aux_device->aux_dev.dev.release = adc5_gen3_aux_device_release;
+ 
+@@ -874,7 +875,7 @@ static int adc5_gen3_probe(struct platform_device *pdev)
+ 		return ret;
+ 
+ 	if (adc->n_tm_channels > 0) {
+-		ret = adc5_gen3_add_aux_tm_device(adc);
++		ret = adc5_gen3_add_aux_tm_device(adc, iio_device_id(indio_dev));
+ 		if (ret)
+ 			dev_err_probe(dev, ret,
+ 				      "Failed to add auxiliary TM device\n");
+-- 
+2.43.0
+

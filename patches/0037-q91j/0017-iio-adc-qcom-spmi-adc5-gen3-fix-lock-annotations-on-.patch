@@ -1,0 +1,54 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Rupesh Majhi <zoone.rupert@gmail.com>
+Date: Tue, 27 Oct 2026 14:49:46 +0200
+Subject: [PATCH 17/30] iio: adc: qcom-spmi-adc5-gen3: fix lock annotations on
+ mutex helpers
+
+Since commit 5b63d0ae94cc ("compiler-context-analysis: Remove Sparse
+support"), __acquires() and __releases() only feed context analysis.
+Their argument is parsed before the function body, where only dev is in
+scope, so with analysis enabled for this file the build fails:
+
+  error: use of undeclared identifier 'adc'
+
+Name the lock through dev, the same way the bodies find it. The analysis
+then also checks that the helpers really take and drop it.
+
+Suggested-by: Bart Van Assche <bvanassche@acm.org>
+Signed-off-by: Rupesh Majhi <zoone.rupert@gmail.com>
+Tested-by: Jinseob Kim <kimjinseob88@gmail.com>
+Signed-off-by: Jonathan Cameron <jonathan.cameron@oss.qualcomm.com>
+
+[mzak: picked from linux-next 097eb5d0af96 for q91j, gains #30; applies unchanged]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/iio/adc/qcom-spmi-adc5-gen3.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/iio/adc/qcom-spmi-adc5-gen3.c b/drivers/iio/adc/qcom-spmi-adc5-gen3.c
+index 810d25b66..74b3e4570 100644
+--- a/drivers/iio/adc/qcom-spmi-adc5-gen3.c
++++ b/drivers/iio/adc/qcom-spmi-adc5-gen3.c
+@@ -741,7 +741,7 @@ static int adc5_gen3_add_aux_tm_device(struct adc5_chip *adc)
+ }
+ 
+ void adc5_gen3_mutex_lock(struct device *dev)
+-	__acquires(&adc->lock)
++	__acquires(&((struct adc5_chip *)iio_priv(dev_get_drvdata(dev->parent)))->lock)
+ {
+ 	struct iio_dev *indio_dev = dev_get_drvdata(dev->parent);
+ 	struct adc5_chip *adc = iio_priv(indio_dev);
+@@ -751,7 +751,7 @@ void adc5_gen3_mutex_lock(struct device *dev)
+ EXPORT_SYMBOL_NS_GPL(adc5_gen3_mutex_lock, "QCOM_SPMI_ADC5_GEN3");
+ 
+ void adc5_gen3_mutex_unlock(struct device *dev)
+-	__releases(&adc->lock)
++	__releases(&((struct adc5_chip *)iio_priv(dev_get_drvdata(dev->parent)))->lock)
+ {
+ 	struct iio_dev *indio_dev = dev_get_drvdata(dev->parent);
+ 	struct adc5_chip *adc = iio_priv(indio_dev);
+-- 
+2.43.0
+

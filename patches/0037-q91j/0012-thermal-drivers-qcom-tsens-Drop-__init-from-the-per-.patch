@@ -1,0 +1,118 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Christian Schmidbauer <opensource@grische.xyz>
+Date: Wed, 4 Nov 2026 15:57:40 +0100
+Subject: [PATCH 12/30] thermal/drivers/qcom/tsens: Drop __init from the
+ per-SoC ->init callbacks
+
+init_8226(), init_8909(), init_8939(), init_8952(), init_8956(),
+init_9607(), init_tsens_v1_no_rpm() and init_tsens_v2_no_rpm() are
+marked __init, but tsens_probe() calls them through priv->ops->init()
+and can run after free_initmem().  The call then jumps into memory that
+is no longer mapped executable, and the kernel oopses.
+
+The probe runs that late when fw_devlink defers it until the deferred
+probe timeout.
+
+Fixes: a7d3006be5ca ("thermal/drivers/tsens: Sort out msm8976 vs msm8956 data")
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Schmidbauer <opensource@grische.xyz>
+
+[mzak: picked from lore <20261104145740.2623473-3-opensource@grische.xyz> (2/2) for q91j, gains #30; applies unchanged]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/thermal/qcom/tsens-v0_1.c | 9 +++++----
+ drivers/thermal/qcom/tsens-v1.c   | 7 ++++---
+ drivers/thermal/qcom/tsens-v2.c   | 2 +-
+ 3 files changed, 10 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/thermal/qcom/tsens-v0_1.c b/drivers/thermal/qcom/tsens-v0_1.c
+index 32d2d3e33..a13897632 100644
+--- a/drivers/thermal/qcom/tsens-v0_1.c
++++ b/drivers/thermal/qcom/tsens-v0_1.c
+@@ -207,7 +207,7 @@ static int calibrate_8974(struct tsens_priv *priv)
+ 	return 0;
+ }
+ 
+-static int __init init_8226(struct tsens_priv *priv)
++static int init_8226(struct tsens_priv *priv)
+ {
+ 	priv->sensor[0].slope = 2901;
+ 	priv->sensor[1].slope = 2846;
+@@ -219,7 +219,7 @@ static int __init init_8226(struct tsens_priv *priv)
+ 	return init_common(priv);
+ }
+ 
+-static int __init init_8909(struct tsens_priv *priv)
++static int init_8909(struct tsens_priv *priv)
+ {
+ 	int i;
+ 
+@@ -240,7 +240,8 @@ static int __init init_8909(struct tsens_priv *priv)
+ 	return init_common(priv);
+ }
+ 
+-static int __init init_8939(struct tsens_priv *priv) {
++static int init_8939(struct tsens_priv *priv)
++{
+ 	priv->sensor[0].slope = 2911;
+ 	priv->sensor[1].slope = 2789;
+ 	priv->sensor[2].slope = 2906;
+@@ -255,7 +256,7 @@ static int __init init_8939(struct tsens_priv *priv) {
+ 	return init_common(priv);
+ }
+ 
+-static int __init init_9607(struct tsens_priv *priv)
++static int init_9607(struct tsens_priv *priv)
+ {
+ 	int i;
+ 
+diff --git a/drivers/thermal/qcom/tsens-v1.c b/drivers/thermal/qcom/tsens-v1.c
+index 7bda8e608..ed0064f4e 100644
+--- a/drivers/thermal/qcom/tsens-v1.c
++++ b/drivers/thermal/qcom/tsens-v1.c
+@@ -145,7 +145,7 @@ static const struct reg_field tsens_v1_regfields[MAX_REGFIELDS] = {
+ 	[TRDY] = REG_FIELD(TM_TRDY_OFF, 0, 0),
+ };
+ 
+-static int __init init_8952(struct tsens_priv *priv)
++static int init_8952(struct tsens_priv *priv)
+ {
+ 	priv->sensor[0].p1_calib_offset = 2;
+ 	priv->sensor[0].p2_calib_offset = -1;
+@@ -173,7 +173,8 @@ static int __init init_8952(struct tsens_priv *priv)
+ 	return init_common(priv);
+ }
+ 
+-static int __init init_8956(struct tsens_priv *priv) {
++static int init_8956(struct tsens_priv *priv)
++{
+ 	priv->sensor[0].slope = 3313;
+ 	priv->sensor[1].slope = 3275;
+ 	priv->sensor[2].slope = 3320;
+@@ -189,7 +190,7 @@ static int __init init_8956(struct tsens_priv *priv) {
+ 	return init_common(priv);
+ }
+ 
+-static int __init init_tsens_v1_no_rpm(struct tsens_priv *priv)
++static int init_tsens_v1_no_rpm(struct tsens_priv *priv)
+ {
+ 	int i, ret;
+ 	u32 mask = 0;
+diff --git a/drivers/thermal/qcom/tsens-v2.c b/drivers/thermal/qcom/tsens-v2.c
+index 843dd29fa..22284973b 100644
+--- a/drivers/thermal/qcom/tsens-v2.c
++++ b/drivers/thermal/qcom/tsens-v2.c
+@@ -220,7 +220,7 @@ static int tsens_v2_calibration(struct tsens_priv *priv)
+ 	return 0;
+ }
+ 
+-static int __init init_tsens_v2_no_rpm(struct tsens_priv *priv)
++static int init_tsens_v2_no_rpm(struct tsens_priv *priv)
+ {
+ 	struct device *dev = priv->dev;
+ 	int i, ret;
+-- 
+2.43.0
+

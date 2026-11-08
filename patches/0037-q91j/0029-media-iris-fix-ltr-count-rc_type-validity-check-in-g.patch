@@ -1,0 +1,40 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Wangao Wang <wangao.wang@oss.qualcomm.com>
+Date: Thu, 29 Oct 2026 11:12:00 +0800
+Subject: [PATCH 29/30] media: iris: fix ltr count rc_type validity check in
+ gen2
+
+The condition was inverted: CBR_VFR, CBR_CFR and RC_OFF are the valid
+rc_types for LTR, so reject anything that does NOT match these types.
+
+Fixes: 6870381285b8 ("media: qcom: iris: Add Long-Term Reference support for encoder")
+Signed-off-by: Wangao Wang <wangao.wang@oss.qualcomm.com>
+
+[mzak: picked from lore <20261029-gen2_ltr_fix-v1-1-6d5518d59b9c@oss.qualcomm.com> for q91j, gains #30; applies unchanged]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/media/platform/qcom/iris/iris_ctrls.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_ctrls.c b/drivers/media/platform/qcom/iris/iris_ctrls.c
+index 46d47c3a6..2612907ae 100644
+--- a/drivers/media/platform/qcom/iris/iris_ctrls.c
++++ b/drivers/media/platform/qcom/iris/iris_ctrls.c
+@@ -1430,9 +1430,9 @@ int iris_set_ltr_count_gen2(struct iris_inst *inst, enum platform_inst_fw_cap_ty
+ 	if (!ltr_count)
+ 		return -EINVAL;
+ 
+-	if (inst->hfi_rc_type == HFI_RC_CBR_VFR ||
+-	    inst->hfi_rc_type == HFI_RC_CBR_CFR ||
+-	    inst->hfi_rc_type == HFI_RC_OFF) {
++	if (inst->hfi_rc_type != HFI_RC_CBR_VFR &&
++	    inst->hfi_rc_type != HFI_RC_CBR_CFR &&
++	    inst->hfi_rc_type != HFI_RC_OFF) {
+ 		inst->fw_caps[LTR_COUNT].value = 0;
+ 		return -EINVAL;
+ 	}
+-- 
+2.43.0
+
