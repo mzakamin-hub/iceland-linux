@@ -1,0 +1,202 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 7 Nov 2026 00:08:33 +0200
+Subject: [PATCH 2/9] arm64: dts: qcom: kaanapali-oneplus-iceland: QMX CPU
+ backstops
+
+Add passive trips at 95 C (5 C hysteresis, 250 ms passive polling) on the
+eight qmx-* zones, mapped to the cluster's CPU cooling device, next to the
+cpu-* / cpullc-* backstops of the shell zone commit. The idea and the zone set
+follow Doctor Logix's kaanapali-cpu-cooling.dtsi (denialwm 8bd03159587a),
+which throttles the Pad 4 at 90 C; we keep our 95 C.
+
+Promoted to the default device tree after the q91e opt-in rows passed
+(7 Nov 2026, owner rule: what passes becomes the default).
+
+Suggested-by: Doctor Logix <doctor.logix@gmail.com>
+Based-on: denialwm/linux-perpetua 8bd03159587a (zone set; the 95 C value is ours)
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ .../kaanapali-oneplus-iceland-qmx-optin.dtsi  | 159 ++++++++++++++++++
+ .../dts/qcom/kaanapali-oneplus-iceland.dts    |   1 +
+ 2 files changed, 160 insertions(+)
+ create mode 100644 arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland-qmx-optin.dtsi
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland-qmx-optin.dtsi b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland-qmx-optin.dtsi
+new file mode 100644
+index 000000000..b272ea8cc
+--- /dev/null
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland-qmx-optin.dtsi
+@@ -0,0 +1,159 @@
++// SPDX-License-Identifier: BSD-3-Clause
++/*
++ * OPT-IN, rehearsal only (q91d, 7 Nov 2026): CPU passive backstops on the eight QMX sensors, as Doctor Logix's
++ * kaanapali-cpu-cooling.dtsi (denialwm 8bd03159587a) does for every kaanapali board, with our value: 95 C and
++ * 5 C hysteresis, the same as the cpu-* / cpullc-* backstops of kaanapali-oneplus-iceland-thermal-optin.dtsi
++ * (denialwm uses 90 C on the Pad 4). Stock throttles at 105 C.
++ */
++
++&{/thermal-zones/qmx-0-0-thermal} {
++	polling-delay-passive = <250>;
++
++	trips {
++		qmx_0_0_backstop: qmx-0-0-backstop {
++			temperature = <95000>;
++			hysteresis = <5000>;
++			type = "passive";
++		};
++	};
++
++	cooling-maps {
++		map-backstop {
++			trip = <&qmx_0_0_backstop>;
++			cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++		};
++	};
++};
++
++&{/thermal-zones/qmx-0-1-thermal} {
++	polling-delay-passive = <250>;
++
++	trips {
++		qmx_0_1_backstop: qmx-0-1-backstop {
++			temperature = <95000>;
++			hysteresis = <5000>;
++			type = "passive";
++		};
++	};
++
++	cooling-maps {
++		map-backstop {
++			trip = <&qmx_0_1_backstop>;
++			cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++		};
++	};
++};
++
++&{/thermal-zones/qmx-0-2-thermal} {
++	polling-delay-passive = <250>;
++
++	trips {
++		qmx_0_2_backstop: qmx-0-2-backstop {
++			temperature = <95000>;
++			hysteresis = <5000>;
++			type = "passive";
++		};
++	};
++
++	cooling-maps {
++		map-backstop {
++			trip = <&qmx_0_2_backstop>;
++			cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++		};
++	};
++};
++
++&{/thermal-zones/qmx-1-0-thermal} {
++	polling-delay-passive = <250>;
++
++	trips {
++		qmx_1_0_backstop: qmx-1-0-backstop {
++			temperature = <95000>;
++			hysteresis = <5000>;
++			type = "passive";
++		};
++	};
++
++	cooling-maps {
++		map-backstop {
++			trip = <&qmx_1_0_backstop>;
++			cooling-device = <&cpu6 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++		};
++	};
++};
++
++&{/thermal-zones/qmx-1-1-thermal} {
++	polling-delay-passive = <250>;
++
++	trips {
++		qmx_1_1_backstop: qmx-1-1-backstop {
++			temperature = <95000>;
++			hysteresis = <5000>;
++			type = "passive";
++		};
++	};
++
++	cooling-maps {
++		map-backstop {
++			trip = <&qmx_1_1_backstop>;
++			cooling-device = <&cpu6 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++		};
++	};
++};
++
++&{/thermal-zones/qmx-1-2-thermal} {
++	polling-delay-passive = <250>;
++
++	trips {
++		qmx_1_2_backstop: qmx-1-2-backstop {
++			temperature = <95000>;
++			hysteresis = <5000>;
++			type = "passive";
++		};
++	};
++
++	cooling-maps {
++		map-backstop {
++			trip = <&qmx_1_2_backstop>;
++			cooling-device = <&cpu6 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++		};
++	};
++};
++
++&{/thermal-zones/qmx-1-3-thermal} {
++	polling-delay-passive = <250>;
++
++	trips {
++		qmx_1_3_backstop: qmx-1-3-backstop {
++			temperature = <95000>;
++			hysteresis = <5000>;
++			type = "passive";
++		};
++	};
++
++	cooling-maps {
++		map-backstop {
++			trip = <&qmx_1_3_backstop>;
++			cooling-device = <&cpu6 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++		};
++	};
++};
++
++&{/thermal-zones/qmx-1-4-thermal} {
++	polling-delay-passive = <250>;
++
++	trips {
++		qmx_1_4_backstop: qmx-1-4-backstop {
++			temperature = <95000>;
++			hysteresis = <5000>;
++			type = "passive";
++		};
++	};
++
++	cooling-maps {
++		map-backstop {
++			trip = <&qmx_1_4_backstop>;
++			cooling-device = <&cpu6 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++		};
++	};
++};
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index dad6b0372..1a4e7b462 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -3939,3 +3939,4 @@ smp2p-sleepstate {
+ 	};
+ };
+ #include "kaanapali-oneplus-iceland-thermal-optin.dtsi"
++#include "kaanapali-oneplus-iceland-qmx-optin.dtsi"
+-- 
+2.43.0
+

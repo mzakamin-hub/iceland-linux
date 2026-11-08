@@ -1,0 +1,42 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Armada <noreply@armada.local>
+Date: Sat, 7 Nov 2026 11:33:53 +0200
+Subject: [PATCH 7/9] pinctrl: qcom: sm8650-lpass-lpi: force runtime suspend
+ across system sleep
+
+The LPI pin controller only has runtime PM ops, and it is a device-link
+supplier of the SoundWire controllers. When a SoundWire peripheral is
+kept runtime-active (the WCD9390 on the AYN Odin 3, held for jack
+detection), the controllers are force-suspended for system sleep but
+keep their link references, so the pin controller stays active with
+its LPASS_HW_MACRO and LPASS_HW_DCODEC votes, and the ADSP keeps LPASS
+(and CX) up through s2idle. Force the runtime suspend across system
+sleep, like the macros and the SoundWire controller.
+
+Link: https://github.com/armada-os/armada/blob/4c945ec5b28176c8580059a1c5ab6176ac5f3104/packages/kernel/patches/0565-pinctrl-qcom-sm8650-lpass-lpi-force-runtime-suspend-across-system-sleep.patch
+[mzak: picked from portare-ch/portareos 1124, which carries armada-os 0565
+ on the SM8550 LPI driver. On the OnePlus Pad 4 (SM8850) the kaanapali
+ lpass_tlmm node ("qcom,sm8750-lpass-lpi-pinctrl", "qcom,sm8650-lpass-lpi-pinctrl")
+ binds this driver, so the change goes here, as in armada's original.]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/pinctrl/qcom/pinctrl-sm8650-lpass-lpi.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/pinctrl/qcom/pinctrl-sm8650-lpass-lpi.c b/drivers/pinctrl/qcom/pinctrl-sm8650-lpass-lpi.c
+index bc7889c99..e33d4360c 100644
+--- a/drivers/pinctrl/qcom/pinctrl-sm8650-lpass-lpi.c
++++ b/drivers/pinctrl/qcom/pinctrl-sm8650-lpass-lpi.c
+@@ -220,6 +220,7 @@ static const struct of_device_id lpi_pinctrl_of_match[] = {
+ MODULE_DEVICE_TABLE(of, lpi_pinctrl_of_match);
+ 
+ static const struct dev_pm_ops lpi_pinctrl_pm_ops = {
++	SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend, pm_runtime_force_resume)
+ 	RUNTIME_PM_OPS(pm_clk_suspend, pm_clk_resume, NULL)
+ };
+ 
+-- 
+2.43.0
+

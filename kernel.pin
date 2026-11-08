@@ -137,6 +137,8 @@ INFINITI_COMMIT=10650ae7bef447d04eb820bfc0c2d5a98d83e4e2
 # Kernel 7.4.0-rc1-iceland-00645-ge71b4b12aba6.
 # q91e (7 Nov 2026) = q91d + 0032-q91e: GPI multi-owner I2C, GPI command matching, the Horae shell sensor driver, GMU supplier sync, dispcc DSI disable-unused, optional smaller dwc3 usb-ddr vote (default off). Config: + configs/q91e.config.
 # Kernel 7.4.0-rc1-iceland-00653-ga2dc53808442.
+# q91f (7 Nov 2026) = q91e + 0033-q91f: shell thermal zone, CPU and QMX backstops and the Horae sensor in the default DT, ramoops 2 MiB, SoundWire / LPI forced runtime suspend in system sleep, smp2p inbound reset only on restart, UFS clock gating held in system PM.
+# Kernel 7.4.0-rc1-iceland-00662-g80b909b46db4.
 
 # Tree hash expected after each series on v7.4-rc1 (scripts/prepare.sh checks them):
 TREE_AFTER_0001_infiniti=bb91771cc3af5b0da66e7363a225d3d7cd53b2ee
@@ -171,3 +173,4 @@ TREE_AFTER_0029_q91b=2b604f559d8c87149eb635603edff595f537cc82
 TREE_AFTER_0030_q91c=c1e6089cb38ffdc61ba6fb82afd9ffc0237747e9
 TREE_AFTER_0031_q91d=62f2af873b0a09867ad62ba788f5a1397adb8e96
 TREE_AFTER_0032_q91e=389071fecbb95c723cbb95b259b52b945b2adad3
+TREE_AFTER_0033_q91f=278196c49f1624bed13832d843b0c02f82e5048b

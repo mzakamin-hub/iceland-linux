@@ -1,0 +1,48 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Armada <noreply@armada.local>
+Date: Sat, 7 Nov 2026 11:33:53 +0200
+Subject: [PATCH 8/9] soc: qcom: smp2p: reset inbound state only on restart
+
+Commit 42c4cf5d4828 ("soc: qcom: smp2p: Add support for smp2p v2")
+clears the last handled value of every inbound entry so that the values
+a v2 remote writes after a restart are seen as changes. The commit
+message scopes this to a detected restart, but the loop runs on every
+interrupt whenever the SSR ack feature was negotiated.
+
+Every notification from the remote then reports each set bit as a fresh
+rising edge. On SM8550 the ADSP notifies several times a second while
+its sensors stream, so the q6v5 ready and handover interrupts fire at
+that rate and log "Handover signaled, but it already happened" each
+time.
+
+Only clear the inbound state when a restart is detected.
+
+Fixes: 42c4cf5d4828 ("soc: qcom: smp2p: Add support for smp2p v2")
+Link: https://github.com/armada-os/armada/blob/b58df0a1ae086da5f39ef3647f63db5a2288f82f/packages/kernel/patches/0569-soc-qcom-smp2p-reset-inbound-state-only-on-restart.patch
+
+[mzak: picked from portare-ch/portareos 1143 (= armada-os 0569). Our smp2p.c had the same loop
+ (qcom_smp2p_check_ssr() cleared every inbound last_value whenever SSR ack was negotiated).]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/soc/qcom/smp2p.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/soc/qcom/smp2p.c b/drivers/soc/qcom/smp2p.c
+index 01b8580c9..11af1f64e 100644
+--- a/drivers/soc/qcom/smp2p.c
++++ b/drivers/soc/qcom/smp2p.c
+@@ -194,6 +194,9 @@ static bool qcom_smp2p_check_ssr(struct qcom_smp2p *smp2p)
+ 
+ 	restart_done = in->flags & BIT(SMP2P_FLAGS_RESTART_DONE_BIT);
+ 	restart = restart_done != smp2p->ssr_ack;
++	if (!restart)
++		return false;
++
+ 	list_for_each_entry(entry, &smp2p->inbound, node) {
+ 		if (!entry->value)
+ 			continue;
+-- 
+2.43.0
+

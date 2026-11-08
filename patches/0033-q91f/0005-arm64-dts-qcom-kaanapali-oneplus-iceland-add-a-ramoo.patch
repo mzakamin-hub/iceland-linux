@@ -1,0 +1,71 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 7 Nov 2026 11:29:45 +0200
+Subject: [PATCH 5/9] arm64: dts: qcom: kaanapali-oneplus-iceland: add a
+ ramoops region
+
+A silent freeze ends in a watchdog reset and leaves nothing behind: the
+kernel has PSTORE_RAM, PSTORE_CONSOLE and PSTORE_PMSG, but no region to
+store into. The only other backend, efi_pstore, needs non-volatile EFI
+runtime variables, which the U-Boot boot chain does not provide. pstore
+takes one backend: ramoops probes at boot, before efi_pstore's initcall.
+
+Add a fixed 2 MiB ramoops region: 512 KiB console log, 256 KiB pmsg and
+five 256 KiB oops / panic records, 16-byte ECC per record.
+
+Stock describes its 2.25 MiB ramoops-region only as a dynamic allocation
+above 4 GiB (alloc-ranges, no reg), so there is no stock address to reuse.
+The region sits in HLOS RAM of the first ABL /memory segment above 4 GiB
+(0x880000000-0x8af8fe000), 416 MiB above stock's fixed lcp_dare_region
+(0x880000000, 96 MiB, reusable) and outside every stock fixed region, and
+far below the top of RAM, where U-Boot's EFI runtime data and GRUB's
+initrd are placed. A kernel image placed over it by KASLR makes the
+no-map reservation fail (-EBUSY), and ramoops then fails its
+request_mem_region on System RAM: no pstore for that boot, nothing else.
+
+The idea of carrying stock's pstore over to the mainline device tree
+follows the lockup diagnostics of denialwm's linux-perpetua (Doctor
+Logix), which keeps CSD_LOCK_WAIT_DEBUG on for the Pad 4.
+
+Suggested-by: Doctor Logix <doctor.logix@gmail.com>
+Based-on: denialwm/linux-perpetua lockup diagnostics (CSD_LOCK_WAIT_DEBUG + pstore; idea only)
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ .../dts/qcom/kaanapali-oneplus-iceland.dts    | 20 +++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index e66681bb8..586fee50b 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -338,6 +338,26 @@ adsp_rpc_remote_heap_mem: adsp-rpc-remote-heap {
+ 			size = <0x0 0xc00000>;
+ 			no-map;
+ 		};
++
++		/*
++		 * pstore/ramoops: the console log of the previous boot, oops / panic
++		 * records and pmsg survive a warm reset or a watchdog reset here.
++		 * Stock places its 2.25 MiB ramoops-region dynamically above 4 GiB
++		 * (alloc-ranges, no fixed address), so this is a fixed 2 MiB in
++		 * HLOS RAM of the first segment above 4 GiB (ABL /memory segment
++		 * 0x880000000-0x8af8fe000), clear of stock's fixed regions there
++		 * (lcp_dare_region 0x880000000 + 96 MiB) and far below the top of
++		 * RAM, where U-Boot's EFI allocations and the initrd sit.
++		 */
++		ramoops@8a0000000 {
++			compatible = "ramoops";
++			reg = <0x8 0xa0000000 0x0 0x200000>;
++			no-map;
++			record-size = <0x40000>;
++			console-size = <0x80000>;
++			pmsg-size = <0x40000>;
++			ecc-size = <16>;
++		};
+ 	};
+ 
+ 	sound {
+-- 
+2.43.0
+
