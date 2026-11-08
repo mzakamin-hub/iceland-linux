@@ -1,0 +1,72 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 7 Nov 2026 15:08:02 +0200
+Subject: [PATCH] soc: qcom: smp2p_sleepstate: wakeup events only while
+ suspending
+
+The DSPs toggle the inbound sleepstate entry many times a second while
+sensors stream. Each edge reported a 200 ms wakeup event, so the wakeup
+source stayed active for as long as a sensor client was open, and a
+read of /sys/power/wakeup_count blocks while any wakeup source is
+active. KDE's powerdevil reads it through a helper before every
+suspend: the helper hung until the 25 s D-Bus timeout, so a closed
+cover put the tablet to sleep only after ~26 s (and not at all if the
+cover was opened again within that time).
+
+The wakeup event only matters once a suspend has started: from
+PM_SUSPEND_PREPARE (this notifier runs first) to PM_POST_SUSPEND it
+aborts the suspend or wakes the system as before. Outside that window
+the edges are ignored.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/soc/qcom/smp2p_sleepstate.c | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/soc/qcom/smp2p_sleepstate.c b/drivers/soc/qcom/smp2p_sleepstate.c
+index 70f1a4e6e..139a465a4 100644
+--- a/drivers/soc/qcom/smp2p_sleepstate.c
++++ b/drivers/soc/qcom/smp2p_sleepstate.c
+@@ -24,6 +24,7 @@ struct smp2p_sleepstate {
+ 	struct qcom_smem_state *state;
+ 	struct wakeup_source *ws;
+ 	struct notifier_block pm_nb;
++	bool suspending;
+ };
+ 
+ static int smp2p_sleepstate_pm_notifier(struct notifier_block *nb,
+@@ -33,10 +34,12 @@ static int smp2p_sleepstate_pm_notifier(struct notifier_block *nb,
+ 
+ 	switch (event) {
+ 	case PM_SUSPEND_PREPARE:
++		WRITE_ONCE(ss->suspending, true);
+ 		qcom_smem_state_update_bits(ss->state, AWAKE_BIT, 0);
+ 		break;
+ 	case PM_POST_SUSPEND:
+ 		qcom_smem_state_update_bits(ss->state, AWAKE_BIT, AWAKE_BIT);
++		WRITE_ONCE(ss->suspending, false);
+ 		break;
+ 	}
+ 
+@@ -47,7 +50,16 @@ static irqreturn_t smp2p_sleepstate_handler(int irq, void *data)
+ {
+ 	struct smp2p_sleepstate *ss = data;
+ 
+-	__pm_wakeup_event(ss->ws, 200);
++	/*
++	 * Only a suspend in progress needs to hear that the DSP wants the AP
++	 * awake. While the system is running, the DSP toggles this entry
++	 * many times a second when sensors stream; a wakeup event for each
++	 * edge kept the source active all the time, and a read of
++	 * /sys/power/wakeup_count blocks while any source is active (KDE's
++	 * powerdevil waited 25 s before every suspend).
++	 */
++	if (READ_ONCE(ss->suspending))
++		__pm_wakeup_event(ss->ws, 200);
+ 
+ 	return IRQ_HANDLED;
+ }
+-- 
+2.43.0
+
