@@ -1,0 +1,68 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 7 Nov 2026 11:36:10 +0200
+Subject: [PATCH 3/3] wifi: ath12k: writable WMI_WOW_ENABLE flags for the wake
+ bring-up
+
+The vendor host sets flags in WMI_WOW_ENABLE that tell the firmware how
+the host sleeps (system suspend, PCIe DRV L1SS sleep); the firmware
+chooses how it wakes the host from them. Upstream sends 0.
+
+Add the two known flag bits and wow_flags (default 0 = unchanged), so
+the wake path can be tried without a rebuild, as denialwm/linux-perpetua
+476ac2f9e476 does for its PCIe DRV bring-up.
+
+Suggested-by: Doctor Logix <doctor.logix@gmail.com>
+Based-on: denialwm/linux-perpetua 476ac2f9e476
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/net/wireless/ath/ath12k/wmi.c | 9 ++++++++-
+ drivers/net/wireless/ath/ath12k/wmi.h | 4 ++++
+ 2 files changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/ath/ath12k/wmi.c b/drivers/net/wireless/ath/ath12k/wmi.c
+index e7ecae9b7..30ae8f23f 100644
+--- a/drivers/net/wireless/ath/ath12k/wmi.c
++++ b/drivers/net/wireless/ath/ath12k/wmi.c
+@@ -10954,6 +10954,11 @@ int ath12k_wmi_wow_host_wakeup_ind(struct ath12k *ar)
+ 	return ret;
+ }
+ 
++static uint ath12k_wmi_wow_flags;
++module_param_named(wow_flags, ath12k_wmi_wow_flags, uint, 0644);
++MODULE_PARM_DESC(wow_flags,
++		 "WMI_WOW_ENABLE flags for a suspend into Wake-on-WLAN, e.g. 0x20 system suspend, 0x10 DRV L1SS sleep (default: 0)");
++
+ int ath12k_wmi_wow_enable(struct ath12k *ar)
+ {
+ 	struct wmi_wow_enable_cmd *cmd;
+@@ -10971,7 +10976,9 @@ int ath12k_wmi_wow_enable(struct ath12k *ar)
+ 
+ 	cmd->enable = cpu_to_le32(1);
+ 	cmd->pause_iface_config = cpu_to_le32(WOW_IFACE_PAUSE_ENABLED);
+-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI, "wmi tlv wow enable\n");
++	cmd->flags = cpu_to_le32(READ_ONCE(ath12k_wmi_wow_flags));
++	ath12k_dbg(ar->ab, ATH12K_DBG_WMI, "wmi tlv wow enable flags %#x\n",
++		   le32_to_cpu(cmd->flags));
+ 
+ 	ret = ath12k_wmi_cmd_send(ar->wmi, skb, WMI_WOW_ENABLE_CMDID);
+ 	if (ret) {
+diff --git a/drivers/net/wireless/ath/ath12k/wmi.h b/drivers/net/wireless/ath/ath12k/wmi.h
+index b6b4fa6fc..dd287723a 100644
+--- a/drivers/net/wireless/ath/ath12k/wmi.h
++++ b/drivers/net/wireless/ath/ath12k/wmi.h
+@@ -5592,6 +5592,10 @@ enum wmi_wow_interface_cfg {
+ 	WOW_IFACE_PAUSE_DISABLED
+ };
+ 
++/* WMI_WOW_ENABLE_CMDID flags, as the vendor host sets them */
++#define WMI_WOW_FLAG_ENABLE_DRV_PCIE_L1SS_SLEEP	BIT(4)
++#define WMI_WOW_FLAG_SYSTEM_SUSPEND_WOW		BIT(5)
++
+ #define C2S(x) case x: return #x
+ 
+ static inline const char *wow_wakeup_event(enum wmi_wow_wakeup_event ev)
+-- 
+2.43.0
+
