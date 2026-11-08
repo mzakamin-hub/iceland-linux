@@ -1,0 +1,79 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
+Date: Tue, 20 Oct 2026 15:28:08 +0200
+Subject: [PATCH 2/3] power: supply: qcom_battmgr: Expose USB connector
+ temperature
+
+The firmware is capable of reporting the temperature of the connector.
+Expose it at the USB supply.
+
+Signed-off-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
+
+[mzak: lore 20261020-topic-usb_temp-v1-1-3dbe390f9834@oss.qualcomm.com (v1, linux-arm-msm 20 Oct 2026); git am -3, one conflict: our sm8350_usb_prop_map maps USB_TYPE to USB_ADAP_TYPE (Pad 4 port), kept, the TEMP line added after it; on the Pad 4 (OPLUS variant, oplus_usb_props) this alone exposes nothing, see the next commit]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/power/supply/qcom_battmgr.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
+index bd6b46702..d2baec2ee 100644
+--- a/drivers/power/supply/qcom_battmgr.c
++++ b/drivers/power/supply/qcom_battmgr.c
+@@ -95,6 +95,7 @@ enum qcom_battmgr_variant {
+ #define USB_ADAP_TYPE			7
+ #define USB_MOISTURE_DET_EN		8
+ #define USB_MOISTURE_DET_STS		9
++#define USB_TEMP			10
+ 
+ #define BATTMGR_WLS_PROPERTY_GET	0x34
+ #define BATTMGR_WLS_PROPERTY_SET	0x35
+@@ -391,6 +392,7 @@ struct qcom_battmgr_usb {
+ 	unsigned int current_max;
+ 	unsigned int current_limit;
+ 	unsigned int usb_type;
++	int temperature;
+ };
+ 
+ struct qcom_battmgr_wireless {
+@@ -1646,6 +1648,7 @@ static const u8 sm8350_usb_prop_map[] = {
+ 	[POWER_SUPPLY_PROP_CURRENT_MAX] = USB_CURR_MAX,
+ 	[POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT] = USB_INPUT_CURR_LIMIT,
+ 	[POWER_SUPPLY_PROP_USB_TYPE] = USB_ADAP_TYPE,
++	[POWER_SUPPLY_PROP_TEMP] = USB_TEMP,
+ };
+ 
+ static int qcom_battmgr_usb_sm8350_update(struct qcom_battmgr *battmgr,
+@@ -1727,6 +1730,9 @@ static int qcom_battmgr_usb_get_property(struct power_supply *psy,
+ 	case POWER_SUPPLY_PROP_USB_TYPE:
+ 		val->intval = battmgr->usb.usb_type;
+ 		break;
++	case POWER_SUPPLY_PROP_TEMP:
++		val->intval = battmgr->usb.temperature;
++		break;
+ 	default:
+ 		return -EINVAL;
+ 	}
+@@ -1764,6 +1770,7 @@ static const enum power_supply_property sm8350_usb_props[] = {
+ 	POWER_SUPPLY_PROP_CURRENT_MAX,
+ 	POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT,
+ 	POWER_SUPPLY_PROP_USB_TYPE,
++	POWER_SUPPLY_PROP_TEMP,
+ };
+ 
+ /* the OPLUS variant adds the cable's attach state */
+@@ -2383,6 +2390,10 @@ static void qcom_battmgr_sm8350_callback(struct qcom_battmgr *battmgr,
+ 			battmgr->usb.usb_type =
+ 				qcom_battmgr_oplus_usb_type(le32_to_cpu(resp->intval.value));
+ 			break;
++		case USB_TEMP:
++			battmgr->usb.temperature =
++				DIV_ROUND_CLOSEST((int)le32_to_cpu(resp->intval.value), 10);
++			break;
+ 		default:
+ 			dev_warn(battmgr->dev, "unknown property %#x\n", property);
+ 			break;
+-- 
+2.43.0
+

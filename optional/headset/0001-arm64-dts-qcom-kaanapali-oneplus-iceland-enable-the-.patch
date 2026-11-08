@@ -1,0 +1,79 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 19 Oct 2026 02:20:00 +0300
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: enable the USB-C
+ analog headset
+
+The Pad 4 has no 3.5 mm jack; stock plays analog headsets through the
+USB-C port (qcom,msm-mbhc-usbc-audio-supported in its sound card): the
+WCD9395 USBSS switch routes the codec's headphone and microphone lines to
+the connector's D+/D- and SBU pins in Type-C audio accessory mode. The
+codec and the switch are both described here, and the switch is already
+the connector's SBU mux, but the two are not connected: the switch does
+not find the codec's mode / orientation switch, so the codec's headset
+detection is never told about an accessory.
+
+Describe the codec as a mode and orientation switch and link it to the
+switch's port@1, as the Kaanapali MTP does (Balaji Kalkonda, "arm64:
+dts: qcom: kaanapali-mtp: Enable USB headset and Type-C accessory mode",
+v2 4/5, Reviewed-by Konrad Dybcio). Also route MIC BIAS2 to AMIC2, the
+codec's headset microphone input, as the other WCD939x boards do. The
+MTP's I2C bus changes (100 kHz, internal 2.2 kOhm pull-up) are not
+taken: without a clock-frequency this bus already runs at the GENI
+controller's default of 100 kHz, and the switch answers on it today.
+
+Link: https://lore.kernel.org/r/20261015-kaanapali_dp-v2-4-c15cb83d9140@oss.qualcomm.com
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+(cherry picked from commit 24dd73c3e017b118b93de7c3f6b5d9aa2cf313ef)
+---
+ .../dts/qcom/kaanapali-oneplus-iceland.dts     | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index d11551573..f184892ff 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -369,6 +369,7 @@ sound {
+ 		audio-routing = "IN1_HPHL", "HPHL_OUT",
+ 				"IN2_HPHR", "HPHR_OUT",
+ 				"AMIC1", "MIC BIAS1",
++				"AMIC2", "MIC BIAS2",
+ 				"AMIC5", "MIC BIAS1",
+ 				"TX SWR_INPUT0", "ADC1_OUTPUT",
+ 				"TX SWR_INPUT1", "ADC2_OUTPUT",
+@@ -495,6 +496,15 @@ wcd939x: audio-codec {
+ 		vdd-px-supply = <&vreg_l1g_1p2>;
+ 
+ 		#sound-dai-cells = <1>;
++
++		mode-switch;
++		orientation-switch;
++
++		port {
++			wcd_codec_headset_in: endpoint {
++				remote-endpoint = <&wcd_usbss_headset_out>;
++			};
++		};
+ 	};
+ 
+ 	wcn7860-pmu {
+@@ -1325,6 +1335,14 @@ wcd_usbss_sbu_mux: endpoint {
+ 					remote-endpoint = <&pmic_glink_sbu>;
+ 				};
+ 			};
++
++			port@1 {
++				reg = <1>;
++
++				wcd_usbss_headset_out: endpoint {
++					remote-endpoint = <&wcd_codec_headset_in>;
++				};
++			};
+ 		};
+ 	};
+ };
+-- 
+2.43.0
+
