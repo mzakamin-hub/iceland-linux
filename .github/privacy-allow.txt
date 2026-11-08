@@ -17,3 +17,8 @@ value 20261029105142.2503-1-26rote@gmail.com
 #
 # A section number of the IEEE 802.11be standard quoted in an upstream mac80211 patch (0019-q90r/0008), not an address.
 value 10.3.2.14
+#
+# lore Message-IDs quoted in the q91c / q91k queue (the dwc3 UTMI resume idea credited in 0028-q91/0010, the USB
+# connector temperature patch picked in 0038-q91k/0002).
+value 20261027-dwc3-utmi-resume-v1-1-ca9f0aa65783@gmail.com
+value 20261020-topic-usb_temp-v1-1-3dbe390f9834@oss.qualcomm.com
