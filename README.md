@@ -10,10 +10,21 @@ This repository is one part of the project. The boot chain and the install are d
 
 ## Current kernel
 
-- **Branch:** [`iceland-7.4-rc1`](https://github.com/mzakamin-hub/iceland-linux/tree/iceland-7.4-rc1) (tag `q91k`). Build
+- **Branch:** [`iceland-7.4-rc1`](https://github.com/mzakamin-hub/iceland-linux/tree/iceland-7.4-rc1) (tag `q91n`). Build
   from this branch.
-- **Queue:** q91k, kernel release `7.4.0-rc1-iceland-00704-ga2e1ea44d3c3`, packaged as `kernel-iceland`, on Linux
-  `v7.4-rc1`. Every queue since q91c has its own tag (`q91c` to `q91k`).
+- **Queue:** q91n, kernel release `7.4.0-rc1-iceland-00743-g06b3ff1eede5`, packaged as `kernel-iceland`, on Linux
+  `v7.4-rc1`. The released queues since q91c have their own tags (`q91c` to `q91k`, `q91n`).
+- **New in q91n** (since q91k):
+  - Security: 25 fixes from mainline: mac80211 use-after-free on an MLO link rollback and on TTLM disconnect,
+    cfg80211 regulatory rule out-of-bounds read, TCP Fast Open and ipv6 raw socket use-after-free, TCP / ipv6 RCU
+    frees, GUP-fast bounds, memcg / THP / khugepaged / shmem / vma fixes, essiv, btrfs, netfilter SIP, Bluetooth
+    CIS / CIG length checks and smb client bounds.
+  - Qualcomm: remoteproc firmware address bounds, the mdt_loader segment name and smem partition range checks;
+    msm keeps the objects of queued VM_BIND unmaps busy.
+  - Wi-Fi: ath12k fixes for a firmware crash around resume (CE interrupts toggled once, no wait in resume for a
+    reset that cannot finish there, the thermal devices unregistered once).
+  - Also included, not yet verified with a USB-PD charger: the battery manager keeps a 9 V PD contract at stock's
+    cool-down level 4 instead of returning to 5 V (series `0039-q91m-pd`).
 - **New in q91d to q91k** (since q91c):
   - GPU: GPU recovery frees the crash state asynchronously (no recovery deadlock), the GMU-to-host interrupts are
     masked before the GMU boots, A8xx 1/2-bit alpha filtering precision, msm VM_BIND and metadata lock fixes.
@@ -42,19 +53,20 @@ This repository is one part of the project. The boot chain and the install are d
 
 ## Download
 
-The newest release is q91k: the [`q91k` release](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q91k) has:
+The newest release is q91n: the [`q91n` release](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q91n) has:
 
-- `kernel-iceland-7.4.0~rc1.iceland.00704.ga2e1ea44d3c3-1.fc44.aarch64.rpm`, the package for the tablet (built for
-  Fedora 44, installs on Fedora 45);
+- `kernel-iceland-7.4.0.rc1.iceland.00743.g06b3ff1eede5-1.fc44.aarch64.rpm`, the package for the tablet (built for Fedora 44,
+  installs on Fedora 45; package version `7.4.0~rc1.iceland.00743.g06b3ff1eede5`, the file name has `.` for `~`);
 - the optional `headset` device tree, the source RPM, which carries this repository's queue, and `SHA256SUMS`.
 
 Check the files with `sha256sum -c SHA256SUMS`. On the tablet, install the package with dnf:
 
 ```bash
-sudo dnf install ./kernel-iceland-7.4.0~rc1.iceland.00704.ga2e1ea44d3c3-1.fc44.aarch64.rpm
+sudo dnf install ./kernel-iceland-7.4.0.rc1.iceland.00743.g06b3ff1eede5-1.fc44.aarch64.rpm
 ```
 
-Earlier releases: [q90z](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90z),
+Earlier releases: [q91k](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q91k),
+[q90z](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90z),
 [q90u](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90u),
 [q90r](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90r),
 [q90i](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90i) and older.
@@ -69,7 +81,7 @@ The counts below are for `iceland-7.4-rc1`.
 | `patches/0001-infiniti/` | the patches from infiniti-mainline/linux (OnePlus 15, the same SoC), rebased onto `v7.4-rc1` |
 | `patches/0002-iceland/` | the OnePlus Pad 4 series, numbered with gaps up to 0412 |
 | `patches/0003-glitchfix/` to `patches/0027-q90z/` | 158 patches: the display-timing switches of q89z, then one series per queue q90b to q90z (upstream picks and our fixes; there is no q90j series: q90j only removed patches) |
-| `patches/0028-q91/` to `patches/0038-q91k/` | the series of the v7.4-rc1 queues q91 to q91k (upstream and list picks, peer picks and our fixes; one series per queue) |
+| `patches/0028-q91/` to `patches/0040-q91n/` | the series of the v7.4-rc1 queues q91 to q91n (upstream and list picks, peer picks and our fixes; one series per queue) |
 | `optional/headset/` | the device tree change of the optional `headset` DTB (not applied by `scripts/prepare.sh`) |
 | `configs/` | `distro-neutral.config`, then one fragment per queue up to `q91e.config` (merged into the build in the order of `scripts/build.sh`) and `required.config` (options the build checks) |
 | `scripts/prepare.sh` | clones the upstream tag, checks its commit, applies every series with `git am`, checks the tree hashes |
@@ -95,7 +107,7 @@ scripts/build.sh ./src ./out    # Image, Image.gz, the DTB and the modules; writ
   but not fatal), `configs/distro-neutral.config`, `q90b.config`, `q90i.config`, `q90i-shipped.config` and
   `q90m.config` to `q90r.config`, `q90s.config`, `q90t.config`, `q90y.config`, `q90z.config` and `q91c.config` to `q91e.config`, then checks `q90i.config`, `q90i-shipped.config`,
   `q90m.config`, `q90p.config`, `q90s.config`, `q90t.config`, `q90y.config`, `q90z.config`, `q91c.config` to `q91e.config` and `required.config` strictly. The result is the
-  same `.config` as the kernel-iceland q91k package's.
+  same `.config` as the kernel-iceland q91n package's.
   A failed strict check stops the build unless `ALLOW_CONFIG_DRIFT=1` is set.
 - `out/dist/` holds `Image`, `Image.gz`, `kaanapali-oneplus-iceland.dtb`, the config, `modules-<release>.tar.zst`,
   `BUILD_INFO` (kernel release, source commit, queue commit, compiler) and `SHA256SUMS`.
