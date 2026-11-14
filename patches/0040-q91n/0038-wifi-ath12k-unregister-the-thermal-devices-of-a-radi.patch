@@ -1,0 +1,50 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Vladyslav Tymoshchuk <tvlad744@gmail.com>
+Date: Thu, 12 Nov 2026 13:00:07 +0200
+Subject: [PATCH 38/38] wifi: ath12k: unregister the thermal devices of a radio
+ only once
+
+ath12k_core_reconfigure_on_crash() calls ath12k_thermal_unregister(),
+and the devices are registered again only when the start that follows
+reaches ath12k_core_pdev_create(). If it does not, because the firmware
+crashes again or the start fails earlier, the next restart unregisters
+the devices a second time:
+
+  Unable to handle kernel NULL pointer dereference at virtual address 0000000000000050
+  Workqueue: ath12k_wq ath12k_core_restart [ath12k]
+  pc : hwmon_device_unregister+0x24/0x90
+  lr : ath12k_thermal_unregister+0x7c/0xf4 [ath12k]
+  Call trace:
+   hwmon_device_unregister+0x24/0x90 (P)
+   ath12k_thermal_unregister+0x7c/0xf4 [ath12k]
+   ath12k_core_restart+0x3c/0x210 [ath12k]
+
+Skip the radios that have nothing registered.
+
+Fixes: 151322bccdbd ("wifi: ath12k: add basic hwmon temperature reporting")
+Signed-off-by: Vladyslav Tymoshchuk <tvlad744@gmail.com>
+
+[mzak: picked from lore / patchwork series 1209448 v1 for q91n (13 Nov scan, gain E); applies unchanged]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/net/wireless/ath/ath12k/thermal.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/ath/ath12k/thermal.c b/drivers/net/wireless/ath/ath12k/thermal.c
+index 97fc49c40ac1..7707ae4eb683 100644
+--- a/drivers/net/wireless/ath/ath12k/thermal.c
++++ b/drivers/net/wireless/ath/ath12k/thermal.c
+@@ -257,7 +257,7 @@ static void ath12k_thermal_cleanup_radio(struct ath12k_base *ab, int i)
+ 	struct ath12k *ar;
+ 
+ 	ar = ab->pdevs[i].ar;
+-	if (!ar)
++	if (!ar || !ar->thermal.cdev)
+ 		return;
+ 
+ 	hwmon_device_unregister(ar->thermal.hwmon_dev);
+-- 
+2.43.0
+

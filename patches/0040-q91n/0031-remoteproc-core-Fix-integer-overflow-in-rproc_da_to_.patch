@@ -1,0 +1,66 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Atul Akella <atul.akella@gmail.com>
+Date: Sat, 31 Oct 2026 21:41:30 +0530
+Subject: [PATCH 31/38] remoteproc: core: Fix integer overflow in
+ rproc_da_to_va() bounds check
+
+offset is calculated as da - carveout->da and stored in a 32 bit
+signed int, while da and carveout->da are both u64. For a
+sufficiently small da, the 64bit difference is truncated into the
+32 bit int, bypassing the offset < 0 underflow check with a small
+positive value. Additionally, offset + len > carveout->len can
+itself overflow when offset and len are both large, providing a
+second bypass.
+
+Rewrite the bounds check entirely in u64 arithmetic. Reject
+underflow before computing offset (da < carveout->da). Replace the
+addition-based overflow check with a subtraction-based one
+(len > carveout->len - offset) so no intermediate sum can wrap.
+
+Signed-off-by: Atul Akella <atul.akella@gmail.com>
+Link: https://lore.kernel.org/r/20261031161131.1647-1-atul.akella@gmail.com
+Fixes: 400e64df6b23 ("remoteproc: add framework for controlling remote processors")
+Cc: stable@vger.kernel.org
+Signed-off-by: Mathieu Poirier <mathieu.poirier@linaro.org>
+
+(cherry picked from commit b16b5a4fdf7d1f4ec15a53622d9b66081325fbf9)
+[mzak: picked from linux-next next-20261113 for q91n (13 Nov scan, gain D); applies unchanged]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/remoteproc/remoteproc_core.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/remoteproc/remoteproc_core.c b/drivers/remoteproc/remoteproc_core.c
+index 23f8539a99bd..d5fa9d23bd5c 100644
+--- a/drivers/remoteproc/remoteproc_core.c
++++ b/drivers/remoteproc/remoteproc_core.c
+@@ -198,18 +198,20 @@ void *rproc_da_to_va(struct rproc *rproc, u64 da, size_t len, bool *is_iomem)
+ 	}
+ 
+ 	list_for_each_entry(carveout, &rproc->carveouts, node) {
+-		int offset = da - carveout->da;
++		u64 offset;
+ 
+ 		/*  Verify that carveout is allocated */
+ 		if (!carveout->va)
+ 			continue;
+ 
+ 		/* try next carveout if da is too small */
+-		if (offset < 0)
++		if (da < carveout->da)
+ 			continue;
+ 
+-		/* try next carveout if da is too large */
+-		if (offset + len > carveout->len)
++		offset = da - carveout->da;
++
++		/* try next carveout if da or len is too large */
++		if (offset > carveout->len || len > carveout->len - offset)
+ 			continue;
+ 
+ 		ptr = carveout->va + offset;
+-- 
+2.43.0
+

@@ -1,0 +1,105 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sarannya S <sarannya.s@oss.qualcomm.com>
+Date: Wed, 28 Oct 2026 10:33:50 +0100
+Subject: [PATCH 35/38] soc: qcom: smem: validate private item payloads
+
+Validate a matching entry's size and padding even when the caller does
+not request the length, and check that the payload stays inside the
+same region as the header.
+
+Zero-length payloads are now rejected as invalid.
+
+Signed-off-by: Sarannya S <sarannya.s@oss.qualcomm.com>
+Signed-off-by: Pranav Mahesh Phansalkar <pranav.phansalkar@oss.qualcomm.com>
+Signed-off-by: Sudeepgoud Patil <sudeep.patil@oss.qualcomm.com>
+Signed-off-by: Albert Esteve <aesteve@redhat.com>
+Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
+Reviewed-by: Abel Vesa <abel.vesa@oss.qualcomm.com>
+Link: https://patch.msgid.link/20261028-port-smem-v5-3-121257d490b5@redhat.com
+[bjorn: ptr != NULL should be ptr]
+Signed-off-by: Bjorn Andersson <andersson@kernel.org>
+
+(cherry picked from commit 8815169259ad002577a7053212760f9c2490ae4a)
+[mzak: picked from qcom drivers-for-7.5 for q91n (13 Nov scan, gain D); applies unchanged]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/soc/qcom/smem.c | 35 +++++++++++++++++++----------------
+ 1 file changed, 19 insertions(+), 16 deletions(-)
+
+diff --git a/drivers/soc/qcom/smem.c b/drivers/soc/qcom/smem.c
+index b14c1ee41c2f..92a00a826591 100644
+--- a/drivers/soc/qcom/smem.c
++++ b/drivers/soc/qcom/smem.c
+@@ -615,6 +615,7 @@ static void *qcom_smem_get_private(struct qcom_smem *smem,
+ 	struct smem_private_entry *next_e;
+ 	struct smem_partition_header *phdr;
+ 	void *item_ptr, *p_end;
++	size_t entry_size = 0;
+ 	u32 padding_data;
+ 	u32 e_size;
+ 
+@@ -634,20 +635,21 @@ static void *qcom_smem_get_private(struct qcom_smem *smem,
+ 			goto invalid_canary;
+ 
+ 		if (le16_to_cpu(e->item) == item) {
+-			if (size != NULL) {
+-				e_size = le32_to_cpu(e->size);
+-				padding_data = le16_to_cpu(e->padding_data);
++			e_size = le32_to_cpu(e->size);
++			padding_data = le16_to_cpu(e->padding_data);
+ 
+-				if (WARN_ON(e_size > part->size || padding_data > e_size))
+-					return ERR_PTR(-EINVAL);
++			if (WARN_ON(e_size > part->size || padding_data >= e_size))
++				return ERR_PTR(-EINVAL);
+ 
+-				*size = e_size - padding_data;
+-			}
++			entry_size = e_size - padding_data;
+ 
+ 			item_ptr = uncached_entry_to_item(e);
+-			if (WARN_ON(item_ptr > p_end))
++			if (WARN_ON(!IN_PARTITION_RANGE(item_ptr, entry_size, e, uncached_end)))
+ 				return ERR_PTR(-EINVAL);
+ 
++			if (size)
++				*size = entry_size;
++
+ 			return item_ptr;
+ 		}
+ 
+@@ -677,20 +679,21 @@ static void *qcom_smem_get_private(struct qcom_smem *smem,
+ 			goto invalid_canary;
+ 
+ 		if (le16_to_cpu(e->item) == item) {
+-			if (size != NULL) {
+-				e_size = le32_to_cpu(e->size);
+-				padding_data = le16_to_cpu(e->padding_data);
++			e_size = le32_to_cpu(e->size);
++			padding_data = le16_to_cpu(e->padding_data);
+ 
+-				if (WARN_ON(e_size > part->size || padding_data > e_size))
+-					return ERR_PTR(-EINVAL);
++			if (WARN_ON(e_size > part->size || padding_data >= e_size))
++				return ERR_PTR(-EINVAL);
+ 
+-				*size = e_size - padding_data;
+-			}
++			entry_size = e_size - padding_data;
+ 
+ 			item_ptr = cached_entry_to_item(e);
+-			if (WARN_ON(item_ptr < (void *)phdr))
++			if (WARN_ON(!IN_PARTITION_RANGE(item_ptr, entry_size, cached_end, e)))
+ 				return ERR_PTR(-EINVAL);
+ 
++			if (size)
++				*size = entry_size;
++
+ 			return item_ptr;
+ 		}
+ 
+-- 
+2.43.0
+

@@ -1,0 +1,60 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sarannya S <sarannya.s@oss.qualcomm.com>
+Date: Wed, 28 Oct 2026 10:33:48 +0100
+Subject: [PATCH 33/38] soc: qcom: smem: add IN_PARTITION_RANGE helper
+
+Add IN_PARTITION_RANGE() to test that a pointer lies in [start, end]
+and that pointer + size does not wrap.
+
+Signed-off-by: Sarannya S <sarannya.s@oss.qualcomm.com>
+Signed-off-by: Pranav Mahesh Phansalkar <pranav.phansalkar@oss.qualcomm.com>
+Signed-off-by: Sudeepgoud Patil <sudeep.patil@oss.qualcomm.com>
+Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
+Signed-off-by: Albert Esteve <aesteve@redhat.com>
+Reviewed-by: Abel Vesa <abel.vesa@oss.qualcomm.com>
+Link: https://patch.msgid.link/20261028-port-smem-v5-1-121257d490b5@redhat.com
+Signed-off-by: Bjorn Andersson <andersson@kernel.org>
+
+(cherry picked from commit 784f49db7a33d5feda0ff1d4200c1653cad0114a)
+[mzak: picked from qcom drivers-for-7.5 for q91n (13 Nov scan, gain D); applies unchanged]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/soc/qcom/smem.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/drivers/soc/qcom/smem.c b/drivers/soc/qcom/smem.c
+index b5e7bd8c1512..36a4a10f3aec 100644
+--- a/drivers/soc/qcom/smem.c
++++ b/drivers/soc/qcom/smem.c
+@@ -2,6 +2,7 @@
+ /*
+  * Copyright (c) 2015, Sony Mobile Communications AB.
+  * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
++ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+  */
+ 
+ #include <linux/debugfs.h>
+@@ -88,6 +89,18 @@
+ /* Processor/host identifier for the global partition */
+ #define SMEM_GLOBAL_HOST	0xfffe
+ 
++/* Entry range check
++ * ptr >= start : Checks if ptr is at or past the start of the region
++ * ptr <= end   : Checks if ptr is within the region
++ * size <= end - ptr: Checks if size fits in the remaining space, using
++ *                    uintptr_t subtraction to avoid pointer overflow UB
++ *                    (safe because ptr <= end is checked first)
++ */
++#define IN_PARTITION_RANGE(ptr, size, start, end)		\
++	((void *)(ptr) >= (void *)(start) &&			\
++	 (void *)(ptr) <= (void *)(end) &&			\
++	 (size) <= (uintptr_t)(end) - (uintptr_t)(ptr))
++
+ /**
+   * struct smem_proc_comm - proc_comm communication struct (legacy)
+   * @command:	current command to be executed
+-- 
+2.43.0
+

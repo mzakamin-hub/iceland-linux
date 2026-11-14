@@ -1,0 +1,129 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Dani=C3=ABl=20Trujillo?= <datrujillo@nvidia.com>
+Date: Fri, 6 Nov 2026 05:02:23 +0000
+Subject: [PATCH 23/38] ipv4: fib_trie: prevent speculative out-of-bounds child
+ access
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+fib_table_lookup() checks the child index against the bounds before
+passing it to get_child_rcu().
+
+The index is derived from the lookup key, which in turn is derived from
+flp->daddr. A userspace process can therefore influence the index by
+triggering lookups for chosen destination IPv4 addresses.
+
+If this bounds check is mispredicted as in-bounds, an out-of-bounds index
+can be transiently passed to get_child_rcu(). The value loaded beyond the
+child array is then treated as a node pointer. A later transient
+dereference of that pointer can cause a data-dependent cache footprint.
+
+This was found during Spectre-v1 research. Leakage was demonstrated with
+instrumentation that delays branch resolution with a CLFLUSH before the
+mispredicted branch and makes the leaked location deterministic for
+reproducible measurement. In that setup, a userspace-controlled IPv4
+lookup key was able to trigger a transient out-of-bounds child access.
+The transient use of the loaded value as a pointer caused a
+data-dependent cache footprint that was recoverable from userspace using
+Prime+Probe. A real-world attacker would likely need to delay branch
+resolution, which was not demonstrated end-to-end without the added
+CLFLUSH.
+
+Sanitize the index with array_index_nospec() before accessing the child
+array. This removed the observed leakage in the described setup.
+
+Apply the hardening before setting cindex in fib_table_lookup(), because
+cindex can later be used by the backtrace path to load another child
+pointer. fib_find_node() has the same pattern, with the checked index
+derived from a user-provided key in fib_table_insert() and
+fib_table_delete(). leaf_walk_rcu() has a similar checked cindex before
+get_child_rcu(), and the traversed state can be influenced by userspace
+actions. fib_find_node() runs under RTNL and leaf_walk_rcu() is not on
+the packet lookup hot path, so harden those analogous accesses in the
+same way. Also harden fib_trie_get_next(), where a mispredicted loop
+condition could transiently read one child past the array.
+
+I see a slowdown of roughly 10% in a microbenchmark where we call
+fib_table_lookup() with 64 routes directly from inside the kernel. I
+observed no slowdown in a loopback UDP sendto() microbenchmark.
+
+Fixes: 9f9e636d4f89 ("fib_trie: Optimize fib_table_lookup to avoid wasting time on loops/variables")
+Cc: stable@vger.kernel.org
+Reviewed-by: Eric Dumazet <edumazet@kernel.org>
+Signed-off-by: Daniël Trujillo <datrujillo@nvidia.com>
+Link: https://patch.msgid.link/20261106-fib-trie-nospec-v3-1-53da6550dcf8@nvidia.com
+Signed-off-by: Jakub Kicinski <kuba@kernel.org>
+
+(cherry picked from commit fd3d73286662950656f54616d0b3fea29e2dc99a)
+[mzak: picked from torvalds master (v7.4-rc2+) for q91n (13 Nov scan, gain A); applies unchanged]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ net/ipv4/fib_trie.c | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/net/ipv4/fib_trie.c b/net/ipv4/fib_trie.c
+index be1e40780ad7..394df1de1281 100644
+--- a/net/ipv4/fib_trie.c
++++ b/net/ipv4/fib_trie.c
+@@ -61,6 +61,7 @@
+ #include <linux/export.h>
+ #include <linux/vmalloc.h>
+ #include <linux/notifier.h>
++#include <linux/nospec.h>
+ #include <net/net_namespace.h>
+ #include <net/inet_dscp.h>
+ #include <net/ip.h>
+@@ -961,6 +962,8 @@ static struct key_vector *fib_find_node(struct trie *t,
+ 			break;
+ 		}
+ 
++		index = array_index_nospec(index, 1ul << n->bits);
++
+ 		/* keep searching until we find a perfect match leaf or NULL */
+ 	} while (IS_TNODE(n));
+ 
+@@ -1467,6 +1470,8 @@ int fib_table_lookup(struct fib_table *tb, const struct flowi4 *flp,
+ 		if (IS_LEAF(n))
+ 			goto found;
+ 
++		index = array_index_nospec(index, 1ul << n->bits);
++
+ 		/* only record pn and cindex if we are going to be chopping
+ 		 * bits later.  Otherwise we are just wasting cycles.
+ 		 */
+@@ -1770,6 +1775,8 @@ static struct key_vector *leaf_walk_rcu(struct key_vector **tn, t_key key)
+ 		if (cindex >> pn->bits)
+ 			break;
+ 
++		cindex = array_index_nospec(cindex, 1ul << pn->bits);
++
+ 		/* descend into the next child */
+ 		n = get_child_rcu(pn, cindex++);
+ 		if (!n)
+@@ -1791,6 +1798,8 @@ static struct key_vector *leaf_walk_rcu(struct key_vector **tn, t_key key)
+ 			continue;
+ 		}
+ 
++		cindex = array_index_nospec(cindex, 1ul << pn->bits);
++
+ 		/* grab the next available node */
+ 		n = get_child_rcu(pn, cindex++);
+ 		if (!n)
+@@ -2437,7 +2446,10 @@ static struct key_vector *fib_trie_get_next(struct fib_trie_iter *iter)
+ 
+ 	while (!IS_TRIE(pn)) {
+ 		while (cindex < child_length(pn)) {
+-			struct key_vector *n = get_child_rcu(pn, cindex++);
++			struct key_vector *n;
++
++			cindex = array_index_nospec(cindex, child_length(pn));
++			n = get_child_rcu(pn, cindex++);
+ 
+ 			if (!n)
+ 				continue;
+-- 
+2.43.0
+

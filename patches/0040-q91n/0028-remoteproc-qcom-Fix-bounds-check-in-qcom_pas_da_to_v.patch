@@ -1,0 +1,59 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Atul Akella <atul.akella@gmail.com>
+Date: Sat, 7 Nov 2026 00:13:09 +0530
+Subject: [PATCH 28/38] remoteproc: qcom: Fix bounds check in
+ qcom_pas_da_to_va()
+
+offset is calculated as da - pas->mem_reloc and stored in a
+32 bit signed int, while da and pas->mem_reloc are both u64.
+For a sufficiently small da, the 64bit difference is truncated
+into the 32 bit int, bypassing the offset < 0 underflow check
+with a small positive value. Additionally, offset + len >
+pas->mem_size can itself overflow when offset and len are both
+large, providing a second bypass.
+
+da and len come from firmware's ELF program headers via
+rproc_da_to_va(), and the result is used by the ELF loader
+to write firmware segments, so a malformed firmware image can
+cause writes outside the carveout.
+
+Rewrite the bounds check entirely in u64 arithmetic. Reject
+underflow before computing offset (da < pas->mem_reloc).
+Replace the addition based overflow check with a
+subtraction based one (len > pas->mem_size - offset) so no
+intermediate sum can wrap.
+
+Fixes: b9e718e950c3 ("remoteproc: Introduce Qualcomm ADSP PIL")
+Cc: stable@vger.kernel.org
+Signed-off-by: Atul Akella <atul.akella@gmail.com>
+
+[mzak: picked from lore / patchwork series 1204460 v1 for q91n (13 Nov scan, gain D); applies unchanged]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/remoteproc/qcom_q6v5_pas.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/remoteproc/qcom_q6v5_pas.c b/drivers/remoteproc/qcom_q6v5_pas.c
+index a1ea271051e2..79fc2a54db17 100644
+--- a/drivers/remoteproc/qcom_q6v5_pas.c
++++ b/drivers/remoteproc/qcom_q6v5_pas.c
+@@ -474,10 +474,12 @@ static int qcom_pas_stop(struct rproc *rproc)
+ static void *qcom_pas_da_to_va(struct rproc *rproc, u64 da, size_t len, bool *is_iomem)
+ {
+ 	struct qcom_pas *pas = rproc->priv;
+-	int offset;
++	u64 offset;
+ 
++	if (da < pas->mem_reloc)
++		return NULL;
+ 	offset = da - pas->mem_reloc;
+-	if (offset < 0 || offset + len > pas->mem_size)
++	if (offset > pas->mem_size || len > pas->mem_size - offset)
+ 		return NULL;
+ 
+ 	if (is_iomem)
+-- 
+2.43.0
+

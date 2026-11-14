@@ -1,0 +1,65 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Vladyslav Tymoshchuk <tvlad744@gmail.com>
+Date: Thu, 12 Nov 2026 13:00:05 +0200
+Subject: [PATCH 36/38] wifi: ath12k: disable and enable the CE interrupts only
+ once
+
+ath12k_pci_ce_irqs_disable() calls disable_irq_nosync() each time it is
+called, and ath12k_pci_ce_irqs_enable() calls enable_irq() once, from
+ath12k_pci_start().
+
+Without WoWLAN, ath12k_core_suspend_late() disables the CE interrupts
+and powers the device down, and ath12k_core_resume_early() boots the
+firmware again. If the firmware crashes during that boot, before
+ath12k_pci_start(), ath12k_core_reset() disables the interrupts a
+second time. The start that follows the reset enables them once, they
+stay masked and the HTC control response is never seen:
+
+  ath12k_wifi7_pci 0000:01:00.0: Service connect timeout
+  ath12k_wifi7_pci 0000:01:00.0: failed to connect to HTT: -110
+  ath12k_wifi7_pci 0000:01:00.0: failed to start core: -110
+  ath12k_wifi7_pci 0000:01:00.0: failed to reconfigure driver on crash recovery
+
+The device is dead until a reboot.
+
+Make ATH12K_FLAG_CE_IRQ_ENABLED guard both functions, as
+ATH12K_FLAG_EXT_IRQ_ENABLED does for the ext interrupts.
+
+Fixes: 8d5f4da8d70b ("wifi: ath12k: support suspend/resume")
+Signed-off-by: Vladyslav Tymoshchuk <tvlad744@gmail.com>
+
+[mzak: picked from lore / patchwork series 1209448 v1 for q91n (13 Nov scan, gain E); applies unchanged]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/net/wireless/ath/ath12k/pci.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/net/wireless/ath/ath12k/pci.c b/drivers/net/wireless/ath/ath12k/pci.c
+index 7d780b3fa521..4d2696e35edf 100644
+--- a/drivers/net/wireless/ath/ath12k/pci.c
++++ b/drivers/net/wireless/ath/ath12k/pci.c
+@@ -381,7 +381,8 @@ static void ath12k_pci_ce_irqs_disable(struct ath12k_base *ab)
+ {
+ 	int i;
+ 
+-	clear_bit(ATH12K_FLAG_CE_IRQ_ENABLED, &ab->dev_flags);
++	if (!test_and_clear_bit(ATH12K_FLAG_CE_IRQ_ENABLED, &ab->dev_flags))
++		return;
+ 
+ 	for (i = 0; i < ab->hw_params->ce_count; i++) {
+ 		if (ath12k_ce_get_attr_flags(ab, i) & CE_ATTR_DIS_INTR)
+@@ -722,7 +723,8 @@ static void ath12k_pci_ce_irqs_enable(struct ath12k_base *ab)
+ {
+ 	int i;
+ 
+-	set_bit(ATH12K_FLAG_CE_IRQ_ENABLED, &ab->dev_flags);
++	if (test_and_set_bit(ATH12K_FLAG_CE_IRQ_ENABLED, &ab->dev_flags))
++		return;
+ 
+ 	for (i = 0; i < ab->hw_params->ce_count; i++) {
+ 		if (ath12k_ce_get_attr_flags(ab, i) & CE_ATTR_DIS_INTR)
+-- 
+2.43.0
+
