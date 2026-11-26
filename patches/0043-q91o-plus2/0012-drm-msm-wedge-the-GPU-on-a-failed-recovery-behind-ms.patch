@@ -1,0 +1,758 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 23:23:48 +0200
+Subject: [PATCH 12/21] drm/msm: wedge the GPU on a failed recovery behind
+ msm.wedge_failed_recovery
+
+Our policy so far (default, unchanged): when the hardware init at the end
+of ->recover() fails, the queued submits are completed as faulted and
+not replayed (fail_queued_submits), and on A8xx a recovery whose CX GDSC
+did not collapse completes them too (a8xx_safe_recover). yzddmr6's set
+argues that completing hardware fences before a confirmed CX collapse
+can let DMA run into freed or reused memory.
+
+With msm.wedge_failed_recovery=1 (read-only, default off) their policy
+applies instead:
+- A6xx-A8xx share a checked recovery power cycle (a6xx_recover_pm):
+  runtime PM and hw_init failures are no longer ignored; a GPU whose
+  recovery fails is marked wedged for good: new submits and runtime
+  resume get -EIO, the per-ring hangcheck timers stop, queued jobs that
+  reach run_job end with -EIO without touching the hardware;
+- outstanding hardware fences are completed with -EIO only after a
+  confirmed CX power collapse (if hw_init started the CP, the GPU is
+  suspended again first); otherwise fences and buffers are kept;
+- the fence advance past the hung submit moves after ->recover();
+- hardware fences are initialised under gpu->lock only when a submit
+  reaches the hardware, so a failure cannot complete future jobs;
+- timestamp, debugfs, perf counter and sysprof paths check the runtime
+  PM / hw_init result;
+- legacy GEM close waits interruptibly and rechecks the wedged state
+  once a second, leaving the mappings to the final free, so a process
+  can exit while the fences of a wedged GPU stay pending.
+Off, every gpu->wedged test is inert (only msm_gpu_recovery_failed(),
+reached from the switched paths alone, sets it) and the recover worker,
+the A6xx / A8xx recover functions, submit, run_job and the other paths
+run the previous code.
+
+Re-implemented from yzddmr6's linux-sm8450-liuqin work (no
+Signed-off-by): commit 3700afaa3add ("drm/msm: stop A6xx-A8xx replay when
+GPU recovery fails"), itself based on their earlier liuqin change (Link
+below), and commit 03dad4b6a375 ("drm/msm: let legacy GEM close exit after
+terminal GPU failure"),
+adapted to our per-ring hangcheck, hung_ring / recovery_in_progress and
+the A8xx safe-recover parameter.
+
+Link: https://github.com/yzddmr6/linux-sm8450-liuqin/commit/018982b5e1ac830617c6aed9cacb6cc68f4eae1a
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/adreno/a6xx_gpu.c      |  78 +++++++++++
+ drivers/gpu/drm/msm/adreno/a6xx_gpu.h      |   1 +
+ drivers/gpu/drm/msm/adreno/a8xx_gpu.c      |  10 ++
+ drivers/gpu/drm/msm/adreno/adreno_device.c |   7 +-
+ drivers/gpu/drm/msm/adreno/adreno_gpu.c    |  12 +-
+ drivers/gpu/drm/msm/msm_debugfs.c          |  21 ++-
+ drivers/gpu/drm/msm/msm_gem.c              |  35 ++++-
+ drivers/gpu/drm/msm/msm_gem_submit.c       |   3 +
+ drivers/gpu/drm/msm/msm_gpu.c              | 154 +++++++++++++++++++--
+ drivers/gpu/drm/msm/msm_gpu.h              |  10 +-
+ drivers/gpu/drm/msm/msm_perfcntr.c         |  11 +-
+ drivers/gpu/drm/msm/msm_ringbuffer.c       |  19 ++-
+ drivers/gpu/drm/msm/msm_submitqueue.c      |  15 +-
+ 13 files changed, 340 insertions(+), 36 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gpu.c b/drivers/gpu/drm/msm/adreno/a6xx_gpu.c
+index 9b048623a6062..2c64cdf4ef1e1 100644
+--- a/drivers/gpu/drm/msm/adreno/a6xx_gpu.c
++++ b/drivers/gpu/drm/msm/adreno/a6xx_gpu.c
+@@ -1571,6 +1571,75 @@ static void a6xx_dump(struct msm_gpu *gpu)
+ 	adreno_dump(gpu);
+ }
+ 
++/* Drop and restore the two recovery references without waking the GPU. */
++static int a6xx_recover_suspend(struct msm_gpu *gpu, int active_submits)
++{
++	struct a6xx_gmu *gmu = &to_a6xx_gpu(to_adreno_gpu(gpu))->gmu;
++	struct device *dev = &gpu->pdev->dev;
++	int ret;
++
++	reinit_completion(&gmu->pd_gate);
++	ret = dev_pm_genpd_add_notifier(gmu->cxpd, &gmu->pd_nb);
++	if (ret)
++		return ret;
++
++	dev_pm_genpd_synced_poweroff(gmu->cxpd);
++
++	if (active_submits)
++		pm_runtime_put_noidle(dev);
++	ret = pm_runtime_put_sync_suspend(dev);
++
++	if (ret >= 0 &&
++	    !wait_for_completion_timeout(&gmu->pd_gate, msecs_to_jiffies(1000)))
++		ret = -ETIMEDOUT;
++
++	dev_pm_genpd_remove_notifier(gmu->cxpd);
++
++	if (active_submits)
++		pm_runtime_get_noresume(dev);
++	pm_runtime_get_noresume(dev);
++
++	return ret < 0 ? ret : 0;
++}
++
++/*
++ * msm.wedge_failed_recovery: the checked recovery power cycle shared by
++ * A6xx-A8xx. Caller holds gpu->lock and active_lock, with active_submits
++ * cleared.
++ */
++void a6xx_recover_pm(struct msm_gpu *gpu, int active_submits)
++{
++	struct a6xx_gpu *a6xx_gpu = to_a6xx_gpu(to_adreno_gpu(gpu));
++	struct a6xx_gmu *gmu = &a6xx_gpu->gmu;
++	bool quiesced = false;
++	int ret;
++
++	ret = a6xx_recover_suspend(gpu, active_submits);
++	if (ret)
++		goto failed;
++
++	/* No submitted commands survive a confirmed CX power collapse. */
++	quiesced = true;
++	ret = pm_runtime_resume(&gpu->pdev->dev);
++	if (ret < 0)
++		goto failed;
++
++	quiesced = false;
++	ret = msm_gpu_hw_init(gpu);
++	if (ret) {
++		/* hw_init may have started the CP; stop it before ending fences. */
++		gmu->hung = true;
++		quiesced = !a6xx_recover_suspend(gpu, active_submits);
++		goto failed;
++	}
++
++	a6xx_gpu->hung = false;
++	return;
++
++failed:
++	msm_gpu_recovery_failed(gpu, ret, quiesced);
++}
++
+ static void a6xx_recover(struct msm_gpu *gpu)
+ {
+ 	struct adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
+@@ -1617,6 +1686,15 @@ static void a6xx_recover(struct msm_gpu *gpu)
+ 		a6xx_gpu_sw_reset(gpu, false);
+ 	}
+ 
++	if (msm_wedge_failed_recovery) {
++		a6xx_recover_pm(gpu, active_submits);
++
++		gpu->active_submits = active_submits;
++		mutex_unlock(&gpu->active_lock);
++		pm_runtime_use_autosuspend(&gpu->pdev->dev);
++		return;
++	}
++
+ 	reinit_completion(&gmu->pd_gate);
+ 	dev_pm_genpd_add_notifier(gmu->cxpd, &gmu->pd_nb);
+ 	dev_pm_genpd_synced_poweroff(gmu->cxpd);
+diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
+index ffc60814c5a0a..740b28a84c07b 100644
+--- a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
++++ b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
+@@ -354,6 +354,7 @@ int a6xx_gpu_state_put(struct msm_gpu_state *state);
+ 
+ void a6xx_bus_clear_pending_transactions(struct adreno_gpu *adreno_gpu, bool gx_off);
+ void a6xx_gpu_sw_reset(struct msm_gpu *gpu, bool assert);
++void a6xx_recover_pm(struct msm_gpu *gpu, int active_submits);
+ int a6xx_fenced_write(struct a6xx_gpu *gpu, u32 offset, u64 value, u32 mask, bool is_64b);
+ void a6xx_flush(struct msm_gpu *gpu, struct msm_ringbuffer *ring);
+ void a6xx_flush_yield(struct msm_gpu *gpu, struct msm_ringbuffer *ring);
+diff --git a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
+index 1c4b98269b0ca..6d83464a7b61f 100644
+--- a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
++++ b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
+@@ -1015,6 +1015,16 @@ void a8xx_recover(struct msm_gpu *gpu)
+ 	 */
+ 	gpu->active_submits = 0;
+ 
++	/* the checked power cycle replaces a8xx_safe_recover's completion */
++	if (msm_wedge_failed_recovery) {
++		a6xx_recover_pm(gpu, active_submits);
++
++		gpu->active_submits = active_submits;
++		mutex_unlock(&gpu->active_lock);
++		pm_runtime_use_autosuspend(&gpu->pdev->dev);
++		return;
++	}
++
+ 	reinit_completion(&gmu->pd_gate);
+ 	dev_pm_genpd_add_notifier(gmu->cxpd, &gmu->pd_nb);
+ 	dev_pm_genpd_synced_poweroff(gmu->cxpd);
+diff --git a/drivers/gpu/drm/msm/adreno/adreno_device.c b/drivers/gpu/drm/msm/adreno/adreno_device.c
+index b2ec0146c9fe0..351a3ca3a9b4e 100644
+--- a/drivers/gpu/drm/msm/adreno/adreno_device.c
++++ b/drivers/gpu/drm/msm/adreno/adreno_device.c
+@@ -424,7 +424,12 @@ MODULE_DEVICE_TABLE(of, dt_match);
+ static int adreno_runtime_resume(struct device *dev)
+ {
+ 	struct msm_gpu *gpu = dev_to_gpu(dev);
+-	int ret = gpu->funcs->pm_resume(gpu);
++	int ret;
++
++	if (READ_ONCE(gpu->wedged))
++		return -EIO;
++
++	ret = gpu->funcs->pm_resume(gpu);
+ 	if (!ret)
+ 		ret = msm_perfcntr_resume(gpu);
+ 	return ret;
+diff --git a/drivers/gpu/drm/msm/adreno/adreno_gpu.c b/drivers/gpu/drm/msm/adreno/adreno_gpu.c
+index bd536158d2031..8d36e972e64ac 100644
+--- a/drivers/gpu/drm/msm/adreno/adreno_gpu.c
++++ b/drivers/gpu/drm/msm/adreno/adreno_gpu.c
+@@ -401,7 +401,17 @@ int adreno_get_param(struct msm_gpu *gpu, struct msm_context *ctx,
+ 		return 0;
+ 	case MSM_PARAM_TIMESTAMP:
+ 		if (adreno_gpu->funcs->get_timestamp) {
+-			pm_runtime_get_sync(&gpu->pdev->dev);
++			if (READ_ONCE(gpu->wedged))
++				return -EIO;
++
++			if (!msm_wedge_failed_recovery) {
++				pm_runtime_get_sync(&gpu->pdev->dev);
++			} else {
++				int ret = pm_runtime_resume_and_get(&gpu->pdev->dev);
++
++				if (ret < 0)
++					return ret;
++			}
+ 			*value = adreno_gpu->funcs->get_timestamp(gpu);
+ 			pm_runtime_put_autosuspend(&gpu->pdev->dev);
+ 
+diff --git a/drivers/gpu/drm/msm/msm_debugfs.c b/drivers/gpu/drm/msm/msm_debugfs.c
+index d05307bfa1235..14d0c66ea2431 100644
+--- a/drivers/gpu/drm/msm/msm_debugfs.c
++++ b/drivers/gpu/drm/msm/msm_debugfs.c
+@@ -84,13 +84,26 @@ static int msm_gpu_open(struct inode *inode, struct file *file)
+ 	if (ret)
+ 		goto free_priv;
+ 
+-	pm_runtime_get_sync(&gpu->pdev->dev);
+-	msm_gpu_hw_init(gpu);
+-	show_priv->state = gpu->funcs->gpu_state_get(gpu);
+-	pm_runtime_put_sync(&gpu->pdev->dev);
++	if (!msm_wedge_failed_recovery) {
++		pm_runtime_get_sync(&gpu->pdev->dev);
++		msm_gpu_hw_init(gpu);
++		show_priv->state = gpu->funcs->gpu_state_get(gpu);
++		pm_runtime_put_sync(&gpu->pdev->dev);
++	} else {
++		ret = pm_runtime_resume_and_get(&gpu->pdev->dev);
++		if (ret >= 0) {
++			ret = msm_gpu_hw_init(gpu);
++			if (!ret)
++				show_priv->state = gpu->funcs->gpu_state_get(gpu);
++			pm_runtime_put_sync(&gpu->pdev->dev);
++		}
++	}
+ 
+ 	mutex_unlock(&gpu->lock);
+ 
++	if (ret < 0)
++		goto free_priv;
++
+ 	if (IS_ERR(show_priv->state)) {
+ 		ret = PTR_ERR(show_priv->state);
+ 		goto free_priv;
+diff --git a/drivers/gpu/drm/msm/msm_gem.c b/drivers/gpu/drm/msm/msm_gem.c
+index 130ae27ee00be..68599dbbe4fe4 100644
+--- a/drivers/gpu/drm/msm/msm_gem.c
++++ b/drivers/gpu/drm/msm/msm_gem.c
+@@ -54,8 +54,10 @@ static void put_iova_spaces(struct drm_gem_object *obj, struct drm_gpuvm *vm,
+ 
+ static void msm_gem_close(struct drm_gem_object *obj, struct drm_file *file)
+ {
++	struct msm_drm_private *priv = obj->dev->dev_private;
+ 	struct msm_context *ctx = file->driver_priv;
+ 	struct drm_exec exec;
++	long ret;
+ 
+ 	update_ctx_mem(file, -obj->size);
+ 	msm_gem_vma_put(obj);
+@@ -76,12 +78,33 @@ static void msm_gem_close(struct drm_gem_object *obj, struct drm_file *file)
+ 	if (msm_context_is_vmbind(ctx))
+ 		return;
+ 
+-	/*
+-	 * TODO we might need to kick this to a queue to avoid blocking
+-	 * in CLOSE ioctl
+-	 */
+-	dma_resv_wait_timeout(obj->resv, DMA_RESV_USAGE_BOOKKEEP, false,
+-			      MAX_SCHEDULE_TIMEOUT);
++	if (!msm_wedge_failed_recovery) {
++		/*
++		 * TODO we might need to kick this to a queue to avoid blocking
++		 * in CLOSE ioctl
++		 */
++		dma_resv_wait_timeout(obj->resv, DMA_RESV_USAGE_BOOKKEEP, false,
++				      MAX_SCHEDULE_TIMEOUT);
++	} else {
++		/*
++		 * A failed recovery may be unable to stop DMA: it keeps the
++		 * pending fences and BO references, but close must still let
++		 * the process exit. Leave the mappings to
++		 * msm_gem_free_object() rather than unmapping memory the GPU
++		 * might still access; the same holds when a signal interrupts
++		 * the wait (submits hold the BO and VM). The terminal state is
++		 * rechecked once a second; that is not a deadline.
++		 */
++		while (!dma_resv_test_signaled(obj->resv, DMA_RESV_USAGE_BOOKKEEP)) {
++			if (READ_ONCE(priv->gpu->wedged))
++				return;
++			ret = dma_resv_wait_timeout(obj->resv,
++						    DMA_RESV_USAGE_BOOKKEEP,
++						    true, HZ);
++			if (ret < 0)
++				return;
++		}
++	}
+ 
+ 	msm_gem_lock_vm_and_obj(&exec, obj, ctx->vm);
+ 	put_iova_spaces(obj, ctx->vm, true, "close");
+diff --git a/drivers/gpu/drm/msm/msm_gem_submit.c b/drivers/gpu/drm/msm/msm_gem_submit.c
+index c7b3315c69b0a..7220971ef5819 100644
+--- a/drivers/gpu/drm/msm/msm_gem_submit.c
++++ b/drivers/gpu/drm/msm/msm_gem_submit.c
+@@ -632,6 +632,9 @@ int msm_ioctl_gem_submit(struct drm_device *dev, void *data,
+ 	if (!gpu)
+ 		return -ENXIO;
+ 
++	if (READ_ONCE(gpu->wedged))
++		return -EIO;
++
+ 	if (!vm)
+ 		return UERR(ENOMEM, dev, "no VM");
+ 
+diff --git a/drivers/gpu/drm/msm/msm_gpu.c b/drivers/gpu/drm/msm/msm_gpu.c
+index 34ef145fb8e30..ed0a45168062d 100644
+--- a/drivers/gpu/drm/msm/msm_gpu.c
++++ b/drivers/gpu/drm/msm/msm_gpu.c
+@@ -166,12 +166,28 @@ void msm_gpu_show_fdinfo(struct msm_gpu *gpu, struct msm_context *ctx,
+ 	drm_printf(p, "drm-maxfreq-gpu:\t%u Hz\n", gpu->fast_rate);
+ }
+ 
++/*
++ * A GPU whose recovery fails is wedged for good: new submits are refused, the
++ * hangcheck stops, queued jobs end with -EIO without touching the hardware,
++ * and the pending hardware fences are completed only after a confirmed CX
++ * collapse (otherwise they and their buffers are kept, as DMA may still run).
++ * Off (default): the queued submits are completed as faulted when the
++ * hardware init after ->recover() fails, as before.
++ */
++bool msm_wedge_failed_recovery;
++module_param_named(wedge_failed_recovery, msm_wedge_failed_recovery, bool, 0400);
++MODULE_PARM_DESC(wedge_failed_recovery,
++		 "Wedge the GPU when its recovery fails and keep unfinished fences until CX collapsed (default off)");
++
+ int msm_gpu_hw_init(struct msm_gpu *gpu)
+ {
+ 	int ret;
+ 
+ 	WARN_ON(!mutex_is_locked(&gpu->lock));
+ 
++	if (gpu->wedged)
++		return -EIO;
++
+ 	if (!gpu->needs_hw_init)
+ 		return 0;
+ 
+@@ -460,6 +476,54 @@ find_submit(struct msm_ringbuffer *ring, uint32_t fence)
+ 
+ static void retire_submits(struct msm_gpu *gpu);
+ 
++/* Only call after the GPU can no longer access the submitted buffers. */
++static void msm_gpu_fail_submits(struct msm_gpu *gpu)
++{
++	int i;
++
++	lockdep_assert_held(&gpu->lock);
++
++	for (i = 0; i < gpu->nr_rings; i++) {
++		struct msm_ringbuffer *ring = gpu->rb[i];
++		struct msm_gem_submit *submit;
++		unsigned long flags;
++
++		spin_lock_irqsave(&ring->submit_lock, flags);
++		list_for_each_entry(submit, &ring->submits, node) {
++			struct dma_fence *fence = submit->hw_fence;
++
++			spin_lock(dma_fence_spinlock(fence));
++			if (!dma_fence_is_signaled_locked(fence)) {
++				dma_fence_set_error(fence, -EIO);
++				dma_fence_signal_locked(fence);
++			}
++			spin_unlock(dma_fence_spinlock(fence));
++		}
++		spin_unlock_irqrestore(&ring->submit_lock, flags);
++
++		ring->memptrs->fence = ring->fctx->last_fence;
++		msm_update_fence(ring->fctx, ring->fctx->last_fence);
++	}
++}
++
++/* msm.wedge_failed_recovery only: the only place that sets gpu->wedged */
++void msm_gpu_recovery_failed(struct msm_gpu *gpu, int error, bool quiesced)
++{
++	int i;
++
++	lockdep_assert_held(&gpu->lock);
++
++	WRITE_ONCE(gpu->wedged, true);
++	for (i = 0; i < gpu->nr_rings; i++)
++		timer_delete_sync(&gpu->rb[i]->hangcheck_timer);
++	DRM_DEV_ERROR(&gpu->pdev->dev, "GPU recovery failed: %d; device wedged\n", error);
++	if (quiesced)
++		msm_gpu_fail_submits(gpu);
++	else
++		DRM_DEV_ERROR(&gpu->pdev->dev,
++			      "GPU not quiescent; retaining pending fences and buffers\n");
++}
++
+ static void get_comm_cmdline(struct msm_gem_submit *submit, char **comm, char **cmd)
+ {
+ 	struct msm_context *ctx = submit->queue->ctx;
+@@ -534,11 +598,14 @@ static void recover_worker(struct kthread_work *work)
+ 	char *comm = NULL, *cmd = NULL;
+ 	unsigned int noreclaim_flag;
+ 	struct task_struct *task;
+-	int i;
++	int i, ret = 0;
+ 
+ 	mutex_lock(&gpu->lock);
+ 	WRITE_ONCE(gpu->recovery_in_progress, true);
+ 
++	if (gpu->wedged)
++		goto out_unlock;
++
+ 	DRM_DEV_ERROR(dev->dev, "%s: hangcheck recover!\n", gpu->name);
+ 
+ 	submit = find_submit(cur_ring, cur_ring->memptrs->fence + 1);
+@@ -590,14 +657,37 @@ static void recover_worker(struct kthread_work *work)
+ 	}
+ 
+ 	/* Record the crash state */
+-	pm_runtime_get_sync(&gpu->pdev->dev);
+-	msm_gpu_crashstate_capture(gpu, submit, NULL, comm, cmd);
++	if (msm_wedge_failed_recovery) {
++		ret = pm_runtime_get_sync(&gpu->pdev->dev);
++		if (ret >= 0)
++			msm_gpu_crashstate_capture(gpu, submit, NULL, comm, cmd);
++	} else {
++		pm_runtime_get_sync(&gpu->pdev->dev);
++		msm_gpu_crashstate_capture(gpu, submit, NULL, comm, cmd);
++	}
+ 
+ 	memalloc_noreclaim_restore(noreclaim_flag);
+ 
+ 	kfree(cmd);
+ 	kfree(comm);
+ 
++	/*
++	 * msm.wedge_failed_recovery: recover first and advance the fences
++	 * only after recovery has stopped the old commands (fence waiters can
++	 * release BOs before retire_submits() runs); a failed recovery wedges
++	 * the GPU and replays nothing.
++	 */
++	if (msm_wedge_failed_recovery) {
++		if (ret < 0) {
++			msm_gpu_recovery_failed(gpu, ret, false);
++			goto out_pm;
++		}
++		priv->disable_err_irq = false;
++		gpu->funcs->recover(gpu);
++		if (gpu->wedged)
++			goto out_pm;
++	}
++
+ 	/*
+ 	 * Update all the rings with the latest and greatest fence.. this
+ 	 * needs to happen after msm_rd_dump_submit() to ensure that the
+@@ -618,13 +708,15 @@ static void recover_worker(struct kthread_work *work)
+ 		msm_update_fence(ring->fctx, fence);
+ 	}
+ 
+-	priv->disable_err_irq = false;
++	if (!msm_wedge_failed_recovery) {
++		priv->disable_err_irq = false;
+ 
+-	gpu->funcs->recover(gpu);
++		gpu->funcs->recover(gpu);
+ 
+-	/* ->recover() ends with a hardware init: did the GPU come back? */
+-	if (gpu->needs_hw_init)
+-		fail_queued_submits(gpu);
++		/* ->recover() ends with a hardware init: did the GPU come back? */
++		if (gpu->needs_hw_init)
++			fail_queued_submits(gpu);
++	}
+ 
+ 	/* retire completed submits, plus the one that hung: */
+ 	retire_submits(gpu);
+@@ -650,6 +742,7 @@ static void recover_worker(struct kthread_work *work)
+ 		spin_unlock_irqrestore(&ring->submit_lock, flags);
+ 	}
+ 
++out_pm:
+ 	pm_runtime_put(&gpu->pdev->dev);
+ 
+ out_unlock:
+@@ -662,12 +755,17 @@ static void recover_worker(struct kthread_work *work)
+ void msm_gpu_fault_crashstate_capture(struct msm_gpu *gpu, struct msm_gpu_fault_info *fault_info)
+ {
+ 	struct msm_gem_submit *submit;
+-	struct msm_ringbuffer *cur_ring = gpu->funcs->active_ring(gpu);
++	struct msm_ringbuffer *cur_ring;
+ 	char *comm = NULL, *cmd = NULL;
+ 	unsigned int noreclaim_flag;
+ 
+ 	mutex_lock(&gpu->lock);
+ 
++	if (gpu->wedged)
++		goto resume_smmu;
++
++	cur_ring = gpu->funcs->active_ring(gpu);
++
+ 	submit = find_submit(cur_ring, cur_ring->memptrs->fence + 1);
+ 	if (submit && submit->fault_dumped)
+ 		goto resume_smmu;
+@@ -685,9 +783,14 @@ void msm_gpu_fault_crashstate_capture(struct msm_gpu *gpu, struct msm_gpu_fault_
+ 	}
+ 
+ 	/* Record the crash state */
+-	pm_runtime_get_sync(&gpu->pdev->dev);
+-	msm_gpu_crashstate_capture(gpu, submit, fault_info, comm, cmd);
+-	pm_runtime_put_sync(&gpu->pdev->dev);
++	if (!msm_wedge_failed_recovery) {
++		pm_runtime_get_sync(&gpu->pdev->dev);
++		msm_gpu_crashstate_capture(gpu, submit, fault_info, comm, cmd);
++		pm_runtime_put_sync(&gpu->pdev->dev);
++	} else if (pm_runtime_resume_and_get(&gpu->pdev->dev) >= 0) {
++		msm_gpu_crashstate_capture(gpu, submit, fault_info, comm, cmd);
++		pm_runtime_put_sync(&gpu->pdev->dev);
++	}
+ 
+ 	memalloc_noreclaim_restore(noreclaim_flag);
+ 
+@@ -747,6 +850,9 @@ static void hangcheck_worker(struct kthread_work *work)
+ 	struct drm_device *dev = gpu->dev;
+ 	uint32_t fence = ring->memptrs->fence;
+ 
++	if (READ_ONCE(gpu->wedged))
++		return;
++
+ 	if (fence != ring->hangcheck_fence) {
+ 		/* some progress has been made.. ya! */
+ 		ring->hangcheck_fence = fence;
+@@ -918,16 +1024,32 @@ void msm_gpu_retire(struct msm_gpu *gpu)
+ }
+ 
+ /* add bo's to gpu's ring, and kick gpu: */
+-void msm_gpu_submit(struct msm_gpu *gpu, struct msm_gem_submit *submit)
++int msm_gpu_submit(struct msm_gpu *gpu, struct msm_gem_submit *submit)
+ {
+ 	struct msm_ringbuffer *ring = submit->ring;
+ 	unsigned long flags;
++	int ret;
+ 
+ 	WARN_ON(!mutex_is_locked(&gpu->lock));
+ 
+-	pm_runtime_get_sync(&gpu->pdev->dev);
++	if (msm_wedge_failed_recovery) {
++		ret = pm_runtime_resume_and_get(&gpu->pdev->dev);
++		if (ret < 0)
++			return ret;
++
++		ret = msm_gpu_hw_init(gpu);
++		if (ret) {
++			pm_runtime_put(&gpu->pdev->dev);
++			return ret;
++		}
++
++		/* only a submit that reaches the hardware gets its hw fence */
++		msm_fence_init(submit->hw_fence, ring->fctx);
++	} else {
++		pm_runtime_get_sync(&gpu->pdev->dev);
+ 
+-	msm_gpu_hw_init(gpu);
++		msm_gpu_hw_init(gpu);
++	}
+ 
+ 	submit->seqno = submit->hw_fence->seqno;
+ 
+@@ -955,6 +1077,8 @@ void msm_gpu_submit(struct msm_gpu *gpu, struct msm_gem_submit *submit)
+ 
+ 	pm_runtime_put(&gpu->pdev->dev);
+ 	hangcheck_ring_timer_reset(gpu, submit->ring);
++
++	return 0;
+ }
+ 
+ /*
+diff --git a/drivers/gpu/drm/msm/msm_gpu.h b/drivers/gpu/drm/msm/msm_gpu.h
+index 10c3db69f1743..c5961b71eb526 100644
+--- a/drivers/gpu/drm/msm/msm_gpu.h
++++ b/drivers/gpu/drm/msm/msm_gpu.h
+@@ -213,6 +213,12 @@ struct msm_gpu {
+ 	/* does gpu need hw_init? */
+ 	bool needs_hw_init;
+ 
++	/*
++	 * msm.wedge_failed_recovery: terminal recovery failure; set under
++	 * lock, read with READ_ONCE elsewhere. Never set with the switch off.
++	 */
++	bool wedged;
++
+ 	/**
+ 	 * global_faults: number of GPU hangs not attributed to a particular
+ 	 * address space
+@@ -763,7 +769,9 @@ void msm_devfreq_idle(struct msm_gpu *gpu);
+ int msm_gpu_hw_init(struct msm_gpu *gpu);
+ 
+ void msm_gpu_retire(struct msm_gpu *gpu);
+-void msm_gpu_submit(struct msm_gpu *gpu, struct msm_gem_submit *submit);
++extern bool msm_wedge_failed_recovery;
++void msm_gpu_recovery_failed(struct msm_gpu *gpu, int error, bool quiesced);
++int msm_gpu_submit(struct msm_gpu *gpu, struct msm_gem_submit *submit);
+ 
+ int msm_gpu_init(struct drm_device *drm, struct platform_device *pdev,
+ 		struct msm_gpu *gpu, const struct msm_gpu_funcs *funcs,
+diff --git a/drivers/gpu/drm/msm/msm_perfcntr.c b/drivers/gpu/drm/msm/msm_perfcntr.c
+index d50a57063bc63..f6d31d2232b8e 100644
+--- a/drivers/gpu/drm/msm/msm_perfcntr.c
++++ b/drivers/gpu/drm/msm/msm_perfcntr.c
+@@ -201,10 +201,9 @@ sel_worker(struct work_struct *w)
+ 	scoped_guard (mutex, &gpu->lock) {
+ 		guard(mutex)(&gpu->perfcntr_lock);
+ 
+-		if (stream == gpu->perfcntrs->stream) {
+-			msm_gpu_hw_init(gpu);
++		if (stream == gpu->perfcntrs->stream &&
++		    (!msm_gpu_hw_init(gpu) || !msm_wedge_failed_recovery))
+ 			gpu->funcs->perfcntr_configure(gpu, ring, stream);
+-		}
+ 	}
+ 
+ 	pm_runtime_put_autosuspend(&gpu->pdev->dev);
+@@ -246,6 +245,9 @@ sample_worker(struct kthread_work *work)
+ 	struct msm_gpu *gpu = stream->gpu;
+ 	struct msm_rbmemptrs *memptrs = gpu->rb[0]->memptrs;
+ 
++	if (READ_ONCE(gpu->wedged))
++		return;
++
+ 	if (memptrs->perfcntr_fence != stream->sel_fence)
+ 		return;
+ 
+@@ -310,6 +312,9 @@ sample_timer(struct hrtimer *hrtimer)
+ 	struct msm_perfcntr_stream *stream =
+ 		container_of(hrtimer, typeof(*stream), sample_timer);
+ 
++	if (READ_ONCE(stream->gpu->wedged))
++		return HRTIMER_NORESTART;
++
+ 	kthread_queue_work(stream->gpu->worker, &stream->sample_work);
+ 
+ 	hrtimer_forward_now(hrtimer, ns_to_ktime(stream->sample_period_ns));
+diff --git a/drivers/gpu/drm/msm/msm_ringbuffer.c b/drivers/gpu/drm/msm/msm_ringbuffer.c
+index 38e1e6866301e..2316af391b92c 100644
+--- a/drivers/gpu/drm/msm/msm_ringbuffer.c
++++ b/drivers/gpu/drm/msm/msm_ringbuffer.c
+@@ -18,9 +18,11 @@ static struct dma_fence *msm_job_run(struct drm_sched_job *job)
+ 	struct msm_gpu *gpu = submit->gpu;
+ 	struct drm_device *dev = gpu->dev;
+ 	unsigned nr_cmds = submit->nr_cmds;
+-	int i;
++	int i, ret;
+ 
+-	msm_fence_init(submit->hw_fence, fctx);
++	/* msm.wedge_failed_recovery initialises it in msm_gpu_submit() */
++	if (!msm_wedge_failed_recovery)
++		msm_fence_init(submit->hw_fence, fctx);
+ 
+ 	mutex_lock(&dev->gem_lru_mutex);
+ 
+@@ -37,15 +39,26 @@ static struct dma_fence *msm_job_run(struct drm_sched_job *job)
+ 	/* TODO move submit path over to using a per-ring lock.. */
+ 	mutex_lock(&gpu->lock);
+ 
++	if (gpu->wedged) {
++		mutex_unlock(&gpu->lock);
++		msm_submit_retire(submit);
++		return ERR_PTR(-EIO);
++	}
++
+ 	if (submit->queue->ctx->closed)
+ 		submit->nr_cmds = 0;
+ 
+-	msm_gpu_submit(gpu, submit);
++	ret = msm_gpu_submit(gpu, submit);
+ 
+ 	submit->nr_cmds = nr_cmds;
+ 
+ 	mutex_unlock(&gpu->lock);
+ 
++	if (ret) {
++		msm_submit_retire(submit);
++		return ERR_PTR(ret);
++	}
++
+ 	return dma_fence_get(submit->hw_fence);
+ }
+ 
+diff --git a/drivers/gpu/drm/msm/msm_submitqueue.c b/drivers/gpu/drm/msm/msm_submitqueue.c
+index 2dbe42551bd8f..1b3009b3b9435 100644
+--- a/drivers/gpu/drm/msm/msm_submitqueue.c
++++ b/drivers/gpu/drm/msm/msm_submitqueue.c
+@@ -9,8 +9,13 @@
+ 
+ int msm_context_set_sysprof(struct msm_context *ctx, struct msm_gpu *gpu, int sysprof)
+ {
++	int ret;
++
+ 	guard(rwsem_write)(&ctx->ctxlock);
+ 
++	if (sysprof && READ_ONCE(gpu->wedged))
++		return -EIO;
++
+ 	/*
+ 	 * Since pm_runtime and sysprof_active are both refcounts, we
+ 	 * call apply the new value first, and then unwind the previous
+@@ -21,7 +26,13 @@ int msm_context_set_sysprof(struct msm_context *ctx, struct msm_gpu *gpu, int sy
+ 	default:
+ 		return UERR(EINVAL, gpu->dev, "Invalid sysprof: %d", sysprof);
+ 	case 2:
+-		pm_runtime_get_sync(&gpu->pdev->dev);
++		if (!msm_wedge_failed_recovery) {
++			pm_runtime_get_sync(&gpu->pdev->dev);
++		} else {
++			ret = pm_runtime_resume_and_get(&gpu->pdev->dev);
++			if (ret < 0)
++				return ret;
++		}
+ 		fallthrough;
+ 	case 1:
+ 		refcount_inc(&gpu->sysprof_active);
+@@ -43,7 +54,7 @@ int msm_context_set_sysprof(struct msm_context *ctx, struct msm_gpu *gpu, int sy
+ 	}
+ 
+ 	/* Some gpu families require additional setup for sysprof */
+-	if (gpu->funcs->sysprof_setup)
++	if (!READ_ONCE(gpu->wedged) && gpu->funcs->sysprof_setup)
+ 		gpu->funcs->sysprof_setup(gpu, false);
+ 
+ 	ctx->sysprof = sysprof;
+-- 
+2.43.0
+

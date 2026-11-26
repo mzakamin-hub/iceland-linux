@@ -1,0 +1,173 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 23:19:51 +0200
+Subject: [PATCH 11/21] usb: dwc3: qcom: VBUS override deferral behind
+ iceland.dwc3_vbus_defer
+
+The previous commit (pw 1191670 v2) records a VBUS override update that
+a role switch makes while the glue is suspended for system sleep and
+applies it on resume, and serializes the role notifier against the
+system suspend / resume callbacks with a mutex. On SM8750 a cable unplug
+during s2idle otherwise has the UCSI work write QSCRATCH with the glue
+clocks off and resets the SoC.
+
+Gate it behind the kernel command line switch iceland.dwc3_vbus_defer
+(default off). It is not a module parameter, so the dwc3_qcom parameter
+list (owner rule: keep_icc_runtime, rpm_icc_*, eusb2_wakeup) is unchanged.
+Off, the notifier takes no lock and writes the override at once, and the
+system suspend / resume callbacks run without the role lock, as before;
+no update is ever recorded, so the resume path applies nothing.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/usb/dwc3/dwc3-qcom.c | 76 +++++++++++++++++++++++++++++-------
+ 1 file changed, 61 insertions(+), 15 deletions(-)
+
+diff --git a/drivers/usb/dwc3/dwc3-qcom.c b/drivers/usb/dwc3/dwc3-qcom.c
+index e1a5013f0c400..775d69387f1f5 100644
+--- a/drivers/usb/dwc3/dwc3-qcom.c
++++ b/drivers/usb/dwc3/dwc3-qcom.c
+@@ -162,6 +162,24 @@ struct dwc3_qcom {
+ 
+ #define to_dwc3_qcom(d) container_of((d), struct dwc3_qcom, dwc)
+ 
++/*
++ * iceland.dwc3_vbus_defer=1: a role switch while the glue is suspended for
++ * system sleep only records the VBUS override update, and the role notifier
++ * is serialized against the system suspend / resume callbacks. Off (default):
++ * the notifier writes QSCRATCH at once, as before.
++ */
++static bool dwc3_qcom_vbus_defer;
++
++#ifndef MODULE
++static int __init dwc3_qcom_vbus_defer_setup(char *str)
++{
++	if (kstrtobool(str, &dwc3_qcom_vbus_defer))
++		pr_warn("dwc3-qcom: bad iceland.dwc3_vbus_defer=%s\n", str);
++	return 1;
++}
++__setup("iceland.dwc3_vbus_defer=", dwc3_qcom_vbus_defer_setup);
++#endif
++
+ /*
+  * Hold the CPU latency request only while active, with a USB role and with
+  * something attached (VBUS from a host, or host mode).
+@@ -876,13 +894,10 @@ static int dwc3_qcom_setup_irq(struct dwc3_qcom *qcom, struct platform_device *p
+ 	return 0;
+ }
+ 
+-static void dwc3_qcom_set_role_notifier(struct dwc3 *dwc, enum usb_role next_role)
++static void __dwc3_qcom_set_role(struct dwc3_qcom *qcom, enum usb_role next_role)
+ {
+-	struct dwc3_qcom *qcom = to_dwc3_qcom(dwc);
+ 	bool enable;
+ 
+-	guard(mutex)(&qcom->role_lock);
+-
+ 	qcom->qos_role = next_role;
+ 	dwc3_qcom_update_qos(qcom);
+ 
+@@ -898,7 +913,7 @@ static void dwc3_qcom_set_role_notifier(struct dwc3 *dwc, enum usb_role next_rol
+ 	 * turn them on, so leave QSCRATCH alone and let
+ 	 * dwc3_qcom_pm_resume() apply the update.
+ 	 */
+-	if (qcom->pm_suspended) {
++	if (dwc3_qcom_vbus_defer && qcom->pm_suspended) {
+ 		qcom->vbus_override_pending = true;
+ 		qcom->vbus_override = enable;
+ 		WRITE_ONCE(qcom->current_role, next_role);
+@@ -928,6 +943,19 @@ static void dwc3_qcom_set_role_notifier(struct dwc3 *dwc, enum usb_role next_rol
+ 	WRITE_ONCE(qcom->current_role, next_role);
+ }
+ 
++static void dwc3_qcom_set_role_notifier(struct dwc3 *dwc, enum usb_role next_role)
++{
++	struct dwc3_qcom *qcom = to_dwc3_qcom(dwc);
++
++	if (!dwc3_qcom_vbus_defer) {
++		__dwc3_qcom_set_role(qcom, next_role);
++		return;
++	}
++
++	guard(mutex)(&qcom->role_lock);
++	__dwc3_qcom_set_role(qcom, next_role);
++}
++
+ static void dwc3_qcom_run_stop_notifier(struct dwc3 *dwc, bool is_on)
+ {
+ 	struct dwc3_qcom *qcom = to_dwc3_qcom(dwc);
+@@ -1122,19 +1150,13 @@ static void dwc3_qcom_remove(struct platform_device *pdev)
+ 	pm_runtime_put_noidle(qcom->dev);
+ }
+ 
+-static int dwc3_qcom_pm_suspend(struct device *dev)
++static int __dwc3_qcom_pm_suspend(struct device *dev)
+ {
+ 	struct dwc3 *dwc = dev_get_drvdata(dev);
+ 	struct dwc3_qcom *qcom = to_dwc3_qcom(dwc);
+ 	bool wakeup = device_may_wakeup(dev);
+ 	int ret;
+ 
+-	/*
+-	 * A role switch that comes in now waits until the glue is suspended
+-	 * and is then deferred, see dwc3_qcom_set_role_notifier().
+-	 */
+-	guard(mutex)(&qcom->role_lock);
+-
+ 	ret = dwc3_pm_suspend(&qcom->dwc);
+ 	if (ret)
+ 		return ret;
+@@ -1153,15 +1175,28 @@ static int dwc3_qcom_pm_suspend(struct device *dev)
+ 	return 0;
+ }
+ 
+-static int dwc3_qcom_pm_resume(struct device *dev)
++static int dwc3_qcom_pm_suspend(struct device *dev)
++{
++	struct dwc3_qcom *qcom = to_dwc3_qcom(dev_get_drvdata(dev));
++
++	if (!dwc3_qcom_vbus_defer)
++		return __dwc3_qcom_pm_suspend(dev);
++
++	/*
++	 * A role switch that comes in now waits until the glue is suspended
++	 * and is then deferred, see __dwc3_qcom_set_role().
++	 */
++	guard(mutex)(&qcom->role_lock);
++	return __dwc3_qcom_pm_suspend(dev);
++}
++
++static int __dwc3_qcom_pm_resume(struct device *dev)
+ {
+ 	struct dwc3 *dwc = dev_get_drvdata(dev);
+ 	struct dwc3_qcom *qcom = to_dwc3_qcom(dwc);
+ 	bool wakeup = device_may_wakeup(dev);
+ 	int ret;
+ 
+-	guard(mutex)(&qcom->role_lock);
+-
+ 	scoped_guard(mutex, &qcom->pipe_clk_lock) {
+ 		ret = dwc3_qcom_resume(qcom, wakeup);
+ 		if (ret)
+@@ -1189,6 +1224,17 @@ static int dwc3_qcom_pm_resume(struct device *dev)
+ 	return ret;
+ }
+ 
++static int dwc3_qcom_pm_resume(struct device *dev)
++{
++	struct dwc3_qcom *qcom = to_dwc3_qcom(dev_get_drvdata(dev));
++
++	if (!dwc3_qcom_vbus_defer)
++		return __dwc3_qcom_pm_resume(dev);
++
++	guard(mutex)(&qcom->role_lock);
++	return __dwc3_qcom_pm_resume(dev);
++}
++
+ static void dwc3_qcom_complete(struct device *dev)
+ {
+ 	struct dwc3 *dwc = dev_get_drvdata(dev);
+-- 
+2.43.0
+

@@ -1,0 +1,261 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 23:14:44 +0200
+Subject: [PATCH 03/21] wifi: ath12k: WoW-resume crash recovery behind
+ ath12k.wow_crash_recovery
+
+A firmware crash while resuming from wake-on-WLAN (or any system resume)
+can leave Wi-Fi dead until a reboot: mac80211 fails the resume and drops
+its interfaces without removing them from the driver, their vifs stay on
+ar->arvifs, and a failed WoW resume moved the hw to RESTARTING so the
+reset skipped ath12k_core_halt() for it.
+
+With ath12k.wow_crash_recovery=1 (read-only after load, default off;
+off keeps every path as before):
+- a start while the firmware is still reloading is refused with -EBUSY;
+  a running hw is halted there and marked off;
+- the driver tracks whether mac80211 has the hw started: a start without
+  it is a fresh open that finishes the reset and wakes the queues; a
+  restart is requested only for a hw mac80211 still runs;
+- the reset halts a hw that is already RESTARTING;
+- a crash during the WoW resume asks mac80211 for a regular restart
+  instead of failing the resume with -EIO.
+
+Re-implemented as a switch from Reixo0's work, in github Reixo0/linux
+commit dc66eb03a0b9 ("wifi: ath12k: recover from a firmware crash during
+a WoW resume") (no Signed-off-by; the author reports recovery by a fresh
+start and reassociation in ~18 s on the NX809J). It belongs to the
+wake-on-WLAN set (CESTA hand-off), which is off by default as well.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/net/wireless/ath/ath12k/core.c  | 27 ++++++++-
+ drivers/net/wireless/ath/ath12k/core.h  |  2 +
+ drivers/net/wireless/ath/ath12k/debug.h |  1 +
+ drivers/net/wireless/ath/ath12k/mac.c   | 73 ++++++++++++++++++++++++-
+ drivers/net/wireless/ath/ath12k/wow.c   | 13 ++++-
+ 5 files changed, 112 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/net/wireless/ath/ath12k/core.c b/drivers/net/wireless/ath/ath12k/core.c
+index baa00705e0435..2917b907e725a 100644
+--- a/drivers/net/wireless/ath/ath12k/core.c
++++ b/drivers/net/wireless/ath/ath12k/core.c
+@@ -35,6 +35,11 @@ module_param_named(ftm_mode, ath12k_ftm_mode, bool, 0444);
+ MODULE_PARM_DESC(ftm_mode, "Boots up in factory test mode");
+ EXPORT_SYMBOL(ath12k_ftm_mode);
+ 
++bool ath12k_wow_crash_recovery;
++module_param_named(wow_crash_recovery, ath12k_wow_crash_recovery, bool, 0444);
++MODULE_PARM_DESC(wow_crash_recovery,
++		 "Recover from a firmware crash during a WoW / system resume by a fresh start (default: off)");
++
+ bool ath12k_enable_11d;
+ module_param_named(enable_11d, ath12k_enable_11d, bool, 0444);
+ MODULE_PARM_DESC(enable_11d, "Run the firmware's 802.11d country scan (default: off)");
+@@ -1680,6 +1685,17 @@ static void ath12k_core_post_reconfigure_recovery(struct ath12k_base *ab)
+ 
+ 		switch (ah->state) {
+ 		case ATH12K_HW_STATE_ON:
++		case ATH12K_HW_STATE_RESTARTING:
++			/*
++			 * wow_crash_recovery: halt also when a failed WoW
++			 * resume moved it to RESTARTING first: left unhalted,
++			 * its vifs stay on ar->arvifs, and mac80211 adding
++			 * them again (memset of a linked entry) turns the
++			 * list into an endless loop.
++			 */
++			if (ah->state == ATH12K_HW_STATE_RESTARTING &&
++			    !ath12k_wow_crash_recovery)
++				break;
+ 			ah->state = ATH12K_HW_STATE_RESTARTING;
+ 
+ 			for (j = 0; j < ah->num_radio; j++) {
+@@ -1694,8 +1710,6 @@ static void ath12k_core_post_reconfigure_recovery(struct ath12k_base *ab)
+ 				    "cannot restart hw %d that hasn't been started\n",
+ 				    i);
+ 			break;
+-		case ATH12K_HW_STATE_RESTARTING:
+-			break;
+ 		case ATH12K_HW_STATE_RESTARTED:
+ 			ah->state = ATH12K_HW_STATE_WEDGED;
+ 			fallthrough;
+@@ -1746,6 +1760,15 @@ static void ath12k_core_restart(struct work_struct *work)
+ 
+ 		for (i = 0; i < ag->num_hw; i++) {
+ 			ah = ath12k_ag_to_ah(ag, i);
++			/*
++			 * Not running in mac80211 since the crash (the crash
++			 * failed a system resume, say): it has nothing left to
++			 * restore, and the next open starts the hw afresh.
++			 */
++			if (ath12k_wow_crash_recovery &&
++			    (READ_ONCE(ah->state) != ATH12K_HW_STATE_RESTARTING ||
++			     !READ_ONCE(ah->started)))
++				continue;
+ 			ieee80211_restart_hw(ah->hw);
+ 		}
+ 
+diff --git a/drivers/net/wireless/ath/ath12k/core.h b/drivers/net/wireless/ath/ath12k/core.h
+index c14b38ea53a57..f0594c149812d 100644
+--- a/drivers/net/wireless/ath/ath12k/core.h
++++ b/drivers/net/wireless/ath/ath12k/core.h
+@@ -785,6 +785,8 @@ struct ath12k_hw {
+ 	 */
+ 	struct mutex hw_mutex;
+ 	enum ath12k_hw_state state;
++	/* mac80211 has the hw started: a start without it is a fresh open */
++	bool started;
+ 
+ 	/* protects survey[] shared across radios of this hw. */
+ 	spinlock_t survey_lock;
+diff --git a/drivers/net/wireless/ath/ath12k/debug.h b/drivers/net/wireless/ath/ath12k/debug.h
+index 0ff3eb1540876..6bb236434ff7f 100644
+--- a/drivers/net/wireless/ath/ath12k/debug.h
++++ b/drivers/net/wireless/ath/ath12k/debug.h
+@@ -39,6 +39,7 @@ __printf(2, 3) void __ath12k_warn(struct device *dev, const char *fmt, ...);
+ 
+ extern unsigned int ath12k_debug_mask;
+ extern bool ath12k_ftm_mode;
++extern bool ath12k_wow_crash_recovery;
+ extern bool ath12k_enable_11d;
+ extern bool ath12k_cold_boot_cal;
+ 
+diff --git a/drivers/net/wireless/ath/ath12k/mac.c b/drivers/net/wireless/ath/ath12k/mac.c
+index 3d18f28c926a4..de9da78a725e8 100644
+--- a/drivers/net/wireless/ath/ath12k/mac.c
++++ b/drivers/net/wireless/ath/ath12k/mac.c
+@@ -10082,6 +10082,7 @@ int ath12k_mac_op_start(struct ieee80211_hw *hw)
+ {
+ 	struct ath12k_hw *ah = ath12k_hw_to_ah(hw);
+ 	struct ath12k *ar;
++	bool fresh;
+ 	int ret, i;
+ 
+ 	if (ath12k_ftm_mode)
+@@ -10093,12 +10094,52 @@ int ath12k_mac_op_start(struct ieee80211_hw *hw)
+ 
+ 	guard(mutex)(&ah->hw_mutex);
+ 
++	/*
++	 * mac80211 restarts a running hw without stopping it first; any
++	 * other start opens it afresh. A failed start leaves it stopped
++	 * without a stop call, so clear the mark until this one succeeds.
++	 */
++	fresh = !ah->started;
++	ah->started = false;
++	if (!ath12k_wow_crash_recovery)
++		goto set_state;
++
++	/*
++	 * A firmware crash during system resume fails mac80211's resume,
++	 * which shuts every interface down; userspace then brings one up
++	 * again while the firmware is still reloading. Refuse that start
++	 * without touching the state: every command would time out.
++	 */
++	for_each_ar(ah, ar, i) {
++		if (!test_bit(ATH12K_FLAG_CRASH_FLUSH, &ar->ab->dev_flags))
++			continue;
++
++		/*
++		 * mac80211 now drops its interfaces without removing them
++		 * from the driver, and may free them (userspace deletes the
++		 * P2P device): unlink them all here, or ar->arvifs keeps
++		 * freed entries. The next open then starts the hw afresh.
++		 */
++		if (ah->state == ATH12K_HW_STATE_ON ||
++		    ah->state == ATH12K_HW_STATE_RESTARTING) {
++			for_each_ar(ah, ar, i)
++				ath12k_core_halt(ar);
++			ath12k_mac_dp_peer_cleanup(ah);
++			ah->state = ATH12K_HW_STATE_OFF;
++		}
++
++		return -EBUSY;
++	}
++
++set_state:
+ 	switch (ah->state) {
+ 	case ATH12K_HW_STATE_OFF:
+ 		ah->state = ATH12K_HW_STATE_ON;
+ 		break;
+ 	case ATH12K_HW_STATE_RESTARTING:
+-		ah->state = ATH12K_HW_STATE_RESTARTED;
++		/* Opened afresh: mac80211 dropped what the restart was for */
++		ah->state = fresh && ath12k_wow_crash_recovery ?
++			    ATH12K_HW_STATE_ON : ATH12K_HW_STATE_RESTARTED;
+ 		break;
+ 	case ATH12K_HW_STATE_RESTARTED:
+ 	case ATH12K_HW_STATE_WEDGED:
+@@ -10121,6 +10162,35 @@ int ath12k_mac_op_start(struct ieee80211_hw *hw)
+ 		}
+ 	}
+ 
++	ah->started = true;
++
++	/*
++	 * Started afresh after a crash whose restart mac80211 dropped (no
++	 * interface was open, so reconfig_complete never comes): wake the
++	 * queues the recovery stopped and finish the reset here.
++	 */
++	if (ath12k_wow_crash_recovery && ah->state == ATH12K_HW_STATE_ON) {
++		bool was_reset = false;
++
++		for_each_ar(ah, ar, i) {
++			struct ath12k_base *ab = ar->ab;
++
++			if (!ab->is_reset)
++				continue;
++
++			was_reset = true;
++			atomic_dec(&ab->reset_count);
++			complete(&ab->reset_complete);
++			ab->is_reset = false;
++			atomic_set(&ab->fail_cont_count, 0);
++			ath12k_warn(ab, "pdev %d recovered by a fresh start\n",
++				    ar->pdev->pdev_id);
++		}
++
++		if (was_reset)
++			ieee80211_wake_queues(hw);
++	}
++
+ 	return 0;
+ 
+ fail_start:
+@@ -10257,6 +10327,7 @@ void ath12k_mac_op_stop(struct ieee80211_hw *hw, bool suspend)
+ 	mutex_lock(&ah->hw_mutex);
+ 
+ 	ah->state = ATH12K_HW_STATE_OFF;
++	ah->started = false;
+ 
+ 	for_each_ar(ah, ar, i)
+ 		ath12k_mac_stop(ar);
+diff --git a/drivers/net/wireless/ath/ath12k/wow.c b/drivers/net/wireless/ath/ath12k/wow.c
+index d8789104d8869..5332a22bbf909 100644
+--- a/drivers/net/wireless/ath/ath12k/wow.c
++++ b/drivers/net/wireless/ath/ath12k/wow.c
+@@ -1005,8 +1005,19 @@ int ath12k_wow_op_resume(struct ieee80211_hw *hw)
+ 			ah->state = ATH12K_HW_STATE_RESTARTING;
+ 			ret = 1;
+ 			break;
+-		case ATH12K_HW_STATE_OFF:
+ 		case ATH12K_HW_STATE_RESTARTING:
++			/*
++			 * wow_crash_recovery: the firmware crashed during the
++			 * resume and its recovery has begun: ask mac80211 for
++			 * a regular restart too. Failing the resume instead
++			 * leaves mac80211 suspended, and Wi-Fi hangs for good.
++			 */
++			if (ath12k_wow_crash_recovery) {
++				ret = 1;
++				break;
++			}
++			fallthrough;
++		case ATH12K_HW_STATE_OFF:
+ 		case ATH12K_HW_STATE_RESTARTED:
+ 		case ATH12K_HW_STATE_WEDGED:
+ 		case ATH12K_HW_STATE_TM:
+-- 
+2.43.0
+

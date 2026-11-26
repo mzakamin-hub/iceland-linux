@@ -1,0 +1,65 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 23:31:48 +0200
+Subject: [PATCH 20/21] iommu/arm-smmu-qcom: Kaanapali MDSS ACTLR behind a
+ switch
+
+qcom_smmu_actlr_client_of_match sets the ACTLR of the SM8750 display
+controller (default prefetch, CMTLB context caching) but has no entry
+for the Kaanapali one, whose context bank keeps the reset value. That
+may cost TLB misses on scanout at 3392x2400 (inferred, not measured).
+
+Add the entry behind arm_smmu.kaanapali_mdss_actlr (read-only, default
+off): 1 writes PREFETCH_DEFAULT | CMTLB for "qcom,kaanapali-mdss" as for
+"qcom,sm8750-mdss"; 0 finds no match for it, as before. It touches the
+display path, so it is meant for an A/B with the glitch detector and the
+underrun counters first.
+
+Own idea (21 Nov gains scan, gfx-media).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/iommu/arm/arm-smmu/arm-smmu-qcom.c | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/drivers/iommu/arm/arm-smmu/arm-smmu-qcom.c b/drivers/iommu/arm/arm-smmu/arm-smmu-qcom.c
+index e20d274bc5fd5..9880be56969f4 100644
+--- a/drivers/iommu/arm/arm-smmu/arm-smmu-qcom.c
++++ b/drivers/iommu/arm/arm-smmu/arm-smmu-qcom.c
+@@ -349,12 +349,32 @@ static bool qcom_adreno_can_do_ttbr1(struct arm_smmu_device *smmu)
+ 	return true;
+ }
+ 
++/*
++ * The Kaanapali display controller with the ACTLR value of its SM8750
++ * predecessor (default prefetch, context-match TLB caching). Opt-in until it
++ * is measured (underruns, glitch detector): arm_smmu.kaanapali_mdss_actlr=1;
++ * 0 (default) leaves its ACTLR as before.
++ */
++static bool kaanapali_mdss_actlr;
++module_param(kaanapali_mdss_actlr, bool, 0444);
++MODULE_PARM_DESC(kaanapali_mdss_actlr,
++		 "Kaanapali MDSS: SMMU ACTLR default prefetch + CMTLB as on SM8750 (default off)");
++
++static const struct of_device_id qcom_smmu_actlr_kaanapali_mdss[] = {
++	{ .compatible = "qcom,kaanapali-mdss",
++			.data = (const void *) (PREFETCH_DEFAULT | CMTLB) },
++	{ }
++};
++
+ static void qcom_smmu_set_actlr_dev(struct device *dev, struct arm_smmu_device *smmu, int cbndx,
+ 		const struct of_device_id *client_match)
+ {
+ 	const struct of_device_id *match =
+ 			of_match_device(client_match, dev);
+ 
++	if (!match && kaanapali_mdss_actlr)
++		match = of_match_device(qcom_smmu_actlr_kaanapali_mdss, dev);
++
+ 	if (!match) {
+ 		dev_dbg(dev, "no ACTLR settings present\n");
+ 		return;
+-- 
+2.43.0
+

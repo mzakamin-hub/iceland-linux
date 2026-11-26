@@ -1,0 +1,146 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 23:17:59 +0200
+Subject: [PATCH 09/21] soc: qcom: pmic_glink: hold-back over sleep behind
+ pmic_glink.sleep_defer
+
+The previous four commits (Vladyslav Tymoshchuk's RFC pw 1191458 1-4/4)
+hold the PMIC GLINK notifications back over system sleep and make the
+USB-C (ucsi_glink) and charger (qcom_battmgr) notifications wakeup
+events. On SM8750 a cable unplug in s2idle otherwise has the UCSI work
+touch dwc3 registers with the clocks off and resets the SoC; whether the
+Pad 4 does the same is not known yet (row first).
+
+Gate the set behind pmic_glink.sleep_defer (read-only after load, default
+off): off, ->prepare() does not start the hold-back and ->complete()
+queues nothing, so every notification reaches the clients at once as
+before; pmic_glink reports no wakeup event, and ucsi_glink / qcom_battmgr
+do not become wakeup-capable (no power/wakeup attribute, no filter).
+pmic_glink_sleep_defer_enabled() tells the clients.
+
+Link: https://lore.kernel.org/all/20261022164151.592-1-tvlad744@gmail.com/
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/power/supply/qcom_battmgr.c |  8 +++++---
+ drivers/soc/qcom/pmic_glink.c       | 31 ++++++++++++++++++++++++++++-
+ drivers/usb/typec/ucsi/ucsi_glink.c |  8 +++++---
+ include/linux/soc/qcom/pmic_glink.h |  1 +
+ 4 files changed, 41 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
+index 3d47899cd7d74..b2512a5f68e74 100644
+--- a/drivers/power/supply/qcom_battmgr.c
++++ b/drivers/power/supply/qcom_battmgr.c
+@@ -3961,9 +3961,11 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
+ 	if (ret)
+ 		return ret;
+ 
+-	device_set_wakeup_capable(dev, true);
+-	pmic_glink_client_set_wakeup_filter(battmgr->client,
+-					    qcom_battmgr_is_charger_notification);
++	if (pmic_glink_sleep_defer_enabled()) {
++		device_set_wakeup_capable(dev, true);
++		pmic_glink_client_set_wakeup_filter(battmgr->client,
++						    qcom_battmgr_is_charger_notification);
++	}
+ 
+ 	pmic_glink_client_register(battmgr->client);
+ 
+diff --git a/drivers/soc/qcom/pmic_glink.c b/drivers/soc/qcom/pmic_glink.c
+index 40c63e61910c9..17ba5d13c360a 100644
+--- a/drivers/soc/qcom/pmic_glink.c
++++ b/drivers/soc/qcom/pmic_glink.c
+@@ -22,6 +22,29 @@
+ #define PMIC_GLINK_SEND_TIMEOUT (5 * HZ)
+ #define PMIC_GLINK_MAX_DEFERRED	64
+ 
++/*
++ * Hold the notifications back over system sleep and report the wakeup events
++ * of the clients (RFC pw 1191458). Off: notifications reach the clients at
++ * once as before, and no client becomes a wakeup source.
++ */
++static bool sleep_defer;
++module_param(sleep_defer, bool, 0444);
++MODULE_PARM_DESC(sleep_defer,
++		 "Hold PMIC GLINK notifications back over system sleep and report client wakeup events (default off)");
++
++/**
++ * pmic_glink_sleep_defer_enabled() - whether pmic_glink.sleep_defer is set
++ *
++ * Clients become wakeup sources only when it is.
++ *
++ * Return: true when notifications are held back over system sleep.
++ */
++bool pmic_glink_sleep_defer_enabled(void)
++{
++	return sleep_defer;
++}
++EXPORT_SYMBOL_GPL(pmic_glink_sleep_defer_enabled);
++
+ enum {
+ 	PMIC_GLINK_CLIENT_BATT = 0,
+ 	PMIC_GLINK_CLIENT_ALTMODE,
+@@ -223,7 +246,7 @@ EXPORT_SYMBOL_GPL(pmic_glink_send);
+ static bool pmic_glink_is_wakeup_event(struct pmic_glink_client *client,
+ 				       const void *data, size_t len)
+ {
+-	if (!device_may_wakeup(client->dev))
++	if (!sleep_defer || !device_may_wakeup(client->dev))
+ 		return false;
+ 
+ 	return !client->wakeup_filter || client->wakeup_filter(data, len, client->priv);
+@@ -657,6 +680,9 @@ static int pmic_glink_prepare(struct device *dev)
+ {
+ 	struct pmic_glink *pg = dev_get_drvdata(dev);
+ 
++	if (!sleep_defer)
++		return 0;
++
+ 	guard(spinlock_irqsave)(&pg->defer_lock);
+ 	pg->defer = true;
+ 
+@@ -667,6 +693,9 @@ static void pmic_glink_complete(struct device *dev)
+ {
+ 	struct pmic_glink *pg = dev_get_drvdata(dev);
+ 
++	if (!sleep_defer)
++		return;
++
+ 	/* Runs once the tasks are thawed, all devices have resumed by then */
+ 	queue_work(system_freezable_wq, &pg->deliver_work);
+ }
+diff --git a/drivers/usb/typec/ucsi/ucsi_glink.c b/drivers/usb/typec/ucsi/ucsi_glink.c
+index 5b8bccd303203..1f080f24e274e 100644
+--- a/drivers/usb/typec/ucsi/ucsi_glink.c
++++ b/drivers/usb/typec/ucsi/ucsi_glink.c
+@@ -480,9 +480,11 @@ static int pmic_glink_ucsi_probe(struct auxiliary_device *adev,
+ 	}
+ 
+ 	/* pmic_glink reports the notifications as wakeup events */
+-	ret = devm_device_init_wakeup(dev);
+-	if (ret)
+-		return ret;
++	if (pmic_glink_sleep_defer_enabled()) {
++		ret = devm_device_init_wakeup(dev);
++		if (ret)
++			return ret;
++	}
+ 
+ 	ucsi->client = devm_pmic_glink_client_alloc(dev, PMIC_GLINK_OWNER_USBC,
+ 						    pmic_glink_ucsi_callback,
+diff --git a/include/linux/soc/qcom/pmic_glink.h b/include/linux/soc/qcom/pmic_glink.h
+index 786d2f35a9a9e..ce71fe39d019d 100644
+--- a/include/linux/soc/qcom/pmic_glink.h
++++ b/include/linux/soc/qcom/pmic_glink.h
+@@ -28,6 +28,7 @@ struct pmic_glink_client *devm_pmic_glink_client_alloc(struct device *dev,
+ 						       void (*cb)(const void *, size_t, void *),
+ 						       void (*pdr)(void *, int),
+ 						       void *priv);
++bool pmic_glink_sleep_defer_enabled(void);
+ void pmic_glink_client_set_wakeup_filter(struct pmic_glink_client *client,
+ 					 bool (*filter)(const void *, size_t, void *));
+ void pmic_glink_client_register(struct pmic_glink_client *client);
+-- 
+2.43.0
+

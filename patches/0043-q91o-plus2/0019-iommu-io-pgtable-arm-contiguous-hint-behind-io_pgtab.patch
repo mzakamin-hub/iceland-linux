@@ -1,0 +1,64 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 23:31:33 +0200
+Subject: [PATCH 19/21] iommu/io-pgtable-arm: contiguous hint behind
+ io_pgtable_arm.cont_hint
+
+The previous commit (kernel-topics 54ec97300f6e, FROMLIST) advertises
+the contiguous-hint group sizes in pgsize_bitmap and maps such groups
+with the CONT bit set, for more IOTLB reach on GPU, camera and video
+buffers (the system heap already hands out 2 MB / 64 KB chunks since
+q91n).
+
+Make it opt-in: io_pgtable_arm.cont_hint=0 (default, read-only) sets
+IO_PGTABLE_QUIRK_ARM_NO_CONT_HINT on every LPAE table before its page
+sizes are chosen, so pgsize_bitmap, the map and the unmap paths are the
+ones of before (no CONT bit is ever written, so the new partial-unmap
+check never triggers); 1 uses the hint.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/iommu/io-pgtable-arm.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/drivers/iommu/io-pgtable-arm.c b/drivers/iommu/io-pgtable-arm.c
+index 01d98959c514f..4418703932eba 100644
+--- a/drivers/iommu/io-pgtable-arm.c
++++ b/drivers/iommu/io-pgtable-arm.c
+@@ -12,6 +12,7 @@
+ #include <linux/atomic.h>
+ #include <linux/bitops.h>
+ #include <linux/io-pgtable.h>
++#include <linux/moduleparam.h>
+ #include <linux/sizes.h>
+ #include <linux/slab.h>
+ #include <linux/types.h>
+@@ -1042,12 +1043,24 @@ static void arm_lpae_restrict_pgsizes(struct io_pgtable_cfg *cfg)
+ 	cfg->pgsize_bitmap &= GENMASK_ULL(cfg->oas, 0);
+ }
+ 
++/*
++ * The contiguous hint (CONT) groups are opt-in here: io_pgtable_arm.cont_hint=1
++ * advertises them in pgsize_bitmap and maps them tagged; 0 (default) treats every
++ * table as IO_PGTABLE_QUIRK_ARM_NO_CONT_HINT, i.e. maps as before.
++ */
++static bool cont_hint;
++module_param(cont_hint, bool, 0444);
++MODULE_PARM_DESC(cont_hint, "Use the contiguous hint bit in LPAE IOMMU page tables (default off)");
++
+ static struct arm_lpae_io_pgtable *
+ arm_lpae_alloc_pgtable(struct io_pgtable_cfg *cfg)
+ {
+ 	struct arm_lpae_io_pgtable *data;
+ 	int levels, va_bits, pg_shift;
+ 
++	if (!cont_hint)
++		cfg->quirks |= IO_PGTABLE_QUIRK_ARM_NO_CONT_HINT;
++
+ 	arm_lpae_restrict_pgsizes(cfg);
+ 
+ 	if (!(cfg->pgsize_bitmap & (SZ_4K | SZ_16K | SZ_64K)))
+-- 
+2.43.0
+

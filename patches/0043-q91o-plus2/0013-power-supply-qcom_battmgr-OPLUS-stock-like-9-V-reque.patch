@@ -1,0 +1,178 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 23:26:21 +0200
+Subject: [PATCH 13/21] power: supply: qcom_battmgr: OPLUS: stock-like 9 V
+ request behind a switch
+
+With qcom_battmgr.pd_stock_request=1 (read-only after load, default off)
+the iceland PD setup asks for 9 V the way stock does (OnePlusOSS
+vendor/oplus/kernel/charger, oneplus/sm8850_b_16.0_pad_4 07ca84e621ba:
+oplus_chg_wired.c oplus_wired_pd_config_work() and
+oplus_wired_batt_full_pdqc_buck_work(), charger_ic/oplus_hal_adsp.c
+oplus_get_pd_svooc_status(); used as a reference, re-implemented):
+- the input current goes down to 500 mA (PDQC_BUCK_DEF_CURR_MA, the
+  USB PD pSnkStdby level) before the PDO change, instead of the 9 V
+  target the 5 V ladder held; the 9 V ladder then runs from its floor as
+  before;
+- a request the source did not follow (VBUS still low) is sent again up
+  to 3 times, 1 s apart (PD_RETRY_COUNT_MAX, PD_RETRY_DELAY);
+- no 9 V while the firmware flags the source as a SuperVOOC-capable
+  OnePlus PD brick (OPLUS_GET_PD_SVOOC, property 121 of the pad_4
+  oplus_pmic_glink_id.h; not yet seen answered on this firmware, a
+  failed read counts as "not SVOOC");
+- back to 5 V while the charge limit holds the charger (the 85 % hold)
+  and 9 V again on its release; at a full battery 5 V until the unplug
+  (stock's batt_full_pdqc_locked).
+Off, the request runs exactly as before. 9 V stays the only raised
+voltage (never 12 V); the PD input power row (the owner's 20 W), the
+cool-down levels, the contract cap and every current limit are
+unchanged; SuperVOOC code and defaults are not touched.
+
+jstockdale's 0071 / 0072 (source-offer current from the PDO read) are not
+in the local stores and are not part of this; the contract cap keeps the
+UCSI RDO current.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/power/supply/qcom_battmgr.c | 90 ++++++++++++++++++++++++++++-
+ 1 file changed, 89 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
+index b2512a5f68e74..ad50fd1414967 100644
+--- a/drivers/power/supply/qcom_battmgr.c
++++ b/drivers/power/supply/qcom_battmgr.c
+@@ -2632,6 +2632,57 @@ static int qcom_battmgr_oplus_set(struct qcom_battmgr *battmgr, int property, u3
+ #define ICELAND_PD_COOL4_FCC_MAX_UA	3300000	/* caps in [3000, 3300) mA: stock's cool-down level 4 */
+ #define ICELAND_PD_COOL4_ICL_MA		1500	/* cool_down_pdqc_curr_ma level 4, at 9 V */
+ #define ICELAND_PD_5V_TRIES		3	/* 5 V requests per attach the charger may ignore */
++
++/*
++ * qcom_battmgr.pd_stock_request=1: the 9 V request as stock makes it (OnePlusOSS
++ * oplus_chg_wired.c, oneplus/sm8850_b_16.0_pad_4 07ca84e, oplus_wired_pd_config_work() and
++ * oplus_wired_batt_full_pdqc_buck_work(); charger_ic/oplus_hal_adsp.c oplus_get_pd_svooc_status()):
++ * - the input current goes to 500 mA (PDQC_BUCK_DEF_CURR_MA, USB PD pSnkStdby) before the PDO
++ *   change, not to the 9 V target the 5 V ladder held;
++ * - a request the source does not follow is sent again up to 3 times, 1 s apart
++ *   (PD_RETRY_COUNT_MAX, PD_RETRY_DELAY);
++ * - no 9 V while the source is a SuperVOOC-capable OnePlus PD brick (the firmware's PD_SVOOC
++ *   flag, OPLUS_GET_PD_SVOOC; a failed read counts as not SVOOC);
++ * - back to 5 V while the charge limit holds the charger (the 85 % hold), 9 V again on its
++ *   release; and at a full battery, 5 V until the unplug (batt_full_pdqc_locked).
++ * Off (default): the request as before. The voltages (9 V, never 12 V), the input power row and
++ * every current limit are unchanged either way.
++ */
++static bool pd_stock_request;
++module_param(pd_stock_request, bool, 0444);
++MODULE_PARM_DESC(pd_stock_request,
++		 "OPLUS: 9 V PD request as stock: 500 mA before the PDO change, 3 retries, no 9 V on a SuperVOOC brick, 5 V at the charge limit hold / full (default off)");
++
++#define ICELAND_PD_STOCK_ICL_UA		500000	/* PDQC_BUCK_DEF_CURR_MA */
++#define ICELAND_PD_STOCK_RETRIES	3	/* PD_RETRY_COUNT_MAX */
++#define ICELAND_PD_STOCK_RETRY_MS	1000	/* PD_RETRY_DELAY */
++#define OPLUS_GET_PD_SVOOC		121	/* oplus_pmic_glink_id.h, pad_4 07ca84e */
++
++/* pd_stock_request: the source is a SuperVOOC-capable OnePlus PD brick; lock held */
++static bool qcom_battmgr_iceland_pd_svooc(struct qcom_battmgr *battmgr)
++{
++	if (qcom_battmgr_request_property(battmgr, OPLUS_PROPERTY_GET, OPLUS_GET_PD_SVOOC, 0))
++		return false;
++
++	return battmgr->oplus_value;
++}
++
++/* pd_stock_request: a reason for 5 V other than a cool-down; lock held, fresh gauge */
++static const char *qcom_battmgr_iceland_pd_stock_5v(struct qcom_battmgr *battmgr, bool *again)
++{
++	if (!pd_stock_request)
++		return NULL;
++	if (battmgr->status.percent != (unsigned int)-1 && battmgr->status.percent >= 100) {
++		*again = false;
++		return "battery full";
++	}
++	if (battmgr->chg_limit_hold) {
++		*again = true;
++		return "charge limit hold";
++	}
++
++	return NULL;
++}
+ /* type changes followed during one attach; one more puts the "unknown" limits in force until the unplug */
+ #define ICELAND_TYPE_CHANGES_MAX	5
+ 
+@@ -3241,12 +3292,33 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+ 		battmgr->pd_9v_again = true;
+ 		want_9v = false;
+ 	}
++	if (want_9v && pd_stock_request) {
++		bool again = true;
++		const char *why = qcom_battmgr_iceland_pd_stock_5v(battmgr, &again);
++
++		if (!why && qcom_battmgr_iceland_pd_svooc(battmgr)) {
++			why = "SuperVOOC brick";
++			again = false;
++		}
++		if (why) {
++			/* the hold's release asks for 9 V through the poll's check */
++			battmgr->pd_9v_again = again;
++			want_9v = false;
++			dev_info(battmgr->dev, "charger: no 9 V request (%s)\n", why);
++		}
++	}
+ 	if (want_9v) {
++		unsigned int tries = 0;
++
+ 		/* before the contract: never more than the 5 V ladder held, the 9 V row, level 4 */
+ 		icl_ua = min(qcom_battmgr_iceland_pd_9v_target_ua(battmgr, type, power_mw, ICELAND_PD_MV),
+ 			     icl_5v_ua);
++		/* pd_stock_request: stock's 500 mA before the PDO change */
++		if (pd_stock_request)
++			icl_ua = min(icl_ua, ICELAND_PD_STOCK_ICL_UA);
+ 		ret = qcom_battmgr_oplus_set(battmgr, OPLUS_USB_INPUT_CURR_LIMIT, icl_ua);
+ 		qcom_battmgr_iceland_check(battmgr, ret, "9 V input current limit");
++retry:
+ 		/* no 9 V request unless the lower current is in place; then VBUS may be 9 V */
+ 		if (!ret) {
+ 			battmgr->pd_9v = true;
+@@ -3261,6 +3333,18 @@ static void qcom_battmgr_iceland_setup_charger(struct qcom_battmgr *battmgr)
+ 		ret = qcom_battmgr_request_property(battmgr, BATTMGR_USB_PROPERTY_GET,
+ 						    USB_VOLT_NOW, 0);
+ 		mv = ret ? 0 : battmgr->usb.voltage_now / 1000;
++		/* pd_stock_request: a request the source did not follow, again 1 s later */
++		if (pd_stock_request && !ret && !qcom_battmgr_iceland_vbus_high(mv) &&
++		    !battmgr->input_suspend && battmgr->usb.online &&
++		    tries < ICELAND_PD_STOCK_RETRIES) {
++			tries++;
++			dev_info(battmgr->dev, "charger: 9 V not taken (VBUS %u mV), retry %u of %u\n",
++				 mv, tries, ICELAND_PD_STOCK_RETRIES);
++			mutex_unlock(&battmgr->lock);
++			msleep(ICELAND_PD_STOCK_RETRY_MS);
++			mutex_lock(&battmgr->lock);
++			goto retry;
++		}
+ 		/*
+ 		 * The charger stayed at 5 V: the 5 V input current again. If VBUS could not be read, keep the lower
+ 		 * 9 V current (fail low: VBUS may be 9 V).
+@@ -3324,7 +3408,8 @@ static void qcom_battmgr_iceland_pd_check(struct qcom_battmgr *battmgr)
+ 	if (!battmgr->pd_9v) {
+ 		if (battmgr->pd_9v_again && !qcom_battmgr_iceland_pd_cool_down(battmgr) &&
+ 		    !qcom_battmgr_oplus_update_gauge(battmgr) &&
+-		    battmgr->status.voltage_now < ICELAND_PD_9V_VBAT_MAX_UV) {
++		    battmgr->status.voltage_now < ICELAND_PD_9V_VBAT_MAX_UV &&
++		    !qcom_battmgr_iceland_pd_stock_5v(battmgr, &again)) {
+ 			battmgr->pd_9v_again = false;
+ 			/* the next poll runs the attach setup */
+ 			battmgr->charger_configured = false;
+@@ -3342,6 +3427,9 @@ static void qcom_battmgr_iceland_pd_check(struct qcom_battmgr *battmgr)
+ 	} else if (battmgr->status.voltage_now >= ICELAND_PD_9V_VBAT_MAX_UV) {
+ 		why = "battery at 4.5 V";
+ 		again = false;
++	} else if (qcom_battmgr_iceland_pd_stock_5v(battmgr, &again)) {
++		/* pd_stock_request: the 85 % hold / a full battery */
++		why = qcom_battmgr_iceland_pd_stock_5v(battmgr, &again);
+ 	} else {
+ 		/* 9 V stays: does the source hold it under the present load? */
+ 		qcom_battmgr_iceland_pd_9v_watch(battmgr);
+-- 
+2.43.0
+

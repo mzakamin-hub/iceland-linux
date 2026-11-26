@@ -1,0 +1,58 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 23:30:16 +0200
+Subject: [PATCH 17/21] PCI: qcom: gate the shutdown() action behind
+ pcie_qcom.shutdown_l2
+
+The previous commit (pw 1211123 v9 4/4) gives the driver a shutdown()
+callback that masks the Global and chained MSI IRQs and forces the link
+into L2 before reboot / power-off cut the controller's clocks, against
+SMMU translation faults and NoC errors from transactions in flight.
+
+Make it opt-in: with pcie_qcom.shutdown_l2=0 (default, read-only) the
+callback returns at once, as the driver had no shutdown action before;
+1 runs it. The dw_pcie_suspend_noirq() force argument and
+dw_pcie_mask_msi() of the two commits before are unused by default
+(every existing caller passes force=false).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/pci/controller/dwc/pcie-qcom.c | 13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/pci/controller/dwc/pcie-qcom.c b/drivers/pci/controller/dwc/pcie-qcom.c
+index 0b3a54dadcc04..c766c303a236a 100644
+--- a/drivers/pci/controller/dwc/pcie-qcom.c
++++ b/drivers/pci/controller/dwc/pcie-qcom.c
+@@ -327,6 +327,13 @@ MODULE_PARM_DESC(parf_halt_off, "iceland: 1 = PARF AXI halt features off where t
+ static bool suspend_linkoff;
+ module_param(suspend_linkoff, bool, 0444);
+ MODULE_PARM_DESC(suspend_linkoff, "iceland: 1 = Kaanapali link to L2 and off in system suspend (default 0; not with WoWLAN)");
++/*
++ * shutdown_l2 - mask the controller IRQs and force the link to L2 at shutdown / reboot (pw 1211123 v9 4/4);
++ *               0 keeps the driver without a shutdown action, as before
++ */
++static bool shutdown_l2;
++module_param(shutdown_l2, bool, 0444);
++MODULE_PARM_DESC(shutdown_l2, "iceland: 1 = link to L2 and controller IRQs masked at shutdown / reboot (default 0)");
+ 
+ struct qcom_pcie_perst {
+ 	struct list_head list;
+@@ -2550,8 +2557,12 @@ static int qcom_pcie_probe(struct platform_device *pdev)
+ static void qcom_pcie_shutdown(struct platform_device *pdev)
+ {
+ 	struct qcom_pcie *pcie = platform_get_drvdata(pdev);
+-	struct dw_pcie *pci = pcie->pci;
++	struct dw_pcie *pci;
++
++	if (!shutdown_l2 || !pcie)
++		return;
+ 
++	pci = pcie->pci;
+ 	if (pcie->global_irq)
+ 		disable_irq(pcie->global_irq);
+ 
+-- 
+2.43.0
+

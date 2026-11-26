@@ -1,0 +1,148 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 23:15:44 +0200
+Subject: [PATCH 04/21] ASoC: qcom: sc8280xp: restart SoundWire streams across
+ system suspend (switch)
+
+With a PCM open across system suspend, the back end is prepared again on
+resume, but qcom_snd_sdw_prepare() skips a SoundWire stream that is still
+marked prepared: the stream is never enabled again after the bus went
+through s2idle, and headphone audio can come back thin and distorted
+until every stream is closed.
+
+With snd_soc_sc8280xp.sdw_resume_restart=1 (read-only after load, default
+off) the card gets suspend_post / resume_pre callbacks: suspend_post
+disables and deprepares the prepared SoundWire streams of the back ends
+as hw_free does, resume_pre prepares and enables them again before the
+ports are restored and DAPM powers the codec, as a fresh prepare would
+(enabling them only at the userspace re-prepare pops). A stream that
+cannot be enabled yet is left to the userspace prepare. Off, the card has
+no such callbacks, as before. Unlike the original, only back-end links
+are walked (front-end DAI ids are not AFE port ids) and the walk holds
+the card's DPCM mutex against a concurrent prepare / hw_free.
+
+Re-implemented from Armada's patch 0085 ("ASoC: qcom: sc8280xp: restart
+SoundWire streams across system suspend", armada tree revision a2347add78,
+15 Nov; tested there on WCD9385 / WCD9395 headphones and WSA884x speakers;
+no Signed-off-by).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ sound/soc/qcom/sc8280xp.c | 84 +++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 84 insertions(+)
+
+diff --git a/sound/soc/qcom/sc8280xp.c b/sound/soc/qcom/sc8280xp.c
+index 2d6eb9a04f24f..7ad5a40bbe21a 100644
+--- a/sound/soc/qcom/sc8280xp.c
++++ b/sound/soc/qcom/sc8280xp.c
+@@ -102,8 +102,15 @@ struct qcom_snd_soc_common {
+ 	int (*snd_prepare)(struct snd_pcm_substream *substream);
+ };
+ 
++static bool sdw_resume_restart;
++module_param(sdw_resume_restart, bool, 0444);
++MODULE_PARM_DESC(sdw_resume_restart,
++		 "Disable the prepared SoundWire streams before system suspend and enable them again on resume (default off)");
++
+ struct sc8280xp_snd_data {
+ 	bool stream_prepared[AFE_PORT_MAX];
++	/* sdw_resume_restart: streams this driver disabled for system suspend */
++	bool sdw_suspended[AFE_PORT_MAX];
+ 	struct snd_soc_card *card;
+ 	struct snd_soc_jack jack;
+ 	struct snd_soc_jack dp_jack[8];
+@@ -568,6 +575,79 @@ static int sc8280xp_snd_hw_free(struct snd_pcm_substream *substream)
+ 	return qcom_snd_sdw_hw_free(substream, &data->stream_prepared[cpu_dai->id]);
+ }
+ 
++/*
++ * sdw_resume_restart: with a PCM open across system suspend, the BE is
++ * prepared again on resume, but qcom_snd_sdw_prepare() skips a stream still
++ * marked prepared, so the SoundWire stream is never enabled again after the
++ * bus went through suspend. Disable / deprepare the prepared streams as
++ * hw_free does, and enable them again before the ports are restored and
++ * DAPM powers the codec, as a fresh prepare would.
++ */
++static int sc8280xp_snd_suspend_post(struct snd_soc_card *card)
++{
++	struct sc8280xp_snd_data *data = snd_soc_card_get_drvdata(card);
++	struct snd_soc_pcm_runtime *rtd;
++	int dir;
++
++	snd_soc_dpcm_mutex_lock(card);
++	for_each_card_rtds(card, rtd) {
++		struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
++		bool *prepared;
++
++		/* back ends only: the front ends have no SoundWire stream */
++		if (!rtd->dai_link->no_pcm || !cpu_dai ||
++		    cpu_dai->id >= AFE_PORT_MAX)
++			continue;
++		prepared = &data->stream_prepared[cpu_dai->id];
++		for_each_pcm_streams(dir) {
++			struct snd_pcm_substream *ss;
++
++			ss = snd_soc_dpcm_get_substream(rtd, dir);
++			if (!ss || !*prepared)
++				continue;
++			qcom_snd_sdw_hw_free(ss, prepared);
++			if (!*prepared)
++				data->sdw_suspended[cpu_dai->id] = true;
++		}
++	}
++	snd_soc_dpcm_mutex_unlock(card);
++
++	return 0;
++}
++
++static int sc8280xp_snd_resume_pre(struct snd_soc_card *card)
++{
++	struct sc8280xp_snd_data *data = snd_soc_card_get_drvdata(card);
++	struct snd_soc_pcm_runtime *rtd;
++	int dir;
++
++	snd_soc_dpcm_mutex_lock(card);
++	for_each_card_rtds(card, rtd) {
++		struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
++		bool *prepared;
++
++		if (!rtd->dai_link->no_pcm || !cpu_dai ||
++		    cpu_dai->id >= AFE_PORT_MAX ||
++		    !data->sdw_suspended[cpu_dai->id])
++			continue;
++		data->sdw_suspended[cpu_dai->id] = false;
++		prepared = &data->stream_prepared[cpu_dai->id];
++		for_each_pcm_streams(dir) {
++			struct snd_pcm_substream *ss;
++
++			ss = snd_soc_dpcm_get_substream(rtd, dir);
++			/* not ready yet: the userspace re-prepare enables it */
++			if (ss && !*prepared && qcom_snd_sdw_prepare(ss, prepared))
++				dev_warn(card->dev,
++					 "%s: SoundWire stream left to the next prepare\n",
++					 cpu_dai->name);
++		}
++	}
++	snd_soc_dpcm_mutex_unlock(card);
++
++	return 0;
++}
++
+ static void sc8280xp_snd_exit(struct snd_soc_pcm_runtime *rtd)
+ {
+ 	struct sc8280xp_snd_data *data = snd_soc_card_get_drvdata(rtd->card);
+@@ -641,6 +721,10 @@ static int sc8280xp_platform_probe(struct platform_device *pdev)
+ 
+ 	card->driver_name = data->priv->driver_name;
+ 	sc8280xp_add_be_ops(card);
++	if (sdw_resume_restart) {
++		card->suspend_post = sc8280xp_snd_suspend_post;
++		card->resume_pre = sc8280xp_snd_resume_pre;
++	}
+ 	return devm_snd_soc_register_card(dev, card);
+ }
+ 
+-- 
+2.43.0
+

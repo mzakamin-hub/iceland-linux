@@ -1,0 +1,158 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 23:37:24 +0200
+Subject: [PATCH 21/21] drm/msm/a8xx: two GMU fixes from the slumber series,
+ each behind a switch
+
+Two parts of Travis Geisinger's (perpetua) A8xx GMU slumber and
+preemption squash, re-implemented, each opt-in and read-only (default
+off = the code paths of before):
+
+- msm.a8xx_preempt_init_reset=1: at preemption hw init, drop the timer
+  and the GMU preempt keepalive vote of a preemption that was in flight
+  when the GPU went down, and forget its next ring; such a preemption
+  never completes and its vote keeps the GMU out of IFPC for good
+  (perpetua: "Reset a stuck preemption on GPU init").
+- msm.a8xx_irq_fence_wait=1: the IRQ handler holds a GX keepalive vote
+  and waits (up to 100 us) for the AHB fence to allow access before it
+  reads and clears the RBBM status; with the fence closed the GMU is in
+  a power collapse that the pending interrupt aborts (perpetua
+  "Keep GX on and wait for the AHB fence in the IRQ handler"). Off, a8xx_irq() runs the handler body directly.
+
+The other eleven parts of the squash (slumber instead of forced off,
+GBIF halt handling, PWR_COL hysteresis on A8xx, ...) are not taken: they
+change the GMU power path that runs the vendor GMU 5.3.33 with
+preemption. Each switch is meant for its own IFPC soak (20 min).
+
+Re-implemented from github perpetua (17 Nov, no Signed-off-by), squashed
+commit 3524508384a1 ("drm/msm/a8xx: the GMU slumber and preemption path").
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/adreno/a8xx_gpu.c      | 49 ++++++++++++++++++++++
+ drivers/gpu/drm/msm/adreno/a8xx_preempt.c  | 11 +++++
+ drivers/gpu/drm/msm/adreno/adreno_device.c | 10 +++++
+ drivers/gpu/drm/msm/adreno/adreno_gpu.h    |  2 +
+ 4 files changed, 72 insertions(+)
+
+diff --git a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
+index 6d83464a7b61f..c0afd0be8e298 100644
+--- a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
++++ b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
+@@ -1348,7 +1348,56 @@ static void a8xx_sw_fuse_violation_irq(struct msm_gpu *gpu)
+ 	}
+ }
+ 
++/*
++ * msm.a8xx_irq_fence_wait: with the AHB fence not in ALLOW mode when an RBBM
++ * interrupt arrives, the GMU is in the middle of a power collapse and the GX
++ * registers (the IRQ status and clear registers among them) are not
++ * accessible; the GMU aborts the collapse because of the pending interrupt,
++ * so wait for that, with a GX keepalive vote held through the handler.
++ */
++static void a8xx_irq_keepalive_vote(struct msm_gpu *gpu, bool on)
++{
++	struct a6xx_gpu *a6xx_gpu = to_a6xx_gpu(to_adreno_gpu(gpu));
++
++	gmu_write(&a6xx_gpu->gmu, REG_A8XX_GMU_GMU_PWR_COL_KEEPALIVE, on);
++}
++
++static int a8xx_irq_poll_fence(struct msm_gpu *gpu)
++{
++	struct a6xx_gpu *a6xx_gpu = to_a6xx_gpu(to_adreno_gpu(gpu));
++	struct a6xx_gmu *gmu = &a6xx_gpu->gmu;
++	u32 status;
++
++	if (gmu_poll_timeout_atomic(gmu, REG_A6XX_GMU_AO_AHB_FENCE_CTRL, status,
++				    !status, 1, 100)) {
++		dev_err_ratelimited(&gpu->pdev->dev,
++				    "irq fence poll timeout, fence_ctrl=0x%x, unmasked_status=0x%x\n",
++				    status,
++				    gmu_read(gmu, REG_A6XX_GMU_RBBM_INT_UNMASKED_STATUS));
++		return -ETIMEDOUT;
++	}
++
++	return 0;
++}
++
++static irqreturn_t __a8xx_irq(struct msm_gpu *gpu);
++
+ irqreturn_t a8xx_irq(struct msm_gpu *gpu)
++{
++	irqreturn_t ret = IRQ_HANDLED;
++
++	if (!a8xx_irq_fence_wait)
++		return __a8xx_irq(gpu);
++
++	a8xx_irq_keepalive_vote(gpu, true);
++	if (!a8xx_irq_poll_fence(gpu))
++		ret = __a8xx_irq(gpu);
++	a8xx_irq_keepalive_vote(gpu, false);
++
++	return ret;
++}
++
++static irqreturn_t __a8xx_irq(struct msm_gpu *gpu)
+ {
+ 	struct msm_drm_private *priv = gpu->dev->dev_private;
+ 	u32 status = gpu_read(gpu, REG_A8XX_RBBM_INT_0_STATUS);
+diff --git a/drivers/gpu/drm/msm/adreno/a8xx_preempt.c b/drivers/gpu/drm/msm/adreno/a8xx_preempt.c
+index 7dc94970cfb30..0b63a8ec21dcd 100644
+--- a/drivers/gpu/drm/msm/adreno/a8xx_preempt.c
++++ b/drivers/gpu/drm/msm/adreno/a8xx_preempt.c
+@@ -140,6 +140,17 @@ void a8xx_preempt_hw_init(struct msm_gpu *gpu)
+ 	/* Enable the GMEM save/restore feature for preemption */
+ 	gpu_write(gpu, REG_A6XX_RB_CONTEXT_SWITCH_GMEM_SAVE_RESTORE_ENABLE, 0x1);
+ 
++	/*
++	 * msm.a8xx_preempt_init_reset: a preemption that was in flight when
++	 * the GPU went down never completes; drop its timer and its keepalive
++	 * vote, which would otherwise keep the GMU out of IFPC for good.
++	 */
++	if (a8xx_preempt_init_reset) {
++		timer_delete(&a6xx_gpu->preempt_timer);
++		a8xx_preempt_keepalive_vote(gpu, false);
++		a6xx_gpu->next_ring = NULL;
++	}
++
+ 	/* Reset the preemption state */
+ 	set_preempt_state(a6xx_gpu, PREEMPT_NONE);
+ 
+diff --git a/drivers/gpu/drm/msm/adreno/adreno_device.c b/drivers/gpu/drm/msm/adreno/adreno_device.c
+index 351a3ca3a9b4e..542bbc0017f6f 100644
+--- a/drivers/gpu/drm/msm/adreno/adreno_device.c
++++ b/drivers/gpu/drm/msm/adreno/adreno_device.c
+@@ -56,6 +56,16 @@ MODULE_PARM_DESC(a8xx_clx_tz_flag,
+ 		 "A8xx: with msm.enable_clx=1 also set GPU_CLX_EN_REQ in the TZ GPU init request, as KGSL does (0=off, 1=on (default))");
+ module_param(a8xx_clx_tz_flag, bool, 0400);
+ 
++bool a8xx_preempt_init_reset;
++MODULE_PARM_DESC(a8xx_preempt_init_reset,
++		 "A8xx: at GPU init drop the timer and GMU keepalive vote of a preemption that was in flight when the GPU went down (0=off (default), 1=on)");
++module_param(a8xx_preempt_init_reset, bool, 0400);
++
++bool a8xx_irq_fence_wait;
++MODULE_PARM_DESC(a8xx_irq_fence_wait,
++		 "A8xx: hold a GX keepalive vote in the IRQ handler and wait for the AHB fence to allow access before reading the IRQ status (0=off (default), 1=on)");
++module_param(a8xx_irq_fence_wait, bool, 0400);
++
+ bool a8xx_safe_recover = true;
+ MODULE_PARM_DESC(a8xx_safe_recover,
+ 		 "A8xx: when the CX GDSC did not collapse at a GPU recovery (no reset), complete the queued submits as faulted instead of replaying them (1=on (default), 0=replay)");
+diff --git a/drivers/gpu/drm/msm/adreno/adreno_gpu.h b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
+index 719b822cedada..d5db5936db424 100644
+--- a/drivers/gpu/drm/msm/adreno/adreno_gpu.h
++++ b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
+@@ -31,6 +31,8 @@ static inline void adreno_iceland_gpu_defaults(struct device *dev,
+ #endif
+ extern bool a8xx_crashstate;
+ extern bool a8xx_safe_recover;
++extern bool a8xx_preempt_init_reset;
++extern bool a8xx_irq_fence_wait;
+ extern bool a8xx_legacy_protect;
+ extern bool a8xx_kgsl_eco;
+ extern bool a8xx_kgsl_bcl;
+-- 
+2.43.0
+

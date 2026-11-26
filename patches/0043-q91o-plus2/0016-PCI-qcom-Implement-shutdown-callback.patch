@@ -1,0 +1,112 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Manivannan Sadhasivam <mani@kernel.org>
+Date: Sat, 14 Nov 2026 07:30:54 +0530
+Subject: [PATCH 16/21] PCI: qcom: Implement shutdown() callback
+
+PCIe host controllers should bring the link down cleanly before system
+shutdown/reboot proceeds to remove power/clocks from the controller.
+Without this, the link may still be up and endpoints still have
+transactions in flight when power/clocks are cut, which can trip SMMU
+translation faults or NoC protocol errors.
+
+Reuse dw_pcie_suspend_noirq() in the shutdown path to force the link
+into L2, putting it into D3cold.
+
+device_shutdown() runs with interrupts enabled, unlike suspend_noirq().
+Mask the chained MSI IRQ(s) and the Global IRQ before tearing down the
+link and clocks/PHY, since a late/spurious interrupt could otherwise
+reach a handler that touches now-unclocked PARF/DBI registers. Use
+dw_pcie_mask_msi() rather than dw_pcie_free_msi() so the MSI IRQ domain
+and the MSI mappings held by downstream devices (which device_shutdown()
+does not remove) are left intact.
+
+Stash a struct qcom_pcie in the platform drvdata in both the normal and
+the firmware-managed (ECAM) probe paths, so shutdown() has a single
+path and recovers everything it needs (Global IRQ, config, dw_pcie)
+uniformly via platform_get_drvdata().
+
+Signed-off-by: Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
+Signed-off-by: Krishna Chaitanya Chundru <krishna.chundru@oss.qualcomm.com>
+
+[mzak: picked for q91o-plus2 (step 3, set B) from pw 1211123 v9 2-4/4 (lore 20261114-shutdown-v9-*-5430c9f242ed); mark V (the gains scan: V V V V; earlier v7 reverted 2 Nov for a wrong reason); 1/4 (pci-host-common early bus-walk exit) left out: it changes the common suspend path, and with force=true the shutdown enters L2 regardless; 4/4 applied by hand on the devm_kzalloc_obj conversion; the qcom shutdown action is gated by pcie_qcom.shutdown_l2 (default 0) in the next commit]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/pci/controller/dwc/pcie-qcom.c | 30 ++++++++++++++++++++++++++
+ 1 file changed, 30 insertions(+)
+
+diff --git a/drivers/pci/controller/dwc/pcie-qcom.c b/drivers/pci/controller/dwc/pcie-qcom.c
+index d5bbd661d0f64..0b3a54dadcc04 100644
+--- a/drivers/pci/controller/dwc/pcie-qcom.c
++++ b/drivers/pci/controller/dwc/pcie-qcom.c
+@@ -2086,9 +2086,14 @@ static int qcom_pcie_ecam_host_init(struct pci_config_window *cfg)
+ {
+ 	struct device *dev = cfg->parent;
+ 	struct dw_pcie_rp *pp;
++	struct qcom_pcie *pcie;
+ 	struct dw_pcie *pci;
+ 	int ret;
+ 
++	pcie = devm_kzalloc_obj(dev, *pcie);
++	if (!pcie)
++		return -ENOMEM;
++
+ 	pci = devm_kzalloc_obj(dev, *pci);
+ 	if (!pci)
+ 		return -ENOMEM;
+@@ -2098,6 +2103,9 @@ static int qcom_pcie_ecam_host_init(struct pci_config_window *cfg)
+ 	pci->dbi_base = cfg->win;
+ 	pp->num_vectors = MSI_DEF_NUM_VECTORS;
+ 
++	pcie->pci = pci;
++	pcie->cfg = of_device_get_match_data(dev);
++
+ 	/*
+ 	 * dw_pcie_msi_host_init() is called directly here, bypassing
+ 	 * dw_pcie_host_init() where pp->lock is normally initialized.
+@@ -2113,6 +2121,9 @@ static int qcom_pcie_ecam_host_init(struct pci_config_window *cfg)
+ 
+ 	dw_pcie_msi_init(pp);
+ 
++	/* Stash pcie so qcom_pcie_shutdown() can mask the MSI IRQ(s) later */
++	platform_set_drvdata(to_platform_device(dev), pcie);
++
+ 	return devm_add_action_or_reset(dev, qcom_pci_free_msi, pp);
+ }
+ 
+@@ -2536,6 +2547,24 @@ static int qcom_pcie_probe(struct platform_device *pdev)
+ 	return ret;
+ }
+ 
++static void qcom_pcie_shutdown(struct platform_device *pdev)
++{
++	struct qcom_pcie *pcie = platform_get_drvdata(pdev);
++	struct dw_pcie *pci = pcie->pci;
++
++	if (pcie->global_irq)
++		disable_irq(pcie->global_irq);
++
++	if (pci->pp.use_imsi_rx)
++		dw_pcie_mask_msi(&pci->pp);
++
++	if (!pcie->cfg->firmware_managed && !pci->suspended)
++		dw_pcie_suspend_noirq(pci, true);
++
++	pm_runtime_put_sync(&pdev->dev);
++	pm_runtime_disable(&pdev->dev);
++}
++
+ static int qcom_pcie_suspend_noirq(struct device *dev)
+ {
+ 	struct qcom_pcie *pcie;
+@@ -2729,5 +2758,6 @@ static struct platform_driver qcom_pcie_driver = {
+ 		.pm = &qcom_pcie_pm_ops,
+ 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
+ 	},
++	.shutdown = qcom_pcie_shutdown,
+ };
+ builtin_platform_driver(qcom_pcie_driver);
+-- 
+2.43.0
+

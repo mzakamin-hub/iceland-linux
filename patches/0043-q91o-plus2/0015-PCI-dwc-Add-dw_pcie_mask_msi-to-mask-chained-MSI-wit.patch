@@ -1,0 +1,95 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Krishna Chaitanya Chundru <krishna.chundru@oss.qualcomm.com>
+Date: Sat, 14 Nov 2026 07:30:53 +0530
+Subject: [PATCH 15/21] PCI: dwc: Add dw_pcie_mask_msi() to mask chained MSI
+ without freeing domain
+
+dw_pcie_free_msi() detaches the chained MSI handler(s) and then removes
+the MSI IRQ domain via irq_domain_remove(). That is correct for the
+dw_pcie_host_deinit() teardown path, where PCI devices have already been
+removed and no MSI mappings remain.
+
+It is not safe to call from the shutdown()/reboot path. device_shutdown()
+does not remove PCI devices or tear down their per-device child MSI
+domains, so endpoint drivers that do not free their MSI vectors in a
+shutdown callback leave live MSI descriptors parented to the domain.
+Removing the domain there orphans those descriptors and leaves dangling
+references to freed memory: during a subsequent kexec CPU teardown, IRQ
+migration walks irq_data->parent_data and can dereference the freed
+msi_irq_domain.
+
+Add dw_pcie_mask_msi(), which only disables the controller's chained MSI
+parent interrupt line(s) to stop further MSI delivery, leaving the IRQ
+domain and the downstream MSI mappings intact. This gives the shutdown
+path a way to silence MSIs before clocks/power are cut without the
+teardown side effects of dw_pcie_free_msi().
+
+Signed-off-by: Krishna Chaitanya Chundru <krishna.chundru@oss.qualcomm.com>
+
+[mzak: picked for q91o-plus2 (step 3, set B) from pw 1211123 v9 2-4/4 (lore 20261114-shutdown-v9-*-5430c9f242ed); mark V (the gains scan: V V V V; earlier v7 reverted 2 Nov for a wrong reason); 1/4 (pci-host-common early bus-walk exit) left out: it changes the common suspend path, and with force=true the shutdown enters L2 regardless; 4/4 applied by hand on the devm_kzalloc_obj conversion; the qcom shutdown action is gated by pcie_qcom.shutdown_l2 (default 0) in the next commit]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ .../pci/controller/dwc/pcie-designware-host.c | 22 +++++++++++++++++++
+ drivers/pci/controller/dwc/pcie-designware.h  |  4 ++++
+ 2 files changed, 26 insertions(+)
+
+diff --git a/drivers/pci/controller/dwc/pcie-designware-host.c b/drivers/pci/controller/dwc/pcie-designware-host.c
+index ff2ff8adc2e81..3683f005c213f 100644
+--- a/drivers/pci/controller/dwc/pcie-designware-host.c
++++ b/drivers/pci/controller/dwc/pcie-designware-host.c
+@@ -240,6 +240,28 @@ void dw_pcie_free_msi(struct dw_pcie_rp *pp)
+ }
+ EXPORT_SYMBOL_GPL(dw_pcie_free_msi);
+ 
++/**
++ * dw_pcie_mask_msi - Mask the chained MSI parent interrupt(s)
++ * @pp: DWC PCIe RP private data
++ *
++ * Disable the controller's chained MSI interrupt line(s) to stop further
++ * MSI delivery, while leaving the MSI IRQ domain and the MSI mappings held
++ * by downstream devices intact. Unlike dw_pcie_free_msi(), this does not
++ * remove the IRQ domain, so it is safe to call from the shutdown()/reboot
++ * path where PCI devices are not removed and their MSI descriptors must not
++ * be orphaned.
++ */
++void dw_pcie_mask_msi(struct dw_pcie_rp *pp)
++{
++	u32 ctrl;
++
++	for (ctrl = 0; ctrl < MAX_MSI_CTRLS; ctrl++) {
++		if (pp->msi_irq[ctrl] > 0)
++			disable_irq(pp->msi_irq[ctrl]);
++	}
++}
++EXPORT_SYMBOL_GPL(dw_pcie_mask_msi);
++
+ void dw_pcie_msi_init(struct dw_pcie_rp *pp)
+ {
+ 	struct dw_pcie *pci = to_dw_pcie_from_pp(pp);
+diff --git a/drivers/pci/controller/dwc/pcie-designware.h b/drivers/pci/controller/dwc/pcie-designware.h
+index 4905932cfaf92..7228218d5dd1a 100644
+--- a/drivers/pci/controller/dwc/pcie-designware.h
++++ b/drivers/pci/controller/dwc/pcie-designware.h
+@@ -867,6 +867,7 @@ void dw_handle_msi_irq(struct dw_pcie_rp *pp);
+ void dw_pcie_msi_init(struct dw_pcie_rp *pp);
+ int dw_pcie_msi_host_init(struct dw_pcie_rp *pp);
+ void dw_pcie_free_msi(struct dw_pcie_rp *pp);
++void dw_pcie_mask_msi(struct dw_pcie_rp *pp);
+ int dw_pcie_setup_rc(struct dw_pcie_rp *pp);
+ int dw_pcie_host_init(struct dw_pcie_rp *pp);
+ void dw_pcie_host_deinit(struct dw_pcie_rp *pp);
+@@ -897,6 +898,9 @@ static inline int dw_pcie_msi_host_init(struct dw_pcie_rp *pp)
+ static inline void dw_pcie_free_msi(struct dw_pcie_rp *pp)
+ { }
+ 
++static inline void dw_pcie_mask_msi(struct dw_pcie_rp *pp)
++{ }
++
+ static inline int dw_pcie_setup_rc(struct dw_pcie_rp *pp)
+ {
+ 	return 0;
+-- 
+2.43.0
+
