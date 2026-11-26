@@ -163,6 +163,8 @@ INFINITI_COMMIT=10650ae7bef447d04eb820bfc0c2d5a98d83e4e2
 # q91o-plus3 (22 Nov 2026) = q91o-plus2 + 0044-q91o-plus3: revert of the last-locked resident BOs of a VM_BIND submit.
 # q92a (23 Nov 2026) = q91o-plus3 + 0045-q92a: typec orientation switch init, ath12k link id bounds, qdsp6 node leaks, aux-hpd last HPD state, DPU stretched idle frame timeouts.
 # Kernel 7.4.0-rc4-iceland-00821-g7090d65132e4.
+# q92b (23 Nov 2026) = q92a + 0046-q92b: qcom_battmgr pmic_glink client use-after-free on unbind.
+# Kernel 7.4.0-rc4-iceland-00822-g58b8c04517b0.
 
 # Tree hash expected after each series on v7.4-rc4 (scripts/prepare.sh checks them):
 TREE_AFTER_0001_infiniti=ab755f7a527baeef80e230d9552990af430016bb
@@ -210,3 +212,4 @@ TREE_AFTER_0042_q91o_plus=bcb3bf3c9cad846538fd316a51ae95b5976d0584
 TREE_AFTER_0043_q91o_plus2=a5bcb11db6891e675c7e8cca6c65cbbc2b5cdca9
 TREE_AFTER_0044_q91o_plus3=575b0b135568532e2edcf533e30ad6c7b78d363e
 TREE_AFTER_0045_q92a=927a61247a14191a9144876315aea7d3bc0a67f7
+TREE_AFTER_0046_q92b=d9fc049dcb8714bd3d189e05d3b95549960698b4
