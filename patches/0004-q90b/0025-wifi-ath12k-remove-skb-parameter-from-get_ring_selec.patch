@@ -34,7 +34,7 @@ Signed-off-by: Jose Ignacio Tornos Martinez <jtornosm@redhat.com>
  3 files changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/hw.h b/drivers/net/wireless/ath/ath12k/hw.h
-index b5fbcefdb6cc..21271d8bfeea 100644
+index b5fbcefdb6cc3..21271d8bfeea8 100644
 --- a/drivers/net/wireless/ath/ath12k/hw.h
 +++ b/drivers/net/wireless/ath/ath12k/hw.h
 @@ -248,7 +248,7 @@ struct ath12k_hw_ops {
@@ -47,7 +47,7 @@ index b5fbcefdb6cc..21271d8bfeea 100644
  	bool (*is_frame_link_agnostic)(struct ath12k_link_vif *arvif,
  				       struct ieee80211_mgmt *mgmt);
 diff --git a/drivers/net/wireless/ath/ath12k/wifi7/dp_tx.c b/drivers/net/wireless/ath/ath12k/wifi7/dp_tx.c
-index 41abf1865702..8fd68e5b412c 100644
+index 41abf18657028..8fd68e5b412c7 100644
 --- a/drivers/net/wireless/ath/ath12k/wifi7/dp_tx.c
 +++ b/drivers/net/wireless/ath/ath12k/wifi7/dp_tx.c
 @@ -155,7 +155,7 @@ int ath12k_wifi7_dp_tx(struct ath12k_pdev_dp *dp_pdev, struct ath12k_link_vif *a
@@ -60,7 +60,7 @@ index 41abf1865702..8fd68e5b412c 100644
  tcl_ring_sel:
  	tcl_ring_retry = false;
 diff --git a/drivers/net/wireless/ath/ath12k/wifi7/hw.c b/drivers/net/wireless/ath/ath12k/wifi7/hw.c
-index a1d7d81db356..8e97db8a46dd 100644
+index a1d7d81db3564..8e97db8a46ddc 100644
 --- a/drivers/net/wireless/ath/ath12k/wifi7/hw.c
 +++ b/drivers/net/wireless/ath/ath12k/wifi7/hw.c
 @@ -50,7 +50,7 @@ ath12k_wifi7_hw_mac_id_to_srng_id_qcn9274(const struct ath12k_hw_params *hw,
@@ -84,3 +84,6 @@ index a1d7d81db356..8e97db8a46dd 100644
  }
  
  static bool ath12k_wifi7_dp_srng_is_comp_ring_wcn7850(int ring_num)
+-- 
+2.43.0
+

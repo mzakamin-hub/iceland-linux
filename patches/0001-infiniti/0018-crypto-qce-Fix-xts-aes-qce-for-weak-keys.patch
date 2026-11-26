@@ -39,7 +39,7 @@ Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
  2 files changed, 13 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/crypto/qce/cipher.h b/drivers/crypto/qce/cipher.h
-index 850f257d00f3..daea07551118 100644
+index 850f257d00f3a..daea07551118d 100644
 --- a/drivers/crypto/qce/cipher.h
 +++ b/drivers/crypto/qce/cipher.h
 @@ -14,6 +14,7 @@
@@ -51,7 +51,7 @@ index 850f257d00f3..daea07551118 100644
  };
  
 diff --git a/drivers/crypto/qce/skcipher.c b/drivers/crypto/qce/skcipher.c
-index dcf2c6ebd588..7abc1d7b1cf0 100644
+index dcf2c6ebd588f..7abc1d7b1cf04 100644
 --- a/drivers/crypto/qce/skcipher.c
 +++ b/drivers/crypto/qce/skcipher.c
 @@ -12,6 +12,7 @@
@@ -102,3 +102,6 @@ index dcf2c6ebd588..7abc1d7b1cf0 100644
  	    sg_nents_for_len(req->src, req->cryptlen) > 1 ||
  	    sg_nents_for_len(req->dst, req->cryptlen) > 1)) {
  		skcipher_request_set_tfm(&rctx->fallback_req, ctx->fallback);
+-- 
+2.43.0
+

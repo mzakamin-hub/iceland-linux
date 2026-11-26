@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 2 Nov 2026 11:48:25 +0200
-Subject: [PATCH 09/24] media: qcom: camss: csiphy-3ph: leave the PHY in reset
- after a stream
+Subject: [PATCH] media: qcom: camss: csiphy-3ph: leave the PHY in reset after
+ a stream
 
 csiphy_lanes_disable() only switches the lanes and the common power-down
 off; the PHY itself keeps running. The vendor driver ends every stream by
@@ -17,8 +17,6 @@ about half the time until the camera power domain went down
 of CAMSS v23). This is our own form for the CAMSS v21 CSIPHY code the
 Pad 4 runs (front <-> rear switches).
 
-Suggested-by: Doctor Logix <doctor.logix@gmail.com>
-Based-on: denialwm/linux-perpetua cc2de7a37a7c (finding; our form for CAMSS v21)
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 Signed-off-by: mzak <mzak.amin@gmail.com>
 ---
@@ -26,7 +24,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 12 insertions(+)
 
 diff --git a/drivers/media/platform/qcom/camss/camss-csiphy-3ph-1-0.c b/drivers/media/platform/qcom/camss/camss-csiphy-3ph-1-0.c
-index dac8d2ecf799..5673fd8e015f 100644
+index 638f77263d761..9fc94cbcce850 100644
 --- a/drivers/media/platform/qcom/camss/camss-csiphy-3ph-1-0.c
 +++ b/drivers/media/platform/qcom/camss/camss-csiphy-3ph-1-0.c
 @@ -1160,6 +1160,9 @@ static void csiphy_lanes_enable(struct csiphy_device *csiphy,
@@ -55,3 +53,6 @@ index dac8d2ecf799..5673fd8e015f 100644
  }
  
  static int csiphy_init(struct csiphy_device *csiphy)
+-- 
+2.43.0
+

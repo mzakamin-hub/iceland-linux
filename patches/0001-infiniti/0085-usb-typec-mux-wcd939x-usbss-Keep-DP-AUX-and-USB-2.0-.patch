@@ -13,7 +13,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 12 insertions(+)
 
 diff --git a/drivers/usb/typec/mux/wcd939x-usbss.c b/drivers/usb/typec/mux/wcd939x-usbss.c
-index 73db3aa3cec4..53bcd9eddb81 100644
+index ca806041aa0a1..69e381312dd5a 100644
 --- a/drivers/usb/typec/mux/wcd939x-usbss.c
 +++ b/drivers/usb/typec/mux/wcd939x-usbss.c
 @@ -197,6 +197,7 @@ struct wcd939x_usbss {
@@ -49,3 +49,6 @@ index 73db3aa3cec4..53bcd9eddb81 100644
  	if (usbss->mode != state->mode) {
  		usbss->mode = state->mode;
  
+-- 
+2.43.0
+

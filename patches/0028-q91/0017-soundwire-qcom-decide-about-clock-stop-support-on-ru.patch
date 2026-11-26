@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Marek Szyprowski <m.szyprowski@samsung.com>
 Date: Wed, 28 Oct 2026 23:38:49 +0100
-Subject: [PATCH 17/32] soundwire: qcom: decide about clock stop support on
- runtime suspend
+Subject: [PATCH] soundwire: qcom: decide about clock stop support on runtime
+ suspend
 
 The controller decides whether to use the clock stop mode for runtime PM
 based on the clk_stop_mode1 property of the attached peripherals, but
@@ -43,7 +43,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 19 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/soundwire/qcom.c b/drivers/soundwire/qcom.c
-index bc7fcd6b905f..d4d807363cc0 100644
+index 4aafe82d2b680..51ae5a32ee7c7 100644
 --- a/drivers/soundwire/qcom.c
 +++ b/drivers/soundwire/qcom.c
 @@ -723,14 +723,10 @@ static int qcom_swrm_enumerate(struct sdw_bus *bus)
@@ -93,3 +93,6 @@ index bc7fcd6b905f..d4d807363cc0 100644
  	if (!ctrl->clock_stop_not_supported) {
  		/* Mask bus clash interrupt */
  		ctrl->intr_mask &= ~SWRM_INTERRUPT_STATUS_MASTER_CLASH_DET;
+-- 
+2.43.0
+

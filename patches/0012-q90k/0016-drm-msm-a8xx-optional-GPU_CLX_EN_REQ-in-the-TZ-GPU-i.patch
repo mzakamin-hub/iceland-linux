@@ -27,7 +27,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  5 files changed, 38 insertions(+), 13 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
-index b950985016bd..fadf5261009d 100644
+index b950985016bd0..fadf5261009de 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 @@ -1253,7 +1253,7 @@ static int a6xx_gmu_secure_init(struct a6xx_gpu *a6xx_gpu)
@@ -89,7 +89,7 @@ index b950985016bd..fadf5261009d 100644
  						     QCOM_SCM_GPU_TSENSE_EN_REQ);
  		if (ret) {
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.h b/drivers/gpu/drm/msm/adreno/a6xx_gmu.h
-index b5006bedfeb0..488da2579ef7 100644
+index b5006bedfeb0c..488da2579ef76 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.h
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.h
 @@ -128,6 +128,9 @@ struct a6xx_gmu {
@@ -103,7 +103,7 @@ index b5006bedfeb0..488da2579ef7 100644
  	struct notifier_block pd_nb;
  	struct completion pd_gate;
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_hfi.c b/drivers/gpu/drm/msm/adreno/a6xx_hfi.c
-index 5aab2c1bbe0f..beb5f1ca553a 100644
+index 06112c62c08e1..8ff3d85d7876e 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_hfi.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_hfi.c
 @@ -970,7 +970,8 @@ static int a6xx_hfi_enable_clx(struct a6xx_gmu *gmu)
@@ -117,7 +117,7 @@ index 5aab2c1bbe0f..beb5f1ca553a 100644
  	ret = a6xx_hfi_feature_ctrl_msg(gmu, HFI_FEATURE_CLX, 1, 0);
  	if (ret) {
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_device.c b/drivers/gpu/drm/msm/adreno/adreno_device.c
-index 9e68a9ac2197..a879d21c0945 100644
+index 9e68a9ac21973..a879d21c0945c 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_device.c
 +++ b/drivers/gpu/drm/msm/adreno/adreno_device.c
 @@ -48,6 +48,11 @@ MODULE_PARM_DESC(a8xx_kgsl_bcl,
@@ -133,7 +133,7 @@ index 9e68a9ac2197..a879d21c0945 100644
  MODULE_PARM_DESC(a8xx_safe_recover,
  		 "A8xx: when the CX GDSC did not collapse at a GPU recovery (no reset), complete the queued submits as faulted instead of replaying them (1=on (default), 0=replay)");
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_gpu.h b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
-index 5eb5fe65c79a..3a8f6a78200b 100644
+index 5eb5fe65c79a5..3a8f6a78200b5 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_gpu.h
 +++ b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
 @@ -26,6 +26,7 @@ extern bool a8xx_safe_recover;
@@ -144,3 +144,6 @@ index 5eb5fe65c79a..3a8f6a78200b 100644
  
  enum {
  	ADRENO_FW_PM4 = 0,
+-- 
+2.43.0
+

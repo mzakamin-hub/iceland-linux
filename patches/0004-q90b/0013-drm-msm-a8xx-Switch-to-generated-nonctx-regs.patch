@@ -14,7 +14,7 @@ Acked-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
  1 file changed, 7 insertions(+), 347 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a8xx_catalog.c b/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
-index 15fc10d5db68..bc79013165c1 100644
+index 15fc10d5db688..bc79013165c13 100644
 --- a/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
 +++ b/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
 @@ -18,71 +18,6 @@
@@ -455,3 +455,6 @@ index 15fc10d5db68..bc79013165c1 100644
  			.pwrup_reglist = &a850_pwrup_reglist,
  			.dyn_pwrup_reglist = &a850_dyn_pwrup_reglist,
  			.ifpc_reglist = &a850_ifpc_reglist,
+-- 
+2.43.0
+

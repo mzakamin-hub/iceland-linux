@@ -27,7 +27,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  4 files changed, 136 insertions(+), 1 deletion(-)
 
 diff --git a/sound/soc/qcom/qdsp6/audioreach.c b/sound/soc/qcom/qdsp6/audioreach.c
-index d2dc5d37bccf..4bb6ffbbf18a 100644
+index aa1f4e2967647..0111ac7fec748 100644
 --- a/sound/soc/qcom/qdsp6/audioreach.c
 +++ b/sound/soc/qcom/qdsp6/audioreach.c
 @@ -152,6 +152,13 @@ struct apm_i2s_module_intf_cfg {
@@ -130,7 +130,7 @@ index d2dc5d37bccf..4bb6ffbbf18a 100644
  static int audioreach_audio_if_set_media_format(struct q6apm_graph *graph,
  						const struct audioreach_module *module,
  						const struct audioreach_module_config *cfg)
-@@ -1531,6 +1617,10 @@ int audioreach_set_media_format(struct q6apm_graph *graph,
+@@ -1537,6 +1623,10 @@ int audioreach_set_media_format(struct q6apm_graph *graph,
  		if (!rc)
  			rc = audioreach_module_enable(graph, module, true);
  		break;
@@ -142,7 +142,7 @@ index d2dc5d37bccf..4bb6ffbbf18a 100644
  	case MODULE_ID_AUDIO_IF_SINK:
  		rc = audioreach_audio_if_set_media_format(graph, module, cfg);
 diff --git a/sound/soc/qcom/qdsp6/audioreach.h b/sound/soc/qcom/qdsp6/audioreach.h
-index 587f14ce71d2..202f215de00c 100644
+index 587f14ce71d23..202f215de00c7 100644
 --- a/sound/soc/qcom/qdsp6/audioreach.h
 +++ b/sound/soc/qcom/qdsp6/audioreach.h
 @@ -22,6 +22,8 @@ struct q6apm_graph;
@@ -199,7 +199,7 @@ index 587f14ce71d2..202f215de00c 100644
  
  /*
 diff --git a/sound/soc/qcom/qdsp6/q6apm.c b/sound/soc/qcom/qdsp6/q6apm.c
-index f592ddeda492..894302dcd108 100644
+index 454bfddcf3181..8bc2734bb29de 100644
 --- a/sound/soc/qcom/qdsp6/q6apm.c
 +++ b/sound/soc/qcom/qdsp6/q6apm.c
 @@ -90,7 +90,8 @@ static struct audioreach_graph *q6apm_get_audioreach_graph(struct q6apm *apm, ui
@@ -213,7 +213,7 @@ index f592ddeda492..894302dcd108 100644
  	return graph;
  }
 diff --git a/sound/soc/qcom/qdsp6/topology.c b/sound/soc/qcom/qdsp6/topology.c
-index 612d8f03e6e9..715f2890d2b9 100644
+index aa2ab2b058d0f..958ee0912fa21 100644
 --- a/sound/soc/qcom/qdsp6/topology.c
 +++ b/sound/soc/qcom/qdsp6/topology.c
 @@ -792,6 +792,9 @@ static int audioreach_widget_audio_if_module_load(struct audioreach_module *mod,
@@ -235,3 +235,6 @@ index 612d8f03e6e9..715f2890d2b9 100644
  	case MODULE_ID_AUDIO_IF_SINK:
  	case MODULE_ID_AUDIO_IF_SOURCE:
  		ret = audioreach_widget_audio_if_module_load(mod, mod_array);
+-- 
+2.43.0
+

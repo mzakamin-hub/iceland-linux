@@ -22,7 +22,7 @@ Signed-off-by: Akhil P Oommen <akhilpo@oss.qualcomm.com>
  2 files changed, 11 insertions(+), 15 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/msm_gpu.h b/drivers/gpu/drm/msm/msm_gpu.h
-index d27d54bdb7a7..bc5b31eb1eca 100644
+index d27d54bdb7a71..bc5b31eb1eca8 100644
 --- a/drivers/gpu/drm/msm/msm_gpu.h
 +++ b/drivers/gpu/drm/msm/msm_gpu.h
 @@ -522,17 +522,18 @@ msm_context_is_vmbind(struct msm_context *ctx)
@@ -71,7 +71,7 @@ index d27d54bdb7a7..bc5b31eb1eca 100644
  	return 0;
  }
 diff --git a/drivers/gpu/drm/msm/msm_submitqueue.c b/drivers/gpu/drm/msm/msm_submitqueue.c
-index d307cdd17d90..8d550d281704 100644
+index d307cdd17d908..8d550d281704e 100644
 --- a/drivers/gpu/drm/msm/msm_submitqueue.c
 +++ b/drivers/gpu/drm/msm/msm_submitqueue.c
 @@ -136,7 +136,7 @@ get_sched_entity(struct msm_context *ctx, struct msm_ringbuffer *ring,
@@ -83,3 +83,6 @@ index d307cdd17d90..8d550d281704 100644
  
  	/* We should have already validated that the requested priority is
  	 * valid by the time we get here.
+-- 
+2.43.0
+

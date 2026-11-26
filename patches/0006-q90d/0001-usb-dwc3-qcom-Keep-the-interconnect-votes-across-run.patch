@@ -23,7 +23,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 53 insertions(+), 10 deletions(-)
 
 diff --git a/drivers/usb/dwc3/dwc3-qcom.c b/drivers/usb/dwc3/dwc3-qcom.c
-index 2fe9c6696116..cb6e828ca7f1 100644
+index 7dadb48dddc0e..f01280f32a45c 100644
 --- a/drivers/usb/dwc3/dwc3-qcom.c
 +++ b/drivers/usb/dwc3/dwc3-qcom.c
 @@ -65,6 +65,18 @@
@@ -150,3 +150,6 @@ index 2fe9c6696116..cb6e828ca7f1 100644
  }
  
  static int dwc3_qcom_runtime_resume(struct device *dev)
+-- 
+2.43.0
+

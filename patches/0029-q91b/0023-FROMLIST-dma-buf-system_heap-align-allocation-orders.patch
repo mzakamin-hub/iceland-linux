@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Prakash Gupta <prakash.gupta@oss.qualcomm.com>
 Date: Mon, 21 Sep 2026 20:43:41 +0530
-Subject: [PATCH 23/24] FROMLIST: dma-buf: system_heap: align allocation orders
- to ARM64 hugepage sizes
+Subject: [PATCH] FROMLIST: dma-buf: system_heap: align allocation orders to
+ ARM64 hugepage sizes
 
 System heap currently uses a fixed allocation order, {8, 4, 0} while
 requesting pages from the buddy allocator which correspond to 1 MiB,
@@ -32,7 +32,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 23 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/dma-buf/heaps/system_heap.c b/drivers/dma-buf/heaps/system_heap.c
-index c8959eadc71d..7a3e26c3dd43 100644
+index c8959eadc71d1..7a3e26c3dd434 100644
 --- a/drivers/dma-buf/heaps/system_heap.c
 +++ b/drivers/dma-buf/heaps/system_heap.c
 @@ -22,6 +22,7 @@
@@ -78,3 +78,6 @@ index c8959eadc71d..7a3e26c3dd43 100644
  #define NUM_ORDERS ARRAY_SIZE(orders)
  
  static int system_heap_set_page_decrypted(struct page *page)
+-- 
+2.43.0
+

@@ -59,7 +59,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  3 files changed, 24 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/remoteproc/qcom_q6v5.c b/drivers/remoteproc/qcom_q6v5.c
-index fe148b4b3775..51b24cbd4336 100644
+index fe148b4b3775f..51b24cbd4336b 100644
 --- a/drivers/remoteproc/qcom_q6v5.c
 +++ b/drivers/remoteproc/qcom_q6v5.c
 @@ -147,15 +147,18 @@ static irqreturn_t q6v5_wdog_interrupt(int irq, void *data)
@@ -103,7 +103,7 @@ index fe148b4b3775..51b24cbd4336 100644
  	return IRQ_HANDLED;
  }
 diff --git a/drivers/remoteproc/qcom_q6v5.h b/drivers/remoteproc/qcom_q6v5.h
-index 8991ff090579..a0507860a21c 100644
+index 8991ff0905792..a0507860a21ce 100644
 --- a/drivers/remoteproc/qcom_q6v5.h
 +++ b/drivers/remoteproc/qcom_q6v5.h
 @@ -56,5 +56,6 @@ int qcom_q6v5_unprepare(struct qcom_q6v5 *q6v5);
@@ -114,7 +114,7 @@ index 8991ff090579..a0507860a21c 100644
  
  #endif
 diff --git a/drivers/remoteproc/qcom_q6v5_pas.c b/drivers/remoteproc/qcom_q6v5_pas.c
-index d3caa53ad508..0f23038138cd 100644
+index 7841c8dee72db..fdd2a621b1c4b 100644
 --- a/drivers/remoteproc/qcom_q6v5_pas.c
 +++ b/drivers/remoteproc/qcom_q6v5_pas.c
 @@ -562,10 +562,13 @@ static int qcom_pas_attach(struct rproc *rproc)
@@ -134,3 +134,6 @@ index d3caa53ad508..0f23038138cd 100644
  	}
  
  	return 0;
+-- 
+2.43.0
+

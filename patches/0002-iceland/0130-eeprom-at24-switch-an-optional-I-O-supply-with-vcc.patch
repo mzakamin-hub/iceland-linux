@@ -15,7 +15,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 42 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/nvmem/at24.c b/drivers/nvmem/at24.c
-index 772c4d9fa651..24d3dd0eebe1 100644
+index b9db13cc3e33b..7533c3d9a0521 100644
 --- a/drivers/nvmem/at24.c
 +++ b/drivers/nvmem/at24.c
 @@ -83,6 +83,7 @@ struct at24_data {
@@ -61,7 +61,7 @@ index 772c4d9fa651..24d3dd0eebe1 100644
  static int at24_probe(struct i2c_client *client)
  {
  	struct regmap_config regmap_config = { };
-@@ -702,6 +731,13 @@ static int at24_probe(struct i2c_client *client)
+@@ -701,6 +730,13 @@ static int at24_probe(struct i2c_client *client)
  	if (IS_ERR(at24->vcc_reg))
  		return PTR_ERR(at24->vcc_reg);
  
@@ -75,7 +75,7 @@ index 772c4d9fa651..24d3dd0eebe1 100644
  	writable = !(flags & AT24_FLAG_READONLY);
  	if (writable) {
  		at24->write_max = min_t(unsigned int,
-@@ -753,7 +789,7 @@ static int at24_probe(struct i2c_client *client)
+@@ -752,7 +788,7 @@ static int at24_probe(struct i2c_client *client)
  
  	full_power = acpi_dev_state_d0(&client->dev);
  	if (full_power) {
@@ -84,7 +84,7 @@ index 772c4d9fa651..24d3dd0eebe1 100644
  		if (err)
  			return dev_err_probe(dev, err, "Failed to enable vcc regulator\n");
  
-@@ -771,7 +807,7 @@ static int at24_probe(struct i2c_client *client)
+@@ -770,7 +806,7 @@ static int at24_probe(struct i2c_client *client)
  		if (err) {
  			pm_runtime_disable(dev);
  			if (!pm_runtime_status_suspended(dev))
@@ -93,7 +93,7 @@ index 772c4d9fa651..24d3dd0eebe1 100644
  			return -ENODEV;
  		}
  	}
-@@ -780,7 +816,7 @@ static int at24_probe(struct i2c_client *client)
+@@ -779,7 +815,7 @@ static int at24_probe(struct i2c_client *client)
  	if (IS_ERR(at24->nvmem)) {
  		pm_runtime_disable(dev);
  		if (!pm_runtime_status_suspended(dev))
@@ -102,7 +102,7 @@ index 772c4d9fa651..24d3dd0eebe1 100644
  		return dev_err_probe(dev, PTR_ERR(at24->nvmem),
  				     "failed to register nvmem\n");
  	}
-@@ -808,7 +844,7 @@ static void at24_remove(struct i2c_client *client)
+@@ -807,7 +843,7 @@ static void at24_remove(struct i2c_client *client)
  	pm_runtime_disable(&client->dev);
  	if (acpi_dev_state_d0(&client->dev)) {
  		if (!pm_runtime_status_suspended(&client->dev))
@@ -111,7 +111,7 @@ index 772c4d9fa651..24d3dd0eebe1 100644
  		pm_runtime_set_suspended(&client->dev);
  	}
  }
-@@ -818,7 +854,7 @@ static int __maybe_unused at24_suspend(struct device *dev)
+@@ -817,7 +853,7 @@ static int __maybe_unused at24_suspend(struct device *dev)
  	struct i2c_client *client = to_i2c_client(dev);
  	struct at24_data *at24 = i2c_get_clientdata(client);
  
@@ -120,7 +120,7 @@ index 772c4d9fa651..24d3dd0eebe1 100644
  }
  
  static int __maybe_unused at24_resume(struct device *dev)
-@@ -826,7 +862,7 @@ static int __maybe_unused at24_resume(struct device *dev)
+@@ -825,7 +861,7 @@ static int __maybe_unused at24_resume(struct device *dev)
  	struct i2c_client *client = to_i2c_client(dev);
  	struct at24_data *at24 = i2c_get_clientdata(client);
  
@@ -129,3 +129,6 @@ index 772c4d9fa651..24d3dd0eebe1 100644
  }
  
  static const struct dev_pm_ops at24_pm_ops = {
+-- 
+2.43.0
+

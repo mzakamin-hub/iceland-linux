@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Krishna Chaitanya Chundru <krishna.chundru@oss.qualcomm.com>
 Date: Thu, 29 Oct 2026 09:49:27 +0530
-Subject: [PATCH 12/32] PCI: host-common: Fix early bus-walk exit in
+Subject: [PATCH] PCI: host-common: Fix early bus-walk exit in
  d3cold_possible()
 
 __pci_host_common_d3cold_possible() returns -EOPNOTSUPP for the first
@@ -34,7 +34,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 4 insertions(+), 9 deletions(-)
 
 diff --git a/drivers/pci/controller/pci-host-common.c b/drivers/pci/controller/pci-host-common.c
-index a23907a875e5..c2c852c64aa8 100644
+index 35ee51cf9d067..d1108953c5785 100644
 --- a/drivers/pci/controller/pci-host-common.c
 +++ b/drivers/pci/controller/pci-host-common.c
 @@ -275,21 +275,16 @@ static int __pci_host_common_d3cold_possible(struct pci_dev *pdev,
@@ -63,3 +63,6 @@ index a23907a875e5..c2c852c64aa8 100644
  }
  
  /**
+-- 
+2.43.0
+

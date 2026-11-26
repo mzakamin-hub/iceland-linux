@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Vladyslav Tymoshchuk <tvlad744@gmail.com>
 Date: Thu, 12 Nov 2026 13:00:05 +0200
-Subject: [PATCH 36/38] wifi: ath12k: disable and enable the CE interrupts only
- once
+Subject: [PATCH] wifi: ath12k: disable and enable the CE interrupts only once
 
 ath12k_pci_ce_irqs_disable() calls disable_irq_nosync() each time it is
 called, and ath12k_pci_ce_irqs_enable() calls enable_irq() once, from
@@ -37,7 +36,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/pci.c b/drivers/net/wireless/ath/ath12k/pci.c
-index 7d780b3fa521..4d2696e35edf 100644
+index 7d780b3fa521b..4d2696e35edfd 100644
 --- a/drivers/net/wireless/ath/ath12k/pci.c
 +++ b/drivers/net/wireless/ath/ath12k/pci.c
 @@ -381,7 +381,8 @@ static void ath12k_pci_ce_irqs_disable(struct ath12k_base *ab)

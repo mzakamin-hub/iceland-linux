@@ -19,7 +19,7 @@ Signed-off-by: Akhil P Oommen <akhilpo@oss.qualcomm.com>
  2 files changed, 3 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
-index b7dac7903b68..63f9eb332bbf 100644
+index b7dac7903b68a..63f9eb332bbf9 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 @@ -1531,8 +1531,8 @@ static void a6xx_gmu_shutdown(struct a6xx_gmu *gmu)
@@ -34,7 +34,7 @@ index b7dac7903b68..63f9eb332bbf 100644
  	/*
  	 * Let the user know we failed to slumber but don't worry too
 diff --git a/drivers/gpu/drm/msm/registers/adreno/a6xx_gmu.xml b/drivers/gpu/drm/msm/registers/adreno/a6xx_gmu.xml
-index b3082738c99d..786fd7d2f674 100644
+index b3082738c99d3..786fd7d2f6743 100644
 --- a/drivers/gpu/drm/msm/registers/adreno/a6xx_gmu.xml
 +++ b/drivers/gpu/drm/msm/registers/adreno/a6xx_gmu.xml
 @@ -224,6 +224,7 @@ xsi:schemaLocation="https://gitlab.freedesktop.org/freedreno/ rules-fd.xsd">
@@ -45,3 +45,6 @@ index b3082738c99d..786fd7d2f674 100644
  	</reg32>
  	<reg32 offset="0x23b0d" name="GPU_GMU_AO_GPU_CX_BUSY_STATUS2"/>
  	<reg32 offset="0x23b0e" name="GPU_GMU_AO_GPU_CX_BUSY_MASK"/>
+-- 
+2.43.0
+

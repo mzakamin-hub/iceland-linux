@@ -30,7 +30,7 @@ Signed-off-by: Michael McAllister <me@michaelmcallister.org>
  1 file changed, 8 insertions(+)
 
 diff --git a/drivers/tty/serial/qcom_geni_serial.c b/drivers/tty/serial/qcom_geni_serial.c
-index d8323d6b5286..684252042fe4 100644
+index 61744eef068c3..e5d1e7679c648 100644
 --- a/drivers/tty/serial/qcom_geni_serial.c
 +++ b/drivers/tty/serial/qcom_geni_serial.c
 @@ -1579,6 +1579,14 @@ static void qcom_geni_serial_set_termios(struct uart_port *uport,
@@ -48,3 +48,6 @@ index d8323d6b5286..684252042fe4 100644
  	trace_geni_serial_set_termios(uport->dev, baud, bits_per_char,
  				      tx_trans_cfg, tx_parity_cfg, rx_trans_cfg,
  				      rx_parity_cfg, stop_bit_len);
+-- 
+2.43.0
+

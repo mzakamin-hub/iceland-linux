@@ -33,7 +33,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  3 files changed, 69 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/virt/gunyah/vm_mgr.c b/drivers/virt/gunyah/vm_mgr.c
-index 12726713a5b0..8cc96b46e285 100644
+index 12726713a5b00..8cc96b46e2858 100644
 --- a/drivers/virt/gunyah/vm_mgr.c
 +++ b/drivers/virt/gunyah/vm_mgr.c
 @@ -817,7 +817,7 @@ static int gunyah_vm_start(struct gunyah_vm *ghvm)
@@ -72,7 +72,7 @@ index 12726713a5b0..8cc96b46e285 100644
  	gunyah_rm_notifier_unregister(ghvm->rm, &ghvm->nb);
  err:
 diff --git a/drivers/virt/gunyah/vm_mgr.h b/drivers/virt/gunyah/vm_mgr.h
-index fe07f81b6fea..6b92c5284066 100644
+index fe07f81b6fea2..6b92c52840664 100644
 --- a/drivers/virt/gunyah/vm_mgr.h
 +++ b/drivers/virt/gunyah/vm_mgr.h
 @@ -269,6 +269,7 @@ int gunyah_demand_page(struct gunyah_vm *ghvm, u64 gpa, bool write);
@@ -84,7 +84,7 @@ index fe07f81b6fea..6b92c5284066 100644
  /* Runtime shares a protected guest accepts itself (vm_mgr_pshare.c) */
  int gunyah_vm_pshare_user(struct gunyah_vm *ghvm,
 diff --git a/drivers/virt/gunyah/vm_mgr_mem.c b/drivers/virt/gunyah/vm_mgr_mem.c
-index c48d3ba4489e..036c00df4ae0 100644
+index c48d3ba4489ee..036c00df4ae0b 100644
 --- a/drivers/virt/gunyah/vm_mgr_mem.c
 +++ b/drivers/virt/gunyah/vm_mgr_mem.c
 @@ -494,6 +494,15 @@ static int gunyah_gup_demand_page(struct gunyah_vm *ghvm, struct gunyah_vm_bindi
@@ -160,3 +160,6 @@ index c48d3ba4489e..036c00df4ae0 100644
  /*
   * This function will provide the number of bindings from
   * start_addr to end_addr.
+-- 
+2.43.0
+

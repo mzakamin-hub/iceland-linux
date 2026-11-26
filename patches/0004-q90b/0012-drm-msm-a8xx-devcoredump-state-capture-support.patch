@@ -20,7 +20,7 @@ Signed-off-by: Rob Clark <robin.clark@oss.qualcomm.com>
  create mode 100644 drivers/gpu/drm/msm/adreno/a8xx_gpu_state.c
 
 diff --git a/drivers/gpu/drm/msm/Makefile b/drivers/gpu/drm/msm/Makefile
-index 1e246616f83f..b5d64ee7eb74 100644
+index 1e246616f83f3..b5d64ee7eb741 100644
 --- a/drivers/gpu/drm/msm/Makefile
 +++ b/drivers/gpu/drm/msm/Makefile
 @@ -31,7 +31,9 @@ adreno-y := \
@@ -35,7 +35,7 @@ index 1e246616f83f..b5d64ee7eb74 100644
  msm-display-$(CONFIG_DRM_MSM_HDMI) += \
  	hdmi/hdmi.o \
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gpu.c b/drivers/gpu/drm/msm/adreno/a6xx_gpu.c
-index f7273914f28f..3f1aeeb5ab07 100644
+index f7273914f28f4..3f1aeeb5ab072 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gpu.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gpu.c
 @@ -2920,9 +2920,16 @@ const struct adreno_gpu_funcs a8xx_gpu_funcs = {
@@ -56,7 +56,7 @@ index f7273914f28f..3f1aeeb5ab07 100644
  		.create_private_vm = a6xx_create_private_vm,
  		.get_rptr = a6xx_get_rptr,
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
-index e10fa401bf25..50e18486e411 100644
+index e10fa401bf25d..50e18486e4111 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
 @@ -370,4 +370,9 @@ void a8xx_preempt_irq(struct msm_gpu *gpu);
@@ -71,7 +71,7 @@ index e10fa401bf25..50e18486e411 100644
  #endif /* __A6XX_GPU_H__ */
 diff --git a/drivers/gpu/drm/msm/adreno/a8xx_gpu_state.c b/drivers/gpu/drm/msm/adreno/a8xx_gpu_state.c
 new file mode 100644
-index 000000000000..e4eb2f335a89
+index 0000000000000..e4eb2f335a890
 --- /dev/null
 +++ b/drivers/gpu/drm/msm/adreno/a8xx_gpu_state.c
 @@ -0,0 +1,1253 @@
@@ -1329,7 +1329,7 @@ index 000000000000..e4eb2f335a89
 +	}
 +}
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_snapshot.h b/drivers/gpu/drm/msm/adreno/adreno_snapshot.h
-index f9956e0bc1d5..e8ff102a628b 100644
+index f9956e0bc1d5f..e8ff102a628b7 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_snapshot.h
 +++ b/drivers/gpu/drm/msm/adreno/adreno_snapshot.h
 @@ -7,6 +7,8 @@
@@ -1601,3 +1601,6 @@ index f9956e0bc1d5..e8ff102a628b 100644
 +		return -ENOSPC;
 +	return __cd_run(gpu, p->dumper);
 +}
+-- 
+2.43.0
+

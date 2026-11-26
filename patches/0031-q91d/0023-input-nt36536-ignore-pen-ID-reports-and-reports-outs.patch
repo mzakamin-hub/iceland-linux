@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Joonhoe Kim <26rote@gmail.com>
 Date: Mon, 2 Nov 2026 00:13:27 +0000
-Subject: [PATCH 23/27] input: nt36536: ignore pen ID reports and reports
- outside the axes
+Subject: [PATCH] input: nt36536: ignore pen ID reports and reports outside the
+ axes
 
 The firmware reports the pen ID with format id 0xF1 when the pen is
 lifted, as it reports the pen MAC address with 0xF0. The driver logged
@@ -23,7 +23,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/input/touchscreen/nt36536/nt36xxx.c b/drivers/input/touchscreen/nt36536/nt36xxx.c
-index c5d540601..9b4f37a5a 100644
+index c5d5406019dd5..9b4f37a5a799f 100644
 --- a/drivers/input/touchscreen/nt36536/nt36xxx.c
 +++ b/drivers/input/touchscreen/nt36536/nt36xxx.c
 @@ -1010,6 +1010,8 @@ static irqreturn_t nvt_ts_work_func(int irq, void *data)

@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Sarannya S <sarannya.s@oss.qualcomm.com>
 Date: Wed, 28 Oct 2026 10:33:48 +0100
-Subject: [PATCH 33/38] soc: qcom: smem: add IN_PARTITION_RANGE helper
+Subject: [PATCH] soc: qcom: smem: add IN_PARTITION_RANGE helper
 
 Add IN_PARTITION_RANGE() to test that a pointer lies in [start, end]
 and that pointer + size does not wrap.
@@ -25,7 +25,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 13 insertions(+)
 
 diff --git a/drivers/soc/qcom/smem.c b/drivers/soc/qcom/smem.c
-index b5e7bd8c1512..36a4a10f3aec 100644
+index c394a63e85628..6c4e1fa4747f9 100644
 --- a/drivers/soc/qcom/smem.c
 +++ b/drivers/soc/qcom/smem.c
 @@ -2,6 +2,7 @@

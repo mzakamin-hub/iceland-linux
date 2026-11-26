@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 2 Nov 2026 11:18:57 +0200
-Subject: [PATCH 32/32] FIXUP: build warnings of three posted patches (clang
+Subject: [PATCH] FIXUP: build warnings of three posted patches (clang
  -Wsometimes-uninitialized / -Wunused)
 
 - PCI: qcom: Implement shutdown() callback (pw 1195891 v7 3/3): pcie
@@ -25,7 +25,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  3 files changed, 2 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_preempt.c b/drivers/gpu/drm/msm/adreno/a6xx_preempt.c
-index c5877a21fc20..cc9cf4031299 100644
+index c5877a21fc20d..cc9cf40312999 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_preempt.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_preempt.c
 @@ -15,7 +15,6 @@ static void a6xx_preempt_timer(struct timer_list *t)
@@ -46,7 +46,7 @@ index c5877a21fc20..cc9cf4031299 100644
  
  	if (ring)
 diff --git a/drivers/gpu/drm/msm/msm_gpu.c b/drivers/gpu/drm/msm/msm_gpu.c
-index 0bd9b465cfb1..da89ed49e435 100644
+index 77e69e50423f6..f0d9fb5f9ab7a 100644
 --- a/drivers/gpu/drm/msm/msm_gpu.c
 +++ b/drivers/gpu/drm/msm/msm_gpu.c
 @@ -659,7 +659,6 @@ static bool check_ring_timeout(struct msm_ringbuffer *ring, unsigned long timeou
@@ -58,7 +58,7 @@ index 0bd9b465cfb1..da89ed49e435 100644
  	if (!gpu->funcs->get_ctx_timestamp)
  		return !made_progress(gpu, ring);
 diff --git a/drivers/pci/controller/dwc/pcie-qcom.c b/drivers/pci/controller/dwc/pcie-qcom.c
-index a975385434ed..03a6070ce148 100644
+index c658bc535bcc8..a24f7bb72f3ea 100644
 --- a/drivers/pci/controller/dwc/pcie-qcom.c
 +++ b/drivers/pci/controller/dwc/pcie-qcom.c
 @@ -2481,7 +2481,7 @@ static int qcom_pcie_probe(struct platform_device *pdev)
@@ -70,3 +70,6 @@ index a975385434ed..03a6070ce148 100644
  	struct dw_pcie *pci;
  
  	if (pcie_cfg && pcie_cfg->firmware_managed) {
+-- 
+2.43.0
+

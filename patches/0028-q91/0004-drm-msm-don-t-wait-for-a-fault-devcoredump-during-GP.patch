@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Nico Angelo Dela Cruz <nicoangelodelacruz@gmail.com>
 Date: Mon, 2 Nov 2026 01:55:50 +0800
-Subject: [PATCH 04/32] drm/msm: don't wait for a fault devcoredump during GPU
+Subject: [PATCH] drm/msm: don't wait for a fault devcoredump during GPU
  recovery
 
 adreno_fault_handler() calls reinit_completion() on
@@ -57,7 +57,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  5 files changed, 23 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
-index 6220dcba8ed6..cefdd4246c9e 100644
+index 6220dcba8ed62..cefdd4246c9e7 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 @@ -481,12 +481,15 @@ int a6xx_gmu_set_oob(struct a6xx_gmu *gmu, enum a6xx_gmu_oob_state state)
@@ -79,7 +79,7 @@ index 6220dcba8ed6..cefdd4246c9e 100644
  		wait_for_completion(&a6xx_gpu->base.fault_coredump_done);
  	} while (true);
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_hfi.c b/drivers/gpu/drm/msm/adreno/a6xx_hfi.c
-index 93ea596f78c4..8518e9abcff4 100644
+index 08b7070201ec4..854148732140c 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_hfi.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_hfi.c
 @@ -122,12 +122,15 @@ static int a6xx_hfi_wait_for_msg_interrupt(struct a6xx_gmu *gmu, u32 id, u32 seq
@@ -101,7 +101,7 @@ index 93ea596f78c4..8518e9abcff4 100644
  		wait_for_completion(&a6xx_gpu->base.fault_coredump_done);
  	} while (true);
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_gpu.c b/drivers/gpu/drm/msm/adreno/adreno_gpu.c
-index 76a1cae7b05b..bd536158d203 100644
+index 76a1cae7b05b8..bd536158d2031 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_gpu.c
 +++ b/drivers/gpu/drm/msm/adreno/adreno_gpu.c
 @@ -289,7 +289,8 @@ int adreno_fault_handler(struct msm_gpu *gpu, unsigned long iova, int flags,
@@ -115,7 +115,7 @@ index 76a1cae7b05b..bd536158d203 100644
  
  	/*
 diff --git a/drivers/gpu/drm/msm/msm_gpu.c b/drivers/gpu/drm/msm/msm_gpu.c
-index fa4ff95cc436..0bd9b465cfb1 100644
+index 7e6af19c3c494..77e69e50423f6 100644
 --- a/drivers/gpu/drm/msm/msm_gpu.c
 +++ b/drivers/gpu/drm/msm/msm_gpu.c
 @@ -476,6 +476,7 @@ static void recover_worker(struct kthread_work *work)
@@ -135,7 +135,7 @@ index fa4ff95cc436..0bd9b465cfb1 100644
  
  	msm_gpu_retire(gpu);
 diff --git a/drivers/gpu/drm/msm/msm_gpu.h b/drivers/gpu/drm/msm/msm_gpu.h
-index 56feb50d7bd5..71449dcae931 100644
+index 56feb50d7bd53..71449dcae9314 100644
 --- a/drivers/gpu/drm/msm/msm_gpu.h
 +++ b/drivers/gpu/drm/msm/msm_gpu.h
 @@ -261,6 +261,15 @@ struct msm_gpu {
@@ -154,3 +154,6 @@ index 56feb50d7bd5..71449dcae931 100644
  	/* True if the hardware supports expanded apriv (a650 and newer) */
  	bool hw_apriv;
  
+-- 
+2.43.0
+

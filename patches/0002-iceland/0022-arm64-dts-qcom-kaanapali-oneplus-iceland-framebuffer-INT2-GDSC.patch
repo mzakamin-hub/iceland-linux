@@ -15,7 +15,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 4 insertions(+), 1 deletion(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 081fff201964..541be2ed09c2 100644
+index 081fff2019640..541be2ed09c2f 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -82,7 +82,10 @@ framebuffer: framebuffer@fc800000 {
@@ -30,3 +30,6 @@ index 081fff201964..541be2ed09c2 100644
  			required-opps = <&rpmhpd_opp_turbo>,
  					<&rpmhpd_opp_turbo>,
  					<&rpmhpd_opp_turbo>;
+-- 
+2.43.0
+

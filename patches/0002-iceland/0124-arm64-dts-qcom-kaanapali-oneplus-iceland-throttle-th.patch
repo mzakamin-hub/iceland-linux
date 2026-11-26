@@ -25,7 +25,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 20 insertions(+), 8 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 40492d32edc0..3ff002f3c54c 100644
+index 40492d32edc0e..3ff002f3c54ca 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -12,6 +12,7 @@
@@ -99,3 +99,6 @@ index 40492d32edc0..3ff002f3c54c 100644
  &{/thermal-zones/pmh0110-f-thermal} {
  	cooling-maps {
  		map0 {
+-- 
+2.43.0
+

@@ -28,7 +28,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 11 insertions(+), 19 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 18c7c815d765..3ef7aed55926 100644
+index 18c7c815d7657..3ef7aed559264 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -7878,7 +7878,7 @@ pmu@310b3400 {
@@ -106,3 +106,6 @@ index 18c7c815d765..3ef7aed55926 100644
  
  			operating-points-v2 = <&cpu_bwmon_opp_table>;
  		};
+-- 
+2.43.0
+

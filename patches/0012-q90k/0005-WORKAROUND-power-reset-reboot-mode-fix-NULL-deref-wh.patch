@@ -40,7 +40,7 @@ Signed-off-by: Salendarsingh Gaud <sgaud@qti.qualcomm.com>
  3 files changed, 20 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/firmware/psci/psci.c b/drivers/firmware/psci/psci.c
-index 82f99c7a410f..158a0a1b9b87 100644
+index 82f99c7a410f9..158a0a1b9b879 100644
 --- a/drivers/firmware/psci/psci.c
 +++ b/drivers/firmware/psci/psci.c
 @@ -626,6 +626,7 @@ static int __init psci_init_vendor_reset(void)
@@ -52,7 +52,7 @@ index 82f99c7a410f..158a0a1b9b87 100644
  	ret = reboot_mode_register(reboot, of_fwnode_handle(np));
  	if (ret)
 diff --git a/drivers/power/reset/reboot-mode.c b/drivers/power/reset/reboot-mode.c
-index 554016978a4f..acd9b533db6c 100644
+index 554016978a4fb..acd9b533db6c6 100644
 --- a/drivers/power/reset/reboot-mode.c
 +++ b/drivers/power/reset/reboot-mode.c
 @@ -119,8 +119,16 @@ static int reboot_mode_create_device(struct reboot_mode_driver *reboot)
@@ -100,7 +100,7 @@ index 554016978a4f..acd9b533db6c 100644
  
  	if (!reboot_mode_device)
 diff --git a/include/linux/reboot-mode.h b/include/linux/reboot-mode.h
-index e0d3e8a54050..56581199af23 100644
+index e0d3e8a54050a..56581199af234 100644
 --- a/include/linux/reboot-mode.h
 +++ b/include/linux/reboot-mode.h
 @@ -7,6 +7,7 @@
@@ -111,3 +111,6 @@ index e0d3e8a54050..56581199af23 100644
  	struct list_head head;
  	int (*write)(struct reboot_mode_driver *reboot, u64 magic);
  	struct notifier_block reboot_notifier;
+-- 
+2.43.0
+

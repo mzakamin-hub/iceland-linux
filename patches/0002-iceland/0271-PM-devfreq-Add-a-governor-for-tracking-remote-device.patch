@@ -27,7 +27,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  create mode 100644 drivers/devfreq/governor_remote.c
 
 diff --git a/drivers/devfreq/Kconfig b/drivers/devfreq/Kconfig
-index c999c4a1e567..2caa87554914 100644
+index c999c4a1e5675..2caa875549141 100644
 --- a/drivers/devfreq/Kconfig
 +++ b/drivers/devfreq/Kconfig
 @@ -56,6 +56,14 @@ config DEVFREQ_GOV_POWERSAVE
@@ -46,7 +46,7 @@ index c999c4a1e567..2caa87554914 100644
  	tristate "Userspace"
  	help
 diff --git a/drivers/devfreq/Makefile b/drivers/devfreq/Makefile
-index 404179d79a9d..cde57c8cda76 100644
+index 404179d79a9db..cde57c8cda764 100644
 --- a/drivers/devfreq/Makefile
 +++ b/drivers/devfreq/Makefile
 @@ -4,6 +4,7 @@ obj-$(CONFIG_PM_DEVFREQ_EVENT)	+= devfreq-event.o
@@ -59,7 +59,7 @@ index 404179d79a9d..cde57c8cda76 100644
  
 diff --git a/drivers/devfreq/governor_remote.c b/drivers/devfreq/governor_remote.c
 new file mode 100644
-index 000000000000..df3819757e56
+index 0000000000000..df3819757e56f
 --- /dev/null
 +++ b/drivers/devfreq/governor_remote.c
 @@ -0,0 +1,73 @@
@@ -137,7 +137,7 @@ index 000000000000..df3819757e56
 +MODULE_DESCRIPTION("DEVFREQ Remote Tracking governor");
 +MODULE_LICENSE("GPL");
 diff --git a/include/linux/devfreq.h b/include/linux/devfreq.h
-index dc1075dc3446..4d50cf230950 100644
+index dc1075dc34460..4d50cf2309504 100644
 --- a/include/linux/devfreq.h
 +++ b/include/linux/devfreq.h
 @@ -21,6 +21,7 @@
@@ -148,3 +148,6 @@ index dc1075dc3446..4d50cf230950 100644
  
  /* DEVFREQ notifier interface */
  #define DEVFREQ_TRANSITION_NOTIFIER	(0)
+-- 
+2.43.0
+

@@ -19,13 +19,12 @@ aborts the suspend or wakes the system as before. Outside that window
 the edges are ignored.
 
 Signed-off-by: mzak <mzak.amin@gmail.com>
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 ---
  drivers/soc/qcom/smp2p_sleepstate.c | 14 +++++++++++++-
  1 file changed, 13 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/soc/qcom/smp2p_sleepstate.c b/drivers/soc/qcom/smp2p_sleepstate.c
-index 70f1a4e6e..139a465a4 100644
+index 70f1a4e6e866a..139a465a41737 100644
 --- a/drivers/soc/qcom/smp2p_sleepstate.c
 +++ b/drivers/soc/qcom/smp2p_sleepstate.c
 @@ -24,6 +24,7 @@ struct smp2p_sleepstate {

@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Abel Vesa <abel.vesa@oss.qualcomm.com>
 Date: Mon, 2 Nov 2026 13:07:19 +0200
-Subject: [PATCH 12/27] soc: qcom: pmic_glink_altmode: Fix use-after-free of
- work items on unbind
+Subject: [PATCH] soc: qcom: pmic_glink_altmode: Fix use-after-free of work
+ items on unbind
 
 The altmode context, including the enable_work and the per-port work
 items, is devm-allocated, but nothing cancels the work items on unbind.
@@ -31,7 +31,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 29 insertions(+)
 
 diff --git a/drivers/soc/qcom/pmic_glink_altmode.c b/drivers/soc/qcom/pmic_glink_altmode.c
-index 7102980c3..a96be1aef 100644
+index 91d739a140239..9d233ebbc5ffd 100644
 --- a/drivers/soc/qcom/pmic_glink_altmode.c
 +++ b/drivers/soc/qcom/pmic_glink_altmode.c
 @@ -577,6 +577,23 @@ static void pmic_glink_altmode_put_switch(void *data)

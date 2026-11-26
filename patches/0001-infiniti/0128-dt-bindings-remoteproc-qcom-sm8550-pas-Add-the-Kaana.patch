@@ -12,7 +12,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 6 insertions(+), 2 deletions(-)
 
 diff --git a/Documentation/devicetree/bindings/remoteproc/qcom,sm8550-pas.yaml b/Documentation/devicetree/bindings/remoteproc/qcom,sm8550-pas.yaml
-index 99e9aeeb4f62..39a330994969 100644
+index 99e9aeeb4f62c..39a330994969d 100644
 --- a/Documentation/devicetree/bindings/remoteproc/qcom,sm8550-pas.yaml
 +++ b/Documentation/devicetree/bindings/remoteproc/qcom,sm8550-pas.yaml
 @@ -55,6 +55,9 @@ properties:
@@ -37,3 +37,6 @@ index 99e9aeeb4f62..39a330994969 100644
      then:
        properties:
          interrupts:
+-- 
+2.43.0
+

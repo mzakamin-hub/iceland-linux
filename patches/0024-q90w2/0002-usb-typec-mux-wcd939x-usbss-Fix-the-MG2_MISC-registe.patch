@@ -31,7 +31,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/usb/typec/mux/wcd939x-usbss.c b/drivers/usb/typec/mux/wcd939x-usbss.c
-index 53bcd9eddb81..322c185a54dc 100644
+index 69e381312dd5a..6811af2acb73b 100644
 --- a/drivers/usb/typec/mux/wcd939x-usbss.c
 +++ b/drivers/usb/typec/mux/wcd939x-usbss.c
 @@ -42,7 +42,7 @@
@@ -43,3 +43,6 @@ index 53bcd9eddb81..322c185a54dc 100644
  
  #define WCD_USBSS_MG2_MISC_PCOMP_2X_DYN_BST_ON_EN			BIT(5)
  
+-- 
+2.43.0
+

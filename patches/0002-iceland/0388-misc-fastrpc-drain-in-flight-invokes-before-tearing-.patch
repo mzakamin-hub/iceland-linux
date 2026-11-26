@@ -68,7 +68,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 56 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/misc/fastrpc.c b/drivers/misc/fastrpc.c
-index 49aa1ce14b4c..da60d1d16093 100644
+index fa7d57dc3b24e..7768e4559cd6f 100644
 --- a/drivers/misc/fastrpc.c
 +++ b/drivers/misc/fastrpc.c
 @@ -328,6 +328,15 @@ struct fastrpc_channel_ctx {
@@ -188,3 +188,6 @@ index 49aa1ce14b4c..da60d1d16093 100644
  	if (cctx->fdevice)
  		misc_deregister(&cctx->fdevice->miscdev);
  
+-- 
+2.43.0
+

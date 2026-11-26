@@ -38,7 +38,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 9 insertions(+), 8 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index de61a1a76ffa..1355c4cfe97f 100644
+index de61a1a76ffa4..1355c4cfe97f2 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -2493,12 +2493,13 @@ chg-cp-thermal {
@@ -77,3 +77,6 @@ index de61a1a76ffa..1355c4cfe97f 100644
  				hysteresis = <2000>;
  				type = "passive";
  			};
+-- 
+2.43.0
+

@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Rob Clark <robin.clark@oss.qualcomm.com>
 Date: Wed, 4 Nov 2026 13:20:47 -0800
-Subject: [PATCH 08/30] drm/msm/a8xx: Fix 1/2b alpha filtering precision
+Subject: [PATCH] drm/msm/a8xx: Fix 1/2b alpha filtering precision
 
 Need to set b25 in TPL1_DBG_ECO_CNTL1 on all gen8.
 
@@ -26,7 +26,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  2 files changed, 6 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a8xx_catalog.c b/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
-index 736bfa122..7540e3aed 100644
+index 736bfa12272a5..7540e3aede08c 100644
 --- a/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
 +++ b/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
 @@ -670,8 +670,11 @@ static const struct adreno_reglist_pipe a840_kgsl_eco_regs[] = {
@@ -44,7 +44,7 @@ index 736bfa122..7540e3aed 100644
  	/* no Dead Draw Merge scheme on RB-HLSQ */
  	{ REG_A6XX_RB_RBP_CNTL, BIT(5), BIT(PIPE_BV) | BIT(PIPE_BR) },
 diff --git a/drivers/gpu/drm/msm/adreno/catalog/adreno_kaanapali.h b/drivers/gpu/drm/msm/adreno/catalog/adreno_kaanapali.h
-index 47a818280..dce6fd84a 100644
+index 47a8182805d82..dce6fd84a3a7b 100644
 --- a/drivers/gpu/drm/msm/adreno/catalog/adreno_kaanapali.h
 +++ b/drivers/gpu/drm/msm/adreno/catalog/adreno_kaanapali.h
 @@ -2254,7 +2254,7 @@ static const struct adreno_reglist_pipe kaanapali_nonctxt_regs[] __maybe_unused

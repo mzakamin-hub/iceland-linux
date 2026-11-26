@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
 Date: Sat, 31 Oct 2026 12:11:54 +0800
-Subject: [PATCH 07/24] media: camss: video: factor pipeline stream on/off into
- a helper
+Subject: [PATCH] media: camss: video: factor pipeline stream on/off into a
+ helper
 
 When one subdevice fails to start, the ones already started further up the
 pipeline were left streaming, and the next start would try to start them
@@ -29,7 +29,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 65 insertions(+), 44 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/camss/camss-video.c b/drivers/media/platform/qcom/camss/camss-video.c
-index 0852eb6f1315..9a633ca06618 100644
+index 0852eb6f13154..9a633ca06618b 100644
 --- a/drivers/media/platform/qcom/camss/camss-video.c
 +++ b/drivers/media/platform/qcom/camss/camss-video.c
 @@ -249,13 +249,66 @@ static int video_prepare_streaming(struct vb2_queue *q)
@@ -169,3 +169,6 @@ index 0852eb6f1315..9a633ca06618 100644
  
  	video->ops->flush_buffers(video, VB2_BUF_STATE_ERROR);
  }
+-- 
+2.43.0
+

@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Ananthu C V <ananthu.cv@oss.qualcomm.com>
 Date: Tue, 8 Sep 2026 14:00:28 +0530
-Subject: [PATCH 05/32] FROMLIST: arch_topology: seed capacity_freq_ref with
+Subject: [PATCH] FROMLIST: arch_topology: seed capacity_freq_ref with
  boost-aware max freq
 
 capacity_freq_ref, the per-CPU frequency-invariance reference used by
@@ -30,10 +30,10 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  3 files changed, 9 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/base/arch_topology.c b/drivers/base/arch_topology.c
-index 8c5e47c28d9a..da94f77441da 100644
+index e51fc9f5e9765..6c2bc07dac803 100644
 --- a/drivers/base/arch_topology.c
 +++ b/drivers/base/arch_topology.c
-@@ -404,7 +404,8 @@ init_cpu_capacity_callback(struct notifier_block *nb,
+@@ -402,7 +402,8 @@ init_cpu_capacity_callback(struct notifier_block *nb,
  	cpumask_andnot(cpus_to_visit, cpus_to_visit, policy->related_cpus);
  
  	for_each_cpu(cpu, policy->related_cpus) {
@@ -44,7 +44,7 @@ index 8c5e47c28d9a..da94f77441da 100644
  				       per_cpu(capacity_freq_ref, cpu) * HZ_PER_KHZ);
  	}
 diff --git a/drivers/cpufreq/freq_table.c b/drivers/cpufreq/freq_table.c
-index ea994647abc8..4984142dc08a 100644
+index ea994647abc88..4984142dc08a6 100644
 --- a/drivers/cpufreq/freq_table.c
 +++ b/drivers/cpufreq/freq_table.c
 @@ -33,11 +33,15 @@ int cpufreq_frequency_table_cpuinfo(struct cpufreq_policy *policy)
@@ -73,7 +73,7 @@ index ea994647abc8..4984142dc08a 100644
  		return -EINVAL;
  	else
 diff --git a/include/linux/cpufreq.h b/include/linux/cpufreq.h
-index d3d0d9d02aa4..f43ac9ae2158 100644
+index be1eaa43aeb00..d76383a434e48 100644
 --- a/include/linux/cpufreq.h
 +++ b/include/linux/cpufreq.h
 @@ -45,6 +45,7 @@ enum cpufreq_table_sorting {
@@ -84,3 +84,6 @@ index d3d0d9d02aa4..f43ac9ae2158 100644
  
  	/* in 10^(-9) s = nanoseconds */
  	unsigned int		transition_latency;
+-- 
+2.43.0
+

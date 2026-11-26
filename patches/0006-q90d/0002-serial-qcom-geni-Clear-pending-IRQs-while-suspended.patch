@@ -17,7 +17,7 @@ Signed-off-by: Praveen Talari <praveen.talari@oss.qualcomm.com>
  1 file changed, 13 insertions(+), 15 deletions(-)
 
 diff --git a/drivers/tty/serial/qcom_geni_serial.c b/drivers/tty/serial/qcom_geni_serial.c
-index bfdc155c128d..d8323d6b5286 100644
+index 8ea43b2949157..61744eef068c3 100644
 --- a/drivers/tty/serial/qcom_geni_serial.c
 +++ b/drivers/tty/serial/qcom_geni_serial.c
 @@ -1210,16 +1210,26 @@ static irqreturn_t qcom_geni_serial_isr(int isr, void *dev)
@@ -69,3 +69,6 @@ index bfdc155c128d..d8323d6b5286 100644
  	if (WARN_ON(m_irq_status & M_ILLEGAL_CMD_EN))
  		goto handle_rx;
  
+-- 
+2.43.0
+

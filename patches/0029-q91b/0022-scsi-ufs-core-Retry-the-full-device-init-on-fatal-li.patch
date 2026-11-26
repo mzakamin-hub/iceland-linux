@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Shawn Lin <shawn.lin@rock-chips.com>
 Date: Wed, 28 Oct 2026 15:31:29 +0800
-Subject: [PATCH 22/24] scsi: ufs: core: Retry the full device init on fatal
- link loss
+Subject: [PATCH] scsi: ufs: core: Retry the full device init on fatal link
+ loss
 
 On an RK3576 board the UFS device is rarely reported dead during the
 initialization at boot: DEVICE_FATAL_ERROR | UIC_LINK_LOST is latched and
@@ -52,10 +52,10 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 25 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/ufs/core/ufshcd.c b/drivers/ufs/core/ufshcd.c
-index 5eb79302bee0..cc3b4b160a51 100644
+index 5004a0b1cdc97..d00ae3b01b85a 100644
 --- a/drivers/ufs/core/ufshcd.c
 +++ b/drivers/ufs/core/ufshcd.c
-@@ -11469,12 +11469,14 @@ int ufshcd_init(struct ufs_hba *hba, void __iomem *mmio_base, unsigned int irq)
+@@ -11483,12 +11483,14 @@ int ufshcd_init(struct ufs_hba *hba, void __iomem *mmio_base, unsigned int irq)
  
  	/* Initialize hba, detect and initialize UFS device */
  	ktime_t probe_start = ktime_get();
@@ -71,7 +71,7 @@ index 5eb79302bee0..cc3b4b160a51 100644
  
  	if (hba->mcq_enabled)
  		ufshcd_config_mcq(hba);
-@@ -11491,16 +11493,16 @@ int ufshcd_init(struct ufs_hba *hba, void __iomem *mmio_base, unsigned int irq)
+@@ -11505,16 +11507,16 @@ int ufshcd_init(struct ufs_hba *hba, void __iomem *mmio_base, unsigned int irq)
  	/* Verify device initialization by sending NOP OUT UPIU */
  	err = ufshcd_verify_dev_init(hba);
  	if (err)
@@ -91,7 +91,7 @@ index 5eb79302bee0..cc3b4b160a51 100644
  
  	err = ufshcd_post_device_init(hba);
  
-@@ -11518,6 +11520,25 @@ int ufshcd_init(struct ufs_hba *hba, void __iomem *mmio_base, unsigned int irq)
+@@ -11532,6 +11534,25 @@ int ufshcd_init(struct ufs_hba *hba, void __iomem *mmio_base, unsigned int irq)
  	ufshcd_pm_qos_init(hba);
  	return 0;
  
@@ -117,3 +117,6 @@ index 5eb79302bee0..cc3b4b160a51 100644
  out_release:
  	ufshcd_release(hba);
  out_disable:
+-- 
+2.43.0
+

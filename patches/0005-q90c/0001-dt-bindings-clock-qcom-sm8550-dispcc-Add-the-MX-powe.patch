@@ -20,7 +20,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 20 insertions(+), 6 deletions(-)
 
 diff --git a/Documentation/devicetree/bindings/clock/qcom,sm8550-dispcc.yaml b/Documentation/devicetree/bindings/clock/qcom,sm8550-dispcc.yaml
-index 61f58fbd5bd2..7b0def2fc970 100644
+index 61f58fbd5bd21..7b0def2fc970c 100644
 --- a/Documentation/devicetree/bindings/clock/qcom,sm8550-dispcc.yaml
 +++ b/Documentation/devicetree/bindings/clock/qcom,sm8550-dispcc.yaml
 @@ -54,14 +54,16 @@ properties:
@@ -65,3 +65,6 @@ index 61f58fbd5bd2..7b0def2fc970 100644
  
  unevaluatedProperties: false
  
+-- 
+2.43.0
+

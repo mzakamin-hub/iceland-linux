@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Armada <noreply@armada.local>
 Date: Sat, 7 Nov 2026 11:33:53 +0200
-Subject: [PATCH 7/9] pinctrl: qcom: sm8650-lpass-lpi: force runtime suspend
- across system sleep
+Subject: [PATCH] pinctrl: qcom: sm8650-lpass-lpi: force runtime suspend across
+ system sleep
 
 The LPI pin controller only has runtime PM ops, and it is a device-link
 supplier of the SoundWire controllers. When a SoundWire peripheral is
@@ -26,7 +26,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/pinctrl/qcom/pinctrl-sm8650-lpass-lpi.c b/drivers/pinctrl/qcom/pinctrl-sm8650-lpass-lpi.c
-index bc7889c99..e33d4360c 100644
+index bc7889c993d05..e33d4360c094f 100644
 --- a/drivers/pinctrl/qcom/pinctrl-sm8650-lpass-lpi.c
 +++ b/drivers/pinctrl/qcom/pinctrl-sm8650-lpass-lpi.c
 @@ -220,6 +220,7 @@ static const struct of_device_id lpi_pinctrl_of_match[] = {

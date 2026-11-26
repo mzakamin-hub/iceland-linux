@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 2 Nov 2026 12:41:36 +0200
-Subject: [PATCH 2/2] Revert "PCI: host-common / dwc / qcom: L2 at shutdown"
- (pw 1195891 v7 1-3/3)
+Subject: [PATCH] Revert "PCI: host-common / dwc / qcom: L2 at shutdown" (pw
+ 1195891 v7 1-3/3)
 
 On the Pad 4 every s2idle now logs "qcom-pcie 1c00000.pcie: Timeout
 waiting for L2 entry! LTSSM: 0x12" (3 of 3 cycles), which q90z never
@@ -34,7 +34,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  11 files changed, 24 insertions(+), 53 deletions(-)
 
 diff --git a/drivers/pci/controller/dwc/pci-imx6.c b/drivers/pci/controller/dwc/pci-imx6.c
-index 1f2b942e8423..83fbd998551d 100644
+index 6ecdcd7b413bc..3917e11dc632f 100644
 --- a/drivers/pci/controller/dwc/pci-imx6.c
 +++ b/drivers/pci/controller/dwc/pci-imx6.c
 @@ -1788,7 +1788,7 @@ static int imx_pcie_suspend_noirq(struct device *dev)
@@ -47,7 +47,7 @@ index 1f2b942e8423..83fbd998551d 100644
  
  	return 0;
 diff --git a/drivers/pci/controller/dwc/pci-layerscape.c b/drivers/pci/controller/dwc/pci-layerscape.c
-index bfed194834d4..7f37a0537159 100644
+index e3a9a8b1c1af4..7a77607981cdb 100644
 --- a/drivers/pci/controller/dwc/pci-layerscape.c
 +++ b/drivers/pci/controller/dwc/pci-layerscape.c
 @@ -382,7 +382,7 @@ static int ls_pcie_suspend_noirq(struct device *dev)
@@ -60,7 +60,7 @@ index bfed194834d4..7f37a0537159 100644
  
  static int ls_pcie_resume_noirq(struct device *dev)
 diff --git a/drivers/pci/controller/dwc/pcie-designware-host.c b/drivers/pci/controller/dwc/pcie-designware-host.c
-index e4d47999613c..869a39107a81 100644
+index ff2ff8adc2e81..bbb02458af58f 100644
 --- a/drivers/pci/controller/dwc/pcie-designware-host.c
 +++ b/drivers/pci/controller/dwc/pcie-designware-host.c
 @@ -1235,22 +1235,23 @@ static int dw_pcie_pme_turn_off(struct dw_pcie *pci)
@@ -92,7 +92,7 @@ index e4d47999613c..869a39107a81 100644
  
  	if (pci->pp.ops->pme_turn_off) {
 diff --git a/drivers/pci/controller/dwc/pcie-designware.h b/drivers/pci/controller/dwc/pcie-designware.h
-index 4905932cfaf9..6d788aa00011 100644
+index 4905932cfaf92..6d788aa000117 100644
 --- a/drivers/pci/controller/dwc/pcie-designware.h
 +++ b/drivers/pci/controller/dwc/pcie-designware.h
 @@ -861,7 +861,7 @@ static inline enum dw_pcie_ltssm dw_pcie_get_ltssm(struct dw_pcie *pci)
@@ -114,7 +114,7 @@ index 4905932cfaf9..6d788aa00011 100644
  	return 0;
  }
 diff --git a/drivers/pci/controller/dwc/pcie-eswin.c b/drivers/pci/controller/dwc/pcie-eswin.c
-index 21d077172724..1bb44696057e 100644
+index 599959748a4ea..b9c1e90ce827d 100644
 --- a/drivers/pci/controller/dwc/pcie-eswin.c
 +++ b/drivers/pci/controller/dwc/pcie-eswin.c
 @@ -367,7 +367,7 @@ static int eswin_pcie_suspend_noirq(struct device *dev)
@@ -127,7 +127,7 @@ index 21d077172724..1bb44696057e 100644
  
  static int eswin_pcie_resume_noirq(struct device *dev)
 diff --git a/drivers/pci/controller/dwc/pcie-nxp-s32g.c b/drivers/pci/controller/dwc/pcie-nxp-s32g.c
-index cb9cc9327d85..386e44dd0477 100644
+index ca31bfab78f46..a600e63023682 100644
 --- a/drivers/pci/controller/dwc/pcie-nxp-s32g.c
 +++ b/drivers/pci/controller/dwc/pcie-nxp-s32g.c
 @@ -365,7 +365,7 @@ static int s32g_pcie_suspend_noirq(struct device *dev)
@@ -140,7 +140,7 @@ index cb9cc9327d85..386e44dd0477 100644
  
  static int s32g_pcie_resume_noirq(struct device *dev)
 diff --git a/drivers/pci/controller/dwc/pcie-qcom.c b/drivers/pci/controller/dwc/pcie-qcom.c
-index 03a6070ce148..877d43358207 100644
+index a24f7bb72f3ea..f87777f34d781 100644
 --- a/drivers/pci/controller/dwc/pcie-qcom.c
 +++ b/drivers/pci/controller/dwc/pcie-qcom.c
 @@ -2055,9 +2055,6 @@ static int qcom_pcie_ecam_host_init(struct pci_config_window *cfg)
@@ -208,7 +208,7 @@ index 03a6070ce148..877d43358207 100644
  };
  builtin_platform_driver(qcom_pcie_driver);
 diff --git a/drivers/pci/controller/dwc/pcie-rcar-gen4.c b/drivers/pci/controller/dwc/pcie-rcar-gen4.c
-index 045d33ac61ea..fceecbd16355 100644
+index 706701cb8205e..05556a3dc725e 100644
 --- a/drivers/pci/controller/dwc/pcie-rcar-gen4.c
 +++ b/drivers/pci/controller/dwc/pcie-rcar-gen4.c
 @@ -1071,7 +1071,7 @@ static int rcar_gen4_pcie_suspend_noirq(struct device *dev)
@@ -221,7 +221,7 @@ index 045d33ac61ea..fceecbd16355 100644
  
  static int rcar_gen4_pcie_resume_noirq(struct device *dev)
 diff --git a/drivers/pci/controller/dwc/pcie-stm32.c b/drivers/pci/controller/dwc/pcie-stm32.c
-index 7b3a8c1b04a4..349618ea5b9c 100644
+index 2966f6b942d8b..ee6a65d92ae1a 100644
 --- a/drivers/pci/controller/dwc/pcie-stm32.c
 +++ b/drivers/pci/controller/dwc/pcie-stm32.c
 @@ -78,7 +78,7 @@ static int stm32_pcie_suspend_noirq(struct device *dev)
@@ -234,7 +234,7 @@ index 7b3a8c1b04a4..349618ea5b9c 100644
  		return ret;
  
 diff --git a/drivers/pci/controller/dwc/pcie-ultrarisc.c b/drivers/pci/controller/dwc/pcie-ultrarisc.c
-index 59341682213c..523f454c6c52 100644
+index e3600b825521a..cea9f20612570 100644
 --- a/drivers/pci/controller/dwc/pcie-ultrarisc.c
 +++ b/drivers/pci/controller/dwc/pcie-ultrarisc.c
 @@ -193,7 +193,7 @@ static int ultrarisc_pcie_suspend_noirq(struct device *dev)
@@ -247,7 +247,7 @@ index 59341682213c..523f454c6c52 100644
  		return ret;
  
 diff --git a/drivers/pci/controller/pci-host-common.c b/drivers/pci/controller/pci-host-common.c
-index c2c852c64aa8..a23907a875e5 100644
+index d1108953c5785..35ee51cf9d067 100644
 --- a/drivers/pci/controller/pci-host-common.c
 +++ b/drivers/pci/controller/pci-host-common.c
 @@ -275,16 +275,21 @@ static int __pci_host_common_d3cold_possible(struct pci_dev *pdev,
@@ -276,3 +276,6 @@ index c2c852c64aa8..a23907a875e5 100644
  }
  
  /**
+-- 
+2.43.0
+

@@ -35,7 +35,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 101 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index a89c78361d20..37837f9820a2 100644
+index 1c622d1817037..a013c7214cff0 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -2296,9 +2296,102 @@ static void qcom_battmgr_iceland_check(struct qcom_battmgr *battmgr, int ret, co
@@ -188,3 +188,6 @@ index a89c78361d20..37837f9820a2 100644
  		 battmgr->chg_inhibit ? ", charging inhibited" :
  		 battmgr->chg_limit_hold ? ", charging held by the charge limit" : "");
  }
+-- 
+2.43.0
+

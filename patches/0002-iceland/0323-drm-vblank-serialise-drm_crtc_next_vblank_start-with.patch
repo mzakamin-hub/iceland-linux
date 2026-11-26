@@ -65,7 +65,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 15 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/gpu/drm/drm_vblank.c b/drivers/gpu/drm/drm_vblank.c
-index f90fb2d13e42..2984ce3b68ed 100644
+index c26464ca4a12c..9455a91438fc0 100644
 --- a/drivers/gpu/drm/drm_vblank.c
 +++ b/drivers/gpu/drm/drm_vblank.c
 @@ -1020,28 +1020,36 @@ EXPORT_SYMBOL(drm_crtc_vblank_count_and_time);
@@ -110,7 +110,7 @@ index f90fb2d13e42..2984ce3b68ed 100644
  }
  EXPORT_SYMBOL(drm_crtc_next_vblank_start);
  
-@@ -1405,7 +1413,9 @@ void drm_crtc_vblank_off(struct drm_crtc *crtc)
+@@ -1408,7 +1416,9 @@ void drm_crtc_vblank_off(struct drm_crtc *crtc)
  
  	/* Will be reset by the modeset helpers when re-enabling the crtc by
  	 * calling drm_calc_timestamping_constants(). */
@@ -120,3 +120,6 @@ index f90fb2d13e42..2984ce3b68ed 100644
  
  	/* Wait for any vblank work that's still executing to finish */
  	drm_vblank_flush_worker(vblank);
+-- 
+2.43.0
+

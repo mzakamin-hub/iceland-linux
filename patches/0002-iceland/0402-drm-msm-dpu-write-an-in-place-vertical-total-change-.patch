@@ -47,7 +47,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  2 files changed, 320 insertions(+), 40 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
-index 60b679698c1c..08fe4cb5c75e 100644
+index 60b679698c1c9..08fe4cb5c75e4 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 @@ -147,6 +147,14 @@ enum dpu_enc_rc_states {
@@ -537,7 +537,7 @@ index 60b679698c1c..08fe4cb5c75e 100644
  	return 0;
  }
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_trace.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_trace.h
-index 805d117493da..43c42fc4e533 100644
+index 805d117493da3..43c42fc4e5336 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_trace.h
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_trace.h
 @@ -454,6 +454,30 @@ TRACE_EVENT(dpu_enc_trigger_flush,
@@ -571,3 +571,6 @@ index 805d117493da..43c42fc4e533 100644
  DECLARE_EVENT_CLASS(dpu_id_event_template,
  	TP_PROTO(uint32_t drm_id, u32 event),
  	TP_ARGS(drm_id, event),
+-- 
+2.43.0
+

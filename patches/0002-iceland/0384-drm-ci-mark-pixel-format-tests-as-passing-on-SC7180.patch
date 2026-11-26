@@ -19,7 +19,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/ci/xfails/msm-sc7180-trogdor-kingoftown-fails.txt b/drivers/gpu/drm/ci/xfails/msm-sc7180-trogdor-kingoftown-fails.txt
-index 2daf4ab879a9..ea3013faa37c 100644
+index 2daf4ab879a92..ea3013faa37c5 100644
 --- a/drivers/gpu/drm/ci/xfails/msm-sc7180-trogdor-kingoftown-fails.txt
 +++ b/drivers/gpu/drm/ci/xfails/msm-sc7180-trogdor-kingoftown-fails.txt
 @@ -18,5 +18,3 @@ kms_pipe_crc_basic@compare-crc-sanitycheck-nv12,Fail
@@ -28,3 +28,6 @@ index 2daf4ab879a9..ea3013faa37c 100644
  kms_plane_alpha_blend@coverage-vs-premult-vs-constant,Fail
 -kms_plane@pixel-format,Fail
 -kms_plane@pixel-format-source-clamping,Fail
+-- 
+2.43.0
+

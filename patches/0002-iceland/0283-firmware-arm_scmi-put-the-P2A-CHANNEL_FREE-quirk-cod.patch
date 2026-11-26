@@ -17,7 +17,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/firmware/arm_scmi/driver.c b/drivers/firmware/arm_scmi/driver.c
-index 5034674a45d1..01960563d770 100644
+index b767130239c17..8bda149d9d654 100644
 --- a/drivers/firmware/arm_scmi/driver.c
 +++ b/drivers/firmware/arm_scmi/driver.c
 @@ -1091,6 +1091,9 @@ static bool scmi_xfer_async_response_complete(struct scmi_xfer *xfer)
@@ -40,3 +40,6 @@ index 5034674a45d1..01960563d770 100644
  
  	if (info->desc->ops->clear_channel)
  		info->desc->ops->clear_channel(cinfo);
+-- 
+2.43.0
+

@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Manivannan Sadhasivam <mani@kernel.org>
 Date: Thu, 29 Oct 2026 09:49:29 +0530
-Subject: [PATCH 14/32] PCI: qcom: Implement shutdown() callback
+Subject: [PATCH] PCI: qcom: Implement shutdown() callback
 
 PCIe host controllers should bring the link down cleanly before system
 shutdown/reboot proceeds to remove power/clocks from the controller.
@@ -25,7 +25,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 35 insertions(+)
 
 diff --git a/drivers/pci/controller/dwc/pcie-qcom.c b/drivers/pci/controller/dwc/pcie-qcom.c
-index 77c05dbb3c4f..a975385434ed 100644
+index 5d669d39db2a1..c658bc535bcc8 100644
 --- a/drivers/pci/controller/dwc/pcie-qcom.c
 +++ b/drivers/pci/controller/dwc/pcie-qcom.c
 @@ -2055,6 +2055,9 @@ static int qcom_pcie_ecam_host_init(struct pci_config_window *cfg)
@@ -83,3 +83,6 @@ index 77c05dbb3c4f..a975385434ed 100644
 +	.shutdown = qcom_pcie_shutdown,
  };
  builtin_platform_driver(qcom_pcie_driver);
+-- 
+2.43.0
+

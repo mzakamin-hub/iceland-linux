@@ -30,7 +30,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 5 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/misc/fastrpc.c b/drivers/misc/fastrpc.c
-index af18ff1992ee..021f7b62b747 100644
+index cdc2627bdaf2e..932d83c64d379 100644
 --- a/drivers/misc/fastrpc.c
 +++ b/drivers/misc/fastrpc.c
 @@ -1328,7 +1328,11 @@ static inline int fastrpc_wait_for_response(struct fastrpc_invoke_ctx *ctx,
@@ -46,3 +46,6 @@ index af18ff1992ee..021f7b62b747 100644
  	}
  
  	return err;
+-- 
+2.43.0
+

@@ -25,7 +25,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 50 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_core_perf.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_core_perf.c
-index 4f5c70229f63..c2cfc127552b 100644
+index 4f5c70229f63d..c2cfc127552b4 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_core_perf.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_core_perf.c
 @@ -11,6 +11,7 @@
@@ -113,3 +113,6 @@ index 4f5c70229f63..c2cfc127552b 100644
  	}
  
  	avg_bw /= kms->num_paths;
+-- 
+2.43.0
+

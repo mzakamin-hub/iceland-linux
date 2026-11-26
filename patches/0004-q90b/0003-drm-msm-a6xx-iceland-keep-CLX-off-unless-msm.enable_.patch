@@ -26,7 +26,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  3 files changed, 18 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_hfi.c b/drivers/gpu/drm/msm/adreno/a6xx_hfi.c
-index 6b34e704a70d..1ab46097c2c3 100644
+index a9f9fa2adadf5..7479bed01c750 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_hfi.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_hfi.c
 @@ -938,6 +938,19 @@ static int a6xx_hfi_enable_clx(struct a6xx_gmu *gmu)
@@ -50,7 +50,7 @@ index 6b34e704a70d..1ab46097c2c3 100644
  	if (ret) {
  		DRM_DEV_ERROR(gmu->dev, "Unable to enable CLX (%d)\n", ret);
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_device.c b/drivers/gpu/drm/msm/adreno/adreno_device.c
-index 2ec130c1cf71..4699f2a93a2c 100644
+index 2ec130c1cf712..4699f2a93a2c2 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_device.c
 +++ b/drivers/gpu/drm/msm/adreno/adreno_device.c
 @@ -28,6 +28,10 @@ bool disable_acd;
@@ -65,7 +65,7 @@ index 2ec130c1cf71..4699f2a93a2c 100644
  MODULE_PARM_DESC(skip_gpu, "Disable GPU driver register (0=enable GPU driver register (default), 1=skip GPU driver register");
  module_param(skip_gpu, bool, 0400);
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_gpu.h b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
-index 4b2156825bdf..06c7899f414c 100644
+index 4b2156825bdf2..06c7899f414ce 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_gpu.h
 +++ b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
 @@ -20,6 +20,7 @@
@@ -76,3 +76,6 @@ index 4b2156825bdf..06c7899f414c 100644
  
  enum {
  	ADRENO_FW_PM4 = 0,
+-- 
+2.43.0
+

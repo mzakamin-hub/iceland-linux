@@ -17,7 +17,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 17 insertions(+), 4 deletions(-)
 
 diff --git a/tools/virt/gunyah/gh_vmtest.py b/tools/virt/gunyah/gh_vmtest.py
-index 05b8697481ce..b8e64c2177f2 100755
+index 05b8697481cec..b8e64c2177f28 100755
 --- a/tools/virt/gunyah/gh_vmtest.py
 +++ b/tools/virt/gunyah/gh_vmtest.py
 @@ -1,9 +1,10 @@
@@ -78,3 +78,6 @@ index 05b8697481ce..b8e64c2177f2 100755
      if EXTRA_SIZE:
          got = bytes(extra[0:4])
          print("[8x] shared binding word 0 = %s -> %s" % (got.hex(), "guest write visible on host" if got == bytes.fromhex("34120000") else "MISMATCH"))
+-- 
+2.43.0
+

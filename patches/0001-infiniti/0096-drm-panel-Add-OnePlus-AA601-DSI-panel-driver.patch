@@ -15,7 +15,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  create mode 100644 drivers/gpu/drm/panel/panel-oneplus-aa601.c
 
 diff --git a/drivers/gpu/drm/panel/Kconfig b/drivers/gpu/drm/panel/Kconfig
-index 7a520b4d60fe..29ae7d0478ef 100644
+index 7a520b4d60fef..29ae7d0478ef3 100644
 --- a/drivers/gpu/drm/panel/Kconfig
 +++ b/drivers/gpu/drm/panel/Kconfig
 @@ -777,6 +777,17 @@ config DRM_PANEL_OLIMEX_LCD_OLINUXINO
@@ -37,7 +37,7 @@ index 7a520b4d60fe..29ae7d0478ef 100644
          tristate "Orise Technology ota5601a RGB/SPI panel"
          depends on SPI
 diff --git a/drivers/gpu/drm/panel/Makefile b/drivers/gpu/drm/panel/Makefile
-index da5175909d54..421dafacd684 100644
+index da5175909d540..421dafacd684b 100644
 --- a/drivers/gpu/drm/panel/Makefile
 +++ b/drivers/gpu/drm/panel/Makefile
 @@ -75,6 +75,7 @@ obj-$(CONFIG_DRM_PANEL_NOVATEK_NT39016) += panel-novatek-nt39016.o
@@ -50,7 +50,7 @@ index da5175909d54..421dafacd684 100644
  obj-$(CONFIG_DRM_PANEL_OSD_OSD101T2587_53TS) += panel-osd-osd101t2587-53ts.o
 diff --git a/drivers/gpu/drm/panel/panel-oneplus-aa601.c b/drivers/gpu/drm/panel/panel-oneplus-aa601.c
 new file mode 100644
-index 000000000000..3989bff0cd7a
+index 0000000000000..3989bff0cd7a1
 --- /dev/null
 +++ b/drivers/gpu/drm/panel/panel-oneplus-aa601.c
 @@ -0,0 +1,912 @@
@@ -966,3 +966,6 @@ index 000000000000..3989bff0cd7a
 +MODULE_AUTHOR("idusergod <artem.martyanov06@gmail.com>");
 +MODULE_DESCRIPTION("DRM driver for OnePlus AA601 P 7 A0020 DSC panel");
 +MODULE_LICENSE("GPL");
+-- 
+2.43.0
+

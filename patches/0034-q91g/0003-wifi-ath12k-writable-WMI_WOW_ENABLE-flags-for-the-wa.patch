@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 7 Nov 2026 11:36:10 +0200
-Subject: [PATCH 3/3] wifi: ath12k: writable WMI_WOW_ENABLE flags for the wake
+Subject: [PATCH] wifi: ath12k: writable WMI_WOW_ENABLE flags for the wake
  bring-up
 
 The vendor host sets flags in WMI_WOW_ENABLE that tell the firmware how
@@ -12,17 +12,14 @@ Add the two known flag bits and wow_flags (default 0 = unchanged), so
 the wake path can be tried without a rebuild, as denialwm/linux-perpetua
 476ac2f9e476 does for its PCIe DRV bring-up.
 
-Suggested-by: Doctor Logix <doctor.logix@gmail.com>
-Based-on: denialwm/linux-perpetua 476ac2f9e476
 Signed-off-by: mzak <mzak.amin@gmail.com>
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 ---
  drivers/net/wireless/ath/ath12k/wmi.c | 9 ++++++++-
  drivers/net/wireless/ath/ath12k/wmi.h | 4 ++++
  2 files changed, 12 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/wmi.c b/drivers/net/wireless/ath/ath12k/wmi.c
-index e7ecae9b7..30ae8f23f 100644
+index e7ecae9b70703..30ae8f23fe741 100644
 --- a/drivers/net/wireless/ath/ath12k/wmi.c
 +++ b/drivers/net/wireless/ath/ath12k/wmi.c
 @@ -10954,6 +10954,11 @@ int ath12k_wmi_wow_host_wakeup_ind(struct ath12k *ar)
@@ -49,7 +46,7 @@ index e7ecae9b7..30ae8f23f 100644
  	ret = ath12k_wmi_cmd_send(ar->wmi, skb, WMI_WOW_ENABLE_CMDID);
  	if (ret) {
 diff --git a/drivers/net/wireless/ath/ath12k/wmi.h b/drivers/net/wireless/ath/ath12k/wmi.h
-index b6b4fa6fc..dd287723a 100644
+index b6b4fa6fc9bbf..dd287723a33bf 100644
 --- a/drivers/net/wireless/ath/ath12k/wmi.h
 +++ b/drivers/net/wireless/ath/ath12k/wmi.h
 @@ -5592,6 +5592,10 @@ enum wmi_wow_interface_cfg {

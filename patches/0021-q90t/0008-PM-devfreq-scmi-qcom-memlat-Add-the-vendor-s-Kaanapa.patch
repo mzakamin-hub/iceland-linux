@@ -31,7 +31,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 123 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/devfreq/scmi-qcom-memlat-devfreq.c b/drivers/devfreq/scmi-qcom-memlat-devfreq.c
-index 6d19fc36528e..d16a2d8e129e 100644
+index 6d19fc36528ed..d16a2d8e129e4 100644
 --- a/drivers/devfreq/scmi-qcom-memlat-devfreq.c
 +++ b/drivers/devfreq/scmi-qcom-memlat-devfreq.c
 @@ -98,6 +98,15 @@ enum scmi_qcom_memlat_hw_type {
@@ -250,3 +250,6 @@ index 6d19fc36528e..d16a2d8e129e 100644
  	ret = info->ops->stop_activity(info->ph, NULL, 0, MEMLAT_ALGO_STR, MEMLAT_STOP_TIMER);
  	if (ret < 0)
  		dev_err(&sdev->dev, "failed to stop memory group timer\n");
+-- 
+2.43.0
+

@@ -36,7 +36,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 77 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/media/i2c/dw9719.c b/drivers/media/i2c/dw9719.c
-index 7be9b8524f48..ef1a53fe54e9 100644
+index ab14ac7fa80b1..8b0e7ca05560d 100644
 --- a/drivers/media/i2c/dw9719.c
 +++ b/drivers/media/i2c/dw9719.c
 @@ -10,6 +10,7 @@
@@ -148,3 +148,6 @@ index 7be9b8524f48..ef1a53fe54e9 100644
  		break;
  	case DW9718S:
  		/* Datasheet says [OCP/UVLO] should be disabled below 2.5V */
+-- 
+2.43.0
+

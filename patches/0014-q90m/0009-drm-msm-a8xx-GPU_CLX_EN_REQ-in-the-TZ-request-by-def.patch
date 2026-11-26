@@ -19,7 +19,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_device.c b/drivers/gpu/drm/msm/adreno/adreno_device.c
-index a879d21c0945..62a1f6e88a4e 100644
+index a879d21c0945c..62a1f6e88a4e2 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_device.c
 +++ b/drivers/gpu/drm/msm/adreno/adreno_device.c
 @@ -48,9 +48,9 @@ MODULE_PARM_DESC(a8xx_kgsl_bcl,
@@ -34,3 +34,6 @@ index a879d21c0945..62a1f6e88a4e 100644
  module_param(a8xx_clx_tz_flag, bool, 0400);
  
  bool a8xx_safe_recover = true;
+-- 
+2.43.0
+

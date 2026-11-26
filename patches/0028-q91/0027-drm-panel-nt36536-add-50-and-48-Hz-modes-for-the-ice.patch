@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 2 Nov 2026 10:54:27 +0200
-Subject: [PATCH 27/32] drm/panel: nt36536: add 50 and 48 Hz modes for the
- iceland panel
+Subject: [PATCH] drm/panel: nt36536: add 50 and 48 Hz modes for the iceland
+ panel
 
 The stock software switches the OnePlus Pad 4 panel to 50 and 48 Hz for
 25 / 50 fps and 24 fps video. Add both rates, derived from our 90 Hz
@@ -15,7 +15,6 @@ The values match SuperTurtleDev / Yibo Wang's commit 2fe9301e73fa,
 which took them from the vendor DFPS lists; that commit was used as a
 cross-check only. The 144 Hz mode stays.
 
-Based-on: SuperTurtleDev iceland kernel 2fe9301e73fa (Yibo Wang; mode values cross-checked only)
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 Signed-off-by: mzak <mzak.amin@gmail.com>
 ---
@@ -23,7 +22,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 24 insertions(+)
 
 diff --git a/drivers/gpu/drm/panel/panel-novatek-nt36536.c b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
-index 61f0c2621bfd..458e899d23b3 100644
+index 61f0c2621bfd6..458e899d23b3f 100644
 --- a/drivers/gpu/drm/panel/panel-novatek-nt36536.c
 +++ b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
 @@ -853,6 +853,30 @@ static const struct drm_display_mode csot_iceland_modes[] = {
@@ -57,3 +56,6 @@ index 61f0c2621bfd..458e899d23b3 100644
  	{
  		/* 30Hz */
  		.clock = (3392 + 100 + 64 + 104) * (2400 + 8126 + 2 + 272) * 30 / 1000,
+-- 
+2.43.0
+

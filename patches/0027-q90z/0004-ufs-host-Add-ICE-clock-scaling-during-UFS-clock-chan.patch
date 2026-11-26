@@ -28,7 +28,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 21 insertions(+)
 
 diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
-index be23d20c29c1..095aa5870693 100644
+index 5c23119f7a32e..40ed27e9d1900 100644
 --- a/drivers/ufs/host/ufs-qcom.c
 +++ b/drivers/ufs/host/ufs-qcom.c
 @@ -314,6 +314,15 @@ static int ufs_qcom_ice_prepare_key(struct blk_crypto_profile *profile,
@@ -73,3 +73,6 @@ index be23d20c29c1..095aa5870693 100644
  		ufs_qcom_icc_update_bw(host);
  		ufshcd_uic_hibern8_exit(hba);
  	}
+-- 
+2.43.0
+

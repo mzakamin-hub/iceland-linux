@@ -20,7 +20,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 
 diff --git a/Documentation/devicetree/bindings/input/oneplus,iceland-pogo-keyboard.yaml b/Documentation/devicetree/bindings/input/oneplus,iceland-pogo-keyboard.yaml
 new file mode 100644
-index 000000000000..d00e1fa4e392
+index 0000000000000..d00e1fa4e3925
 --- /dev/null
 +++ b/Documentation/devicetree/bindings/input/oneplus,iceland-pogo-keyboard.yaml
 @@ -0,0 +1,63 @@
@@ -87,3 +87,6 @@ index 000000000000..d00e1fa4e392
 +        wakeup-source;
 +      };
 +    };
+-- 
+2.43.0
+

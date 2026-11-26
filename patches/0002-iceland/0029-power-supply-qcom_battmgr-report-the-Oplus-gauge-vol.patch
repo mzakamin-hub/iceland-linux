@@ -15,7 +15,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 3 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 65ed57c0c5b8..1044bd165a96 100644
+index 4d16244d0ccf9..e22741aae9566 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -1808,8 +1808,9 @@ static void qcom_battmgr_oplus_gauge_callback(struct qcom_battmgr *battmgr,
@@ -30,3 +30,6 @@ index 65ed57c0c5b8..1044bd165a96 100644
  	battmgr->status.percent = le32_to_cpu(data[OPLUS_GAUGE_SOC]) / 100;
  	battmgr->status.capacity = le32_to_cpu(data[OPLUS_GAUGE_REMAINING]) * 1000;
  	battmgr->status.soh_percent = le32_to_cpu(data[OPLUS_GAUGE_SOH]);
+-- 
+2.43.0
+

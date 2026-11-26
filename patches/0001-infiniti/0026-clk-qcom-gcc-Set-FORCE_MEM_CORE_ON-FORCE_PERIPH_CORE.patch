@@ -26,7 +26,7 @@ Link: https://lore.kernel.org/r/20260714-mem_on-v1-1-f5bfb6def0a1@oss.qualcomm.c
  4 files changed, 30 insertions(+)
 
 diff --git a/drivers/clk/qcom/gcc-glymur.c b/drivers/clk/qcom/gcc-glymur.c
-index be18a555fe31..a02ba14ced2d 100644
+index be18a555fe314..a02ba14ced2d6 100644
 --- a/drivers/clk/qcom/gcc-glymur.c
 +++ b/drivers/clk/qcom/gcc-glymur.c
 @@ -8497,6 +8497,17 @@ static void clk_glymur_regs_configure(struct device *dev, struct regmap *regmap)
@@ -48,7 +48,7 @@ index be18a555fe31..a02ba14ced2d 100644
  
  static const struct qcom_cc_driver_data gcc_glymur_driver_data = {
 diff --git a/drivers/clk/qcom/gcc-kaanapali.c b/drivers/clk/qcom/gcc-kaanapali.c
-index c9473fb79ccc..ceb7615b0c77 100644
+index c9473fb79ccc9..ceb7615b0c771 100644
 --- a/drivers/clk/qcom/gcc-kaanapali.c
 +++ b/drivers/clk/qcom/gcc-kaanapali.c
 @@ -3484,6 +3484,9 @@ static void clk_kaanapali_regs_configure(struct device *dev, struct regmap *regm
@@ -62,7 +62,7 @@ index c9473fb79ccc..ceb7615b0c77 100644
  
  static const struct qcom_cc_driver_data gcc_kaanapali_driver_data = {
 diff --git a/drivers/clk/qcom/gcc-nord.c b/drivers/clk/qcom/gcc-nord.c
-index 4f87e06b33ab..66080f653f96 100644
+index 4f87e06b33ab4..66080f653f96e 100644
 --- a/drivers/clk/qcom/gcc-nord.c
 +++ b/drivers/clk/qcom/gcc-nord.c
 @@ -1824,11 +1824,24 @@ static const u32 gcc_nord_critical_cbcrs[] = {
@@ -91,7 +91,7 @@ index 4f87e06b33ab..66080f653f96 100644
  
  static const struct qcom_cc_desc gcc_nord_desc = {
 diff --git a/drivers/clk/qcom/gcc-qdu1000.c b/drivers/clk/qcom/gcc-qdu1000.c
-index a139fd8f722d..4dfc67280611 100644
+index a139fd8f722dd..4dfc67280611a 100644
 --- a/drivers/clk/qcom/gcc-qdu1000.c
 +++ b/drivers/clk/qcom/gcc-qdu1000.c
 @@ -2669,6 +2669,9 @@ static int gcc_qdu1000_probe(struct platform_device *pdev)
@@ -104,3 +104,6 @@ index a139fd8f722d..4dfc67280611 100644
  	ret = qcom_cc_register_rcg_dfs(regmap, gcc_dfs_clocks,
  				       ARRAY_SIZE(gcc_dfs_clocks));
  	if (ret)
+-- 
+2.43.0
+

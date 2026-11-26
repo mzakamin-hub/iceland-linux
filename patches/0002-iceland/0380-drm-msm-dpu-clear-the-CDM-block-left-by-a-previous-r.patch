@@ -26,7 +26,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 4 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
-index d816de4993b6..ca63b8cc2365 100644
+index d816de4993b6b..ca63b8cc23659 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 @@ -1995,6 +1995,7 @@ static void dpu_encoder_virt_atomic_mode_set(struct drm_encoder *drm_enc,
@@ -55,3 +55,6 @@ index d816de4993b6..ca63b8cc2365 100644
  
  	/*
  	 * There may be 4 PP and 2 INTF for quad pipe case, so INTF is not
+-- 
+2.43.0
+

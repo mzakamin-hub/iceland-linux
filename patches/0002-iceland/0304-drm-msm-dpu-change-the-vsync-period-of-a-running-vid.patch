@@ -28,7 +28,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  4 files changed, 91 insertions(+), 17 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h
-index 0bfbce317575..7af6113b6ad5 100644
+index 0bfbce3175754..7af6113b6ad5d 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h
 @@ -90,6 +90,10 @@ struct dpu_encoder_phys;
@@ -52,7 +52,7 @@ index 0bfbce317575..7af6113b6ad5 100644
  			struct drm_writeback_job *job);
  	void (*cleanup_wb_job)(struct dpu_encoder_phys *phys_enc,
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
-index 1babf8a8ea1f..9ddae7581d0d 100644
+index 1babf8a8ea1f3..9ddae7581d0dd 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
 @@ -254,6 +254,62 @@ static void programmable_fetch_config(struct dpu_encoder_phys *phys_enc,
@@ -167,7 +167,7 @@ index 1babf8a8ea1f..9ddae7581d0d 100644
  
  /**
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
-index 6aa58f25217d..dd6476cd0f4c 100644
+index 6aa58f25217dc..dd6476cd0f4cf 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
 @@ -281,6 +281,19 @@ static void dpu_hw_intf_enable_timing_engine(
@@ -202,7 +202,7 @@ index 6aa58f25217d..dd6476cd0f4c 100644
  	if (mdss_rev->core_major_ver >= 5 && cfg->type == INTF_DSI) {
  		WARN_ON(!cfg->intr_tear_rd_ptr);
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.h
-index 4d135ae80b55..6b6510647db4 100644
+index 4d135ae80b555..6b6510647db48 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.h
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.h
 @@ -61,6 +61,9 @@ struct dpu_hw_intf_cmd_mode_cfg {
@@ -224,3 +224,6 @@ index 4d135ae80b55..6b6510647db4 100644
  	void (*enable_timing)(struct dpu_hw_intf *intf,
  			u8 enable);
  
+-- 
+2.43.0
+

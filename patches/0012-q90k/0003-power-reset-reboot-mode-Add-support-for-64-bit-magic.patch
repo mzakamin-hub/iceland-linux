@@ -38,7 +38,7 @@ Link: https://lore.kernel.org/r/20251109-arm-psci-system_reset2-vendor-reboots-v
  5 files changed, 39 insertions(+), 19 deletions(-)
 
 diff --git a/drivers/power/reset/nvmem-reboot-mode.c b/drivers/power/reset/nvmem-reboot-mode.c
-index d260715fccf6..4479c874077c 100644
+index 19d12a59383fd..9946dc975e8d2 100644
 --- a/drivers/power/reset/nvmem-reboot-mode.c
 +++ b/drivers/power/reset/nvmem-reboot-mode.c
 @@ -17,14 +17,19 @@ struct nvmem_reboot_mode {
@@ -73,7 +73,7 @@ index d260715fccf6..4479c874077c 100644
  		dev_err(reboot->dev, "update reboot mode bits failed\n");
  
 diff --git a/drivers/power/reset/qcom-pon.c b/drivers/power/reset/qcom-pon.c
-index cd7ba680b841..e74407f9b74a 100644
+index 112d1bcefedf5..b49162fe498f2 100644
 --- a/drivers/power/reset/qcom-pon.c
 +++ b/drivers/power/reset/qcom-pon.c
 @@ -27,17 +27,22 @@ struct qcom_pon {
@@ -103,7 +103,7 @@ index cd7ba680b841..e74407f9b74a 100644
  		dev_err(pon->dev, "update reboot mode bits failed\n");
  
 diff --git a/drivers/power/reset/reboot-mode.c b/drivers/power/reset/reboot-mode.c
-index a8ef487a1be4..554016978a4f 100644
+index a8ef487a1be4b..554016978a4fb 100644
 --- a/drivers/power/reset/reboot-mode.c
 +++ b/drivers/power/reset/reboot-mode.c
 @@ -20,7 +20,7 @@
@@ -173,7 +173,7 @@ index a8ef487a1be4..554016978a4f 100644
  		if (!info->mode) {
  			ret = -ENOMEM;
 diff --git a/drivers/power/reset/syscon-reboot-mode.c b/drivers/power/reset/syscon-reboot-mode.c
-index e0772c9f70f7..3cbd000c5122 100644
+index 946b6774d5e58..4b2550b1740ed 100644
 --- a/drivers/power/reset/syscon-reboot-mode.c
 +++ b/drivers/power/reset/syscon-reboot-mode.c
 @@ -20,16 +20,21 @@ struct syscon_reboot_mode {
@@ -202,7 +202,7 @@ index e0772c9f70f7..3cbd000c5122 100644
  		dev_err(reboot->dev, "update reboot mode bits failed\n");
  
 diff --git a/include/linux/reboot-mode.h b/include/linux/reboot-mode.h
-index 22f707ade4ba..e0d3e8a54050 100644
+index 22f707ade4ba9..e0d3e8a54050a 100644
 --- a/include/linux/reboot-mode.h
 +++ b/include/linux/reboot-mode.h
 @@ -3,11 +3,12 @@
@@ -219,3 +219,6 @@ index 22f707ade4ba..e0d3e8a54050 100644
  	struct notifier_block reboot_notifier;
  };
  
+-- 
+2.43.0
+

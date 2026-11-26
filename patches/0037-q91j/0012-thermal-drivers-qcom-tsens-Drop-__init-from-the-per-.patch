@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Christian Schmidbauer <opensource@grische.xyz>
 Date: Wed, 4 Nov 2026 15:57:40 +0100
-Subject: [PATCH 12/30] thermal/drivers/qcom/tsens: Drop __init from the
- per-SoC ->init callbacks
+Subject: [PATCH] thermal/drivers/qcom/tsens: Drop __init from the per-SoC
+ ->init callbacks
 
 init_8226(), init_8909(), init_8939(), init_8952(), init_8956(),
 init_9607(), init_tsens_v1_no_rpm() and init_tsens_v2_no_rpm() are
@@ -28,7 +28,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  3 files changed, 10 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/thermal/qcom/tsens-v0_1.c b/drivers/thermal/qcom/tsens-v0_1.c
-index 32d2d3e33..a13897632 100644
+index 32d2d3e332873..a13897632b91b 100644
 --- a/drivers/thermal/qcom/tsens-v0_1.c
 +++ b/drivers/thermal/qcom/tsens-v0_1.c
 @@ -207,7 +207,7 @@ static int calibrate_8974(struct tsens_priv *priv)
@@ -69,7 +69,7 @@ index 32d2d3e33..a13897632 100644
  	int i;
  
 diff --git a/drivers/thermal/qcom/tsens-v1.c b/drivers/thermal/qcom/tsens-v1.c
-index 7bda8e608..ed0064f4e 100644
+index 7bda8e6087c40..ed0064f4e1ae7 100644
 --- a/drivers/thermal/qcom/tsens-v1.c
 +++ b/drivers/thermal/qcom/tsens-v1.c
 @@ -145,7 +145,7 @@ static const struct reg_field tsens_v1_regfields[MAX_REGFIELDS] = {
@@ -101,7 +101,7 @@ index 7bda8e608..ed0064f4e 100644
  	int i, ret;
  	u32 mask = 0;
 diff --git a/drivers/thermal/qcom/tsens-v2.c b/drivers/thermal/qcom/tsens-v2.c
-index 843dd29fa..22284973b 100644
+index 843dd29fad2e3..22284973bb61f 100644
 --- a/drivers/thermal/qcom/tsens-v2.c
 +++ b/drivers/thermal/qcom/tsens-v2.c
 @@ -220,7 +220,7 @@ static int tsens_v2_calibration(struct tsens_priv *priv)

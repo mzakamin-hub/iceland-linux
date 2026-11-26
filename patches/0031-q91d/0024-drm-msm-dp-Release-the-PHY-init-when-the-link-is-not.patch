@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Joonhoe Kim <26rote@gmail.com>
 Date: Tue, 3 Nov 2026 15:12:40 +0000
-Subject: [PATCH 24/27] drm/msm/dp: Release the PHY init when the link is not
- powered
+Subject: [PATCH] drm/msm/dp: Release the PHY init when the link is not powered
 
 The DP PHY init is shared with the USB side of the QMP combo PHY. While
 DP holds it, qmp_combo_usb_init() skips the common block init, and after
@@ -28,7 +27,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/dp/dp_display.c b/drivers/gpu/drm/msm/dp/dp_display.c
-index f1a75a4b2..a7d461a98 100644
+index 9d16265d1a2da..9d1e1bc94914c 100644
 --- a/drivers/gpu/drm/msm/dp/dp_display.c
 +++ b/drivers/gpu/drm/msm/dp/dp_display.c
 @@ -619,7 +619,7 @@ static int msm_dp_hpd_unplug_handle(struct msm_dp_display_private *dp)

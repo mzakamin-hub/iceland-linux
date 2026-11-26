@@ -11,7 +11,7 @@ Subject: [PATCH] SM8850: Add device tree for OnePlus Pad 4
  create mode 100644 arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 
 diff --git a/arch/arm64/boot/dts/qcom/Makefile b/arch/arm64/boot/dts/qcom/Makefile
-index 5c15b817aee3..31c7806ab79c 100644
+index 5c15b817aee31..31c7806ab79ce 100644
 --- a/arch/arm64/boot/dts/qcom/Makefile
 +++ b/arch/arm64/boot/dts/qcom/Makefile
 @@ -49,6 +49,7 @@ dtb-$(CONFIG_ARCH_QCOM)	+= ipq9574-rdp453.dtb
@@ -24,7 +24,7 @@ index 5c15b817aee3..31c7806ab79c 100644
  dtb-$(CONFIG_ARCH_QCOM)	+= lemans-evk.dtb
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 new file mode 100644
-index 000000000000..f9a56dad62e0
+index 0000000000000..f9a56dad62e05
 --- /dev/null
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -0,0 +1,1148 @@
@@ -1176,3 +1176,6 @@ index 000000000000..f9a56dad62e0
 +
 +	status = "okay";
 +};
+-- 
+2.43.0
+

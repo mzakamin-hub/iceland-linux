@@ -12,7 +12,7 @@ Signed-off-by: Rob Clark <robin.clark@oss.qualcomm.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_gpu.h b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
-index 06c7899f414c..a4476d06f716 100644
+index 06c7899f414ce..a4476d06f7169 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_gpu.h
 +++ b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
 @@ -169,7 +169,7 @@ struct adreno_protect {
@@ -24,3 +24,6 @@ index 06c7899f414c..a4476d06f716 100644
  	.regs = name ## _regs,				\
  	.count = ARRAY_SIZE(name ## _regs),		\
  	.count_max = __count_max,			\
+-- 
+2.43.0
+

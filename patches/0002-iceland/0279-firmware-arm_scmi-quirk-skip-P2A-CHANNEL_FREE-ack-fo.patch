@@ -38,7 +38,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  3 files changed, 12 insertions(+)
 
 diff --git a/drivers/firmware/arm_scmi/driver.c b/drivers/firmware/arm_scmi/driver.c
-index 1e6f69b14321..5034674a45d1 100644
+index 05092301db29a..b767130239c17 100644
 --- a/drivers/firmware/arm_scmi/driver.c
 +++ b/drivers/firmware/arm_scmi/driver.c
 @@ -1099,6 +1099,9 @@ static inline void scmi_clear_channel(struct scmi_info *info,
@@ -52,7 +52,7 @@ index 1e6f69b14321..5034674a45d1 100644
  		info->desc->ops->clear_channel(cinfo);
  }
 diff --git a/drivers/firmware/arm_scmi/quirks.c b/drivers/firmware/arm_scmi/quirks.c
-index 9ed5ce4feded..ac2adb20cfa2 100644
+index 9ed5ce4feded1..ac2adb20cfa20 100644
 --- a/drivers/firmware/arm_scmi/quirks.c
 +++ b/drivers/firmware/arm_scmi/quirks.c
 @@ -172,6 +172,13 @@ struct scmi_quirk {
@@ -78,7 +78,7 @@ index 9ed5ce4feded..ac2adb20cfa2 100644
  };
  
 diff --git a/drivers/firmware/arm_scmi/quirks.h b/drivers/firmware/arm_scmi/quirks.h
-index d8ba60b95652..2330aed495bf 100644
+index d8ba60b956522..2330aed495bf5 100644
 --- a/drivers/firmware/arm_scmi/quirks.h
 +++ b/drivers/firmware/arm_scmi/quirks.h
 @@ -48,5 +48,6 @@ static inline void scmi_quirks_enable(struct device *dev, const char *vend,
@@ -88,3 +88,6 @@ index d8ba60b95652..2330aed495bf 100644
 +DECLARE_SCMI_QUIRK(p2a_no_channel_free_ack);
  
  #endif /* _SCMI_QUIRKS_H */
+-- 
+2.43.0
+

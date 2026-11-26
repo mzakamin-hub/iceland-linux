@@ -20,7 +20,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 28 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 226050e78304..5a044fb69f91 100644
+index 226050e783043..5a044fb69f919 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -3875,3 +3875,31 @@ map1 {
@@ -55,3 +55,6 @@ index 226050e78304..5a044fb69f91 100644
 +		interrupt-names = "smp2p-sleepstate-in";
 +	};
 +};
+-- 
+2.43.0
+

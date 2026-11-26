@@ -19,7 +19,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 23 insertions(+), 18 deletions(-)
 
 diff --git a/drivers/rtc/rtc-pm8xxx.c b/drivers/rtc/rtc-pm8xxx.c
-index e624f848c22b..c0cf54534014 100644
+index 40b6b62116dc4..ad385d99020da 100644
 --- a/drivers/rtc/rtc-pm8xxx.c
 +++ b/drivers/rtc/rtc-pm8xxx.c
 @@ -64,7 +64,8 @@ struct qcom_uefi_rtc_info {
@@ -141,3 +141,6 @@ index e624f848c22b..c0cf54534014 100644
  
  	if (rtc_dd->alarm_irq) {
  		rc = devm_request_any_context_irq(&pdev->dev, rtc_dd->alarm_irq,
+-- 
+2.43.0
+

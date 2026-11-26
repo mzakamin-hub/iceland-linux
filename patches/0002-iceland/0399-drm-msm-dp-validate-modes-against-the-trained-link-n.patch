@@ -56,7 +56,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 36 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/dp/dp_display.c b/drivers/gpu/drm/msm/dp/dp_display.c
-index bd23e10ba89d..c5997a9cf577 100644
+index 5cc8bcfa430a1..49344071ee52e 100644
 --- a/drivers/gpu/drm/msm/dp/dp_display.c
 +++ b/drivers/gpu/drm/msm/dp/dp_display.c
 @@ -792,8 +792,10 @@ enum drm_mode_status msm_dp_display_mode_valid(struct msm_dp *dp,
@@ -115,3 +115,6 @@ index bd23e10ba89d..c5997a9cf577 100644
  
  	return MODE_OK;
  }
+-- 
+2.43.0
+

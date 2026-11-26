@@ -23,7 +23,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 75 insertions(+)
 
 diff --git a/drivers/gpu/drm/panel/panel-novatek-nt36536.c b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
-index d11ff1617232..61f0c2621bfd 100644
+index d11ff16172321..61f0c2621bfd6 100644
 --- a/drivers/gpu/drm/panel/panel-novatek-nt36536.c
 +++ b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
 @@ -36,6 +36,8 @@ struct novatek {
@@ -150,3 +150,6 @@ index d11ff1617232..61f0c2621bfd 100644
  };
  
  static const struct of_device_id novatek_of_match[] = {
+-- 
+2.43.0
+

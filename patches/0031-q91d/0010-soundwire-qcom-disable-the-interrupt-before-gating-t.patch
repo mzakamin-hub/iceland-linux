@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Oleg Keri <okerixx@gmail.com>
 Date: Fri, 9 Oct 2026 10:26:39 +0200
-Subject: [PATCH 10/27] soundwire: qcom: disable the interrupt before gating
- the clock
+Subject: [PATCH] soundwire: qcom: disable the interrupt before gating the
+ clock
 
 swrm_runtime_suspend() gates hclk straight after the ClockStopNow
 broadcast, while the interrupt thread that completed it is still
@@ -27,7 +27,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 2 insertions(+)
 
 diff --git a/drivers/soundwire/qcom.c b/drivers/soundwire/qcom.c
-index d4d807363..6812f4c09 100644
+index 51ae5a32ee7c7..74bf23cd69e63 100644
 --- a/drivers/soundwire/qcom.c
 +++ b/drivers/soundwire/qcom.c
 @@ -1806,6 +1806,7 @@ static int __maybe_unused swrm_runtime_resume(struct device *dev)

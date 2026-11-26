@@ -35,7 +35,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  5 files changed, 20 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
-index 50e18486e411..cc23bbc1bf1a 100644
+index 50e18486e4111..cc23bbc1bf1a0 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
 @@ -60,6 +60,8 @@ static const struct a6xx_limits_tbl name = {	\
@@ -48,7 +48,7 @@ index 50e18486e411..cc23bbc1bf1a 100644
  	const struct adreno_reglist_pipe_list *dyn_pwrup_reglist;
  	const struct adreno_reglist_list *ifpc_reglist;
 diff --git a/drivers/gpu/drm/msm/adreno/a8xx_catalog.c b/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
-index 5f5f71d86df9..4dc5de4d5ede 100644
+index 5f5f71d86df93..4dc5de4d5ede6 100644
 --- a/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
 +++ b/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
 @@ -1026,7 +1026,8 @@ static const struct adreno_info a8xx_gpus[] = {
@@ -62,7 +62,7 @@ index 5f5f71d86df9..4dc5de4d5ede 100644
  			.pwrup_reglist = &a840_pwrup_reglist,
  			.dyn_pwrup_reglist = &a840_dyn_pwrup_reglist,
 diff --git a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
-index d3efef7460bb..896d55d5cf5c 100644
+index d3efef7460bb2..896d55d5cf5cd 100644
 --- a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
 +++ b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
 @@ -249,10 +249,19 @@ static void a8xx_set_hwcg(struct msm_gpu *gpu, bool state)
@@ -87,7 +87,7 @@ index d3efef7460bb..896d55d5cf5c 100644
  		A8XX_CP_PROTECT_CNTL_PIPE_ACCESS_FAULT_ON_VIOL_EN |
  		A8XX_CP_PROTECT_CNTL_PIPE_LAST_SPAN_INF_RANGE |
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_device.c b/drivers/gpu/drm/msm/adreno/adreno_device.c
-index ff1b65652204..3c3773d5758c 100644
+index ff1b65652204c..3c3773d5758cd 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_device.c
 +++ b/drivers/gpu/drm/msm/adreno/adreno_device.c
 @@ -33,6 +33,11 @@ MODULE_PARM_DESC(a8xx_crashstate,
@@ -103,7 +103,7 @@ index ff1b65652204..3c3773d5758c 100644
  MODULE_PARM_DESC(enable_clx, "Enable the GPU current limiter (CLX) on GPUs with a CLX table (0=off (default), 1=on)");
  module_param(enable_clx, bool, 0400);
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_gpu.h b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
-index d3bcdf180d4c..48bc55048a3d 100644
+index d3bcdf180d4c4..48bc55048a3d8 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_gpu.h
 +++ b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
 @@ -22,6 +22,7 @@
@@ -114,3 +114,6 @@ index d3bcdf180d4c..48bc55048a3d 100644
  
  enum {
  	ADRENO_FW_PM4 = 0,
+-- 
+2.43.0
+

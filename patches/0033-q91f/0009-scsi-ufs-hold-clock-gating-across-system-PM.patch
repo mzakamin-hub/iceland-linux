@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: gh123man <gh123man@users.noreply.github.com>
 Date: Sat, 7 Nov 2026 11:33:53 +0200
-Subject: [PATCH 9/9] scsi: ufs: hold clock gating across system PM
+Subject: [PATCH] scsi: ufs: hold clock gating across system PM
 
 Hardware diagnostics captured a software clock-gating worker entering
 DME_HIBER_ENTER with REQ_CLKS_OFF, no active requests, and no PM operation
@@ -38,7 +38,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  2 files changed, 20 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/ufs/core/ufshcd.c b/drivers/ufs/core/ufshcd.c
-index dbc00ab05..16bdf6692 100644
+index d00ae3b01b85a..1ca89c67354b8 100644
 --- a/drivers/ufs/core/ufshcd.c
 +++ b/drivers/ufs/core/ufshcd.c
 @@ -11567,6 +11567,10 @@ void ufshcd_resume_complete(struct device *dev)
@@ -91,7 +91,7 @@ index dbc00ab05..16bdf6692 100644
  		hba->complete_put = true;
  	}
 diff --git a/include/ufs/ufshcd.h b/include/ufs/ufshcd.h
-index 69e49d25f..804dcf50e 100644
+index 69e49d25f6ce4..804dcf50e37e2 100644
 --- a/include/ufs/ufshcd.h
 +++ b/include/ufs/ufshcd.h
 @@ -1071,6 +1071,8 @@ enum ufshcd_mcq_opr {

@@ -19,7 +19,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 6 insertions(+), 1 deletion(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 03865b947d33..e37e59f88bdf 100644
+index 03865b947d330..e37e59f88bdf6 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -2767,7 +2767,10 @@ ufs_mem_hc: ufs@1d84000 {
@@ -43,3 +43,6 @@ index 03865b947d33..e37e59f88bdf 100644
  			lanes-per-direction = <2>;
  			qcom,ice = <&ice>;
  
+-- 
+2.43.0
+

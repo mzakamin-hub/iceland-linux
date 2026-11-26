@@ -26,7 +26,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 22 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 0d8e883b226d..e8455a22c610 100644
+index eb836cdda24fe..b9a11275a6bcb 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -171,6 +171,16 @@ enum qcom_battmgr_variant {
@@ -75,3 +75,6 @@ index 0d8e883b226d..e8455a22c610 100644
  			val->intval = clamp_t(s64, uw, INT_MIN, INT_MAX);
  			dev_dbg(battmgr->dev, "power_now: firmware %d uW, V*I %d uW\n",
  				fw_uw, val->intval);
+-- 
+2.43.0
+

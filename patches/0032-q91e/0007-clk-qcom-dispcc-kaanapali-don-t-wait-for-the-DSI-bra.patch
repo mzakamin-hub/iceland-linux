@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 7 Nov 2026 06:35:43 +0200
-Subject: [PATCH 7/8] clk: qcom: dispcc-kaanapali: don't wait for the DSI
- branches at disable-unused
+Subject: [PATCH] clk: qcom: dispcc-kaanapali: don't wait for the DSI branches
+ at disable-unused
 
 The boot chain leaves the DSI pixel, byte and byte interface branches
 enabled with their source, the DSI PHY PLL, already stopped. When
@@ -25,7 +25,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  3 files changed, 26 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/clk/qcom/clk-branch.c b/drivers/clk/qcom/clk-branch.c
-index 4304e861c..d99a2b71a 100644
+index 4304e861c5635..d99a2b71ad1d9 100644
 --- a/drivers/clk/qcom/clk-branch.c
 +++ b/drivers/clk/qcom/clk-branch.c
 @@ -184,6 +184,25 @@ const struct clk_ops clk_branch2_ops = {
@@ -55,7 +55,7 @@ index 4304e861c..d99a2b71a 100644
  	.enable = clk_branch2_enable,
  	.is_enabled = clk_is_enabled_regmap,
 diff --git a/drivers/clk/qcom/clk-branch.h b/drivers/clk/qcom/clk-branch.h
-index 6bc2ba2b5..52a5a5023 100644
+index 6bc2ba2b53505..52a5a50231a2b 100644
 --- a/drivers/clk/qcom/clk-branch.h
 +++ b/drivers/clk/qcom/clk-branch.h
 @@ -110,6 +110,7 @@ static inline void qcom_branch_set_clk_en(struct regmap *regmap, u32 cbcr)
@@ -67,7 +67,7 @@ index 6bc2ba2b5..52a5a5023 100644
  extern const struct clk_ops clk_branch2_aon_ops;
  extern const struct clk_ops clk_branch2_mem_ops;
 diff --git a/drivers/clk/qcom/dispcc-kaanapali.c b/drivers/clk/qcom/dispcc-kaanapali.c
-index d4301edde..df9ee8d8d 100644
+index d4301edde7d3c..df9ee8d8d7672 100644
 --- a/drivers/clk/qcom/dispcc-kaanapali.c
 +++ b/drivers/clk/qcom/dispcc-kaanapali.c
 @@ -991,7 +991,7 @@ static struct clk_branch disp_cc_mdss_byte0_clk = {

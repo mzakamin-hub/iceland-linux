@@ -47,7 +47,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 166 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/dp/dp_display.c b/drivers/gpu/drm/msm/dp/dp_display.c
-index c5997a9cf577..f1a75a4b2238 100644
+index 49344071ee52e..9d16265d1a2da 100644
 --- a/drivers/gpu/drm/msm/dp/dp_display.c
 +++ b/drivers/gpu/drm/msm/dp/dp_display.c
 @@ -12,10 +12,12 @@
@@ -319,3 +319,6 @@ index c5997a9cf577..f1a75a4b2238 100644
  
  	rc = msm_dp_display_post_enable(msm_dp_display);
  	if (rc) {
+-- 
+2.43.0
+

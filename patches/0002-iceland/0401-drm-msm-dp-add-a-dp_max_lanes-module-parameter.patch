@@ -19,7 +19,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 17 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/dp/dp_panel.c b/drivers/gpu/drm/msm/dp/dp_panel.c
-index 82641b9494de..6accf441a03a 100644
+index 27e2be1153327..a3034255cccb8 100644
 --- a/drivers/gpu/drm/msm/dp/dp_panel.c
 +++ b/drivers/gpu/drm/msm/dp/dp_panel.c
 @@ -13,12 +13,18 @@
@@ -72,3 +72,6 @@ index 82641b9494de..6accf441a03a 100644
  		 msm_dp_panel->link_info.num_lanes, msm_dp_panel->link_info.rate);
  
  	if (drm_dp_is_branch(msm_dp_panel->dpcd)) {
+-- 
+2.43.0
+

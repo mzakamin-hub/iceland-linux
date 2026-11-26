@@ -14,7 +14,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  create mode 100644 sound/soc/codecs/tfa9866.c
 
 diff --git a/sound/soc/codecs/Kconfig b/sound/soc/codecs/Kconfig
-index ba59dabeeccd..387a74bc92d0 100644
+index ba59dabeeccde..387a74bc92d07 100644
 --- a/sound/soc/codecs/Kconfig
 +++ b/sound/soc/codecs/Kconfig
 @@ -284,6 +284,7 @@ config SND_SOC_ALL_CODECS
@@ -40,7 +40,7 @@ index ba59dabeeccd..387a74bc92d0 100644
  	tristate "NXP Semiconductors TFA9879 amplifier"
  	depends on I2C
 diff --git a/sound/soc/codecs/Makefile b/sound/soc/codecs/Makefile
-index 3826f9e4fce8..0f0906717ff0 100644
+index 3826f9e4fce8a..0f0906717ff01 100644
 --- a/sound/soc/codecs/Makefile
 +++ b/sound/soc/codecs/Makefile
 @@ -334,6 +334,7 @@ snd-soc-tas2781-comlib-i2c-y := tas2781-comlib-i2c.o
@@ -61,7 +61,7 @@ index 3826f9e4fce8..0f0906717ff0 100644
  obj-$(CONFIG_SND_SOC_TLV320ADC3XXX)	+= snd-soc-tlv320adc3xxx.o
 diff --git a/sound/soc/codecs/tfa9866.c b/sound/soc/codecs/tfa9866.c
 new file mode 100644
-index 000000000000..8906bac3b490
+index 0000000000000..8906bac3b4904
 --- /dev/null
 +++ b/sound/soc/codecs/tfa9866.c
 @@ -0,0 +1,203 @@
@@ -268,3 +268,6 @@ index 000000000000..8906bac3b490
 +
 +MODULE_DESCRIPTION("ASoC NXP/Goodix TFA9866 driver");
 +MODULE_LICENSE("GPL");
+-- 
+2.43.0
+

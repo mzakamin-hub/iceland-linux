@@ -23,7 +23,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 16 insertions(+)
 
 diff --git a/drivers/virt/gunyah/gunyah_vcpu.c b/drivers/virt/gunyah/gunyah_vcpu.c
-index 0dd3569a5645..1fcadc377010 100644
+index 0dd3569a5645d..1fcadc377010a 100644
 --- a/drivers/virt/gunyah/gunyah_vcpu.c
 +++ b/drivers/virt/gunyah/gunyah_vcpu.c
 @@ -409,6 +409,22 @@ static int gunyah_vcpu_run(struct gunyah_vcpu *vcpu)
@@ -49,3 +49,6 @@ index 0dd3569a5645..1fcadc377010 100644
  		}
  	}
  
+-- 
+2.43.0
+

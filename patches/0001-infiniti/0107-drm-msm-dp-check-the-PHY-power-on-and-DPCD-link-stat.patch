@@ -10,7 +10,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 9 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/dp/dp_ctrl.c b/drivers/gpu/drm/msm/dp/dp_ctrl.c
-index abd3dcdad03c..656316650c3e 100644
+index 47647fdec9de5..6cfb69598d25d 100644
 --- a/drivers/gpu/drm/msm/dp/dp_ctrl.c
 +++ b/drivers/gpu/drm/msm/dp/dp_ctrl.c
 @@ -1883,7 +1883,11 @@ static int msm_dp_ctrl_enable_mainlink_clocks(struct msm_dp_ctrl_private *ctrl,
@@ -39,3 +39,6 @@ index abd3dcdad03c..656316650c3e 100644
  
  	return drm_dp_channel_eq_ok(link_status, num_lanes);
  }
+-- 
+2.43.0
+

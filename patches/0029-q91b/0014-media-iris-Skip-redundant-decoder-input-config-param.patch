@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Vishnu Reddy <busanna.reddy@oss.qualcomm.com>
 Date: Sat, 31 Oct 2026 01:49:09 +0530
-Subject: [PATCH 14/24] media: iris: Skip redundant decoder input config params
+Subject: [PATCH] media: iris: Skip redundant decoder input config params
 
 The decoder input configuration parameters are sent to the firmware every
 time the output plane is streamed on. This includes streamon after a seek.
@@ -26,7 +26,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 5 insertions(+)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c b/drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c
-index 7dcca29f8288..3715ff73e902 100644
+index 7dcca29f8288e..3715ff73e902b 100644
 --- a/drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c
 +++ b/drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c
 @@ -693,6 +693,7 @@ static int iris_hfi_gen2_set_super_block(struct iris_inst *inst, u32 plane)
@@ -48,3 +48,6 @@ index 7dcca29f8288..3715ff73e902 100644
  	if (inst->domain == DECODER) {
  		if (V4L2_TYPE_IS_OUTPUT(plane)) {
  			if (inst->codec == V4L2_PIX_FMT_H264) {
+-- 
+2.43.0
+

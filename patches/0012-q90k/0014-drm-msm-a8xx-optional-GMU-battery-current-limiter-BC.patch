@@ -29,7 +29,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  7 files changed, 59 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
-index 598a6839792a..b950985016bd 100644
+index 598a6839792ae..b950985016bd0 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 @@ -1254,7 +1254,7 @@ static int a6xx_gmu_secure_init(struct a6xx_gpu *a6xx_gpu)
@@ -70,7 +70,7 @@ index 598a6839792a..b950985016bd 100644
  			dev_warn_once(gpu->dev->dev,
  				"SCM call failed\n");
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.h b/drivers/gpu/drm/msm/adreno/a6xx_gmu.h
-index 1a2f82df6642..b5006bedfeb0 100644
+index 1a2f82df66424..b5006bedfeb0c 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.h
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.h
 @@ -125,6 +125,9 @@ struct a6xx_gmu {
@@ -84,7 +84,7 @@ index 1a2f82df6642..b5006bedfeb0 100644
  	struct notifier_block pd_nb;
  	struct completion pd_gate;
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
-index 24f2350607ad..1e5d891c87db 100644
+index 24f2350607ad6..1e5d891c87db2 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
 @@ -69,6 +69,8 @@ struct a6xx_info {
@@ -97,7 +97,7 @@ index 24f2350607ad..1e5d891c87db 100644
  	u32 gmu_chipid;
  	u32 gmu_cgc_mode;
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_hfi.c b/drivers/gpu/drm/msm/adreno/a6xx_hfi.c
-index 1ab46097c2c3..5aab2c1bbe0f 100644
+index 7479bed01c750..06112c62c08e1 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_hfi.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_hfi.c
 @@ -888,6 +888,27 @@ static int a6xx_hfi_enable_acd(struct a6xx_gmu *gmu)
@@ -141,7 +141,7 @@ index 1ab46097c2c3..5aab2c1bbe0f 100644
  	if (ret)
  		return ret;
 diff --git a/drivers/gpu/drm/msm/adreno/a8xx_catalog.c b/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
-index cf2ae4597abf..01942eed25d9 100644
+index cf2ae4597abf8..01942eed25d96 100644
 --- a/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
 +++ b/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
 @@ -1051,6 +1051,8 @@ static const struct adreno_info a8xx_gpus[] = {
@@ -154,7 +154,7 @@ index cf2ae4597abf..01942eed25d9 100644
  			.dyn_pwrup_reglist = &a840_dyn_pwrup_reglist,
  			.ifpc_reglist = &a840_ifpc_reglist,
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_device.c b/drivers/gpu/drm/msm/adreno/adreno_device.c
-index 34099ad31627..9e68a9ac2197 100644
+index 34099ad316271..9e68a9ac21973 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_device.c
 +++ b/drivers/gpu/drm/msm/adreno/adreno_device.c
 @@ -43,6 +43,11 @@ MODULE_PARM_DESC(a8xx_kgsl_eco,
@@ -170,7 +170,7 @@ index 34099ad31627..9e68a9ac2197 100644
  MODULE_PARM_DESC(a8xx_safe_recover,
  		 "A8xx: when the CX GDSC did not collapse at a GPU recovery (no reset), complete the queued submits as faulted instead of replaying them (1=on (default), 0=replay)");
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_gpu.h b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
-index a0ca22418e0d..5eb5fe65c79a 100644
+index a0ca22418e0de..5eb5fe65c79a5 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_gpu.h
 +++ b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
 @@ -25,6 +25,7 @@ extern bool a8xx_crashstate;
@@ -181,3 +181,6 @@ index a0ca22418e0d..5eb5fe65c79a 100644
  
  enum {
  	ADRENO_FW_PM4 = 0,
+-- 
+2.43.0
+

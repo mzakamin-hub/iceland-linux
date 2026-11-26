@@ -15,7 +15,7 @@ Reviewed-by: Vikash Garodia <vikash.garodia@oss.qualcomm.com>
  1 file changed, 2 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
-index 8ba611e15962..ca4951421e2b 100644
+index 8ba611e159628..ca4951421e2b7 100644
 --- a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
 +++ b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
 @@ -2438,9 +2438,8 @@ static u32 iris_vpu4x_enc_line_size(struct iris_inst *inst)
@@ -30,3 +30,6 @@ index 8ba611e15962..ca4951421e2b 100644
  
  	return hfi_vpu4x_buffer_line_enc(width, height, 0, num_vpp_pipes,
  					 lcu_size, inst->codec);
+-- 
+2.43.0
+

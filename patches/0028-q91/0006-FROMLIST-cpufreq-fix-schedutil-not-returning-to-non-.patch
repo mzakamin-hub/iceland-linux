@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Ananthu C V <ananthu.cv@oss.qualcomm.com>
 Date: Tue, 8 Sep 2026 14:00:29 +0530
-Subject: [PATCH 06/32] FROMLIST: cpufreq: fix schedutil not returning to
- non-boost freq when boost is disabled
+Subject: [PATCH] FROMLIST: cpufreq: fix schedutil not returning to non-boost
+ freq when boost is disabled
 
 Commit 538b0188da46 ("cpufreq: ACPI: Set cpuinfo.max_freq directly if
 max boost is known") introduced a guard for cpuinfo max updates to only
@@ -26,18 +26,18 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  3 files changed, 19 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/cpufreq/cpufreq.c b/drivers/cpufreq/cpufreq.c
-index 54dde8419bdc..06fca7eea3e3 100644
+index 4332cb1140701..cfde4f6ee4f61 100644
 --- a/drivers/cpufreq/cpufreq.c
 +++ b/drivers/cpufreq/cpufreq.c
-@@ -574,6 +574,7 @@ static ssize_t show_local_boost(struct cpufreq_policy *policy, char *buf)
+@@ -581,6 +581,7 @@ static ssize_t show_local_boost(struct cpufreq_policy *policy, char *buf)
  
  static int policy_set_boost(struct cpufreq_policy *policy, bool enable)
  {
 +	unsigned int max_freq;
  	int ret;
  
- 	if (policy->boost_enabled == enable)
-@@ -587,7 +588,18 @@ static int policy_set_boost(struct cpufreq_policy *policy, bool enable)
+ 	lockdep_assert_held_write(&policy->rwsem);
+@@ -596,7 +597,18 @@ static int policy_set_boost(struct cpufreq_policy *policy, bool enable)
  		return ret;
  	}
  
@@ -58,7 +58,7 @@ index 54dde8419bdc..06fca7eea3e3 100644
  		policy->boost_enabled = !policy->boost_enabled;
  		cpufreq_driver->set_boost(policy, policy->boost_enabled);
 diff --git a/drivers/cpufreq/freq_table.c b/drivers/cpufreq/freq_table.c
-index 4984142dc08a..7e183e16162d 100644
+index 4984142dc08a6..7e183e16162d5 100644
 --- a/drivers/cpufreq/freq_table.c
 +++ b/drivers/cpufreq/freq_table.c
 @@ -34,6 +34,7 @@ int cpufreq_frequency_table_cpuinfo(struct cpufreq_policy *policy)
@@ -88,7 +88,7 @@ index 4984142dc08a..7e183e16162d 100644
  	if (min_freq == ~0)
  		return -EINVAL;
 diff --git a/include/linux/cpufreq.h b/include/linux/cpufreq.h
-index f43ac9ae2158..2b34a9ff7aef 100644
+index d76383a434e48..cc92ed07664fa 100644
 --- a/include/linux/cpufreq.h
 +++ b/include/linux/cpufreq.h
 @@ -46,6 +46,7 @@ struct cpufreq_cpuinfo {
@@ -99,3 +99,6 @@ index f43ac9ae2158..2b34a9ff7aef 100644
  
  	/* in 10^(-9) s = nanoseconds */
  	unsigned int		transition_latency;
+-- 
+2.43.0
+

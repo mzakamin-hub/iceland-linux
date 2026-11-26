@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Christopher Griffin <christophergriffin05@gmail.com>
 Date: Wed, 4 Nov 2026 23:17:27 -0600
-Subject: [PATCH 18/27] wifi: ath12k: don't bit-reverse the firmware's PPE
- thresholds
+Subject: [PATCH] wifi: ath12k: don't bit-reverse the firmware's PPE thresholds
 
 The firmware reports its PPE thresholds as WMI defines them: in
 ppet16_ppet8_ru3_ru0[nss], each RU has six bits, PPET16 in bits 2:0 and
@@ -32,10 +31,10 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 1 insertion(+), 2 deletions(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/mac.c b/drivers/net/wireless/ath/ath12k/mac.c
-index aaa073921..41459fb4f 100644
+index 9336d8cc3326a..9930f81ab164f 100644
 --- a/drivers/net/wireless/ath/ath12k/mac.c
 +++ b/drivers/net/wireless/ath/ath12k/mac.c
-@@ -8799,8 +8799,7 @@ static void ath12k_gen_ppe_thresh(struct ath12k_wmi_ppe_threshold_arg *fw_ppet,
+@@ -8801,8 +8801,7 @@ static void ath12k_gen_ppe_thresh(struct ath12k_wmi_ppe_threshold_arg *fw_ppet,
  				continue;
  			val = (fw_ppet->ppet16_ppet8_ru3_ru0[nss] >> (ru * 6)) &
  			       0x3f;

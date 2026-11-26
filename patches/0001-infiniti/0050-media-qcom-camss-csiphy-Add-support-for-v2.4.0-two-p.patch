@@ -20,7 +20,7 @@ Signed-off-by: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
  4 files changed, 71 insertions(+)
 
 diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
-index fca3de214a92..9bd0dc7a7f9e 100644
+index 181d6494a6ebd..913e511b998d4 100644
 --- a/drivers/media/platform/qcom/camss/camss.c
 +++ b/drivers/media/platform/qcom/camss/camss.c
 @@ -38,6 +38,57 @@
@@ -81,7 +81,7 @@ index fca3de214a92..9bd0dc7a7f9e 100644
  static const struct resources_icc icc_res_kaanapali[] = {
  	{
  		.name = "ahb",
-@@ -5593,8 +5644,10 @@ static void camss_remove(struct platform_device *pdev)
+@@ -5589,8 +5640,10 @@ static void camss_remove(struct platform_device *pdev)
  static const struct camss_resources kaanapali_resources = {
  	.version = CAMSS_KAANAPALI,
  	.pd_name = "top",
@@ -93,7 +93,7 @@ index fca3de214a92..9bd0dc7a7f9e 100644
  
  static const struct camss_resources msm8916_resources = {
 diff --git a/drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c b/drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c
-index 8cd331cfb4b3..658a39463104 100644
+index 8cd331cfb4b32..658a39463104b 100644
 --- a/drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c
 +++ b/drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c
 @@ -389,3 +389,19 @@ const struct mipi_csi2phy_soc_cfg mipi_csi2_dphy_4nm_x1e = {
@@ -117,7 +117,7 @@ index 8cd331cfb4b3..658a39463104 100644
 +	.num_genpds = ARRAY_SIZE(x1e_genpds),
 +};
 diff --git a/drivers/phy/qualcomm/phy-qcom-mipi-csi2-core.c b/drivers/phy/qualcomm/phy-qcom-mipi-csi2-core.c
-index c0a4fa20eaf0..aff9e66f0352 100644
+index e04bde03e278c..06502be71e50b 100644
 --- a/drivers/phy/qualcomm/phy-qcom-mipi-csi2-core.c
 +++ b/drivers/phy/qualcomm/phy-qcom-mipi-csi2-core.c
 @@ -444,6 +444,7 @@ static int phy_qcom_mipi_csi2_probe(struct platform_device *pdev)
@@ -129,7 +129,7 @@ index c0a4fa20eaf0..aff9e66f0352 100644
  };
  MODULE_DEVICE_TABLE(of, phy_qcom_mipi_csi2_of_match_table);
 diff --git a/drivers/phy/qualcomm/phy-qcom-mipi-csi2.h b/drivers/phy/qualcomm/phy-qcom-mipi-csi2.h
-index d6366f809e51..2355a1db9b94 100644
+index d6366f809e510..2355a1db9b941 100644
 --- a/drivers/phy/qualcomm/phy-qcom-mipi-csi2.h
 +++ b/drivers/phy/qualcomm/phy-qcom-mipi-csi2.h
 @@ -94,5 +94,6 @@ struct mipi_csi2phy_device {
@@ -139,3 +139,6 @@ index d6366f809e51..2355a1db9b94 100644
 +extern const struct mipi_csi2phy_soc_cfg mipi_csi2_dphy_3nm_kaanapali;
  
  #endif /* __PHY_QCOM_MIPI_CSI2_H__ */
+-- 
+2.43.0
+

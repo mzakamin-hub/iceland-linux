@@ -21,7 +21,7 @@ Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/remoteproc/qcom_q6v5_pas.c b/drivers/remoteproc/qcom_q6v5_pas.c
-index 0f23038138cd..a1ea271051e2 100644
+index fdd2a621b1c4b..6c1fc23406084 100644
 --- a/drivers/remoteproc/qcom_q6v5_pas.c
 +++ b/drivers/remoteproc/qcom_q6v5_pas.c
 @@ -279,9 +279,10 @@ static int qcom_pas_load(struct rproc *rproc, const struct firmware *fw)
@@ -36,3 +36,6 @@ index 0f23038138cd..a1ea271051e2 100644
  			return ret;
  		}
  	}
+-- 
+2.43.0
+

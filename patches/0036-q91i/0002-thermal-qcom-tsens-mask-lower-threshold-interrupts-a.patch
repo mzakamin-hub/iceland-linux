@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: virtudude <virtudude@protonmail.com>
 Date: Tue, 11 Aug 2026 00:00:00 +0000
-Subject: [PATCH 2/5] thermal: qcom: tsens: mask lower threshold interrupts
- across system suspend
+Subject: [PATCH] thermal: qcom: tsens: mask lower threshold interrupts across
+ system suspend
 
 The thermal core suspends all thermal zones at the start of
 dpm_prepare(), before any device prepare callback runs. Suspending
@@ -35,7 +35,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 27 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/thermal/qcom/tsens.c b/drivers/thermal/qcom/tsens.c
-index 4d7013fc7..9699cb80d 100644
+index ff7c573c6a213..8e3bd9d7dfe74 100644
 --- a/drivers/thermal/qcom/tsens.c
 +++ b/drivers/thermal/qcom/tsens.c
 @@ -1127,6 +1127,29 @@ static int tsens_get_temp(struct thermal_zone_device *tz, int *temp)

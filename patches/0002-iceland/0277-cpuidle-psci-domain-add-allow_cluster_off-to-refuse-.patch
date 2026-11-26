@@ -49,7 +49,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 21 insertions(+)
 
 diff --git a/drivers/cpuidle/cpuidle-psci-domain.c b/drivers/cpuidle/cpuidle-psci-domain.c
-index 5722365b943e..da036930934c 100644
+index 5722365b943ea..da036930934c9 100644
 --- a/drivers/cpuidle/cpuidle-psci-domain.c
 +++ b/drivers/cpuidle/cpuidle-psci-domain.c
 @@ -12,12 +12,14 @@
@@ -98,3 +98,6 @@ index 5722365b943e..da036930934c 100644
  	if (!state->data)
  		return 0;
  
+-- 
+2.43.0
+

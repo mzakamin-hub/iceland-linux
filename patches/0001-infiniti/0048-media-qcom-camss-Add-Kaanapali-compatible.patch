@@ -17,7 +17,7 @@ Reviewed-by: Loic Poulain <loic.poulain@oss.qualcomm.com>
  2 files changed, 23 insertions(+)
 
 diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
-index c54185c93a8a..fca3de214a92 100644
+index f8e5cf9f3ff09..181d6494a6ebd 100644
 --- a/drivers/media/platform/qcom/camss/camss.c
 +++ b/drivers/media/platform/qcom/camss/camss.c
 @@ -38,6 +38,20 @@
@@ -41,7 +41,7 @@ index c54185c93a8a..fca3de214a92 100644
  static const struct camss_subdev_resources csiphy_res_8x16[] = {
  	/* CSIPHY0 */
  	{
-@@ -5576,6 +5590,13 @@ static void camss_remove(struct platform_device *pdev)
+@@ -5572,6 +5586,13 @@ static void camss_remove(struct platform_device *pdev)
  	camss_genpd_cleanup(camss);
  }
  
@@ -55,7 +55,7 @@ index c54185c93a8a..fca3de214a92 100644
  static const struct camss_resources msm8916_resources = {
  	.version = CAMSS_8x16,
  	.csiphy_res = csiphy_res_8x16,
-@@ -5810,6 +5831,7 @@ static const struct camss_resources x1e80100_resources = {
+@@ -5806,6 +5827,7 @@ static const struct camss_resources x1e80100_resources = {
  };
  
  static const struct of_device_id camss_dt_match[] = {
@@ -64,7 +64,7 @@ index c54185c93a8a..fca3de214a92 100644
  	{ .compatible = "qcom,msm8939-camss", .data = &msm8939_resources },
  	{ .compatible = "qcom,msm8953-camss", .data = &msm8953_resources },
 diff --git a/drivers/media/platform/qcom/camss/camss.h b/drivers/media/platform/qcom/camss/camss.h
-index 7dc2fd9f03e0..0551211f7948 100644
+index 7dc2fd9f03e0d..0551211f79481 100644
 --- a/drivers/media/platform/qcom/camss/camss.h
 +++ b/drivers/media/platform/qcom/camss/camss.h
 @@ -96,6 +96,7 @@ enum camss_version {
@@ -75,3 +75,6 @@ index 7dc2fd9f03e0..0551211f7948 100644
  	CAMSS_X1E80100,
  };
  
+-- 
+2.43.0
+

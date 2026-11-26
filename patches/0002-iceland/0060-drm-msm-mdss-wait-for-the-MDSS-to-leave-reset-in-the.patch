@@ -27,7 +27,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 13 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/msm_mdss.c b/drivers/gpu/drm/msm/msm_mdss.c
-index ee5a710f7e9a..797868e3ab5c 100644
+index de84761a603ba..223c6c092ecff 100644
 --- a/drivers/gpu/drm/msm/msm_mdss.c
 +++ b/drivers/gpu/drm/msm/msm_mdss.c
 @@ -11,6 +11,7 @@
@@ -64,3 +64,6 @@ index ee5a710f7e9a..797868e3ab5c 100644
  	msm_mdss_setup_ubwc(msm_mdss);
  
  	pm_runtime_put_sync(dev);
+-- 
+2.43.0
+

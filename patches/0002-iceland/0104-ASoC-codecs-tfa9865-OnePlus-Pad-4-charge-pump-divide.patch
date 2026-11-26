@@ -20,7 +20,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 8 insertions(+), 4 deletions(-)
 
 diff --git a/sound/soc/codecs/tfa9865.c b/sound/soc/codecs/tfa9865.c
-index 906dfc2d40e1..e77e69704852 100644
+index 906dfc2d40e12..e77e69704852f 100644
 --- a/sound/soc/codecs/tfa9865.c
 +++ b/sound/soc/codecs/tfa9865.c
 @@ -114,7 +114,8 @@ static const struct tfa9865_reg_data tfa9865_iceland_regs_0__34_36[] = {
@@ -63,3 +63,6 @@ index 906dfc2d40e1..e77e69704852 100644
  	{ .reg = 0x5a, .val = 0x2d8e },
  	{ .reg = 0x74, .val = 0x6120 },
  	{ .reg = 0x08, .val = 0x0042 },
+-- 
+2.43.0
+

@@ -24,7 +24,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 7 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 816ca3b822ef..40492d32edc0 100644
+index 816ca3b822efd..40492d32edc0e 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -538,6 +538,12 @@ vreg_bob2: bob2 {
@@ -48,3 +48,6 @@ index 816ca3b822ef..40492d32edc0 100644
  		};
  
  		vreg_l2b_3p0: ldo2 {
+-- 
+2.43.0
+

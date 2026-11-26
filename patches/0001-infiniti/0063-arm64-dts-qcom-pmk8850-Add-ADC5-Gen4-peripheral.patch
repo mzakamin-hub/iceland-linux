@@ -15,7 +15,7 @@ Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
  1 file changed, 25 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/pmk8850.dtsi b/arch/arm64/boot/dts/qcom/pmk8850.dtsi
-index c7ba72fd48bc..44d1d1957f8a 100644
+index c7ba72fd48bc8..44d1d1957f8a9 100644
 --- a/arch/arm64/boot/dts/qcom/pmk8850.dtsi
 +++ b/arch/arm64/boot/dts/qcom/pmk8850.dtsi
 @@ -7,6 +7,7 @@
@@ -57,3 +57,6 @@ index c7ba72fd48bc..44d1d1957f8a 100644
  		pmk8850_rtc: rtc@6100 {
  			compatible = "qcom,pmk8350-rtc";
  			reg = <0x6100>,
+-- 
+2.43.0
+

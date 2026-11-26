@@ -23,7 +23,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 30 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/thermal/qcom/qcom-spmi-temp-alarm.c b/drivers/thermal/qcom/qcom-spmi-temp-alarm.c
-index 911ebfd0cdeb..16b7c5ee4f56 100644
+index 9fb63fa36fa73..db766cb93db69 100644
 --- a/drivers/thermal/qcom/qcom-spmi-temp-alarm.c
 +++ b/drivers/thermal/qcom/qcom-spmi-temp-alarm.c
 @@ -145,6 +145,8 @@ struct qpnp_tm_chip {
@@ -104,3 +104,6 @@ index 911ebfd0cdeb..16b7c5ee4f56 100644
  	ret = qpnp_tm_lite_set_temp_thresh(chip, chip->ntrips, trip->temperature);
  	chip->ntrips++;
  	mutex_unlock(&chip->lock);
+-- 
+2.43.0
+

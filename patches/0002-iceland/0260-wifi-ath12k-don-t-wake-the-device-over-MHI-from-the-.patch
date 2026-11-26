@@ -40,7 +40,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 9 insertions(+)
 
 diff --git a/drivers/net/wireless/ath/ath12k/wifi7/pci.c b/drivers/net/wireless/ath/ath12k/wifi7/pci.c
-index 893474de488d..2c2ba8184217 100644
+index 893474de488db..2c2ba81842177 100644
 --- a/drivers/net/wireless/ath/ath12k/wifi7/pci.c
 +++ b/drivers/net/wireless/ath/ath12k/wifi7/pci.c
 @@ -4,6 +4,7 @@
@@ -66,3 +66,6 @@ index 893474de488d..2c2ba8184217 100644
  	return mhi_device_get_sync(ab_pci->mhi_ctrl->mhi_dev);
  }
  
+-- 
+2.43.0
+

@@ -27,7 +27,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 5 insertions(+), 11 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_core_perf.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_core_perf.c
-index 9fa55904dba1..4f5c70229f63 100644
+index 9fa55904dba1a..4f5c70229f63d 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_core_perf.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_core_perf.c
 @@ -80,15 +80,14 @@ static u64 _dpu_core_perf_calc_bw(const struct dpu_perf_cfg *perf_cfg,
@@ -73,3 +73,6 @@ index 9fa55904dba1..4f5c70229f63 100644
  	DRM_DEBUG_ATOMIC(
  		"crtc=%d clk_rate=%llu core_ib=%u core_ab=%u\n",
  			crtc->base.id, perf->core_clk_rate,
+-- 
+2.43.0
+

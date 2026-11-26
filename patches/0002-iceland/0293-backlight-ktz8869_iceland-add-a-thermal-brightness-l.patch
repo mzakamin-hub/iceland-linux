@@ -33,7 +33,7 @@ Assisted-by: LLM
  1 file changed, 91 insertions(+)
 
 diff --git a/drivers/video/backlight/ktz8869_iceland.c b/drivers/video/backlight/ktz8869_iceland.c
-index d1196bd0300a..9d6dde311e58 100644
+index d1196bd0300a2..9d6dde311e587 100644
 --- a/drivers/video/backlight/ktz8869_iceland.c
 +++ b/drivers/video/backlight/ktz8869_iceland.c
 @@ -12,6 +12,7 @@
@@ -185,3 +185,6 @@ index d1196bd0300a..9d6dde311e58 100644
  end:
  	return 0;
  }
+-- 
+2.43.0
+

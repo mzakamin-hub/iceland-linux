@@ -19,7 +19,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  2 files changed, 8 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
-index acd170f8f27d..6aa58f25217d 100644
+index acd170f8f27d7..6aa58f25217dc 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
 @@ -591,6 +591,13 @@ bool dpu_hw_intf_boot_autorefresh(void __iomem *addr, bool stop)
@@ -37,7 +37,7 @@ index acd170f8f27d..6aa58f25217d 100644
  		return false;
  
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
-index 9be9dd1c2cde..1b64f7406157 100644
+index 929e062c008ea..96b16ee14e4dc 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
 @@ -1520,7 +1520,7 @@ static const struct of_device_id dpu_dt_match[] = {
@@ -49,3 +49,6 @@ index 9be9dd1c2cde..1b64f7406157 100644
  bool dpu_boot_splash(struct device *mdss, bool stop)
  {
  	const struct of_device_id *match = NULL;
+-- 
+2.43.0
+

@@ -67,7 +67,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 16 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/dp/dp_ctrl.c b/drivers/gpu/drm/msm/dp/dp_ctrl.c
-index a3510ce4b0ba..18b83a8ca190 100644
+index 51be575018b9a..059393b3d20b4 100644
 --- a/drivers/gpu/drm/msm/dp/dp_ctrl.c
 +++ b/drivers/gpu/drm/msm/dp/dp_ctrl.c
 @@ -2442,12 +2442,22 @@ int msm_dp_ctrl_on_link(struct msm_dp_ctrl *msm_dp_ctrl,
@@ -112,3 +112,6 @@ index a3510ce4b0ba..18b83a8ca190 100644
  			if (!drm_dp_clock_recovery_ok(link_status,
  					ctrl->link->link_params.num_lanes))
  				rc = msm_dp_ctrl_link_rate_down_shift(ctrl);
+-- 
+2.43.0
+

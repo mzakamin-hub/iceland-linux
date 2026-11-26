@@ -48,7 +48,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 237 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 5410a0e38355..c0231bc866cd 100644
+index 7da5b1e6a6551..d64808ba4a49c 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -398,6 +398,11 @@ struct qcom_battmgr {
@@ -387,3 +387,6 @@ index 5410a0e38355..c0231bc866cd 100644
  	ret = qcom_battmgr_charge_control_thresholds_init(battmgr);
  	if (ret < 0)
  		return dev_err_probe(dev, ret,
+-- 
+2.43.0
+

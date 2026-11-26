@@ -30,7 +30,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 6 insertions(+), 4 deletions(-)
 
 diff --git a/net/qrtr/ns.c b/net/qrtr/ns.c
-index 33a9c4449d6f..09b25107f760 100644
+index 33a9c4449d6f8..09b25107f760e 100644
 --- a/net/qrtr/ns.c
 +++ b/net/qrtr/ns.c
 @@ -239,7 +239,7 @@ static int announce_servers(struct sockaddr_qrtr *sq)
@@ -58,3 +58,6 @@ index 33a9c4449d6f..09b25107f760 100644
  	}
  
  	/* Notify any potential lookups about the new server */
+-- 
+2.43.0
+

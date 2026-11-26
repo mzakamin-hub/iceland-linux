@@ -36,7 +36,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/misc/fastrpc.c b/drivers/misc/fastrpc.c
-index 3b8e69464877..49aa1ce14b4c 100644
+index a412da4bd4f2d..fa7d57dc3b24e 100644
 --- a/drivers/misc/fastrpc.c
 +++ b/drivers/misc/fastrpc.c
 @@ -2667,6 +2667,7 @@ static void fastrpc_notify_users(struct fastrpc_user *user)
@@ -47,3 +47,6 @@ index 3b8e69464877..49aa1ce14b4c 100644
  		complete(&ctx->work);
  	}
  	spin_unlock(&user->lock);
+-- 
+2.43.0
+

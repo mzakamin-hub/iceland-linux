@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Atul Akella <atul.akella@gmail.com>
 Date: Sat, 7 Nov 2026 00:13:10 +0530
-Subject: [PATCH 29/38] remoteproc: qcom: Fix bounds check in
- q6v5_wcss_da_to_va()
+Subject: [PATCH] remoteproc: qcom: Fix bounds check in q6v5_wcss_da_to_va()
 
 offset is calculated as da - wcss->mem_reloc and stored in a
 32 bit signed int, while da and wcss->mem_reloc are both u64.
@@ -36,7 +35,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/remoteproc/qcom_q6v5_wcss.c b/drivers/remoteproc/qcom_q6v5_wcss.c
-index b391724cfd08..e67dc3ff8a07 100644
+index b391724cfd08e..e67dc3ff8a071 100644
 --- a/drivers/remoteproc/qcom_q6v5_wcss.c
 +++ b/drivers/remoteproc/qcom_q6v5_wcss.c
 @@ -740,10 +740,12 @@ static int q6v5_wcss_stop(struct rproc *rproc)

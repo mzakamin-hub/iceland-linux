@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 7 Nov 2026 06:35:43 +0200
-Subject: [PATCH 8/8] usb: dwc3: qcom: optionally keep a smaller usb-ddr vote
+Subject: [PATCH] usb: dwc3: qcom: optionally keep a smaller usb-ddr vote
  across runtime suspend
 
 On Kaanapali, keep_icc_runtime keeps the full usb-ddr vote (1000 / 2500
@@ -24,7 +24,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 65 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/usb/dwc3/dwc3-qcom.c b/drivers/usb/dwc3/dwc3-qcom.c
-index 6a2d1a616..79a70fbf2 100644
+index 1d0bb7b254e35..1d5a0b587a8ea 100644
 --- a/drivers/usb/dwc3/dwc3-qcom.c
 +++ b/drivers/usb/dwc3/dwc3-qcom.c
 @@ -80,6 +80,22 @@ module_param(keep_icc_runtime, bool, 0644);

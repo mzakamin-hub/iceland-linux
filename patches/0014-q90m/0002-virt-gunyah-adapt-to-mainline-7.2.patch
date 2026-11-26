@@ -38,7 +38,7 @@ device appear, and the Qualcomm platform hooks register.
 
 diff --git a/Documentation/virt/gunyah/port_adaptations.md b/Documentation/virt/gunyah/port_adaptations.md
 new file mode 100644
-index 000000000000..da823b1a5432
+index 0000000000000..da823b1a54322
 --- /dev/null
 +++ b/Documentation/virt/gunyah/port_adaptations.md
 @@ -0,0 +1,19 @@
@@ -62,7 +62,7 @@ index 000000000000..da823b1a5432
 +`RM rejected message 00000005 (-1 UNIMPLEMENTED)` at load is the optional RM
 +log query and is harmless.
 diff --git a/drivers/virt/gunyah/gunyah_vcpu.c b/drivers/virt/gunyah/gunyah_vcpu.c
-index 83977ebe1720..0dd3569a5645 100644
+index 83977ebe1720a..0dd3569a5645d 100644
 --- a/drivers/virt/gunyah/gunyah_vcpu.c
 +++ b/drivers/virt/gunyah/gunyah_vcpu.c
 @@ -17,7 +17,7 @@
@@ -76,7 +76,7 @@ index 83977ebe1720..0dd3569a5645 100644
  #include "trace_vcpu.h"
 diff --git a/drivers/virt/gunyah/gunyah_vendor_hooks.h b/drivers/virt/gunyah/gunyah_vendor_hooks.h
 new file mode 100755
-index 000000000000..2a70aff0f57f
+index 0000000000000..2a70aff0f57f8
 --- /dev/null
 +++ b/drivers/virt/gunyah/gunyah_vendor_hooks.h
 @@ -0,0 +1,48 @@
@@ -129,7 +129,7 @@ index 000000000000..2a70aff0f57f
 +
 +#endif /* _GUNYAH_VENDOR_HOOKS_H */
 diff --git a/drivers/virt/gunyah/rsc_mgr.c b/drivers/virt/gunyah/rsc_mgr.c
-index 797d32cc972f..b3ec2c9685e8 100644
+index 797d32cc972f9..b3ec2c9685e8f 100644
 --- a/drivers/virt/gunyah/rsc_mgr.c
 +++ b/drivers/virt/gunyah/rsc_mgr.c
 @@ -980,7 +980,7 @@ static int __init gunyah_rm_init(void)
@@ -142,7 +142,7 @@ index 797d32cc972f..b3ec2c9685e8 100644
  		pr_err("Failed to find interrupt parent domain of resource manager\n");
  		return -ENODEV;
 diff --git a/drivers/virt/gunyah/rsc_mgr.h b/drivers/virt/gunyah/rsc_mgr.h
-index 15153e49734d..cf3ca37f339a 100644
+index 15153e49734d1..cf3ca37f339a1 100644
 --- a/drivers/virt/gunyah/rsc_mgr.h
 +++ b/drivers/virt/gunyah/rsc_mgr.h
 @@ -8,7 +8,12 @@
@@ -159,7 +159,7 @@ index 15153e49734d..cf3ca37f339a 100644
  #define GUNYAH_VMID_INVAL U16_MAX
  #define GUNYAH_MEM_HANDLE_INVAL U32_MAX
 diff --git a/drivers/virt/gunyah/vm_mgr.c b/drivers/virt/gunyah/vm_mgr.c
-index 8dab814c36f3..c964642d0dd0 100644
+index 8dab814c36f39..c964642d0dd0a 100644
 --- a/drivers/virt/gunyah/vm_mgr.c
 +++ b/drivers/virt/gunyah/vm_mgr.c
 @@ -13,7 +13,7 @@
@@ -172,7 +172,7 @@ index 8dab814c36f3..c964642d0dd0 100644
  #include "rsc_mgr.h"
  #include "vm_mgr.h"
 diff --git a/drivers/virt/gunyah/vm_mgr.h b/drivers/virt/gunyah/vm_mgr.h
-index a1133d04b626..84f0e60b0ccc 100644
+index a1133d04b626a..84f0e60b0ccc7 100644
 --- a/drivers/virt/gunyah/vm_mgr.h
 +++ b/drivers/virt/gunyah/vm_mgr.h
 @@ -182,6 +182,31 @@ static bool folio_mmapped(struct folio *folio)
@@ -233,3 +233,6 @@ index a1133d04b626..84f0e60b0ccc 100644
  }
  
  int gunyah_vm_parcel_to_paged(struct gunyah_vm *ghvm,
+-- 
+2.43.0
+

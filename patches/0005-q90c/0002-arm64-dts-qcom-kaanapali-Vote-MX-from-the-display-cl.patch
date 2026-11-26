@@ -28,7 +28,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 68a0f953efb7..f39f3dac2a08 100644
+index 68a0f953efb7e..f39f3dac2a081 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -4967,8 +4967,10 @@ dispcc: clock-controller@9ba2000 {
@@ -44,3 +44,6 @@ index 68a0f953efb7..f39f3dac2a08 100644
  
  			#clock-cells = <1>;
  			#power-domain-cells = <1>;
+-- 
+2.43.0
+

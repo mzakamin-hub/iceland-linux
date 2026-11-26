@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Thomas Fourier <fourier.thomas@gmail.com>
 Date: Wed, 28 Oct 2026 16:33:52 +0100
-Subject: [PATCH 09/32] i2c: qcom-geni: fix double free of the DMA bounce
- buffer
+Subject: [PATCH] i2c: qcom-geni: fix double free of the DMA bounce buffer
 
 geni_i2c_{rx,tx}_msg_cleanup() release gi2c->dma_buf through
 i2c_put_dma_safe_msg_buf(), which kfree()s the bounce buffer when the
@@ -25,7 +24,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 2 insertions(+)
 
 diff --git a/drivers/i2c/busses/i2c-qcom-geni.c b/drivers/i2c/busses/i2c-qcom-geni.c
-index 50f4fc133085..f55e878ec932 100644
+index ef48ab3e8b940..762505fc8ec7f 100644
 --- a/drivers/i2c/busses/i2c-qcom-geni.c
 +++ b/drivers/i2c/busses/i2c-qcom-geni.c
 @@ -505,6 +505,7 @@ static void geni_i2c_rx_msg_cleanup(struct geni_i2c_dev *gi2c,
@@ -44,3 +43,6 @@ index 50f4fc133085..f55e878ec932 100644
  	}
  }
  
+-- 
+2.43.0
+

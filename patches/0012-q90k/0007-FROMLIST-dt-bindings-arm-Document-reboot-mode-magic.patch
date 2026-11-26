@@ -16,7 +16,7 @@ Link: https://lore.kernel.org/r/20260514-arm-psci-system_reset2-vendor-reboots-v
  1 file changed, 42 insertions(+)
 
 diff --git a/Documentation/devicetree/bindings/arm/psci.yaml b/Documentation/devicetree/bindings/arm/psci.yaml
-index 0d04389c81fa..ab754507f77f 100644
+index 0d04389c81faa..ab754507f77f0 100644
 --- a/Documentation/devicetree/bindings/arm/psci.yaml
 +++ b/Documentation/devicetree/bindings/arm/psci.yaml
 @@ -98,6 +98,26 @@ properties:
@@ -80,3 +80,6 @@ index 0d04389c81fa..ab754507f77f 100644
 +      };
 +    };
  ...
+-- 
+2.43.0
+

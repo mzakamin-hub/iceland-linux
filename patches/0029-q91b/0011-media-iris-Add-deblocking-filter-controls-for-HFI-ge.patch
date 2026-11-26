@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Xilin Wu <sophon@radxa.com>
 Date: Thu, 29 Oct 2026 11:58:08 +0800
-Subject: [PATCH 11/24] media: iris: Add deblocking filter controls for HFI
- gen2
+Subject: [PATCH] media: iris: Add deblocking filter controls for HFI gen2
 
 HFI gen2 encoders do not expose deblocking filter controls, preventing
 applications from configuring the filter mode and offsets.
@@ -20,7 +19,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  5 files changed, 216 insertions(+)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_ctrls.c b/drivers/media/platform/qcom/iris/iris_ctrls.c
-index 800a6b3e86ab..46d47c3a6531 100644
+index 800a6b3e86abf..46d47c3a65315 100644
 --- a/drivers/media/platform/qcom/iris/iris_ctrls.c
 +++ b/drivers/media/platform/qcom/iris/iris_ctrls.c
 @@ -66,6 +66,18 @@ static enum platform_inst_fw_cap_type iris_get_cap_id(u32 id)
@@ -130,7 +129,7 @@ index 800a6b3e86ab..46d47c3a6531 100644
  {
  	const struct iris_hfi_session_ops *hfi_ops = inst->hfi_session_ops;
 diff --git a/drivers/media/platform/qcom/iris/iris_ctrls.h b/drivers/media/platform/qcom/iris/iris_ctrls.h
-index 055d7bbdf133..7c231a8bddce 100644
+index 055d7bbdf133c..7c231a8bddce4 100644
 --- a/drivers/media/platform/qcom/iris/iris_ctrls.h
 +++ b/drivers/media/platform/qcom/iris/iris_ctrls.h
 @@ -30,6 +30,7 @@ int iris_set_bitrate_mode_gen1(struct iris_inst *inst, enum platform_inst_fw_cap
@@ -142,7 +141,7 @@ index 055d7bbdf133..7c231a8bddce 100644
  int iris_set_max_qp(struct iris_inst *inst, enum platform_inst_fw_cap_type cap_id);
  int iris_set_frame_qp(struct iris_inst *inst, enum platform_inst_fw_cap_type cap_id);
 diff --git a/drivers/media/platform/qcom/iris/iris_hfi_gen2.c b/drivers/media/platform/qcom/iris/iris_hfi_gen2.c
-index 945c7ad72ed9..9a3245bd1a12 100644
+index 945c7ad72ed99..9a3245bd1a121 100644
 --- a/drivers/media/platform/qcom/iris/iris_hfi_gen2.c
 +++ b/drivers/media/platform/qcom/iris/iris_hfi_gen2.c
 @@ -357,6 +357,64 @@ static const struct platform_inst_fw_cap inst_fw_cap_milos_enc[] = {
@@ -276,7 +275,7 @@ index 945c7ad72ed9..9a3245bd1a12 100644
  		.cap_id = MIN_FRAME_QP_H264,
  		.min = MIN_QP_8BIT,
 diff --git a/drivers/media/platform/qcom/iris/iris_hfi_gen2_defines.h b/drivers/media/platform/qcom/iris/iris_hfi_gen2_defines.h
-index e89ed4075526..04e5429328eb 100644
+index e89ed4075526b..04e5429328eb0 100644
 --- a/drivers/media/platform/qcom/iris/iris_hfi_gen2_defines.h
 +++ b/drivers/media/platform/qcom/iris/iris_hfi_gen2_defines.h
 @@ -57,6 +57,14 @@
@@ -295,7 +294,7 @@ index e89ed4075526..04e5429328eb 100644
  	HFI_RC_VBR_CFR		= 0x00000000,
  	HFI_RC_CBR_CFR		= 0x00000001,
 diff --git a/drivers/media/platform/qcom/iris/iris_platform_common.h b/drivers/media/platform/qcom/iris/iris_platform_common.h
-index 03120cbafbbf..01c8c87af7d6 100644
+index 03120cbafbbfd..01c8c87af7d60 100644
 --- a/drivers/media/platform/qcom/iris/iris_platform_common.h
 +++ b/drivers/media/platform/qcom/iris/iris_platform_common.h
 @@ -159,6 +159,12 @@ enum platform_inst_fw_cap_type {
@@ -311,3 +310,6 @@ index 03120cbafbbf..01c8c87af7d6 100644
  	MIN_FRAME_QP_H264,
  	MIN_FRAME_QP_HEVC,
  	MAX_FRAME_QP_H264,
+-- 
+2.43.0
+

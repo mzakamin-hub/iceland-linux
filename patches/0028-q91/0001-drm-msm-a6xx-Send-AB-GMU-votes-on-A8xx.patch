@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
 Date: Fri, 30 Oct 2026 10:41:40 +0100
-Subject: [PATCH 01/32] drm/msm/a6xx: Send AB GMU votes on A8xx
+Subject: [PATCH] drm/msm/a6xx: Send AB GMU votes on A8xx
 
 This matches the kgsl behavior.
 
@@ -12,7 +12,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
-index 209cf95e433d..d4790f200e49 100644
+index 209cf95e433d2..d4790f200e491 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 @@ -204,7 +204,7 @@ void a6xx_gmu_set_freq(struct msm_gpu *gpu, struct dev_pm_opp *opp,
@@ -24,3 +24,6 @@ index 209cf95e433d..d4790f200e49 100644
  			u64 tmp;
  
  			/* For now, vote for 25% of the bandwidth */
+-- 
+2.43.0
+

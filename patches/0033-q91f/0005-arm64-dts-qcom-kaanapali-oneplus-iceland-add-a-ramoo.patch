@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 7 Nov 2026 11:29:45 +0200
-Subject: [PATCH 5/9] arm64: dts: qcom: kaanapali-oneplus-iceland: add a
- ramoops region
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: add a ramoops
+ region
 
 A silent freeze ends in a watchdog reset and leaves nothing behind: the
 kernel has PSTORE_RAM, PSTORE_CONSOLE and PSTORE_PMSG, but no region to
@@ -27,8 +27,6 @@ The idea of carrying stock's pstore over to the mainline device tree
 follows the lockup diagnostics of denialwm's linux-perpetua (Doctor
 Logix), which keeps CSD_LOCK_WAIT_DEBUG on for the Pad 4.
 
-Suggested-by: Doctor Logix <doctor.logix@gmail.com>
-Based-on: denialwm/linux-perpetua lockup diagnostics (CSD_LOCK_WAIT_DEBUG + pstore; idea only)
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 Signed-off-by: mzak <mzak.amin@gmail.com>
 ---
@@ -36,7 +34,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 20 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index e66681bb8..586fee50b 100644
+index e66681bb8ef0c..586fee50b6969 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -338,6 +338,26 @@ adsp_rpc_remote_heap_mem: adsp-rpc-remote-heap {

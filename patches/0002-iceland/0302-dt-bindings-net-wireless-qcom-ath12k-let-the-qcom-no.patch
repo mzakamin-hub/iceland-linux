@@ -16,7 +16,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/Documentation/devicetree/bindings/net/wireless/qcom,ath12k.yaml b/Documentation/devicetree/bindings/net/wireless/qcom,ath12k.yaml
-index 37c431772c9c..a15af133f804 100644
+index 37c431772c9ce..a15af133f804c 100644
 --- a/Documentation/devicetree/bindings/net/wireless/qcom,ath12k.yaml
 +++ b/Documentation/devicetree/bindings/net/wireless/qcom,ath12k.yaml
 @@ -32,7 +32,7 @@ properties:
@@ -28,3 +28,6 @@ index 37c431772c9c..a15af133f804 100644
        second radio has no 5 GHz path. The firmware must be told not to use it.
  
    vddaon-supply:
+-- 
+2.43.0
+

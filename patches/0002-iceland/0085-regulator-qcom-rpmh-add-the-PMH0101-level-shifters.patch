@@ -15,7 +15,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 13 insertions(+)
 
 diff --git a/drivers/regulator/qcom-rpmh-regulator.c b/drivers/regulator/qcom-rpmh-regulator.c
-index 42bd7f1a6293..8a5be8287f10 100644
+index 759b380ded63b..8b0c0664ca94d 100644
 --- a/drivers/regulator/qcom-rpmh-regulator.c
 +++ b/drivers/regulator/qcom-rpmh-regulator.c
 @@ -39,6 +39,7 @@ enum rpmh_regulator_type {
@@ -66,3 +66,6 @@ index 42bd7f1a6293..8a5be8287f10 100644
  	{}
  };
  
+-- 
+2.43.0
+

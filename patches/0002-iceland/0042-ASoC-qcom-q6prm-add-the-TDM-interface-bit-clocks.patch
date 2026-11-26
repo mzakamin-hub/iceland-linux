@@ -16,7 +16,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  2 files changed, 21 insertions(+)
 
 diff --git a/sound/soc/qcom/qdsp6/q6prm-clocks.c b/sound/soc/qcom/qdsp6/q6prm-clocks.c
-index b4f9abbe02cb..bdf47fe14852 100644
+index b4f9abbe02cb0..bdf47fe148526 100644
 --- a/sound/soc/qcom/qdsp6/q6prm-clocks.c
 +++ b/sound/soc/qcom/qdsp6/q6prm-clocks.c
 @@ -92,6 +92,16 @@ static const struct q6dsp_clk_init q6prm_clks[] = {
@@ -37,7 +37,7 @@ index b4f9abbe02cb..bdf47fe14852 100644
  		       "LPASS_HW_MACRO"),
  	Q6DSP_VOTE_CLK(LPASS_HW_DCODEC_VOTE, Q6PRM_HW_CORE_ID_DCODEC,
 diff --git a/sound/soc/qcom/qdsp6/q6prm.h b/sound/soc/qcom/qdsp6/q6prm.h
-index cf619ef6561a..4aae7bd1af18 100644
+index cf619ef6561a1..4aae7bd1af184 100644
 --- a/sound/soc/qcom/qdsp6/q6prm.h
 +++ b/sound/soc/qcom/qdsp6/q6prm.h
 @@ -10,6 +10,17 @@
@@ -58,3 +58,6 @@ index cf619ef6561a..4aae7bd1af18 100644
  /* Clock ID for Secondary I2S IBIT */
  #define Q6PRM_LPASS_CLK_ID_SEC_MI2S_IBIT                          0x102
  /* Clock ID for Secondary I2S EBIT */
+-- 
+2.43.0
+

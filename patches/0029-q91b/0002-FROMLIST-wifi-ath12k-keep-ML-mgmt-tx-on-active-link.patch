@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Hangtian Zhu <hangtian.zhu@oss.qualcomm.com>
 Date: Fri, 21 Aug 2026 17:22:26 +0800
-Subject: [PATCH 02/24] FROMLIST: wifi: ath12k: keep ML mgmt tx on active link
+Subject: [PATCH] FROMLIST: wifi: ath12k: keep ML mgmt tx on active link
 
 Currently ath12k_mac_get_tx_link() may select an inactive link for ML
 management frame transmission. This happens when mac80211 passes
@@ -34,10 +34,10 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 28 insertions(+)
 
 diff --git a/drivers/net/wireless/ath/ath12k/mac.c b/drivers/net/wireless/ath/ath12k/mac.c
-index f5937837d4f1..484bc6d2dbd8 100644
+index 2d8f8618bb510..5e010e4409de6 100644
 --- a/drivers/net/wireless/ath/ath12k/mac.c
 +++ b/drivers/net/wireless/ath/ath12k/mac.c
-@@ -9727,6 +9727,7 @@ u8 ath12k_mac_get_tx_link(struct ieee80211_sta *sta, struct ieee80211_vif *vif,
+@@ -9740,6 +9740,7 @@ u8 ath12k_mac_get_tx_link(struct ieee80211_sta *sta, struct ieee80211_vif *vif,
  	struct ieee80211_link_sta *link_sta;
  	struct ieee80211_bss_conf *bss_conf;
  	struct ath12k_sta *ahsta;
@@ -45,7 +45,7 @@ index f5937837d4f1..484bc6d2dbd8 100644
  
  	/* Use the link id passed or the default vif link */
  	if (!sta) {
-@@ -9772,6 +9773,33 @@ u8 ath12k_mac_get_tx_link(struct ieee80211_sta *sta, struct ieee80211_vif *vif,
+@@ -9785,6 +9786,33 @@ u8 ath12k_mac_get_tx_link(struct ieee80211_sta *sta, struct ieee80211_vif *vif,
  	if (!ieee80211_is_mgmt(hdr->frame_control))
  		return link;
  
@@ -79,3 +79,6 @@ index f5937837d4f1..484bc6d2dbd8 100644
  	/* Perform address conversion for ML STA Tx */
  	bss_conf = rcu_dereference(vif->link_conf[link]);
  	link_sta = rcu_dereference(sta->link[link]);
+-- 
+2.43.0
+

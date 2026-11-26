@@ -21,7 +21,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  3 files changed, 6 insertions(+), 2 deletions(-)
 
 diff --git a/Documentation/devicetree/bindings/soc/qcom/qcom,pmic-glink.yaml b/Documentation/devicetree/bindings/soc/qcom/qcom,pmic-glink.yaml
-index f905df373721..5c46a74c0a60 100644
+index f905df373721f..5c46a74c0a605 100644
 --- a/Documentation/devicetree/bindings/soc/qcom/qcom,pmic-glink.yaml
 +++ b/Documentation/devicetree/bindings/soc/qcom/qcom,pmic-glink.yaml
 @@ -40,7 +40,9 @@ properties:
@@ -36,7 +36,7 @@ index f905df373721..5c46a74c0a60 100644
            - const: qcom,pmic-glink
        - items:
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 1ae707d30164..065d384b837c 100644
+index 1ae707d301649..065d384b837c9 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -114,7 +114,8 @@ key-volume-down {
@@ -50,7 +50,7 @@ index 1ae707d30164..065d384b837c 100644
  		#size-cells = <0>;
  		orientation-gpios = <&tlmm 60 GPIO_ACTIVE_HIGH>;
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 277c94d8d545..65ed57c0c5b8 100644
+index 473e576a30a33..4d16244d0ccf9 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -2002,6 +2002,7 @@ static const struct of_device_id qcom_battmgr_of_variants[] = {
@@ -61,3 +61,6 @@ index 277c94d8d545..65ed57c0c5b8 100644
  	{ .compatible = "oneplus,infiniti-pmic-glink", .data = (void *)QCOM_BATTMGR_OPLUS },
  	/* Unmatched devices falls back to QCOM_BATTMGR_SM8350 */
  	{}
+-- 
+2.43.0
+

@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Christian Schmidbauer <opensource@grische.xyz>
 Date: Wed, 4 Nov 2026 15:57:39 +0100
-Subject: [PATCH 11/30] thermal/drivers/qcom/tsens: Drop __init from
- init_common()
+Subject: [PATCH] thermal/drivers/qcom/tsens: Drop __init from init_common()
 
 Several tsens_ops instances store init_common() as their ->init
 callback, which tsens_probe() calls through priv->ops->init().
@@ -47,7 +46,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/thermal/qcom/tsens.c b/drivers/thermal/qcom/tsens.c
-index 9699cb80d..cc62c0eeb 100644
+index 8e3bd9d7dfe74..b7e89708b89c8 100644
 --- a/drivers/thermal/qcom/tsens.c
 +++ b/drivers/thermal/qcom/tsens.c
 @@ -929,7 +929,7 @@ static const struct regmap_config tsens_srot_config = {

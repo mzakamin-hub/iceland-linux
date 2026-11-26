@@ -25,7 +25,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  3 files changed, 22 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a8xx_gpu_state.c b/drivers/gpu/drm/msm/adreno/a8xx_gpu_state.c
-index e4eb2f335a89..22b0d0a4ee1e 100644
+index e4eb2f335a890..22b0d0a4ee1ee 100644
 --- a/drivers/gpu/drm/msm/adreno/a8xx_gpu_state.c
 +++ b/drivers/gpu/drm/msm/adreno/a8xx_gpu_state.c
 @@ -1062,13 +1062,26 @@ struct msm_gpu_state *a8xx_gpu_state_get(struct msm_gpu *gpu)
@@ -59,7 +59,7 @@ index e4eb2f335a89..22b0d0a4ee1e 100644
  	if (!state)
  		return ERR_PTR(-ENOMEM);
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_device.c b/drivers/gpu/drm/msm/adreno/adreno_device.c
-index 4699f2a93a2c..ff1b65652204 100644
+index 4699f2a93a2c2..ff1b65652204c 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_device.c
 +++ b/drivers/gpu/drm/msm/adreno/adreno_device.c
 @@ -28,6 +28,11 @@ bool disable_acd;
@@ -75,7 +75,7 @@ index 4699f2a93a2c..ff1b65652204 100644
  MODULE_PARM_DESC(enable_clx, "Enable the GPU current limiter (CLX) on GPUs with a CLX table (0=off (default), 1=on)");
  module_param(enable_clx, bool, 0400);
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_gpu.h b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
-index 05beb80e4ed0..d3bcdf180d4c 100644
+index 05beb80e4ed05..d3bcdf180d4c4 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_gpu.h
 +++ b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
 @@ -21,6 +21,7 @@
@@ -86,3 +86,6 @@ index 05beb80e4ed0..d3bcdf180d4c 100644
  
  enum {
  	ADRENO_FW_PM4 = 0,
+-- 
+2.43.0
+

@@ -34,7 +34,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 15 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
-index 0f51c8e02bd3..cdb33b9a371a 100644
+index 0f51c8e02bd31..cdb33b9a371a9 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 @@ -2218,6 +2218,21 @@ void dpu_encoder_frame_done_callback(
@@ -59,3 +59,6 @@ index 0f51c8e02bd3..cdb33b9a371a 100644
  			/**
  			 * suppress frame_done without waiter,
  			 * likely autorefresh
+-- 
+2.43.0
+

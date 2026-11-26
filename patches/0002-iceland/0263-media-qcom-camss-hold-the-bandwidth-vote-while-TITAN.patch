@@ -44,10 +44,10 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  2 files changed, 52 insertions(+), 13 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
-index 447ef905b7b3..c0d6b045936e 100644
+index c0ccf037f4a0b..aa05dd7db1e4e 100644
 --- a/drivers/media/platform/qcom/camss/camss.c
 +++ b/drivers/media/platform/qcom/camss/camss.c
-@@ -5558,6 +5558,44 @@ static const struct media_device_ops camss_media_ops = {
+@@ -5556,6 +5556,44 @@ static const struct media_device_ops camss_media_ops = {
  	.link_notify = v4l2_pipeline_link_notify,
  };
  
@@ -92,7 +92,7 @@ index 447ef905b7b3..c0d6b045936e 100644
  static int camss_configure_pd(struct camss *camss)
  {
  	const struct camss_resources *res = camss->res;
-@@ -5629,6 +5667,10 @@ static int camss_configure_pd(struct camss *camss)
+@@ -5627,6 +5665,10 @@ static int camss_configure_pd(struct camss *camss)
  		goto fail_pm;
  	}
  
@@ -103,7 +103,7 @@ index 447ef905b7b3..c0d6b045936e 100644
  	return 0;
  
  fail_pm:
-@@ -5669,6 +5711,9 @@ static void camss_genpd_cleanup(struct camss *camss)
+@@ -5667,6 +5709,9 @@ static void camss_genpd_cleanup(struct camss *camss)
  
  	camss_genpd_subdevice_cleanup(camss);
  
@@ -113,7 +113,7 @@ index 447ef905b7b3..c0d6b045936e 100644
  	if (camss->genpd_link)
  		device_link_del(camss->genpd_link);
  
-@@ -6155,11 +6200,10 @@ MODULE_DEVICE_TABLE(of, camss_dt_match);
+@@ -6151,11 +6196,10 @@ MODULE_DEVICE_TABLE(of, camss_dt_match);
  static int __maybe_unused camss_runtime_suspend(struct device *dev)
  {
  	struct camss *camss = dev_get_drvdata(dev);
@@ -127,7 +127,7 @@ index 447ef905b7b3..c0d6b045936e 100644
  		if (ret)
  			return ret;
  	}
-@@ -6174,8 +6218,6 @@ static int __maybe_unused camss_runtime_suspend(struct device *dev)
+@@ -6170,8 +6214,6 @@ static int __maybe_unused camss_runtime_suspend(struct device *dev)
  static int __maybe_unused camss_runtime_resume(struct device *dev)
  {
  	struct camss *camss = dev_get_drvdata(dev);
@@ -136,7 +136,7 @@ index 447ef905b7b3..c0d6b045936e 100644
  	int ret;
  
  #if IS_ENABLED(CONFIG_PM_CLK)
-@@ -6184,15 +6226,10 @@ static int __maybe_unused camss_runtime_resume(struct device *dev)
+@@ -6180,15 +6222,10 @@ static int __maybe_unused camss_runtime_resume(struct device *dev)
  		return ret;
  #endif
  
@@ -156,7 +156,7 @@ index 447ef905b7b3..c0d6b045936e 100644
  
  static const struct dev_pm_ops camss_pm_ops = {
 diff --git a/drivers/media/platform/qcom/camss/camss.h b/drivers/media/platform/qcom/camss/camss.h
-index 4997ca998462..078350701797 100644
+index 4997ca9984628..0783507017970 100644
 --- a/drivers/media/platform/qcom/camss/camss.h
 +++ b/drivers/media/platform/qcom/camss/camss.h
 @@ -139,6 +139,8 @@ struct camss {
@@ -168,3 +168,6 @@ index 4997ca998462..078350701797 100644
  	struct icc_path *icc_path[ICC_SM8250_COUNT];
  	const struct camss_resources *res;
  	bool legacy_phy;
+-- 
+2.43.0
+

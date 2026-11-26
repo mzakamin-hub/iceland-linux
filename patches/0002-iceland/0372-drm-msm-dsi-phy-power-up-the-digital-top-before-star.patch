@@ -50,7 +50,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
-index 5750066a645d..f9debc05591c 100644
+index 8aebd27573d45..ea2754fb99efc 100644
 --- a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
 +++ b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
 @@ -416,7 +416,8 @@ static void dsi_pll_disable_pll_bias(struct dsi_pll_7nm *pll)
@@ -73,3 +73,6 @@ index 5750066a645d..f9debc05591c 100644
  	writel(data, pll->phy->base + REG_DSI_7nm_PHY_CMN_CTRL_0);
  
  	writel(0xc0, pll->phy->pll_base + REG_DSI_7nm_PHY_PLL_SYSTEM_MUXES);
+-- 
+2.43.0
+

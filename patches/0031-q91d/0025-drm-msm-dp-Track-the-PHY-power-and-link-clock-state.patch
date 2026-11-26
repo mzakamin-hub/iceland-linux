@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Joonhoe Kim <26rote@gmail.com>
 Date: Fri, 6 Nov 2026 23:31:14 +0200
-Subject: [PATCH 25/27] drm/msm/dp: Track the PHY power and link clock state
+Subject: [PATCH] drm/msm/dp: Track the PHY power and link clock state
 
 msm_dp_ctrl_enable_mainlink_clocks() powers the PHY on and then enables
 the link clocks. When the link clocks fail to start, it returns with the
@@ -27,7 +27,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 34 insertions(+), 10 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/dp/dp_ctrl.c b/drivers/gpu/drm/msm/dp/dp_ctrl.c
-index 18b83a8ca..739ce3ec3 100644
+index 059393b3d20b4..2a1a3aa7caa12 100644
 --- a/drivers/gpu/drm/msm/dp/dp_ctrl.c
 +++ b/drivers/gpu/drm/msm/dp/dp_ctrl.c
 @@ -141,6 +141,7 @@ struct msm_dp_ctrl_private {

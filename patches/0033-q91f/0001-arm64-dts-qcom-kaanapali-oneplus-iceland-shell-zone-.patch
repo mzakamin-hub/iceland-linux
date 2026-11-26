@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 2 Nov 2026 10:55:19 +0200
-Subject: [PATCH 1/9] arm64: dts: qcom: kaanapali-oneplus-iceland: shell zone
- and CPU backstop
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: shell zone and
+ CPU backstop
 
 - shell-thermal: stock's gear policy as a kernel thermal zone on a
   weighted-thermal-sensor over skin, board and charge-pump thermistors
@@ -23,8 +23,6 @@ tables of iceland-thermal and the decoded model in iceland-firmware.
 Promoted to the default device tree after the q91e opt-in rows passed
 (7 Nov 2026, owner rule: what passes becomes the default).
 
-Suggested-by: Doctor Logix <doctor.logix@gmail.com>
-Based-on: denialwm/linux-perpetua 405aa6965e8e (idea; the values are ours)
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 Signed-off-by: mzak <mzak.amin@gmail.com>
 ---
@@ -35,7 +33,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland-thermal-optin.dtsi b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland-thermal-optin.dtsi
 new file mode 100644
-index 000000000..8066d376b
+index 0000000000000..8066d376b7747
 --- /dev/null
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland-thermal-optin.dtsi
 @@ -0,0 +1,514 @@
@@ -554,7 +552,7 @@ index 000000000..8066d376b
 +};
 +
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 636041daa..dad6b0372 100644
+index 636041daa387a..dad6b037249d6 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -3938,3 +3938,4 @@ smp2p-sleepstate {

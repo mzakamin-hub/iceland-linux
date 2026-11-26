@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Krishna Chaitanya Chundru <krishna.chundru@oss.qualcomm.com>
 Date: Thu, 29 Oct 2026 09:49:28 +0530
-Subject: [PATCH 13/32] PCI: dwc: Force L2 link entry on shutdown/reboot
- without D3cold check
+Subject: [PATCH] PCI: dwc: Force L2 link entry on shutdown/reboot without
+ D3cold check
 
 dw_pcie_suspend_noirq() normally calls pci_host_common_d3cold_possible()
 to check whether every downstream endpoint can be put into D3cold before
@@ -40,7 +40,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  10 files changed, 14 insertions(+), 15 deletions(-)
 
 diff --git a/drivers/pci/controller/dwc/pci-imx6.c b/drivers/pci/controller/dwc/pci-imx6.c
-index 83fbd998551d..1f2b942e8423 100644
+index 3917e11dc632f..6ecdcd7b413bc 100644
 --- a/drivers/pci/controller/dwc/pci-imx6.c
 +++ b/drivers/pci/controller/dwc/pci-imx6.c
 @@ -1788,7 +1788,7 @@ static int imx_pcie_suspend_noirq(struct device *dev)
@@ -53,7 +53,7 @@ index 83fbd998551d..1f2b942e8423 100644
  
  	return 0;
 diff --git a/drivers/pci/controller/dwc/pci-layerscape.c b/drivers/pci/controller/dwc/pci-layerscape.c
-index 7f37a0537159..bfed194834d4 100644
+index 7a77607981cdb..e3a9a8b1c1af4 100644
 --- a/drivers/pci/controller/dwc/pci-layerscape.c
 +++ b/drivers/pci/controller/dwc/pci-layerscape.c
 @@ -382,7 +382,7 @@ static int ls_pcie_suspend_noirq(struct device *dev)
@@ -66,7 +66,7 @@ index 7f37a0537159..bfed194834d4 100644
  
  static int ls_pcie_resume_noirq(struct device *dev)
 diff --git a/drivers/pci/controller/dwc/pcie-designware-host.c b/drivers/pci/controller/dwc/pcie-designware-host.c
-index 869a39107a81..e4d47999613c 100644
+index bbb02458af58f..ff2ff8adc2e81 100644
 --- a/drivers/pci/controller/dwc/pcie-designware-host.c
 +++ b/drivers/pci/controller/dwc/pcie-designware-host.c
 @@ -1235,23 +1235,22 @@ static int dw_pcie_pme_turn_off(struct dw_pcie *pci)
@@ -98,7 +98,7 @@ index 869a39107a81..e4d47999613c 100644
  
  	if (pci->pp.ops->pme_turn_off) {
 diff --git a/drivers/pci/controller/dwc/pcie-designware.h b/drivers/pci/controller/dwc/pcie-designware.h
-index 6d788aa00011..4905932cfaf9 100644
+index 6d788aa000117..4905932cfaf92 100644
 --- a/drivers/pci/controller/dwc/pcie-designware.h
 +++ b/drivers/pci/controller/dwc/pcie-designware.h
 @@ -861,7 +861,7 @@ static inline enum dw_pcie_ltssm dw_pcie_get_ltssm(struct dw_pcie *pci)
@@ -120,7 +120,7 @@ index 6d788aa00011..4905932cfaf9 100644
  	return 0;
  }
 diff --git a/drivers/pci/controller/dwc/pcie-eswin.c b/drivers/pci/controller/dwc/pcie-eswin.c
-index 1bb44696057e..21d077172724 100644
+index b9c1e90ce827d..599959748a4ea 100644
 --- a/drivers/pci/controller/dwc/pcie-eswin.c
 +++ b/drivers/pci/controller/dwc/pcie-eswin.c
 @@ -367,7 +367,7 @@ static int eswin_pcie_suspend_noirq(struct device *dev)
@@ -133,7 +133,7 @@ index 1bb44696057e..21d077172724 100644
  
  static int eswin_pcie_resume_noirq(struct device *dev)
 diff --git a/drivers/pci/controller/dwc/pcie-nxp-s32g.c b/drivers/pci/controller/dwc/pcie-nxp-s32g.c
-index 386e44dd0477..cb9cc9327d85 100644
+index a600e63023682..ca31bfab78f46 100644
 --- a/drivers/pci/controller/dwc/pcie-nxp-s32g.c
 +++ b/drivers/pci/controller/dwc/pcie-nxp-s32g.c
 @@ -365,7 +365,7 @@ static int s32g_pcie_suspend_noirq(struct device *dev)
@@ -146,7 +146,7 @@ index 386e44dd0477..cb9cc9327d85 100644
  
  static int s32g_pcie_resume_noirq(struct device *dev)
 diff --git a/drivers/pci/controller/dwc/pcie-qcom.c b/drivers/pci/controller/dwc/pcie-qcom.c
-index 877d43358207..77c05dbb3c4f 100644
+index f87777f34d781..5d669d39db2a1 100644
 --- a/drivers/pci/controller/dwc/pcie-qcom.c
 +++ b/drivers/pci/controller/dwc/pcie-qcom.c
 @@ -2488,7 +2488,7 @@ static int qcom_pcie_suspend_noirq(struct device *dev)
@@ -159,7 +159,7 @@ index 877d43358207..77c05dbb3c4f 100644
  		return ret;
  
 diff --git a/drivers/pci/controller/dwc/pcie-rcar-gen4.c b/drivers/pci/controller/dwc/pcie-rcar-gen4.c
-index fceecbd16355..045d33ac61ea 100644
+index 05556a3dc725e..706701cb8205e 100644
 --- a/drivers/pci/controller/dwc/pcie-rcar-gen4.c
 +++ b/drivers/pci/controller/dwc/pcie-rcar-gen4.c
 @@ -1071,7 +1071,7 @@ static int rcar_gen4_pcie_suspend_noirq(struct device *dev)
@@ -172,7 +172,7 @@ index fceecbd16355..045d33ac61ea 100644
  
  static int rcar_gen4_pcie_resume_noirq(struct device *dev)
 diff --git a/drivers/pci/controller/dwc/pcie-stm32.c b/drivers/pci/controller/dwc/pcie-stm32.c
-index 349618ea5b9c..7b3a8c1b04a4 100644
+index ee6a65d92ae1a..2966f6b942d8b 100644
 --- a/drivers/pci/controller/dwc/pcie-stm32.c
 +++ b/drivers/pci/controller/dwc/pcie-stm32.c
 @@ -78,7 +78,7 @@ static int stm32_pcie_suspend_noirq(struct device *dev)
@@ -185,7 +185,7 @@ index 349618ea5b9c..7b3a8c1b04a4 100644
  		return ret;
  
 diff --git a/drivers/pci/controller/dwc/pcie-ultrarisc.c b/drivers/pci/controller/dwc/pcie-ultrarisc.c
-index 523f454c6c52..59341682213c 100644
+index cea9f20612570..e3600b825521a 100644
 --- a/drivers/pci/controller/dwc/pcie-ultrarisc.c
 +++ b/drivers/pci/controller/dwc/pcie-ultrarisc.c
 @@ -193,7 +193,7 @@ static int ultrarisc_pcie_suspend_noirq(struct device *dev)
@@ -197,3 +197,6 @@ index 523f454c6c52..59341682213c 100644
  	if (ret)
  		return ret;
  
+-- 
+2.43.0
+

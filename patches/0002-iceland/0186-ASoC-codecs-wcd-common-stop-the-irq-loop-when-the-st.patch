@@ -22,7 +22,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 11 insertions(+), 5 deletions(-)
 
 diff --git a/sound/soc/codecs/wcd-common.c b/sound/soc/codecs/wcd-common.c
-index 9016e974582f..1fd899bde439 100644
+index 9016e974582f5..1fd899bde4391 100644
 --- a/sound/soc/codecs/wcd-common.c
 +++ b/sound/soc/codecs/wcd-common.c
 @@ -126,14 +126,20 @@ int wcd_interrupt_callback(struct sdw_slave *slave, struct irq_domain *slave_irq
@@ -51,3 +51,6 @@ index 9016e974582f..1fd899bde439 100644
  	} while (sts1 || sts2 || sts3);
  
  	return IRQ_HANDLED;
+-- 
+2.43.0
+

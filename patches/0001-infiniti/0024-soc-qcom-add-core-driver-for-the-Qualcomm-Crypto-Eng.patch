@@ -16,7 +16,7 @@ Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
  create mode 100644 drivers/soc/qcom/qce-core.c
 
 diff --git a/drivers/soc/qcom/Kconfig b/drivers/soc/qcom/Kconfig
-index 535c8619197b..67d54d5211ff 100644
+index 535c8619197b3..67d54d5211ff2 100644
 --- a/drivers/soc/qcom/Kconfig
 +++ b/drivers/soc/qcom/Kconfig
 @@ -121,6 +121,17 @@ config QCOM_PMIC_GLINK
@@ -38,7 +38,7 @@ index 535c8619197b..67d54d5211ff 100644
  	tristate "Qualcomm Ramp Controller driver"
  	help
 diff --git a/drivers/soc/qcom/Makefile b/drivers/soc/qcom/Makefile
-index bddd6f0a5836..9ef0f11d0158 100644
+index bddd6f0a58367..9ef0f11d01585 100644
 --- a/drivers/soc/qcom/Makefile
 +++ b/drivers/soc/qcom/Makefile
 @@ -15,6 +15,7 @@ obj-$(CONFIG_QCOM_PMIC_GLINK)	+= pmic_glink_altmode.o
@@ -51,7 +51,7 @@ index bddd6f0a5836..9ef0f11d0158 100644
  obj-$(CONFIG_QCOM_RAMP_CTRL)	+= ramp_controller.o
 diff --git a/drivers/soc/qcom/qce-core.c b/drivers/soc/qcom/qce-core.c
 new file mode 100644
-index 000000000000..8a9d070935cc
+index 0000000000000..8a9d070935cc8
 --- /dev/null
 +++ b/drivers/soc/qcom/qce-core.c
 @@ -0,0 +1,92 @@
@@ -147,3 +147,6 @@ index 000000000000..8a9d070935cc
 +MODULE_DESCRIPTION("Qualcomm crypto engine core driver");
 +MODULE_ALIAS("platform:" KBUILD_MODNAME);
 +MODULE_AUTHOR("Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>");
+-- 
+2.43.0
+

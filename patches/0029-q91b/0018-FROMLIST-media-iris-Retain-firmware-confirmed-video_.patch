@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Vishnu Reddy <busanna.reddy@oss.qualcomm.com>
 Date: Sat, 5 Sep 2026 19:27:23 +0530
-Subject: [PATCH 18/24] FROMLIST: media: iris: Retain firmware confirmed
- video_format across GOP restarts
+Subject: [PATCH] FROMLIST: media: iris: Retain firmware confirmed video_format
+ across GOP restarts
 
 During speed-based rewind, the client restarts the decoder queues once per
 group of pictures (GOP). This is because playing a GOP-based stream in
@@ -34,7 +34,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  3 files changed, 5 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_hfi_common.h b/drivers/media/platform/qcom/iris/iris_hfi_common.h
-index 16099f9a25b6..9bc5221bd0a9 100644
+index 16099f9a25b65..9bc5221bd0a97 100644
 --- a/drivers/media/platform/qcom/iris/iris_hfi_common.h
 +++ b/drivers/media/platform/qcom/iris/iris_hfi_common.h
 @@ -142,6 +142,7 @@ struct hfi_subscription_params {
@@ -46,7 +46,7 @@ index 16099f9a25b6..9bc5221bd0a9 100644
  	u32	level;
  	u32	tier;
 diff --git a/drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c b/drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c
-index 3715ff73e902..1a1ca9c01ee1 100644
+index 3715ff73e902b..1a1ca9c01ee11 100644
 --- a/drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c
 +++ b/drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c
 @@ -358,7 +358,7 @@ static int iris_hfi_gen2_set_colorspace(struct iris_inst *inst, u32 plane)
@@ -67,7 +67,7 @@ index 3715ff73e902..1a1ca9c01ee1 100644
  	inst_hfi_gen2->packet = kzalloc(4096, GFP_KERNEL);
  	if (!inst_hfi_gen2->packet)
 diff --git a/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c b/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
-index 96aefb4aa055..7b0ffe28e77a 100644
+index 96aefb4aa055a..7b0ffe28e77a5 100644
 --- a/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
 +++ b/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
 @@ -618,6 +618,8 @@ static void iris_hfi_gen2_read_input_subcr_params(struct iris_inst *inst)
@@ -79,3 +79,6 @@ index 96aefb4aa055..7b0ffe28e77a 100644
  
  	pixmp_op->colorspace = V4L2_COLORSPACE_DEFAULT;
  	pixmp_op->xfer_func = V4L2_XFER_FUNC_DEFAULT;
+-- 
+2.43.0
+

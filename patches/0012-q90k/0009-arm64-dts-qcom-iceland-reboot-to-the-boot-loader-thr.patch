@@ -23,7 +23,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  2 files changed, 14 insertions(+), 1 deletion(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 5a044fb69f91..5ed53e5b6547 100644
+index 5a044fb69f919..5ed53e5b65477 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -2112,6 +2112,19 @@ &pon_resin {
@@ -47,7 +47,7 @@ index 5a044fb69f91..5ed53e5b6547 100644
  	#address-cells = <1>;
  	#size-cells = <0>;
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index f39f3dac2a08..6e6b69fe1319 100644
+index f39f3dac2a081..6e6b69fe13190 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -352,7 +352,7 @@ pmu {
@@ -59,3 +59,6 @@ index f39f3dac2a08..6e6b69fe1319 100644
  		compatible = "arm,psci-1.0";
  		method = "smc";
  
+-- 
+2.43.0
+

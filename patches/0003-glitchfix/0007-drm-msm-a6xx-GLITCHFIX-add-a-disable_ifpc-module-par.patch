@@ -19,7 +19,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  2 files changed, 9 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
-index 975b819bcd2e..598a6839792a 100644
+index 975b819bcd2e0..598a6839792ae 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 @@ -15,6 +15,8 @@
@@ -45,7 +45,7 @@ index 975b819bcd2e..598a6839792a 100644
  	pm_runtime_enable(gmu->dev);
  
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_device.c b/drivers/gpu/drm/msm/adreno/adreno_device.c
-index d15c29918aec..2ec130c1cf71 100644
+index d15c29918aec8..2ec130c1cf712 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_device.c
 +++ b/drivers/gpu/drm/msm/adreno/adreno_device.c
 @@ -20,6 +20,10 @@ int enable_preemption;
@@ -59,3 +59,6 @@ index d15c29918aec..2ec130c1cf71 100644
  bool disable_acd;
  MODULE_PARM_DESC(disable_acd, "Forcefully disable GPU ACD");
  module_param_unsafe(disable_acd, bool, 0400);
+-- 
+2.43.0
+

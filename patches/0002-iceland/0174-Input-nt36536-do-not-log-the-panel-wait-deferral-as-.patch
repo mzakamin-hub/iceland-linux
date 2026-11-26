@@ -16,7 +16,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/input/touchscreen/nt36536/nt36xxx.c b/drivers/input/touchscreen/nt36536/nt36xxx.c
-index e1850fc15fe8..d557d0e2e5a6 100644
+index e1850fc15fe84..d557d0e2e5a6d 100644
 --- a/drivers/input/touchscreen/nt36536/nt36xxx.c
 +++ b/drivers/input/touchscreen/nt36536/nt36xxx.c
 @@ -1304,8 +1304,8 @@ static int32_t nvt_ts_probe(struct spi_device *client)
@@ -30,3 +30,6 @@ index e1850fc15fe8..d557d0e2e5a6 100644
  			goto err_panelwait_failed;
  		}
  		NVT_LOG("panel is off, retry=%d\n", retry_count);
+-- 
+2.43.0
+

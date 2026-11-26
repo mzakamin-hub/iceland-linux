@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Mukesh Kumar Savaliya <mukesh.savaliya@oss.qualcomm.com>
 Date: Tue, 31 Mar 2026 17:17:42 +0530
-Subject: [PATCH 3/8] FROMLIST: i2c: qcom-geni: Support multi-owner controllers
- in GPI mode
+Subject: [PATCH] FROMLIST: i2c: qcom-geni: Support multi-owner controllers in
+ GPI mode
 
 Some platforms use a QUP-based I2C controller in a configuration where the
 controller is shared with another system processor. In this setup the
@@ -35,7 +35,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 27 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/i2c/busses/i2c-qcom-geni.c b/drivers/i2c/busses/i2c-qcom-geni.c
-index f55e878ec..714149724 100644
+index 762505fc8ec7f..98ae4c5d17155 100644
 --- a/drivers/i2c/busses/i2c-qcom-geni.c
 +++ b/drivers/i2c/busses/i2c-qcom-geni.c
 @@ -940,6 +940,14 @@ static int geni_i2c_gpi_xfer(struct geni_i2c_dev *gi2c, struct i2c_msg msgs[], i

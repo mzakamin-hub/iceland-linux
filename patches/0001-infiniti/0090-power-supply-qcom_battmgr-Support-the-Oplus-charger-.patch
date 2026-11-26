@@ -13,7 +13,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 368 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 636d6f6acecc..277c94d8d545 100644
+index 58e238e6fb2a1..473e576a30a33 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -5,7 +5,9 @@
@@ -549,3 +549,6 @@ index 636d6f6acecc..277c94d8d545 100644
  	battmgr->client = devm_pmic_glink_client_alloc(dev, PMIC_GLINK_OWNER_BATTMGR,
  						       qcom_battmgr_callback,
  						       qcom_battmgr_pdr_notify,
+-- 
+2.43.0
+

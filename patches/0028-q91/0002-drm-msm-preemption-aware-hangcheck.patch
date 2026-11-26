@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Anna Maniscalco <anna.maniscalco2000@gmail.com>
 Date: Thu, 29 Oct 2026 19:41:01 +0100
-Subject: [PATCH 02/32] drm/msm: preemption aware hangcheck
+Subject: [PATCH] drm/msm: preemption aware hangcheck
 
 Rework hangcheck code to work well toghether with preemption.
 
@@ -25,7 +25,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  9 files changed, 137 insertions(+), 39 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a5xx_gpu.c b/drivers/gpu/drm/msm/adreno/a5xx_gpu.c
-index 16c7335c4b1f..8800352455df 100644
+index 4af6501ef4637..e23763fb75083 100644
 --- a/drivers/gpu/drm/msm/adreno/a5xx_gpu.c
 +++ b/drivers/gpu/drm/msm/adreno/a5xx_gpu.c
 @@ -1251,10 +1251,7 @@ static void a5xx_fault_detect_irq(struct msm_gpu *gpu)
@@ -41,7 +41,7 @@ index 16c7335c4b1f..8800352455df 100644
  
  #define RBBM_ERROR_MASK \
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
-index d4790f200e49..6220dcba8ed6 100644
+index d4790f200e491..6220dcba8ed62 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 @@ -30,11 +30,7 @@ static void a6xx_gmu_fault(struct a6xx_gmu *gmu)
@@ -58,7 +58,7 @@ index d4790f200e49..6220dcba8ed6 100644
  
  static irqreturn_t a6xx_gmu_irq(int irq, void *data)
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gpu.c b/drivers/gpu/drm/msm/adreno/a6xx_gpu.c
-index 32e645b615b7..9b048623a606 100644
+index 32e645b615b7a..9b048623a6062 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gpu.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gpu.c
 @@ -521,6 +521,9 @@ static void a7xx_submit(struct msm_gpu *gpu, struct msm_gem_submit *submit)
@@ -169,7 +169,7 @@ index 32e645b615b7..9b048623a606 100644
  	.init = a6xx_gpu_init,
  	.get_timestamp = a6xx_gmu_get_timestamp,
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
-index f7dae534cc14..71a00de9cbfa 100644
+index f7dae534cc14d..71a00de9cbfaf 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
 @@ -113,6 +113,7 @@ struct a6xx_gpu {
@@ -181,7 +181,7 @@ index f7dae534cc14..71a00de9cbfa 100644
  	bool postamble_enabled;
  
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_preempt.c b/drivers/gpu/drm/msm/adreno/a6xx_preempt.c
-index 6712dbac24ce..c5877a21fc20 100644
+index 6712dbac24ceb..c5877a21fc20d 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_preempt.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_preempt.c
 @@ -20,15 +20,18 @@ static void a6xx_preempt_timer(struct timer_list *t)
@@ -255,7 +255,7 @@ index 6712dbac24ce..c5877a21fc20 100644
  	timer_setup(&a6xx_gpu->preempt_timer, a6xx_preempt_timer, 0);
  
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_gpu.c b/drivers/gpu/drm/msm/adreno/adreno_gpu.c
-index dadfe4c69438..9218fc567144 100644
+index dadfe4c694384..9218fc5671446 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_gpu.c
 +++ b/drivers/gpu/drm/msm/adreno/adreno_gpu.c
 @@ -335,7 +335,8 @@ int adreno_fault_handler(struct msm_gpu *gpu, unsigned long iova, int flags,
@@ -269,7 +269,7 @@ index dadfe4c69438..9218fc567144 100644
  		/* Let any concurrent GMU transactions know that the MMU may be
  		 * blocked for a while and they should wait on us.
 diff --git a/drivers/gpu/drm/msm/msm_gpu.c b/drivers/gpu/drm/msm/msm_gpu.c
-index 452da9272773..fa4ff95cc436 100644
+index 77a932adc6be9..7e6af19c3c494 100644
 --- a/drivers/gpu/drm/msm/msm_gpu.c
 +++ b/drivers/gpu/drm/msm/msm_gpu.c
 @@ -467,7 +467,9 @@ static void recover_worker(struct kthread_work *work)
@@ -400,7 +400,7 @@ index 452da9272773..fa4ff95cc436 100644
  		memptrs_iova += sizeof(struct msm_rbmemptrs);
  	}
 diff --git a/drivers/gpu/drm/msm/msm_gpu.h b/drivers/gpu/drm/msm/msm_gpu.h
-index bc5b31eb1eca..56feb50d7bd5 100644
+index bc5b31eb1eca8..56feb50d7bd53 100644
 --- a/drivers/gpu/drm/msm/msm_gpu.h
 +++ b/drivers/gpu/drm/msm/msm_gpu.h
 @@ -101,6 +101,7 @@ struct msm_gpu_funcs {
@@ -436,7 +436,7 @@ index bc5b31eb1eca..56feb50d7bd5 100644
  
  /*
 diff --git a/drivers/gpu/drm/msm/msm_ringbuffer.h b/drivers/gpu/drm/msm/msm_ringbuffer.h
-index 0bfb6b0f42fa..6209c2fd3e67 100644
+index 0bfb6b0f42faa..6209c2fd3e677 100644
 --- a/drivers/gpu/drm/msm/msm_ringbuffer.h
 +++ b/drivers/gpu/drm/msm/msm_ringbuffer.h
 @@ -39,6 +39,9 @@ struct msm_rbmemptrs {
@@ -463,3 +463,6 @@ index 0bfb6b0f42fa..6209c2fd3e67 100644
  	/**
  	 * hangcheck_progress_retries:
  	 *
+-- 
+2.43.0
+

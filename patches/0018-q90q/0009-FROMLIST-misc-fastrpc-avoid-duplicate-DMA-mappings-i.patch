@@ -27,7 +27,7 @@ Signed-off-by: Jianping Li <jianping.li@oss.qualcomm.com>
  1 file changed, 41 insertions(+), 15 deletions(-)
 
 diff --git a/drivers/misc/fastrpc.c b/drivers/misc/fastrpc.c
-index da60d1d16093..ee512b45edd6 100644
+index 7768e4559cd6f..78628d9a68fbf 100644
 --- a/drivers/misc/fastrpc.c
 +++ b/drivers/misc/fastrpc.c
 @@ -52,6 +52,9 @@
@@ -170,3 +170,6 @@ index da60d1d16093..ee512b45edd6 100644
  	if (err) {
  		dev_err(dev, "failed to map buffer, fd = %d\n", req.fd);
  		return err;
+-- 
+2.43.0
+

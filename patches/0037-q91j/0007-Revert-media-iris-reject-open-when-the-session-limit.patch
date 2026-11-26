@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Vishnu Reddy <busanna.reddy@oss.qualcomm.com>
 Date: Sat, 31 Oct 2026 01:45:48 +0530
-Subject: [PATCH 07/30] Revert "media: iris: reject open() when the session
- limit is reached"
+Subject: [PATCH] Revert "media: iris: reject open() when the session limit is
+ reached"
 
 This reverts commit 397ebadcbc21 ("media: iris: reject open() when the
 session limit is reached").
@@ -37,7 +37,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 6 insertions(+), 13 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_vidc.c b/drivers/media/platform/qcom/iris/iris_vidc.c
-index 8c96b007b..23562c178 100644
+index 8c96b007b3915..23562c1786d86 100644
 --- a/drivers/media/platform/qcom/iris/iris_vidc.c
 +++ b/drivers/media/platform/qcom/iris/iris_vidc.c
 @@ -56,23 +56,21 @@ void iris_inst_put(struct iris_inst *inst)

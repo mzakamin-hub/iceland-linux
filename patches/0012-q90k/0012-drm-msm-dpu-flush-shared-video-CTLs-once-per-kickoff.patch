@@ -27,7 +27,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 24 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
-index 97fa68516346..c0a625b13211 100644
+index 97fa68516346b..c0a625b132119 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 @@ -411,6 +411,17 @@ module_param(dpu_vid_slave_late_cleanup, bool, 0644);
@@ -68,3 +68,6 @@ index 97fa68516346..c0a625b13211 100644
  		/*
  		 * This is cleared in frame_done worker, which isn't invoked
  		 * for async commits. So don't set this for async, since it'll
+-- 
+2.43.0
+

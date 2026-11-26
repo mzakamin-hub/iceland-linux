@@ -9,7 +9,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1 insertion(+)
 
 diff --git a/Documentation/devicetree/bindings/net/wireless/qcom,ath12k.yaml b/Documentation/devicetree/bindings/net/wireless/qcom,ath12k.yaml
-index dc68dd59988f..27947f1d64bc 100644
+index dc68dd59988fc..27947f1d64bcd 100644
 --- a/Documentation/devicetree/bindings/net/wireless/qcom,ath12k.yaml
 +++ b/Documentation/devicetree/bindings/net/wireless/qcom,ath12k.yaml
 @@ -17,6 +17,7 @@ properties:
@@ -20,3 +20,6 @@ index dc68dd59988f..27947f1d64bc 100644
  
    reg:
      maxItems: 1
+-- 
+2.43.0
+

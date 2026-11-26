@@ -30,7 +30,7 @@ Signed-off-by: Rob Clark <robin.clark@oss.qualcomm.com>
  create mode 100644 drivers/gpu/drm/msm/adreno/catalog/adreno_pakala.h
 
 diff --git a/drivers/gpu/drm/msm/adreno/a8xx_catalog.c b/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
-index 55a805ab438c..15fc10d5db68 100644
+index 55a805ab438cc..15fc10d5db688 100644
 --- a/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
 +++ b/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
 @@ -10,6 +10,14 @@
@@ -106,7 +106,7 @@ index 55a805ab438c..15fc10d5db68 100644
  
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_gen8_snapshot.h b/drivers/gpu/drm/msm/adreno/adreno_gen8_snapshot.h
 new file mode 100644
-index 000000000000..5f15ccfd7b68
+index 0000000000000..5f15ccfd7b687
 --- /dev/null
 +++ b/drivers/gpu/drm/msm/adreno/adreno_gen8_snapshot.h
 @@ -0,0 +1,582 @@
@@ -693,7 +693,7 @@ index 000000000000..5f15ccfd7b68
 +};
 +
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_gpu.h b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
-index a4476d06f716..ad6b7ac7fbca 100644
+index a4476d06f7169..ad6b7ac7fbca0 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_gpu.h
 +++ b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
 @@ -130,6 +130,8 @@ struct adreno_info {
@@ -707,7 +707,7 @@ index a4476d06f716..ad6b7ac7fbca 100644
  #define ADRENO_CHIP_IDS(tbl...) (uint32_t[]) { tbl, 0 }
 diff --git a/drivers/gpu/drm/msm/adreno/catalog/adreno_glymur.h b/drivers/gpu/drm/msm/adreno/catalog/adreno_glymur.h
 new file mode 100644
-index 000000000000..e6bb03cf7ba8
+index 0000000000000..e6bb03cf7ba8b
 --- /dev/null
 +++ b/drivers/gpu/drm/msm/adreno/catalog/adreno_glymur.h
 @@ -0,0 +1,2315 @@
@@ -3029,7 +3029,7 @@ index 000000000000..e6bb03cf7ba8
 \ No newline at end of file
 diff --git a/drivers/gpu/drm/msm/adreno/catalog/adreno_hawi.h b/drivers/gpu/drm/msm/adreno/catalog/adreno_hawi.h
 new file mode 100644
-index 000000000000..33163d07104f
+index 0000000000000..33163d07104f5
 --- /dev/null
 +++ b/drivers/gpu/drm/msm/adreno/catalog/adreno_hawi.h
 @@ -0,0 +1,2410 @@
@@ -5446,7 +5446,7 @@ index 000000000000..33163d07104f
 \ No newline at end of file
 diff --git a/drivers/gpu/drm/msm/adreno/catalog/adreno_kaanapali.h b/drivers/gpu/drm/msm/adreno/catalog/adreno_kaanapali.h
 new file mode 100644
-index 000000000000..47a8182805d8
+index 0000000000000..47a8182805d82
 --- /dev/null
 +++ b/drivers/gpu/drm/msm/adreno/catalog/adreno_kaanapali.h
 @@ -0,0 +1,2339 @@
@@ -7792,7 +7792,7 @@ index 000000000000..47a8182805d8
 \ No newline at end of file
 diff --git a/drivers/gpu/drm/msm/adreno/catalog/adreno_maili.h b/drivers/gpu/drm/msm/adreno/catalog/adreno_maili.h
 new file mode 100644
-index 000000000000..30f9799c00b8
+index 0000000000000..30f9799c00b8b
 --- /dev/null
 +++ b/drivers/gpu/drm/msm/adreno/catalog/adreno_maili.h
 @@ -0,0 +1,1900 @@
@@ -9699,7 +9699,7 @@ index 000000000000..30f9799c00b8
 \ No newline at end of file
 diff --git a/drivers/gpu/drm/msm/adreno/catalog/adreno_milos.h b/drivers/gpu/drm/msm/adreno/catalog/adreno_milos.h
 new file mode 100644
-index 000000000000..9c770fc1d09a
+index 0000000000000..9c770fc1d09a3
 --- /dev/null
 +++ b/drivers/gpu/drm/msm/adreno/catalog/adreno_milos.h
 @@ -0,0 +1,1994 @@
@@ -11700,7 +11700,7 @@ index 000000000000..9c770fc1d09a
 \ No newline at end of file
 diff --git a/drivers/gpu/drm/msm/adreno/catalog/adreno_pakala.h b/drivers/gpu/drm/msm/adreno/catalog/adreno_pakala.h
 new file mode 100644
-index 000000000000..a5f48b646bca
+index 0000000000000..a5f48b646bca8
 --- /dev/null
 +++ b/drivers/gpu/drm/msm/adreno/catalog/adreno_pakala.h
 @@ -0,0 +1,2178 @@
@@ -13883,3 +13883,6 @@ index 000000000000..a5f48b646bca
 +};
 +DECLARE_ADRENO_PROTECT(pakala_protect, 64);
 \ No newline at end of file
+-- 
+2.43.0
+

@@ -33,7 +33,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  create mode 100644 drivers/media/i2c/sc820cs-regs.h
 
 diff --git a/drivers/media/i2c/Kconfig b/drivers/media/i2c/Kconfig
-index f91e789922f3..a001be13676f 100644
+index f91e789922f38..a001be13676f6 100644
 --- a/drivers/media/i2c/Kconfig
 +++ b/drivers/media/i2c/Kconfig
 @@ -912,6 +912,16 @@ config VIDEO_S5KJN5
@@ -54,7 +54,7 @@ index f91e789922f3..a001be13676f 100644
  	tristate "Toshiba T4KA3 sensor support"
  	depends on ACPI || COMPILE_TEST
 diff --git a/drivers/media/i2c/Makefile b/drivers/media/i2c/Makefile
-index 1ca99223a064..204f6cd38cf9 100644
+index 1ca99223a0644..204f6cd38cf95 100644
 --- a/drivers/media/i2c/Makefile
 +++ b/drivers/media/i2c/Makefile
 @@ -138,6 +138,7 @@ obj-$(CONFIG_VIDEO_RJ54N1) += rj54n1cb0c.o
@@ -67,7 +67,7 @@ index 1ca99223a064..204f6cd38cf9 100644
  obj-$(CONFIG_VIDEO_S5KJN5) += s5kjn5.o
 diff --git a/drivers/media/i2c/sc-modes-regs.h b/drivers/media/i2c/sc-modes-regs.h
 new file mode 100644
-index 000000000000..06a2d5bb81a7
+index 0000000000000..06a2d5bb81a7f
 --- /dev/null
 +++ b/drivers/media/i2c/sc-modes-regs.h
 @@ -0,0 +1,191 @@
@@ -264,7 +264,7 @@ index 000000000000..06a2d5bb81a7
 +};
 diff --git a/drivers/media/i2c/sc1320cs-regs.h b/drivers/media/i2c/sc1320cs-regs.h
 new file mode 100644
-index 000000000000..b01cd68323e3
+index 0000000000000..b01cd68323e36
 --- /dev/null
 +++ b/drivers/media/i2c/sc1320cs-regs.h
 @@ -0,0 +1,192 @@
@@ -462,7 +462,7 @@ index 000000000000..b01cd68323e3
 +
 diff --git a/drivers/media/i2c/sc1320cs.c b/drivers/media/i2c/sc1320cs.c
 new file mode 100644
-index 000000000000..8beabb6131d1
+index 0000000000000..8beabb6131d10
 --- /dev/null
 +++ b/drivers/media/i2c/sc1320cs.c
 @@ -0,0 +1,639 @@
@@ -1107,7 +1107,7 @@ index 000000000000..8beabb6131d1
 +MODULE_LICENSE("GPL");
 diff --git a/drivers/media/i2c/sc820cs-regs.h b/drivers/media/i2c/sc820cs-regs.h
 new file mode 100644
-index 000000000000..f6b1e961adc5
+index 0000000000000..f6b1e961adc54
 --- /dev/null
 +++ b/drivers/media/i2c/sc820cs-regs.h
 @@ -0,0 +1,363 @@
@@ -1474,3 +1474,6 @@ index 000000000000..f6b1e961adc5
 +	{ CCI_REG8(0x5901), 0x04 },
 +};
 +
+-- 
+2.43.0
+

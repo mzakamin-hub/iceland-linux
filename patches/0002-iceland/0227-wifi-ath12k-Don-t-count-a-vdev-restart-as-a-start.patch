@@ -1,5 +1,5 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: mzak <mzak.amin@gmail.com>
+From: Victor Fuentes <victor@vlinkz.dev>
 Date: Sat, 10 Oct 2026 04:19:18 +0300
 Subject: [PATCH] wifi: ath12k: Don't count a vdev restart as a start
 
@@ -18,10 +18,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/mac.c b/drivers/net/wireless/ath/ath12k/mac.c
-index 34c50074bee9..ae40430b73f8 100644
+index b4c1ae243384a..ab4c9d562c2f8 100644
 --- a/drivers/net/wireless/ath/ath12k/mac.c
 +++ b/drivers/net/wireless/ath/ath12k/mac.c
-@@ -11502,7 +11502,8 @@ ath12k_mac_vdev_start_restart(struct ath12k_link_vif *arvif,
+@@ -11515,7 +11515,8 @@ ath12k_mac_vdev_start_restart(struct ath12k_link_vif *arvif,
  						   &arvif->reg_tpc_info);
  	}
  
@@ -31,3 +31,6 @@ index 34c50074bee9..ae40430b73f8 100644
  	ath12k_dbg(ab, ATH12K_DBG_MAC,  "vdev %pM started, vdev_id %d\n",
  		   ahvif->vif->addr, arvif->vdev_id);
  
+-- 
+2.43.0
+

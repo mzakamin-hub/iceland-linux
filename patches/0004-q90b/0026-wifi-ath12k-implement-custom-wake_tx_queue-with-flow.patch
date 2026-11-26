@@ -38,7 +38,7 @@ Signed-off-by: Jose Ignacio Tornos Martinez <jtornosm@redhat.com>
  4 files changed, 72 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/dp.c b/drivers/net/wireless/ath/ath12k/dp.c
-index f129b7fb1e4d..59cd983ad24e 100644
+index f129b7fb1e4d5..59cd983ad24e5 100644
 --- a/drivers/net/wireless/ath/ath12k/dp.c
 +++ b/drivers/net/wireless/ath/ath12k/dp.c
 @@ -1557,6 +1557,7 @@ static int ath12k_dp_setup(struct ath12k_base *ab)
@@ -50,7 +50,7 @@ index f129b7fb1e4d..59cd983ad24e 100644
  
  		dp->tx_ring[i].tx_status_head = 0;
 diff --git a/drivers/net/wireless/ath/ath12k/dp.h b/drivers/net/wireless/ath/ath12k/dp.h
-index efe3b7d182bf..91ee7fc933e4 100644
+index efe3b7d182bf4..91ee7fc933e49 100644
 --- a/drivers/net/wireless/ath/ath12k/dp.h
 +++ b/drivers/net/wireless/ath/ath12k/dp.h
 @@ -69,6 +69,8 @@ struct dp_tx_ring {
@@ -63,7 +63,7 @@ index efe3b7d182bf..91ee7fc933e4 100644
  	int tx_status_head;
  	int tx_status_tail;
 diff --git a/drivers/net/wireless/ath/ath12k/hal.c b/drivers/net/wireless/ath/ath12k/hal.c
-index c0c3d2f047ef..fbe4dc41e34b 100644
+index c0c3d2f047ef0..fbe4dc41e34ba 100644
 --- a/drivers/net/wireless/ath/ath12k/hal.c
 +++ b/drivers/net/wireless/ath/ath12k/hal.c
 @@ -390,6 +390,7 @@ int ath12k_hal_srng_src_num_free(struct ath12k_base *ab, struct hal_srng *srng,
@@ -75,7 +75,7 @@ index c0c3d2f047ef..fbe4dc41e34b 100644
  void *ath12k_hal_srng_src_next_peek(struct ath12k_base *ab,
  				    struct hal_srng *srng)
 diff --git a/drivers/net/wireless/ath/ath12k/wifi7/hw.c b/drivers/net/wireless/ath/ath12k/wifi7/hw.c
-index 8e97db8a46dd..d3bedc3dd1ed 100644
+index 8e97db8a46ddc..d3bedc3dd1edc 100644
 --- a/drivers/net/wireless/ath/ath12k/wifi7/hw.c
 +++ b/drivers/net/wireless/ath/ath12k/wifi7/hw.c
 @@ -1261,9 +1261,76 @@ static void ath12k_wifi7_mac_op_tx(struct ieee80211_hw *hw,
@@ -156,3 +156,6 @@ index 8e97db8a46dd..d3bedc3dd1ed 100644
  	.start                          = ath12k_mac_op_start,
  	.stop                           = ath12k_mac_op_stop,
  	.reconfig_complete              = ath12k_mac_op_reconfig_complete,
+-- 
+2.43.0
+

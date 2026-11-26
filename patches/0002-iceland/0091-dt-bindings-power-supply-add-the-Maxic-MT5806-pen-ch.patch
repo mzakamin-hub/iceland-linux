@@ -22,7 +22,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 
 diff --git a/Documentation/devicetree/bindings/power/supply/maxic,mt5806.yaml b/Documentation/devicetree/bindings/power/supply/maxic,mt5806.yaml
 new file mode 100644
-index 000000000000..98e8fcd540eb
+index 0000000000000..98e8fcd540ebf
 --- /dev/null
 +++ b/Documentation/devicetree/bindings/power/supply/maxic,mt5806.yaml
 @@ -0,0 +1,91 @@
@@ -118,7 +118,7 @@ index 000000000000..98e8fcd540eb
 +        };
 +    };
 diff --git a/Documentation/devicetree/bindings/vendor-prefixes.yaml b/Documentation/devicetree/bindings/vendor-prefixes.yaml
-index 5471a06f93f1..31c5ed04ba35 100644
+index 5471a06f93f10..31c5ed04ba352 100644
 --- a/Documentation/devicetree/bindings/vendor-prefixes.yaml
 +++ b/Documentation/devicetree/bindings/vendor-prefixes.yaml
 @@ -1045,6 +1045,8 @@ patternProperties:
@@ -130,3 +130,6 @@ index 5471a06f93f1..31c5ed04ba35 100644
    "^maxim,.*":
      description: Maxim Integrated Products
    "^maxlinear,.*":
+-- 
+2.43.0
+

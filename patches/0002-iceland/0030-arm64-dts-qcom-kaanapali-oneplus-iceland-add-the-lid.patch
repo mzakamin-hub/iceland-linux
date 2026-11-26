@@ -15,7 +15,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 19 insertions(+), 1 deletion(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 96d01ebbae32..d12c3da1e48c 100644
+index 96d01ebbae32d..d12c3da1e48c4 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -6,6 +6,7 @@
@@ -66,3 +66,6 @@ index 96d01ebbae32..d12c3da1e48c 100644
  	wlan_en: wlan-en-state {
  		pins = "gpio16";
  		function = "gpio";
+-- 
+2.43.0
+

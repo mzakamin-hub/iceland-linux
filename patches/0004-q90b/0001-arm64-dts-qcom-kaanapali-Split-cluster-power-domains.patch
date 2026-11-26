@@ -22,7 +22,7 @@ Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
  1 file changed, 15 insertions(+), 9 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 3ef7aed55926..68a0f953efb7 100644
+index 3ef7aed559264..68a0f953efb7e 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -358,53 +358,59 @@ psci {
@@ -94,3 +94,6 @@ index 3ef7aed55926..68a0f953efb7 100644
  			#power-domain-cells = <0>;
  			domain-idle-states = <&cluster_cl5>;
  			power-domains = <&system_pd>;
+-- 
+2.43.0
+

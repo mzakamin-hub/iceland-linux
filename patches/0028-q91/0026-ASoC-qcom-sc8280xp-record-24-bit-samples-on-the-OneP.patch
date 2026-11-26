@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 2 Nov 2026 09:19:09 +0200
-Subject: [PATCH 26/32] ASoC: qcom: sc8280xp: record 24-bit samples on the
- OnePlus Pad 4
+Subject: [PATCH] ASoC: qcom: sc8280xp: record 24-bit samples on the OnePlus
+ Pad 4
 
 The microphones of the OnePlus Pad 4 reach the DSP through
 TX_CODEC_DMA_TX_3, which the back-end fixup runs at 16 bit. Stock
@@ -22,7 +22,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 7 insertions(+)
 
 diff --git a/sound/soc/qcom/sc8280xp.c b/sound/soc/qcom/sc8280xp.c
-index a4f2a8a973b6..f8cd37d61c47 100644
+index 134bc033d5cce..563c949220d27 100644
 --- a/sound/soc/qcom/sc8280xp.c
 +++ b/sound/soc/qcom/sc8280xp.c
 @@ -95,6 +95,7 @@ struct qcom_snd_soc_common {
@@ -53,3 +53,6 @@ index a4f2a8a973b6..f8cd37d61c47 100644
  };
  
  static const struct qcom_snd_soc_common eliza_priv_data = {
+-- 
+2.43.0
+

@@ -9,7 +9,7 @@ Subject: [PATCH] ICELAND: Add KTZ8869 nodes
  1 file changed, 49 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index f9a56dad62e0..c8d9673808fb 100644
+index f9a56dad62e05..c8d9673808fbf 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -39,6 +39,32 @@ aliases {
@@ -75,3 +75,6 @@ index f9a56dad62e0..c8d9673808fb 100644
  &pcie0 {
  	pinctrl-0 = <&pcie0_default_state>;
  	pinctrl-names = "default";
+-- 
+2.43.0
+

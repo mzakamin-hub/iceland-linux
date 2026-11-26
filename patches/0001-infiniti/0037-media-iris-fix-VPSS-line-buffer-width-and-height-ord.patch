@@ -18,7 +18,7 @@ Reviewed-by: Bryan O'Donoghue <bryan.odonoghue@linaro.org>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
-index 61b4e50e4135..8ba611e15962 100644
+index 61b4e50e4135f..8ba611e159628 100644
 --- a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
 +++ b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
 @@ -2427,8 +2427,8 @@ static u32 hfi_vpu4x_buffer_line_enc(u32 frame_width, u32 frame_height,
@@ -32,3 +32,6 @@ index 61b4e50e4135..8ba611e15962 100644
  
  	return se_lb_size + te_lb_size + fe_lb_size + md_lb_size + dma_opb_lb_size +
  		dse_lb_size + size_vpss_lb_enc;
+-- 
+2.43.0
+

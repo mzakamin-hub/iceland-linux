@@ -29,7 +29,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 16 insertions(+)
 
 diff --git a/drivers/cpuidle/cpuidle-psci-domain.c b/drivers/cpuidle/cpuidle-psci-domain.c
-index da036930934c..8830453a70af 100644
+index da036930934c9..8830453a70af7 100644
 --- a/drivers/cpuidle/cpuidle-psci-domain.c
 +++ b/drivers/cpuidle/cpuidle-psci-domain.c
 @@ -45,6 +45,17 @@ static bool psci_pd_is_cluster(struct generic_pm_domain *pd)
@@ -62,3 +62,6 @@ index da036930934c..8830453a70af 100644
  	if (!state->data)
  		return 0;
  
+-- 
+2.43.0
+

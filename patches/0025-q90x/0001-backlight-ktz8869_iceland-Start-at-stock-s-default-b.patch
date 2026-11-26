@@ -22,7 +22,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 5 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/video/backlight/ktz8869_iceland.c b/drivers/video/backlight/ktz8869_iceland.c
-index 8930f570fc68..a8de2dbd2e4a 100644
+index 8930f570fc68c..a8de2dbd2e4ad 100644
 --- a/drivers/video/backlight/ktz8869_iceland.c
 +++ b/drivers/video/backlight/ktz8869_iceland.c
 @@ -14,7 +14,11 @@
@@ -38,3 +38,6 @@ index 8930f570fc68..a8de2dbd2e4a 100644
  #define MAX_BRIGHTNESS 4095
  #define REG_MAX 0x15
  
+-- 
+2.43.0
+

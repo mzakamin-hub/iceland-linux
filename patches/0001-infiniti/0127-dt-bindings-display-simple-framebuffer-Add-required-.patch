@@ -12,7 +12,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 4 insertions(+)
 
 diff --git a/Documentation/devicetree/bindings/display/simple-framebuffer.yaml b/Documentation/devicetree/bindings/display/simple-framebuffer.yaml
-index 45ffdebc9d86..a201c96d740c 100644
+index 45ffdebc9d86b..a201c96d740c3 100644
 --- a/Documentation/devicetree/bindings/display/simple-framebuffer.yaml
 +++ b/Documentation/devicetree/bindings/display/simple-framebuffer.yaml
 @@ -79,6 +79,10 @@ properties:
@@ -26,3 +26,6 @@ index 45ffdebc9d86..a201c96d740c 100644
    width:
      $ref: /schemas/types.yaml#/definitions/uint32
      description: Width of the framebuffer in pixels
+-- 
+2.43.0
+

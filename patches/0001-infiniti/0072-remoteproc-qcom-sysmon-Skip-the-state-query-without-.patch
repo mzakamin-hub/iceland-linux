@@ -15,7 +15,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/remoteproc/qcom_sysmon.c b/drivers/remoteproc/qcom_sysmon.c
-index 61e1038328e8..54a6b25201f0 100644
+index 61e1038328e83..54a6b25201f08 100644
 --- a/drivers/remoteproc/qcom_sysmon.c
 +++ b/drivers/remoteproc/qcom_sysmon.c
 @@ -739,7 +739,7 @@ bool qcom_sysmon_shutdown_irq_state(struct qcom_sysmon *sysmon)
@@ -27,3 +27,6 @@ index 61e1038328e8..54a6b25201f0 100644
  		return false;
  
  	ret = irq_get_irqchip_state(sysmon->shutdown_irq,
+-- 
+2.43.0
+

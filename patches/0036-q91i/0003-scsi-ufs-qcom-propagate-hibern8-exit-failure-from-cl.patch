@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: jaewun <jaewun@users.noreply.github.com>
 Date: Sat, 7 Nov 2026 16:56:19 +0200
-Subject: [PATCH 3/5] scsi: ufs: qcom: propagate hibern8 exit failure from
+Subject: [PATCH] scsi: ufs: qcom: propagate hibern8 exit failure from
  clk_scale_notify
 
 ufs_qcom_clk_scale_notify() wakes the link with ufshcd_uic_hibern8_exit()
@@ -32,7 +32,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
-index 095aa5870..d33b60b05 100644
+index 40ed27e9d1900..f97ef245fb34b 100644
 --- a/drivers/ufs/host/ufs-qcom.c
 +++ b/drivers/ufs/host/ufs-qcom.c
 @@ -2019,10 +2019,10 @@ static int ufs_qcom_clk_scale_notify(struct ufs_hba *hba, bool scale_up,

@@ -31,7 +31,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 15 insertions(+), 3 deletions(-)
 
 diff --git a/sound/soc/codecs/wcd-clsh-v2.c b/sound/soc/codecs/wcd-clsh-v2.c
-index 62ca22ea0f3b..4ea84d00c6ae 100644
+index 62ca22ea0f3b6..4ea84d00c6ae4 100644
 --- a/sound/soc/codecs/wcd-clsh-v2.c
 +++ b/sound/soc/codecs/wcd-clsh-v2.c
 @@ -449,6 +449,18 @@ static void wcd_clsh_v3_force_iq_ctl(struct snd_soc_component *component,
@@ -80,3 +80,6 @@ index 62ca22ea0f3b..4ea84d00c6ae 100644
  		wcd_clsh_v3_flyback_ctrl(component, ctrl, mode, true);
  		wcd_clsh_v3_set_flyback_current(component, mode);
  		wcd_clsh_v3_set_buck_mode(component, mode);
+-- 
+2.43.0
+

@@ -26,10 +26,10 @@ Signed-off-by: HOYOUNG SEO <hy50.seo@samsung.com>
  1 file changed, 14 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/ufs/core/ufshcd.c b/drivers/ufs/core/ufshcd.c
-index 5cbbebcd148b..a9e07ae286a1 100644
+index 327886a705d02..40457786071e4 100644
 --- a/drivers/ufs/core/ufshcd.c
 +++ b/drivers/ufs/core/ufshcd.c
-@@ -4700,10 +4700,20 @@ EXPORT_SYMBOL_GPL(ufshcd_uic_change_pwr_mode);
+@@ -4702,10 +4702,20 @@ EXPORT_SYMBOL_GPL(ufshcd_uic_change_pwr_mode);
  
  int ufshcd_link_recovery(struct ufs_hba *hba)
  {
@@ -50,7 +50,7 @@ index 5cbbebcd148b..a9e07ae286a1 100644
  	hba->ufshcd_state = UFSHCD_STATE_RESET;
  	ufshcd_set_eh_in_progress(hba);
  	spin_unlock_irqrestore(&hba->host->host_lock, flags);
-@@ -4714,8 +4724,11 @@ int ufshcd_link_recovery(struct ufs_hba *hba)
+@@ -4716,8 +4726,11 @@ int ufshcd_link_recovery(struct ufs_hba *hba)
  	ret = ufshcd_host_reset_and_restore(hba);
  
  	spin_lock_irqsave(&hba->host->host_lock, flags);
@@ -63,3 +63,6 @@ index 5cbbebcd148b..a9e07ae286a1 100644
  	ufshcd_clear_eh_in_progress(hba);
  	spin_unlock_irqrestore(&hba->host->host_lock, flags);
  
+-- 
+2.43.0
+

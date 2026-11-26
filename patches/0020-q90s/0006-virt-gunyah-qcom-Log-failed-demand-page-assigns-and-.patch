@@ -21,7 +21,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 67 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/virt/gunyah/gunyah_qcom.c b/drivers/virt/gunyah/gunyah_qcom.c
-index c9c2c3624a4b..490109b0ae05 100644
+index c9c2c3624a4bd..490109b0ae055 100644
 --- a/drivers/virt/gunyah/gunyah_qcom.c
 +++ b/drivers/virt/gunyah/gunyah_qcom.c
 @@ -12,6 +12,54 @@
@@ -130,3 +130,6 @@ index c9c2c3624a4b..490109b0ae05 100644
  }
  
  static struct gunyah_rm_platform_ops qcom_scm_gunyah_rm_platform_ops = {
+-- 
+2.43.0
+

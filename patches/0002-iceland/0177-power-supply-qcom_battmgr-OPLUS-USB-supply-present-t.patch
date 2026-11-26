@@ -20,7 +20,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 28 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 0a9b22cbf500..c7de330bf586 100644
+index 14453ebdc7fc2..b4e40f61b5ebf 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -1498,6 +1498,20 @@ static int qcom_battmgr_usb_get_property(struct power_supply *psy,
@@ -74,3 +74,6 @@ index 0a9b22cbf500..c7de330bf586 100644
  	.get_property = qcom_battmgr_usb_get_property,
  	.set_property = qcom_battmgr_usb_set_property,
  	.property_is_writeable = qcom_battmgr_usb_is_writeable,
+-- 
+2.43.0
+

@@ -27,7 +27,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  create mode 100644 drivers/thermal/thermal-weighted.c
 
 diff --git a/drivers/thermal/Kconfig b/drivers/thermal/Kconfig
-index 810eeccedfba..e18ec741897d 100644
+index 810eeccedfbab..e18ec741897d2 100644
 --- a/drivers/thermal/Kconfig
 +++ b/drivers/thermal/Kconfig
 @@ -477,6 +477,18 @@ source "drivers/thermal/spacemit/Kconfig"
@@ -50,7 +50,7 @@ index 810eeccedfba..e18ec741897d 100644
  	tristate "Generic ADC based thermal sensor"
  	depends on IIO
 diff --git a/drivers/thermal/Makefile b/drivers/thermal/Makefile
-index 3b249195c088..a44b3baef93e 100644
+index 3b249195c088e..a44b3baef93e6 100644
 --- a/drivers/thermal/Makefile
 +++ b/drivers/thermal/Makefile
 @@ -63,6 +63,7 @@ obj-y				+= tegra/
@@ -63,7 +63,7 @@ index 3b249195c088..a44b3baef93e 100644
  obj-y				+= spacemit/
 diff --git a/drivers/thermal/thermal-weighted.c b/drivers/thermal/thermal-weighted.c
 new file mode 100644
-index 000000000000..b9a35feb8c17
+index 0000000000000..b9a35feb8c174
 --- /dev/null
 +++ b/drivers/thermal/thermal-weighted.c
 @@ -0,0 +1,132 @@
@@ -199,3 +199,6 @@ index 000000000000..b9a35feb8c17
 +
 +MODULE_DESCRIPTION("Weighted average of thermal zones as a thermal sensor");
 +MODULE_LICENSE("GPL");
+-- 
+2.43.0
+

@@ -31,7 +31,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 27 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/input/keyboard/oneplus-pogo-keyboard.c b/drivers/input/keyboard/oneplus-pogo-keyboard.c
-index b5fdbebf9636..1fe56c886472 100644
+index b5fdbebf96364..1fe56c8864727 100644
 --- a/drivers/input/keyboard/oneplus-pogo-keyboard.c
 +++ b/drivers/input/keyboard/oneplus-pogo-keyboard.c
 @@ -414,6 +414,7 @@ struct pogo {
@@ -118,3 +118,6 @@ index b5fdbebf9636..1fe56c886472 100644
  			pogo_send_sleep(pogo, false);
  			schedule_work(&pogo->led_work);
  		}
+-- 
+2.43.0
+

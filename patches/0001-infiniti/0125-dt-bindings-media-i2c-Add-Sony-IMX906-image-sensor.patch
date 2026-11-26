@@ -11,7 +11,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
 
 diff --git a/Documentation/devicetree/bindings/media/i2c/sony,imx906.yaml b/Documentation/devicetree/bindings/media/i2c/sony,imx906.yaml
 new file mode 100644
-index 000000000000..7aece8a24b3b
+index 0000000000000..7aece8a24b3b7
 --- /dev/null
 +++ b/Documentation/devicetree/bindings/media/i2c/sony,imx906.yaml
 @@ -0,0 +1,110 @@
@@ -125,3 +125,6 @@ index 000000000000..7aece8a24b3b
 +        };
 +    };
 +...
+-- 
+2.43.0
+

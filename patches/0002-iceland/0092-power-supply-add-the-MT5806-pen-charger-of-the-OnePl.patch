@@ -52,7 +52,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  create mode 100644 drivers/power/supply/mt5806_pen_charger.c
 
 diff --git a/drivers/power/supply/Kconfig b/drivers/power/supply/Kconfig
-index ee7dc5f2617a..4679a32e6f2f 100644
+index ee7dc5f2617a4..4679a32e6f2fd 100644
 --- a/drivers/power/supply/Kconfig
 +++ b/drivers/power/supply/Kconfig
 @@ -1192,6 +1192,19 @@ config FUEL_GAUGE_MM8013
@@ -76,7 +76,7 @@ index ee7dc5f2617a..4679a32e6f2f 100644
  	tristate "Apple SMC Battery and Power Driver"
  	depends on MFD_MACSMC
 diff --git a/drivers/power/supply/Makefile b/drivers/power/supply/Makefile
-index f3c0d1006c1a..694077712ec1 100644
+index f3c0d1006c1a2..694077712ec12 100644
 --- a/drivers/power/supply/Makefile
 +++ b/drivers/power/supply/Makefile
 @@ -135,3 +135,4 @@ obj-$(CONFIG_CHARGER_QCOM_SMB2)	+= qcom_smbx.o
@@ -86,7 +86,7 @@ index f3c0d1006c1a..694077712ec1 100644
 +obj-$(CONFIG_CHARGER_MT5806_PEN)	+= mt5806_pen_charger.o
 diff --git a/drivers/power/supply/mt5806_pen_charger.c b/drivers/power/supply/mt5806_pen_charger.c
 new file mode 100644
-index 000000000000..f450871bce4a
+index 0000000000000..f450871bce4a8
 --- /dev/null
 +++ b/drivers/power/supply/mt5806_pen_charger.c
 @@ -0,0 +1,1637 @@
@@ -1727,3 +1727,6 @@ index 000000000000..f450871bce4a
 +
 +MODULE_DESCRIPTION("Maxic MT5806 pen charger of the OnePlus Pad 4");
 +MODULE_LICENSE("GPL");
+-- 
+2.43.0
+

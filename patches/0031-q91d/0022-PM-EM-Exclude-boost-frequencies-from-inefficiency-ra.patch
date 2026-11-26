@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Guo Chen <guo.chen@oss.qualcomm.com>
 Date: Tue, 3 Nov 2026 19:21:28 +0800
-Subject: [PATCH 22/27] PM: EM: Exclude boost frequencies from inefficiency
- ranking
+Subject: [PATCH] PM: EM: Exclude boost frequencies from inefficiency ranking
 
 em_compute_costs() ranks all the frequencies of the table, boost ones
 included. A non-boost frequency can be marked inefficient only because
@@ -30,10 +29,10 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  2 files changed, 40 insertions(+)
 
 diff --git a/include/linux/cpufreq.h b/include/linux/cpufreq.h
-index 2b34a9ff7..5a7590a5f 100644
+index cc92ed07664fa..51fae4aa9438c 100644
 --- a/include/linux/cpufreq.h
 +++ b/include/linux/cpufreq.h
-@@ -1157,6 +1157,24 @@ cpufreq_table_set_inefficient(struct cpufreq_policy *policy,
+@@ -1160,6 +1160,24 @@ cpufreq_table_set_inefficient(struct cpufreq_policy *policy,
  	return -EINVAL;
  }
  
@@ -58,7 +57,7 @@ index 2b34a9ff7..5a7590a5f 100644
  static inline int parse_perf_domain(int cpu, const char *list_name,
  				    const char *cell_name,
  				    struct of_phandle_args *args)
-@@ -1221,6 +1239,12 @@ cpufreq_table_set_inefficient(struct cpufreq_policy *policy,
+@@ -1224,6 +1242,12 @@ cpufreq_table_set_inefficient(struct cpufreq_policy *policy,
  	return -EINVAL;
  }
  
@@ -72,10 +71,10 @@ index 2b34a9ff7..5a7590a5f 100644
  						     const char *cell_name, struct cpumask *cpumask,
  						     struct of_phandle_args *pargs)
 diff --git a/kernel/power/energy_model.c b/kernel/power/energy_model.c
-index d19a65461..5b1d095fd 100644
+index 23bc3e798a938..6b47343c15595 100644
 --- a/kernel/power/energy_model.c
 +++ b/kernel/power/energy_model.c
-@@ -255,15 +255,24 @@ static int em_compute_costs(struct device *dev, struct em_perf_state *table,
+@@ -254,15 +254,24 @@ static int em_compute_costs(struct device *dev, struct em_perf_state *table,
  			    unsigned long flags)
  {
  	unsigned long prev_cost = ULONG_MAX;
@@ -100,7 +99,7 @@ index d19a65461..5b1d095fd 100644
  
  		if ((flags & EM_PERF_DOMAIN_ARTIFICIAL) && cb->get_cost) {
  			ret = cb->get_cost(dev, table[i].frequency, &cost);
-@@ -284,6 +293,13 @@ static int em_compute_costs(struct device *dev, struct em_perf_state *table,
+@@ -283,6 +292,13 @@ static int em_compute_costs(struct device *dev, struct em_perf_state *table,
  			table[i].flags = EM_PERF_STATE_INEFFICIENT;
  			dev_dbg(dev, "EM: OPP:%lu is inefficient\n",
  				table[i].frequency);

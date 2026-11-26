@@ -12,7 +12,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 21 insertions(+)
 
 diff --git a/drivers/power/sequencing/pwrseq-qcom-wcn.c b/drivers/power/sequencing/pwrseq-qcom-wcn.c
-index 636dd7e63891..31d7ac32b54f 100644
+index e51b655add01c..402d47f7e6dc2 100644
 --- a/drivers/power/sequencing/pwrseq-qcom-wcn.c
 +++ b/drivers/power/sequencing/pwrseq-qcom-wcn.c
 @@ -431,6 +431,23 @@ static const struct pwrseq_qcom_wcn_pdata pwrseq_wcn7850_of_data = {
@@ -39,7 +39,7 @@ index 636dd7e63891..31d7ac32b54f 100644
  static int pwrseq_qcom_wcn_match_regulator(struct pwrseq_device *pwrseq,
  					   struct device *dev,
  					   const char *name)
-@@ -592,6 +609,10 @@ static const struct of_device_id pwrseq_qcom_wcn_of_match[] = {
+@@ -591,6 +608,10 @@ static const struct of_device_id pwrseq_qcom_wcn_of_match[] = {
  		.compatible = "qcom,wcn7850-pmu",
  		.data = &pwrseq_wcn7850_of_data,
  	},
@@ -50,3 +50,6 @@ index 636dd7e63891..31d7ac32b54f 100644
  	{
  		.compatible = "qcom,wcn6750-pmu",
  		.data = &pwrseq_wcn6750_of_data,
+-- 
+2.43.0
+

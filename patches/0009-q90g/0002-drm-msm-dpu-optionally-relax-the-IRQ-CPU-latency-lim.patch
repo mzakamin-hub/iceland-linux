@@ -34,7 +34,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  3 files changed, 113 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
-index 88c7c2ab4d41..97fa68516346 100644
+index 88c7c2ab4d411..97fa68516346b 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 @@ -155,6 +155,8 @@ enum dpu_enc_rc_states {
@@ -135,7 +135,7 @@ index 88c7c2ab4d41..97fa68516346 100644
  		return;
  
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
-index 8d01ac5be62c..2e53bb503c62 100644
+index 27429ef857780..82eca09233c82 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
 @@ -1442,6 +1442,34 @@ static unsigned int dpu_kms_irq_cpu(struct dpu_kms *dpu_kms)
@@ -245,7 +245,7 @@ index 8d01ac5be62c..2e53bb503c62 100644
  {
  	struct device *dev = &pdev->dev;
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.h
-index 32e81dd561af..90059c767452 100644
+index 32e81dd561afb..90059c7674528 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.h
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.h
 @@ -107,9 +107,15 @@ struct dpu_kms {
@@ -272,3 +272,6 @@ index 32e81dd561af..90059c767452 100644
  
  #define to_dpu_global_state(x) container_of(x, struct dpu_global_state, base)
  
+-- 
+2.43.0
+

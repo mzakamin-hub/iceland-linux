@@ -19,7 +19,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 41 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index f188ba29c392..586ddec24ba0 100644
+index f188ba29c392d..586ddec24ba05 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -313,6 +313,20 @@ scmi_perf: protocol@13 {
@@ -84,3 +84,6 @@ index f188ba29c392..586ddec24ba0 100644
  		nsp_noc: interconnect@260c0000 {
  			compatible = "qcom,kaanapali-nsp-noc";
  			reg = <0x0 0x260c0000 0x0 0x21280>;
+-- 
+2.43.0
+

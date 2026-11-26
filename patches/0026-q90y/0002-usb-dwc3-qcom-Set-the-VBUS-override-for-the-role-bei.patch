@@ -31,7 +31,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 10 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/usb/dwc3/dwc3-qcom.c b/drivers/usb/dwc3/dwc3-qcom.c
-index fddad078a214..3fab555ecee4 100644
+index 55cd50a9f5cac..41185d36bdf2a 100644
 --- a/drivers/usb/dwc3/dwc3-qcom.c
 +++ b/drivers/usb/dwc3/dwc3-qcom.c
 @@ -737,19 +737,21 @@ static void dwc3_qcom_set_role_notifier(struct dwc3 *dwc, enum usb_role next_rol
@@ -72,3 +72,6 @@ index fddad078a214..3fab555ecee4 100644
  	pm_runtime_mark_last_busy(qcom->dev);
  }
  
+-- 
+2.43.0
+

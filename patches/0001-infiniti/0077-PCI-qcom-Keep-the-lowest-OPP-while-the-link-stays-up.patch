@@ -13,7 +13,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 22 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/pci/controller/dwc/pcie-qcom.c b/drivers/pci/controller/dwc/pcie-qcom.c
-index d903f10211c2..8d39de9ab3db 100644
+index efad7c8d15792..e32ed9dd24bb7 100644
 --- a/drivers/pci/controller/dwc/pcie-qcom.c
 +++ b/drivers/pci/controller/dwc/pcie-qcom.c
 @@ -1855,6 +1855,22 @@ static int qcom_pcie_set_max_opp(struct device *dev)
@@ -62,3 +62,6 @@ index d903f10211c2..8d39de9ab3db 100644
  		}
  	}
  	return ret;
+-- 
+2.43.0
+

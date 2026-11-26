@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sun, 8 Nov 2026 00:28:07 +0200
-Subject: [PATCH 30/30] drm/msm/dpu: no GC (gamma LUT) on the Kaanapali DSPP
+Subject: [PATCH] drm/msm/dpu: no GC (gamma LUT) on the Kaanapali DSPP
 
 Kaanapali (DPU 13.0) reuses sm8750_dspp_sblk, which declares a GC v1.8
 block at 0x17c0. With a GC block the CRTC exposes GAMMA_LUT (1024
@@ -25,8 +25,6 @@ it can be dropped. Keep it only if a GAMMA_LUT written on the current
 kernel shows no effect on screen / on the interface CRC, while a CTM
 does; drop it if the GAMMA_LUT works.
 
-Suggested-by: Armada <noreply@armada.local>
-Based-on: armada-os/armada packages/kernel/patches/0068-drm-msm-dpu-lutdma-dspp-igc-gamut.patch (finding only, no code)
 Link: https://github.com/armada-os/armada/tree/main/packages/kernel/patches (0068-drm-msm-dpu-lutdma-dspp-igc-gamut.patch)
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 Signed-off-by: mzak <mzak.amin@gmail.com>
@@ -36,7 +34,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  2 files changed, 17 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_13_0_kaanapali.h b/drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_13_0_kaanapali.h
-index a0a8ea822..3d12e0d33 100644
+index a0a8ea82209a6..3d12e0d3320ac 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_13_0_kaanapali.h
 +++ b/drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_13_0_kaanapali.h
 @@ -195,19 +195,19 @@ static const struct dpu_dspp_cfg kaanapali_dspp[] = {
@@ -64,7 +62,7 @@ index a0a8ea822..3d12e0d33 100644
  };
  
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.c
-index 107150a85..a6cb64eae 100644
+index 107150a8553fe..a6cb64eaeb57d 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.c
 @@ -432,6 +432,19 @@ static const struct dpu_dspp_sub_blks sm8750_dspp_sblk = {

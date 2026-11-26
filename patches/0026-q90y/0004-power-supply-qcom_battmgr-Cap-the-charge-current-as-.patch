@@ -38,7 +38,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  2 files changed, 180 insertions(+)
 
 diff --git a/drivers/power/supply/Kconfig b/drivers/power/supply/Kconfig
-index 4679a32e6f2f..541c55104d96 100644
+index 4679a32e6f2fd..541c55104d964 100644
 --- a/drivers/power/supply/Kconfig
 +++ b/drivers/power/supply/Kconfig
 @@ -211,6 +211,7 @@ config BATTERY_PMU
@@ -50,7 +50,7 @@ index 4679a32e6f2f..541c55104d96 100644
  	help
  	  Say Y here to enable the Qualcomm PMIC GLINK power supply driver,
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index e8455a22c610..bc36d0496581 100644
+index b9a11275a6bcb..bd6a468cbdf17 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -19,6 +19,7 @@
@@ -285,3 +285,6 @@ index e8455a22c610..bc36d0496581 100644
  	pmic_glink_client_register(battmgr->client);
  
  	return 0;
+-- 
+2.43.0
+

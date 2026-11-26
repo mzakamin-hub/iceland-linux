@@ -27,7 +27,7 @@ Signed-off-by: Birk Skyum <birk.skyum@pm.me>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/i2c/busses/i2c-qcom-cci.c b/drivers/i2c/busses/i2c-qcom-cci.c
-index 51ce174d5740..62b0fcb20e7a 100644
+index 7a1c5d41cd05a..b071f393189e3 100644
 --- a/drivers/i2c/busses/i2c-qcom-cci.c
 +++ b/drivers/i2c/busses/i2c-qcom-cci.c
 @@ -794,7 +794,7 @@ static int cci_probe(struct platform_device *pdev)
@@ -39,3 +39,6 @@ index 51ce174d5740..62b0fcb20e7a 100644
  	ret = devm_pm_runtime_set_active_enabled(dev);
  	if (ret)
  		goto disable_clocks;
+-- 
+2.43.0
+

@@ -24,7 +24,7 @@ Signed-off-by: Akhil P Oommen <akhilpo@oss.qualcomm.com>
  4 files changed, 32 insertions(+), 19 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gpu.c b/drivers/gpu/drm/msm/adreno/a6xx_gpu.c
-index b21f860255bc..32e645b615b7 100644
+index b21f860255bcf..32e645b615b7a 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gpu.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gpu.c
 @@ -2250,6 +2250,7 @@ static int a6xx_gmu_pm_suspend(struct msm_gpu *gpu)
@@ -44,7 +44,7 @@ index b21f860255bc..32e645b615b7 100644
  
  	return 0;
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
-index 8be039d5061f..f7dae534cc14 100644
+index 8be039d5061fc..f7dae534cc14d 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
 @@ -314,6 +314,7 @@ void a6xx_preempt_hw_init(struct msm_gpu *gpu);
@@ -56,7 +56,7 @@ index 8be039d5061f..f7dae534cc14 100644
  		struct a6xx_gpu *a6xx_gpu, struct msm_gpu_submitqueue *queue);
  int a6xx_preempt_submitqueue_setup(struct msm_gpu *gpu,
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_preempt.c b/drivers/gpu/drm/msm/adreno/a6xx_preempt.c
-index e2669fee65a0..6712dbac24ce 100644
+index e2669fee65a01..6712dbac24ceb 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_preempt.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_preempt.c
 @@ -140,12 +140,17 @@ void a6xx_preempt_hw_init(struct msm_gpu *gpu)
@@ -128,7 +128,7 @@ index e2669fee65a0..6712dbac24ce 100644
  }
  
 diff --git a/drivers/gpu/drm/msm/adreno/a8xx_preempt.c b/drivers/gpu/drm/msm/adreno/a8xx_preempt.c
-index 91e095dfef52..7dc94970cfb3 100644
+index 91e095dfef525..7dc94970cfb30 100644
 --- a/drivers/gpu/drm/msm/adreno/a8xx_preempt.c
 +++ b/drivers/gpu/drm/msm/adreno/a8xx_preempt.c
 @@ -121,12 +121,17 @@ void a8xx_preempt_hw_init(struct msm_gpu *gpu)
@@ -152,3 +152,6 @@ index 91e095dfef52..7dc94970cfb3 100644
  	}
  
  	/* Write a 0 to signal that we aren't switching pagetables */
+-- 
+2.43.0
+

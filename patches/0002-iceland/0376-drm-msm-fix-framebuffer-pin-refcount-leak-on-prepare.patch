@@ -33,7 +33,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 23 insertions(+), 9 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/msm_fb.c b/drivers/gpu/drm/msm/msm_fb.c
-index a38e5b3a1d1e..792d47b4acc4 100644
+index a38e5b3a1d1e9..792d47b4acc43 100644
 --- a/drivers/gpu/drm/msm/msm_fb.c
 +++ b/drivers/gpu/drm/msm/msm_fb.c
 @@ -80,6 +80,18 @@ void msm_framebuffer_describe(struct drm_framebuffer *fb, struct seq_file *m)
@@ -98,3 +98,6 @@ index a38e5b3a1d1e..792d47b4acc4 100644
  }
  
  uint32_t msm_framebuffer_iova(struct drm_framebuffer *fb, int plane)
+-- 
+2.43.0
+

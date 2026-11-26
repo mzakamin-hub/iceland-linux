@@ -24,10 +24,10 @@ Signed-off-by: Daizhuang Bai <daizhuang.bai@oss.qualcomm.com>
  1 file changed, 68 insertions(+), 56 deletions(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/mac.c b/drivers/net/wireless/ath/ath12k/mac.c
-index 63a57145e41e..d8d233eb90ce 100644
+index 6e09d9cfc1929..85739893cc6ca 100644
 --- a/drivers/net/wireless/ath/ath12k/mac.c
 +++ b/drivers/net/wireless/ath/ath12k/mac.c
-@@ -4442,12 +4442,68 @@ static int ath12k_mac_fils_discovery(struct ath12k_link_vif *arvif,
+@@ -4453,12 +4453,68 @@ static int ath12k_mac_fils_discovery(struct ath12k_link_vif *arvif,
  	return ret;
  }
  
@@ -96,7 +96,7 @@ index 63a57145e41e..d8d233eb90ce 100644
  	struct ieee80211_bss_conf *info;
  	struct ath12k_link_vif *arvif;
  	struct ieee80211_sta *sta;
-@@ -4511,63 +4567,26 @@ void ath12k_mac_op_vif_cfg_changed(struct ieee80211_hw *hw,
+@@ -4522,63 +4578,26 @@ void ath12k_mac_op_vif_cfg_changed(struct ieee80211_hw *hw,
  			}
  		}
  	}
@@ -172,7 +172,7 @@ index 63a57145e41e..d8d233eb90ce 100644
  
  static bool ath12k_mac_supports_tpc(struct ath12k *ar, struct ath12k_vif *ahvif,
  				    const struct cfg80211_chan_def *chandef)
-@@ -4772,7 +4791,6 @@ static void ath12k_mac_bss_info_changed(struct ath12k *ar,
+@@ -4783,7 +4802,6 @@ static void ath12k_mac_bss_info_changed(struct ath12k *ar,
  {
  	struct ath12k_vif *ahvif = arvif->ahvif;
  	struct ieee80211_vif *vif = ath12k_ahvif_to_vif(ahvif);
@@ -180,7 +180,7 @@ index 63a57145e41e..d8d233eb90ce 100644
  	struct ath12k_link_vif *tx_arvif;
  	struct cfg80211_chan_def def;
  	u32 param_id, param_value;
-@@ -5110,12 +5128,6 @@ static void ath12k_mac_bss_info_changed(struct ath12k *ar,
+@@ -5121,12 +5139,6 @@ static void ath12k_mac_bss_info_changed(struct ath12k *ar,
  	}
  
  	ath12k_mac_fils_discovery(arvif, info);
@@ -193,3 +193,6 @@ index 63a57145e41e..d8d233eb90ce 100644
  }
  
  static struct ath12k_vif_cache *ath12k_ahvif_get_link_cache(struct ath12k_vif *ahvif,
+-- 
+2.43.0
+

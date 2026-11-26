@@ -16,7 +16,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 5 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index ccae84bf9513..c503109a9244 100644
+index ccae84bf9513e..c503109a92446 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1437,6 +1437,11 @@ &i2c_master_hub {
@@ -31,3 +31,6 @@ index ccae84bf9513..c503109a9244 100644
  /*
   * No WSA amplifier on this board (the speakers are TFA9865 on the primary
   * TDM port): both WSA macros off, as in the vendor tree.
+-- 
+2.43.0
+

@@ -18,7 +18,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  6 files changed, 153 insertions(+), 23 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
-index ac82b69aedf6..acd170f8f27d 100644
+index ac82b69aedf6b..acd170f8f27d7 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.c
 @@ -587,6 +587,19 @@ static void dpu_hw_intf_disable_autorefresh(struct dpu_hw_intf *intf,
@@ -42,7 +42,7 @@ index ac82b69aedf6..acd170f8f27d 100644
  					     struct dpu_hw_intf_cmd_mode_cfg *cmd_mode_cfg)
  {
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.h
-index badd26305fc9..4d135ae80b55 100644
+index badd26305fc94..4d135ae80b555 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.h
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.h
 @@ -132,4 +132,6 @@ struct dpu_hw_intf *dpu_hw_intf_init(struct drm_device *dev,
@@ -53,7 +53,7 @@ index badd26305fc9..4d135ae80b55 100644
 +
  #endif /*_DPU_HW_INTF_H */
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
-index da3556eb6ecc..9be9dd1c2cde 100644
+index 1b6286dccfc00..929e062c008ea 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
 @@ -10,7 +10,9 @@
@@ -117,7 +117,7 @@ index da3556eb6ecc..9be9dd1c2cde 100644
  	.probe = dpu_dev_probe,
  	.remove = dpu_dev_remove,
 diff --git a/drivers/gpu/drm/msm/msm_drv.h b/drivers/gpu/drm/msm/msm_drv.h
-index 2840e8a5052d..2e5403847156 100644
+index 2840e8a5052d7..2e5403847156b 100644
 --- a/drivers/gpu/drm/msm/msm_drv.h
 +++ b/drivers/gpu/drm/msm/msm_drv.h
 @@ -412,19 +412,26 @@ static inline void msm_mdp_unregister(void) {}
@@ -148,7 +148,7 @@ index 2840e8a5052d..2e5403847156 100644
  
  #ifdef CONFIG_DEBUG_FS
 diff --git a/drivers/gpu/drm/msm/msm_kms.c b/drivers/gpu/drm/msm/msm_kms.c
-index e5d0ea629448..54f42aa62ae3 100644
+index e5d0ea6294484..54f42aa62ae34 100644
 --- a/drivers/gpu/drm/msm/msm_kms.c
 +++ b/drivers/gpu/drm/msm/msm_kms.c
 @@ -268,6 +268,9 @@ int msm_drm_kms_init(struct device *dev, const struct drm_driver *drv)
@@ -162,7 +162,7 @@ index e5d0ea629448..54f42aa62ae3 100644
  	ret = aperture_remove_all_conflicting_devices(drv->name);
  	if (ret)
 diff --git a/drivers/gpu/drm/msm/msm_mdss.c b/drivers/gpu/drm/msm/msm_mdss.c
-index e69b122f2687..1bc80e4ddb2e 100644
+index 259d362475c81..85e24b94e3b01 100644
 --- a/drivers/gpu/drm/msm/msm_mdss.c
 +++ b/drivers/gpu/drm/msm/msm_mdss.c
 @@ -44,6 +44,7 @@ struct msm_mdss {
@@ -317,7 +317,7 @@ index e69b122f2687..1bc80e4ddb2e 100644
  /*
   * MDP5 MDSS uses at most three specified clocks.
   */
-@@ -384,10 +444,6 @@ static struct msm_mdss *msm_mdss_init(struct platform_device *pdev, bool is_mdp5
+@@ -385,10 +445,6 @@ static struct msm_mdss *msm_mdss_init(struct platform_device *pdev, bool is_mdp5
  	int ret;
  	int irq;
  
@@ -325,10 +325,10 @@ index e69b122f2687..1bc80e4ddb2e 100644
 -	if (ret)
 -		return ERR_PTR(ret);
 -
- 	msm_mdss = devm_kzalloc(&pdev->dev, sizeof(*msm_mdss), GFP_KERNEL);
+ 	msm_mdss = devm_kzalloc_obj(&pdev->dev, *msm_mdss);
  	if (!msm_mdss)
  		return ERR_PTR(-ENOMEM);
-@@ -425,6 +481,10 @@ static struct msm_mdss *msm_mdss_init(struct platform_device *pdev, bool is_mdp5
+@@ -426,6 +482,10 @@ static struct msm_mdss *msm_mdss_init(struct platform_device *pdev, bool is_mdp5
  
  	msm_mdss->dev = &pdev->dev;
  
@@ -339,3 +339,6 @@ index e69b122f2687..1bc80e4ddb2e 100644
  	irq = platform_get_irq(pdev, 0);
  	if (irq < 0)
  		return ERR_PTR(irq);
+-- 
+2.43.0
+

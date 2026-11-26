@@ -22,7 +22,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 6 insertions(+), 2 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 23d085e8762b..ccae84bf9513 100644
+index 23d085e8762ba..ccae84bf9513e 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -466,12 +466,16 @@ wcn7860-pmu {
@@ -44,3 +44,6 @@ index 23d085e8762b..ccae84bf9513 100644
  
  		clocks = <&rpmhcc RPMH_RF_CLK1>;
  
+-- 
+2.43.0
+

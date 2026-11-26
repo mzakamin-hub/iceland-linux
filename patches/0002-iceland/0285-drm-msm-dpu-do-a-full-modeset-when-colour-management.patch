@@ -27,7 +27,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 15 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
-index 97ba700319ac..2744fc6311c4 100644
+index 97ba700319ac9..2744fc6311c40 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 @@ -1509,6 +1509,11 @@ static int dpu_crtc_assign_resources(struct drm_crtc *crtc,
@@ -59,3 +59,6 @@ index 97ba700319ac..2744fc6311c4 100644
  	return 0;
  }
  
+-- 
+2.43.0
+

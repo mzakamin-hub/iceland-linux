@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Atul Akella <atul.akella@gmail.com>
 Date: Sat, 31 Oct 2026 21:41:30 +0530
-Subject: [PATCH 31/38] remoteproc: core: Fix integer overflow in
- rproc_da_to_va() bounds check
+Subject: [PATCH] remoteproc: core: Fix integer overflow in rproc_da_to_va()
+ bounds check
 
 offset is calculated as da - carveout->da and stored in a 32 bit
 signed int, while da and carveout->da are both u64. For a
@@ -33,7 +33,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 6 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/remoteproc/remoteproc_core.c b/drivers/remoteproc/remoteproc_core.c
-index 23f8539a99bd..d5fa9d23bd5c 100644
+index 23f8539a99bd7..d5fa9d23bd5cc 100644
 --- a/drivers/remoteproc/remoteproc_core.c
 +++ b/drivers/remoteproc/remoteproc_core.c
 @@ -198,18 +198,20 @@ void *rproc_da_to_va(struct rproc *rproc, u64 da, size_t len, bool *is_iomem)

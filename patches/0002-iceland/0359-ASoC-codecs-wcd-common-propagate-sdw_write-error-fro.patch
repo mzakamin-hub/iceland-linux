@@ -35,7 +35,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 1 insertion(+), 3 deletions(-)
 
 diff --git a/sound/soc/codecs/wcd-common.c b/sound/soc/codecs/wcd-common.c
-index 1fd899bde439..4e8fb7a47e1f 100644
+index 1fd899bde4391..4e8fb7a47e1f9 100644
 --- a/sound/soc/codecs/wcd-common.c
 +++ b/sound/soc/codecs/wcd-common.c
 @@ -115,9 +115,7 @@ EXPORT_SYMBOL_GPL(wcd_update_status);
@@ -49,3 +49,6 @@ index 1fd899bde439..4e8fb7a47e1f 100644
  }
  EXPORT_SYMBOL_GPL(wcd_bus_config);
  
+-- 
+2.43.0
+

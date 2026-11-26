@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
 Date: Thu, 29 Oct 2026 20:31:06 +0800
-Subject: [PATCH 08/24] media: camss: video: check that a buffer is DMA
- contiguous and add a prepare hook
+Subject: [PATCH] media: camss: video: check that a buffer is DMA contiguous
+ and add a prepare hook
 
 The write master of the newer VFE generations can only be programmed with
 a buffer whose payload is physically contiguous, because the frame
@@ -23,7 +23,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  2 files changed, 18 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/media/platform/qcom/camss/camss-video.c b/drivers/media/platform/qcom/camss/camss-video.c
-index 9a633ca06618..028febe63c19 100644
+index 9a633ca06618b..028febe63c199 100644
 --- a/drivers/media/platform/qcom/camss/camss-video.c
 +++ b/drivers/media/platform/qcom/camss/camss-video.c
 @@ -155,7 +155,10 @@ static int video_buf_init(struct vb2_buffer *vb)
@@ -66,7 +66,7 @@ index 9a633ca06618..028febe63c19 100644
  }
  
 diff --git a/drivers/media/platform/qcom/camss/camss-video.h b/drivers/media/platform/qcom/camss/camss-video.h
-index d3e56e240a88..af046ecb7f43 100644
+index d3e56e240a888..af046ecb7f435 100644
 --- a/drivers/media/platform/qcom/camss/camss-video.h
 +++ b/drivers/media/platform/qcom/camss/camss-video.h
 @@ -28,6 +28,7 @@ struct camss_buffer {
@@ -77,3 +77,6 @@ index d3e56e240a88..af046ecb7f43 100644
  	int (*queue_buffer)(struct camss_video *vid, struct camss_buffer *buf);
  	int (*flush_buffers)(struct camss_video *vid,
  			     enum vb2_buffer_state state);
+-- 
+2.43.0
+

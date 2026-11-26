@@ -16,7 +16,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 3 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index abe082adcab2..3b0def8eb726 100644
+index abe082adcab23..3b0def8eb7266 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -47,6 +47,9 @@ aliases {
@@ -29,3 +29,6 @@ index abe082adcab2..3b0def8eb726 100644
  	};
  
  	chosen {
+-- 
+2.43.0
+

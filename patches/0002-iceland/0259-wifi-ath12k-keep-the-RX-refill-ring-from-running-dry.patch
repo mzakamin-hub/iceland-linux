@@ -68,7 +68,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  6 files changed, 182 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/debugfs.c b/drivers/net/wireless/ath/ath12k/debugfs.c
-index 12791e267d1a..69f546420bd4 100644
+index 12791e267d1a8..69f546420bd4d 100644
 --- a/drivers/net/wireless/ath/ath12k/debugfs.c
 +++ b/drivers/net/wireless/ath/ath12k/debugfs.c
 @@ -1032,7 +1032,11 @@ static ssize_t ath12k_debugfs_dump_device_dp_stats(struct file *file,
@@ -117,7 +117,7 @@ index 12791e267d1a..69f546420bd4 100644
  
  	return ret;
 diff --git a/drivers/net/wireless/ath/ath12k/dp.c b/drivers/net/wireless/ath/ath12k/dp.c
-index 83f9edfabf69..35a9047c770d 100644
+index 83f9edfabf696..35a9047c770d2 100644
 --- a/drivers/net/wireless/ath/ath12k/dp.c
 +++ b/drivers/net/wireless/ath/ath12k/dp.c
 @@ -1127,6 +1127,9 @@ static void ath12k_dp_cleanup(struct ath12k_base *ab)
@@ -131,7 +131,7 @@ index 83f9edfabf69..35a9047c770d 100644
  				    HAL_WBM_IDLE_LINK, &dp->wbm_idle_ring);
  
 diff --git a/drivers/net/wireless/ath/ath12k/dp.h b/drivers/net/wireless/ath/ath12k/dp.h
-index 108e27dd5797..efe3b7d182bf 100644
+index 108e27dd5797a..efe3b7d182bf4 100644
 --- a/drivers/net/wireless/ath/ath12k/dp.h
 +++ b/drivers/net/wireless/ath/ath12k/dp.h
 @@ -440,6 +440,15 @@ struct ath12k_device_dp_stats {
@@ -172,7 +172,7 @@ index 108e27dd5797..efe3b7d182bf 100644
  	struct dp_srng rxdma_err_dst_ring[MAX_RXDMA_PER_PDEV];
  	struct dp_rxdma_mon_ring rxdma_mon_buf_ring;
 diff --git a/drivers/net/wireless/ath/ath12k/dp_rx.c b/drivers/net/wireless/ath/ath12k/dp_rx.c
-index 36be543b7c50..b6b9440da07d 100644
+index 36be543b7c50e..b6b9440da07d2 100644
 --- a/drivers/net/wireless/ath/ath12k/dp_rx.c
 +++ b/drivers/net/wireless/ath/ath12k/dp_rx.c
 @@ -7,6 +7,7 @@
@@ -360,7 +360,7 @@ index 36be543b7c50..b6b9440da07d 100644
  }
  
 diff --git a/drivers/net/wireless/ath/ath12k/dp_rx.h b/drivers/net/wireless/ath/ath12k/dp_rx.h
-index 82700474548a..bc465a68b624 100644
+index 82700474548a5..bc465a68b6249 100644
 --- a/drivers/net/wireless/ath/ath12k/dp_rx.h
 +++ b/drivers/net/wireless/ath/ath12k/dp_rx.h
 @@ -225,6 +225,7 @@ void ath12k_dp_rx_pdev_reo_cleanup(struct ath12k_base *ab);
@@ -372,7 +372,7 @@ index 82700474548a..bc465a68b624 100644
  void ath12k_dp_rx_pdev_free(struct ath12k_base *ab, int pdev_idx);
  void ath12k_dp_rx_reo_cmd_list_cleanup(struct ath12k_base *ab);
 diff --git a/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c b/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
-index a32c804403e8..7687295b5b30 100644
+index a32c804403e8a..7687295b5b30a 100644
 --- a/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
 +++ b/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
 @@ -801,9 +801,9 @@ int ath12k_wifi7_dp_rx_process(struct ath12k_dp *dp, int ring_id,
@@ -403,3 +403,6 @@ index a32c804403e8..7687295b5b30 100644
  	}
  
  	ath12k_wifi7_dp_rx_process_received_packets(dp, napi, &msdu_list,
+-- 
+2.43.0
+

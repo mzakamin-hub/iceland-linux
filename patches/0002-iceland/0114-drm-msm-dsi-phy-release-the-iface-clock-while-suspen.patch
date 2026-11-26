@@ -38,7 +38,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  2 files changed, 28 insertions(+), 9 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/dsi/phy/dsi_phy.c b/drivers/gpu/drm/msm/dsi/phy/dsi_phy.c
-index 1fb3899b88bf..737b44ec3787 100644
+index a14e71d8c8a4a..7c3c2c85f02fe 100644
 --- a/drivers/gpu/drm/msm/dsi/phy/dsi_phy.c
 +++ b/drivers/gpu/drm/msm/dsi/phy/dsi_phy.c
 @@ -5,7 +5,6 @@
@@ -49,7 +49,7 @@ index 1fb3899b88bf..737b44ec3787 100644
  #include <linux/pm_runtime.h>
  #include <dt-bindings/phy/phy.h>
  
-@@ -687,13 +686,14 @@ static int dsi_phy_driver_probe(struct platform_device *pdev)
+@@ -686,13 +685,14 @@ static int dsi_phy_driver_probe(struct platform_device *pdev)
  	if (ret)
  		return ret;
  
@@ -71,7 +71,7 @@ index 1fb3899b88bf..737b44ec3787 100644
  
  	if (phy->cfg->ops.pll_init) {
  		ret = phy->cfg->ops.pll_init(phy);
-@@ -711,8 +711,26 @@ static int dsi_phy_driver_probe(struct platform_device *pdev)
+@@ -710,8 +710,26 @@ static int dsi_phy_driver_probe(struct platform_device *pdev)
  	return 0;
  }
  
@@ -100,7 +100,7 @@ index 1fb3899b88bf..737b44ec3787 100644
  
  static struct platform_driver dsi_phy_platform_driver = {
 diff --git a/drivers/gpu/drm/msm/dsi/phy/dsi_phy.h b/drivers/gpu/drm/msm/dsi/phy/dsi_phy.h
-index f5d3e806f8fd..e658dd283be8 100644
+index f5d3e806f8fd5..e658dd283be8c 100644
 --- a/drivers/gpu/drm/msm/dsi/phy/dsi_phy.h
 +++ b/drivers/gpu/drm/msm/dsi/phy/dsi_phy.h
 @@ -107,6 +107,7 @@ struct msm_dsi_phy {
@@ -111,3 +111,6 @@ index f5d3e806f8fd..e658dd283be8 100644
  
  	struct msm_dsi_dphy_timing timing;
  	const struct msm_dsi_phy_cfg *cfg;
+-- 
+2.43.0
+

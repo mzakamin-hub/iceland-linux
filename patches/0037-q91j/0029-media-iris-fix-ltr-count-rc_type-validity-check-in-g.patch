@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Wangao Wang <wangao.wang@oss.qualcomm.com>
 Date: Thu, 29 Oct 2026 11:12:00 +0800
-Subject: [PATCH 29/30] media: iris: fix ltr count rc_type validity check in
- gen2
+Subject: [PATCH] media: iris: fix ltr count rc_type validity check in gen2
 
 The condition was inverted: CBR_VFR, CBR_CFR and RC_OFF are the valid
 rc_types for LTR, so reject anything that does NOT match these types.
@@ -19,7 +18,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_ctrls.c b/drivers/media/platform/qcom/iris/iris_ctrls.c
-index 46d47c3a6..2612907ae 100644
+index 46d47c3a65315..2612907ae1df5 100644
 --- a/drivers/media/platform/qcom/iris/iris_ctrls.c
 +++ b/drivers/media/platform/qcom/iris/iris_ctrls.c
 @@ -1430,9 +1430,9 @@ int iris_set_ltr_count_gen2(struct iris_inst *inst, enum platform_inst_fw_cap_ty

@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Atul Akella <atul.akella@gmail.com>
 Date: Sat, 7 Nov 2026 00:13:11 +0530
-Subject: [PATCH 30/38] remoteproc: qcom: Fix bounds check in wcnss_da_to_va()
+Subject: [PATCH] remoteproc: qcom: Fix bounds check in wcnss_da_to_va()
 
 offset is calculated as da - wcnss->mem_reloc and stored in a
 32 bit signed int, while da and wcnss->mem_reloc are both u64.
@@ -35,7 +35,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/remoteproc/qcom_wcnss.c b/drivers/remoteproc/qcom_wcnss.c
-index c856a92af43c..d95530e8be71 100644
+index 02f38fe29f20f..31097a5726af8 100644
 --- a/drivers/remoteproc/qcom_wcnss.c
 +++ b/drivers/remoteproc/qcom_wcnss.c
 @@ -321,10 +321,12 @@ static int wcnss_stop(struct rproc *rproc)

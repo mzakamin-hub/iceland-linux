@@ -36,7 +36,7 @@ Tested-by: Denis Zornada <denis_zornada@hotmail.com> # Zenbook A16
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/pmdomain/qcom/rpmhpd.c b/drivers/pmdomain/qcom/rpmhpd.c
-index fa8fed5bd3e5..2c9d4beeffbe 100644
+index 919efa34e3a36..3f50e7d5dd109 100644
 --- a/drivers/pmdomain/qcom/rpmhpd.c
 +++ b/drivers/pmdomain/qcom/rpmhpd.c
 @@ -1006,7 +1006,7 @@ static int rpmhpd_aggregate_corner(struct rpmhpd *pd, unsigned int corner)
@@ -48,3 +48,6 @@ index fa8fed5bd3e5..2c9d4beeffbe 100644
  		to_active_sleep(pd, corner, &this_active_corner, &this_sleep_corner);
  	} else {
  		/* Clamp to highest corner if sync_state hasn't happened */
+-- 
+2.43.0
+

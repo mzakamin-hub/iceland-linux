@@ -15,7 +15,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  create mode 100644 drivers/media/i2c/imx906.c
 
 diff --git a/drivers/media/i2c/Kconfig b/drivers/media/i2c/Kconfig
-index 2f4649b1da3c..f91e789922f3 100644
+index 2f4649b1da3c3..f91e789922f38 100644
 --- a/drivers/media/i2c/Kconfig
 +++ b/drivers/media/i2c/Kconfig
 @@ -321,6 +321,17 @@ config VIDEO_IMX576
@@ -37,7 +37,7 @@ index 2f4649b1da3c..f91e789922f3 100644
  	tristate "Sony IMX709 sensor support"
  	depends on GPIOLIB
 diff --git a/drivers/media/i2c/Makefile b/drivers/media/i2c/Makefile
-index 6c9c32288a8b..1ca99223a064 100644
+index 6c9c32288a8b4..1ca99223a0644 100644
 --- a/drivers/media/i2c/Makefile
 +++ b/drivers/media/i2c/Makefile
 @@ -66,6 +66,7 @@ obj-$(CONFIG_VIDEO_IMX471) += imx471.o
@@ -50,7 +50,7 @@ index 6c9c32288a8b..1ca99223a064 100644
  obj-$(CONFIG_VIDEO_IT6625) += it6625.o
 diff --git a/drivers/media/i2c/imx906.c b/drivers/media/i2c/imx906.c
 new file mode 100644
-index 000000000000..57d70215ae0f
+index 0000000000000..57d70215ae0f3
 --- /dev/null
 +++ b/drivers/media/i2c/imx906.c
 @@ -0,0 +1,1059 @@
@@ -1113,3 +1113,6 @@ index 000000000000..57d70215ae0f
 +
 +MODULE_DESCRIPTION("Sony IMX906 camera sensor driver");
 +MODULE_LICENSE("GPL");
+-- 
+2.43.0
+

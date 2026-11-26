@@ -31,7 +31,7 @@ Signed-off-by: Jishnu Prakash <jishnu.prakash@oss.qualcomm.com>
  1 file changed, 11 insertions(+)
 
 diff --git a/drivers/usb/typec/ucsi/ucsi_glink.c b/drivers/usb/typec/ucsi/ucsi_glink.c
-index 1db0c88d817e..a8207bfb719a 100644
+index 1c64b3a3ca4f6..447822242f1b4 100644
 --- a/drivers/usb/typec/ucsi/ucsi_glink.c
 +++ b/drivers/usb/typec/ucsi/ucsi_glink.c
 @@ -7,6 +7,7 @@
@@ -73,3 +73,6 @@ index 1db0c88d817e..a8207bfb719a 100644
  	INIT_WORK(&ucsi->notify_work, pmic_glink_ucsi_notify);
  	INIT_WORK(&ucsi->register_work, pmic_glink_ucsi_register);
  	init_completion(&ucsi->read_ack);
+-- 
+2.43.0
+

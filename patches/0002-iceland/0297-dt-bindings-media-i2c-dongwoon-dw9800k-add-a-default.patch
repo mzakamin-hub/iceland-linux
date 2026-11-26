@@ -21,7 +21,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 11 insertions(+)
 
 diff --git a/Documentation/devicetree/bindings/media/i2c/dongwoon,dw9800k.yaml b/Documentation/devicetree/bindings/media/i2c/dongwoon,dw9800k.yaml
-index 046c0a88bcef..2cf53c071563 100644
+index 046c0a88bcefd..2cf53c0715634 100644
 --- a/Documentation/devicetree/bindings/media/i2c/dongwoon,dw9800k.yaml
 +++ b/Documentation/devicetree/bindings/media/i2c/dongwoon,dw9800k.yaml
 @@ -65,6 +65,16 @@ properties:
@@ -48,3 +48,6 @@ index 046c0a88bcef..2cf53c071563 100644
 +            dongwoon,default-position = <450>;
          };
      };
+-- 
+2.43.0
+

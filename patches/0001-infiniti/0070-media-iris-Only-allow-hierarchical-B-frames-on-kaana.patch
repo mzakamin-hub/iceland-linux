@@ -14,7 +14,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  3 files changed, 6 insertions(+)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_ctrls.c b/drivers/media/platform/qcom/iris/iris_ctrls.c
-index 4f2633bbb49f..d87fe8bab35b 100644
+index 4f2633bbb49f8..d87fe8bab35bd 100644
 --- a/drivers/media/platform/qcom/iris/iris_ctrls.c
 +++ b/drivers/media/platform/qcom/iris/iris_ctrls.c
 @@ -477,6 +477,10 @@ void iris_session_init_caps(struct iris_core *core)
@@ -29,7 +29,7 @@ index 4f2633bbb49f..d87fe8bab35b 100644
  }
  
 diff --git a/drivers/media/platform/qcom/iris/iris_platform_common.h b/drivers/media/platform/qcom/iris/iris_platform_common.h
-index d99ea180d79e..4751e47505e7 100644
+index d99ea180d79eb..4751e47505e7a 100644
 --- a/drivers/media/platform/qcom/iris/iris_platform_common.h
 +++ b/drivers/media/platform/qcom/iris/iris_platform_common.h
 @@ -351,6 +351,7 @@ struct iris_platform_data {
@@ -41,7 +41,7 @@ index d99ea180d79e..4751e47505e7 100644
  	/* max number of macroblocks per frame supported */
  	u32 max_core_mbpf;
 diff --git a/drivers/media/platform/qcom/iris/iris_platform_vpu3x.c b/drivers/media/platform/qcom/iris/iris_platform_vpu3x.c
-index 016ce234d7ba..947b79ed4ae2 100644
+index 016ce234d7ba8..947b79ed4ae22 100644
 --- a/drivers/media/platform/qcom/iris/iris_platform_vpu3x.c
 +++ b/drivers/media/platform/qcom/iris/iris_platform_vpu3x.c
 @@ -258,6 +258,7 @@ const struct iris_platform_data kaanapali_data = {
@@ -52,3 +52,6 @@ index 016ce234d7ba..947b79ed4ae2 100644
  	.max_session_count = 16,
  	.max_core_mbpf = NUM_MBS_8K * 2,
  	.max_core_mbps = ((8192 * 4352) / 256) * 60,
+-- 
+2.43.0
+

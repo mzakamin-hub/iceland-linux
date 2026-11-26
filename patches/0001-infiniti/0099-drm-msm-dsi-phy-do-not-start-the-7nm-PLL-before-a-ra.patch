@@ -13,7 +13,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 9 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
-index 5d805a797abd..5750066a645d 100644
+index ce86dbf618893..8aebd27573d45 100644
 --- a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
 +++ b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
 @@ -96,6 +96,7 @@ struct dsi_pll_7nm {
@@ -53,3 +53,6 @@ index 5d805a797abd..5750066a645d 100644
  	/*
  	 * To avoid any stray glitches while abruptly powering down the PLL
  	 * make sure to gate the clock using the clock enable bit before
+-- 
+2.43.0
+

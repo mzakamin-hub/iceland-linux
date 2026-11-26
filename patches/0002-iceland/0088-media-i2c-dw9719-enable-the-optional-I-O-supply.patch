@@ -14,7 +14,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 21 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/media/i2c/dw9719.c b/drivers/media/i2c/dw9719.c
-index 3b7ba88fd67c..7ea976df9247 100644
+index 5d5da0439dba0..e20c4f8c128a3 100644
 --- a/drivers/media/i2c/dw9719.c
 +++ b/drivers/media/i2c/dw9719.c
 @@ -86,6 +86,7 @@ struct dw9719_device {
@@ -78,3 +78,6 @@ index 3b7ba88fd67c..7ea976df9247 100644
  	v4l2_i2c_subdev_init(&dw9719->sd, client, &dw9719_ops);
  	dw9719->sd.flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
  	dw9719->sd.internal_ops = &dw9719_internal_ops;
+-- 
+2.43.0
+

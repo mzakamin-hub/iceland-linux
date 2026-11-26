@@ -22,7 +22,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 12 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 13b6bdc8ea3f..cd8c0154d45e 100644
+index 667e7657115c5..9c3917b0671d8 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -423,6 +423,8 @@ struct qcom_battmgr {
@@ -70,3 +70,6 @@ index 13b6bdc8ea3f..cd8c0154d45e 100644
  	}
  
  	ret = devm_work_autocancel(dev, &battmgr->enable_work,
+-- 
+2.43.0
+

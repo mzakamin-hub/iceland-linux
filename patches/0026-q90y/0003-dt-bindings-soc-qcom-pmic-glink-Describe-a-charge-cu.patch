@@ -22,7 +22,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 15 insertions(+)
 
 diff --git a/Documentation/devicetree/bindings/soc/qcom/qcom,pmic-glink.yaml b/Documentation/devicetree/bindings/soc/qcom/qcom,pmic-glink.yaml
-index 5c46a74c0a60..a336c47ff3a0 100644
+index 5c46a74c0a605..a336c47ff3a06 100644
 --- a/Documentation/devicetree/bindings/soc/qcom/qcom,pmic-glink.yaml
 +++ b/Documentation/devicetree/bindings/soc/qcom/qcom,pmic-glink.yaml
 @@ -66,6 +66,18 @@ properties:
@@ -54,3 +54,6 @@ index 5c46a74c0a60..a336c47ff3a0 100644
  additionalProperties: false
  
  examples:
+-- 
+2.43.0
+

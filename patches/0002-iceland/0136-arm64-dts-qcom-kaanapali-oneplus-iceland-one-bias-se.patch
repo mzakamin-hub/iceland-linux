@@ -17,7 +17,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 5 insertions(+), 4 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index ac59bcc8ab09..d935ba33c5e9 100644
+index ac59bcc8ab09f..d935ba33c5e9c 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1874,19 +1874,21 @@ channel@275e {
@@ -53,3 +53,6 @@ index ac59bcc8ab09..d935ba33c5e9 100644
  	};
  
  	/*
+-- 
+2.43.0
+

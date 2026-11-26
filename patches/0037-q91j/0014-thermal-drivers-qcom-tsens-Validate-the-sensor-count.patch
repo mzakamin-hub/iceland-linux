@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Daniel Lezcano <daniel.lezcano@oss.qualcomm.com>
 Date: Wed, 21 Oct 2026 10:57:47 +0200
-Subject: [PATCH 14/30] thermal/drivers/qcom/tsens: Validate the sensor count
- before initialization
+Subject: [PATCH] thermal/drivers/qcom/tsens: Validate the sensor count before
+ initialization
 
 The #qcom,sensors property can override the platform sensor count without
 an upper-bound check. A count exceeding the IP's maximum causes the
@@ -30,7 +30,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 11 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/thermal/qcom/tsens.c b/drivers/thermal/qcom/tsens.c
-index eeadf6cc5..5d59aa1d7 100644
+index 5d3677312842c..6e41062aea051 100644
 --- a/drivers/thermal/qcom/tsens.c
 +++ b/drivers/thermal/qcom/tsens.c
 @@ -1428,10 +1428,20 @@ static int tsens_probe_common(struct platform_device *pdev)

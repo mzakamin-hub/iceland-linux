@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Mukesh Kumar Savaliya <mukesh.savaliya@oss.qualcomm.com>
 Date: Tue, 31 Mar 2026 17:17:41 +0530
-Subject: [PATCH 2/8] FROMLIST: soc: qcom: geni-se: Keep pinctrl active for
+Subject: [PATCH] FROMLIST: soc: qcom: geni-se: Keep pinctrl active for
  multi-owner controllers
 
 On platforms where a GENI Serial Engine is shared with another system
@@ -26,7 +26,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  2 files changed, 13 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/soc/qcom/qcom-geni-se.c b/drivers/soc/qcom/qcom-geni-se.c
-index ebca60c84..147e0b29a 100644
+index 4e98fae213fba..290b66be25d4f 100644
 --- a/drivers/soc/qcom/qcom-geni-se.c
 +++ b/drivers/soc/qcom/qcom-geni-se.c
 @@ -613,10 +613,17 @@ int geni_se_resources_off(struct geni_se *se)
@@ -52,7 +52,7 @@ index ebca60c84..147e0b29a 100644
  	geni_se_clks_off(se);
  	return 0;
 diff --git a/include/linux/soc/qcom/geni-se.h b/include/linux/soc/qcom/geni-se.h
-index b3372a314..6b1204074 100644
+index b3372a3147a00..6b12040745154 100644
 --- a/include/linux/soc/qcom/geni-se.h
 +++ b/include/linux/soc/qcom/geni-se.h
 @@ -66,6 +66,7 @@ struct geni_icc_path {

@@ -40,7 +40,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  2 files changed, 35 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
-index cb0cc4454b01..8879cd96f966 100644
+index cb0cc4454b01f..8879cd96f9663 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 @@ -2112,6 +2112,30 @@ static void dpu_encoder_virt_atomic_disable(struct drm_encoder *drm_enc,
@@ -75,7 +75,7 @@ index cb0cc4454b01..8879cd96f966 100644
  	/* after phys waits for frame-done, should be no more frames pending */
  	if (atomic_xchg(&dpu_enc->frame_done_timeout_ms, 0)) {
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
-index bffe55bc20f2..69f78e4ef7f0 100644
+index bffe55bc20f2a..69f78e4ef7f06 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
 @@ -660,6 +660,17 @@ static void dpu_encoder_phys_vid_disable(struct dpu_encoder_phys *phys_enc)
@@ -96,3 +96,6 @@ index bffe55bc20f2..69f78e4ef7f0 100644
  	/*
  	 * Wait for a vsync so we know the ENABLE=0 latched before
  	 * the (connector) source of the vsync's gets disabled,
+-- 
+2.43.0
+

@@ -20,7 +20,7 @@ Signed-off-by: Aiyaz Patel <aiyapate@qti.qualcomm.com>
  1 file changed, 47 insertions(+), 31 deletions(-)
 
 diff --git a/sound/soc/codecs/lpass-va-macro.c b/sound/soc/codecs/lpass-va-macro.c
-index 03d6434a4a12..c02d43997fbe 100644
+index 61b24a1e4dde0..a0b4f5a89b148 100644
 --- a/sound/soc/codecs/lpass-va-macro.c
 +++ b/sound/soc/codecs/lpass-va-macro.c
 @@ -10,7 +10,6 @@
@@ -154,3 +154,6 @@ index 03d6434a4a12..c02d43997fbe 100644
  
  static const struct of_device_id va_macro_dt_match[] = {
  	{ .compatible = "qcom,sc7280-lpass-va-macro", .data = &sc7280_va_data },
+-- 
+2.43.0
+

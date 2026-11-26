@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
 Date: Tue, 20 Oct 2026 15:28:08 +0200
-Subject: [PATCH 2/3] power: supply: qcom_battmgr: Expose USB connector
- temperature
+Subject: [PATCH] power: supply: qcom_battmgr: Expose USB connector temperature
 
 The firmware is capable of reporting the temperature of the connector.
 Expose it at the USB supply.
@@ -18,7 +17,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 11 insertions(+)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index bd6b46702..d2baec2ee 100644
+index 96686b26fbcbe..a9fe83979b402 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -95,6 +95,7 @@ enum qcom_battmgr_variant {

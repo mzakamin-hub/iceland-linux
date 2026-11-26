@@ -15,7 +15,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 7 insertions(+)
 
 diff --git a/Documentation/devicetree/bindings/net/wireless/qcom,ath12k.yaml b/Documentation/devicetree/bindings/net/wireless/qcom,ath12k.yaml
-index 27947f1d64bc..37c431772c9c 100644
+index 27947f1d64bcd..37c431772c9ce 100644
 --- a/Documentation/devicetree/bindings/net/wireless/qcom,ath12k.yaml
 +++ b/Documentation/devicetree/bindings/net/wireless/qcom,ath12k.yaml
 @@ -28,6 +28,13 @@ properties:
@@ -32,3 +32,6 @@ index 27947f1d64bc..37c431772c9c 100644
    vddaon-supply:
      description: VDD_AON supply regulator handle
  
+-- 
+2.43.0
+

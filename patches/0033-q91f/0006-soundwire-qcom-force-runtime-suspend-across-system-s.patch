@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Armada <noreply@armada.local>
 Date: Sat, 7 Nov 2026 11:33:53 +0200
-Subject: [PATCH 6/9] soundwire: qcom: force runtime suspend across system
- sleep
+Subject: [PATCH] soundwire: qcom: force runtime suspend across system sleep
 
 The controller only has runtime PM ops, and a peripheral kept
 runtime-active (the WCD9390 on the AYN Odin 3, held for jack detection)
@@ -22,7 +21,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/soundwire/qcom.c b/drivers/soundwire/qcom.c
-index 6812f4c09..84ed663a0 100644
+index 74bf23cd69e63..a0189f6f3f48c 100644
 --- a/drivers/soundwire/qcom.c
 +++ b/drivers/soundwire/qcom.c
 @@ -1926,6 +1926,7 @@ static int __maybe_unused swrm_runtime_suspend(struct device *dev)

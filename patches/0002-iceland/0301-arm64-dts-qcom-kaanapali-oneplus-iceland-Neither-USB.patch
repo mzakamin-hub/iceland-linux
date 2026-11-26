@@ -25,7 +25,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 13 insertions(+), 1 deletion(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 476baa53359a..1af140298172 100644
+index 476baa53359a7..1af140298172f 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1635,7 +1635,11 @@ &pcie0_phy {
@@ -56,3 +56,6 @@ index 476baa53359a..1af140298172 100644
  	status = "okay";
  };
  
+-- 
+2.43.0
+

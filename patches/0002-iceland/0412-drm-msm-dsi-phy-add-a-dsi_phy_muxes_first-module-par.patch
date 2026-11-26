@@ -25,7 +25,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 15 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
-index 8c21834c04d3..fe15fa45075d 100644
+index c43a7760b6a21..77a80b51f4948 100644
 --- a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
 +++ b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
 @@ -8,11 +8,23 @@
@@ -65,3 +65,6 @@ index 8c21834c04d3..fe15fa45075d 100644
  	spin_unlock_irqrestore(&pll->pll_enable_lock, flags);
  
  	/* Assert PLL core reset */
+-- 
+2.43.0
+

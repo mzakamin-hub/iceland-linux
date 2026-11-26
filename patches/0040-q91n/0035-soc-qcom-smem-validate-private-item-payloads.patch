@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Sarannya S <sarannya.s@oss.qualcomm.com>
 Date: Wed, 28 Oct 2026 10:33:50 +0100
-Subject: [PATCH 35/38] soc: qcom: smem: validate private item payloads
+Subject: [PATCH] soc: qcom: smem: validate private item payloads
 
 Validate a matching entry's size and padding even when the caller does
 not request the length, and check that the payload stays inside the
@@ -29,7 +29,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 19 insertions(+), 16 deletions(-)
 
 diff --git a/drivers/soc/qcom/smem.c b/drivers/soc/qcom/smem.c
-index b14c1ee41c2f..92a00a826591 100644
+index f1a017a1ea757..a3a625999ce2f 100644
 --- a/drivers/soc/qcom/smem.c
 +++ b/drivers/soc/qcom/smem.c
 @@ -615,6 +615,7 @@ static void *qcom_smem_get_private(struct qcom_smem *smem,

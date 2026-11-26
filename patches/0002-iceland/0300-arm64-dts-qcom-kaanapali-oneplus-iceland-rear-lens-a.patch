@@ -16,7 +16,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 2 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index a47dbae0c661..476baa53359a 100644
+index a47dbae0c6613..476baa53359a7 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1336,6 +1336,8 @@ vcm: actuator@c {
@@ -28,3 +28,6 @@ index a47dbae0c661..476baa53359a 100644
  	};
  
  	/* rear: SmartSens SC1320CS, chip id 0xc658 (stock "icelandmain") */
+-- 
+2.43.0
+

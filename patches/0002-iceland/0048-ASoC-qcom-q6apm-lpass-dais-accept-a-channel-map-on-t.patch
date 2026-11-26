@@ -16,7 +16,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 15 insertions(+)
 
 diff --git a/sound/soc/qcom/qdsp6/q6apm-lpass-dais.c b/sound/soc/qcom/qdsp6/q6apm-lpass-dais.c
-index 83f2711bceea..7aac6b1c4169 100644
+index fb9a0d7c5c1cd..42c893173ec1f 100644
 --- a/sound/soc/qcom/qdsp6/q6apm-lpass-dais.c
 +++ b/sound/soc/qcom/qdsp6/q6apm-lpass-dais.c
 @@ -126,6 +126,20 @@ static int q6dma_set_channel_map(struct snd_soc_dai *dai,
@@ -48,3 +48,6 @@ index 83f2711bceea..7aac6b1c4169 100644
  	.hw_params	= q6dma_hw_params,
  	.set_fmt	= q6i2s_set_fmt,
  	.set_sysclk	= q6i2s_set_sysclk,
+-- 
+2.43.0
+

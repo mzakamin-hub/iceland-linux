@@ -69,7 +69,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  2 files changed, 115 insertions(+), 9 deletions(-)
 
 diff --git a/drivers/usb/typec/ucsi/ucsi.c b/drivers/usb/typec/ucsi/ucsi.c
-index 3368bd59da58..244792e809a9 100644
+index 57f15679e3e10..5941b6e12d47d 100644
 --- a/drivers/usb/typec/ucsi/ucsi.c
 +++ b/drivers/usb/typec/ucsi/ucsi.c
 @@ -274,6 +274,37 @@ int ucsi_send_command(struct ucsi *ucsi, u64 command,
@@ -229,7 +229,7 @@ index 3368bd59da58..244792e809a9 100644
  
  		ucsi_reset_connector(con, true);
  	}
-@@ -2172,12 +2270,10 @@ static void ucsi_resume_work(struct work_struct *work)
+@@ -2190,12 +2288,10 @@ static void ucsi_resume_work(struct work_struct *work)
  {
  	struct ucsi *ucsi = container_of(to_delayed_work(work), struct ucsi, resume_work);
  	struct ucsi_connector *con;
@@ -243,7 +243,7 @@ index 3368bd59da58..244792e809a9 100644
  	if (ret < 0) {
  		if (++ucsi->resume_retries < 5) {
  			queue_delayed_work(system_dfl_long_wq, &ucsi->resume_work,
-@@ -2374,6 +2470,8 @@ int ucsi_register(struct ucsi *ucsi)
+@@ -2399,6 +2495,8 @@ int ucsi_register(struct ucsi *ucsi)
  	if (!ucsi->version)
  		return -ENODEV;
  
@@ -252,7 +252,7 @@ index 3368bd59da58..244792e809a9 100644
  	/*
  	 * Version format is JJ.M.N (JJ = Major version, M = Minor version,
  	 * N = sub-minor version).
-@@ -2407,7 +2505,10 @@ void ucsi_unregister(struct ucsi *ucsi)
+@@ -2432,7 +2530,10 @@ void ucsi_unregister(struct ucsi *ucsi)
  
  	ucsi_debugfs_unregister(ucsi);
  
@@ -265,10 +265,10 @@ index 3368bd59da58..244792e809a9 100644
  
  	if (!ucsi->connector)
 diff --git a/drivers/usb/typec/ucsi/ucsi.h b/drivers/usb/typec/ucsi/ucsi.h
-index 1996f04ed5e6..c873192d1905 100644
+index 140d34e90c7c4..c62e2439bc19c 100644
 --- a/drivers/usb/typec/ucsi/ucsi.h
 +++ b/drivers/usb/typec/ucsi/ucsi.h
-@@ -497,6 +497,8 @@ struct ucsi {
+@@ -498,6 +498,8 @@ struct ucsi {
  
  	/* The latest "Notification Enable" bits (SET_NOTIFICATION_ENABLE) */
  	u64 ntfy;
@@ -277,7 +277,7 @@ index 1996f04ed5e6..c873192d1905 100644
  
  	/* PPM communication flags */
  	unsigned long flags;
-@@ -555,6 +557,9 @@ struct ucsi_connector {
+@@ -556,6 +558,9 @@ struct ucsi_connector {
  	struct power_supply *psy;
  	struct power_supply_desc psy_desc;
  	u32 rdo;
@@ -287,3 +287,6 @@ index 1996f04ed5e6..c873192d1905 100644
  	u32 src_pdos[PDO_MAX_OBJECTS];
  	int num_pdos;
  
+-- 
+2.43.0
+

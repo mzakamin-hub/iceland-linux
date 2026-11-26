@@ -21,7 +21,7 @@ Signed-off-by: Kuldeep Singh <kuldeep.singh@oss.qualcomm.com>
  1 file changed, 116 insertions(+), 23 deletions(-)
 
 diff --git a/drivers/soc/qcom/ice.c b/drivers/soc/qcom/ice.c
-index e256595b9826..f9939e2d037c 100644
+index f9ac45505908f..4d2a5b1becd29 100644
 --- a/drivers/soc/qcom/ice.c
 +++ b/drivers/soc/qcom/ice.c
 @@ -16,6 +16,7 @@
@@ -287,3 +287,6 @@ index e256595b9826..f9939e2d037c 100644
  	},
  };
  
+-- 
+2.43.0
+

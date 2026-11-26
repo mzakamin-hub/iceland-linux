@@ -14,7 +14,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_13_0_kaanapali.h b/drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_13_0_kaanapali.h
-index 85f455a9f29c..a0a8ea82209a 100644
+index 85f455a9f29c8..a0a8ea82209a6 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_13_0_kaanapali.h
 +++ b/drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_13_0_kaanapali.h
 @@ -449,7 +449,7 @@ static const struct dpu_perf_cfg kaanapali_perf_data = {
@@ -26,3 +26,6 @@ index 85f455a9f29c..a0a8ea82209a 100644
  	.bw_inefficiency_factor = 120,
  };
  
+-- 
+2.43.0
+

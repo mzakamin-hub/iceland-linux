@@ -31,7 +31,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 99 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index f06f8d2c7e34..0d8e883b226d 100644
+index 82cbd18b2d923..eb836cdda24fe 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -402,6 +402,8 @@ struct qcom_battmgr {
@@ -174,3 +174,6 @@ index f06f8d2c7e34..0d8e883b226d 100644
  
  		battmgr->bat_psy = devm_power_supply_register(dev, psy_desc, &psy_cfg);
  		if (IS_ERR(battmgr->bat_psy))
+-- 
+2.43.0
+

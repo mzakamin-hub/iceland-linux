@@ -20,7 +20,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 insertions(+)
 
 diff --git a/drivers/phy/qualcomm/phy-qcom-eusb2-repeater.c b/drivers/phy/qualcomm/phy-qcom-eusb2-repeater.c
-index d056f0f8dd93..724b64d5f192 100644
+index 1c91d28045d53..bc47e70922927 100644
 --- a/drivers/phy/qualcomm/phy-qcom-eusb2-repeater.c
 +++ b/drivers/phy/qualcomm/phy-qcom-eusb2-repeater.c
 @@ -230,7 +230,9 @@ static int eusb2_repeater_set_mode(struct phy *phy,
@@ -33,3 +33,6 @@ index d056f0f8dd93..724b64d5f192 100644
  	return regulator_bulk_disable(rptr->cfg->num_vregs, rptr->vregs);
  }
  
+-- 
+2.43.0
+

@@ -27,7 +27,7 @@ Signed-off-by: Joonhoe Kim <26rote@gmail.com>
  1 file changed, 11 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
-index 0bbc7ccf4089..c5c963916cd4 100644
+index 4058ee7f23fde..fe9d94a92ed15 100644
 --- a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
 +++ b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
 @@ -4557,10 +4557,12 @@ static int qmp_combo_usb_init(struct phy *phy)
@@ -62,3 +62,6 @@ index 0bbc7ccf4089..c5c963916cd4 100644
  
  	ret = qmp_combo_com_exit(qmp, false);
  	if (ret)
+-- 
+2.43.0
+

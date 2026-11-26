@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Julius Bairaktaris <julius@bairaktaris.de>
 Date: Wed, 11 Nov 2026 09:06:19 +0100
-Subject: [PATCH 26/38] drm/msm: Keep objects of queued VM_BIND unmaps busy
+Subject: [PATCH] drm/msm: Keep objects of queued VM_BIND unmaps busy
 
 A VM_BIND UNMAP closes the VMA when the ioctl runs, but the pgtable
 entries stay until the bind job runs vm_unmap_op(), and the job can wait
@@ -31,7 +31,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 24 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/gpu/drm/msm/msm_gem_vma.c b/drivers/gpu/drm/msm/msm_gem_vma.c
-index 8b702422030a..d12df7e42fce 100644
+index 8b702422030af..d12df7e42fce8 100644
 --- a/drivers/gpu/drm/msm/msm_gem_vma.c
 +++ b/drivers/gpu/drm/msm/msm_gem_vma.c
 @@ -473,7 +473,17 @@ struct op_arg {

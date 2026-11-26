@@ -31,7 +31,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  5 files changed, 115 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/dsi/dsi.c b/drivers/gpu/drm/msm/dsi/dsi.c
-index f3ba7fac3a0c..67acb41e3e0f 100644
+index 8f75f3c37294f..f6725085ecb77 100644
 --- a/drivers/gpu/drm/msm/dsi/dsi.c
 +++ b/drivers/gpu/drm/msm/dsi/dsi.c
 @@ -24,6 +24,20 @@ bool msm_dsi_wide_bus_enabled(struct msm_dsi *msm_dsi)
@@ -56,7 +56,7 @@ index f3ba7fac3a0c..67acb41e3e0f 100644
  {
  	struct platform_device *pdev = msm_dsi->pdev;
 diff --git a/drivers/gpu/drm/msm/dsi/dsi.h b/drivers/gpu/drm/msm/dsi/dsi.h
-index 93c028a122f3..4ad98ee4c363 100644
+index 93c028a122f3a..4ad98ee4c363a 100644
 --- a/drivers/gpu/drm/msm/dsi/dsi.h
 +++ b/drivers/gpu/drm/msm/dsi/dsi.h
 @@ -76,6 +76,8 @@ int msm_dsi_host_power_on(struct mipi_dsi_host *host,
@@ -69,7 +69,7 @@ index 93c028a122f3..4ad98ee4c363 100644
  				  const struct drm_display_mode *mode);
  enum drm_mode_status msm_dsi_host_check_dsc(struct mipi_dsi_host *host,
 diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
-index 52e8391deb53..e09afae16756 100644
+index f6ded959f9b1d..4cf06ba05afd4 100644
 --- a/drivers/gpu/drm/msm/dsi/dsi_host.c
 +++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
 @@ -186,6 +186,8 @@ struct msm_dsi_host {
@@ -174,7 +174,7 @@ index 52e8391deb53..e09afae16756 100644
  				  const struct drm_display_mode *mode)
  {
 diff --git a/drivers/gpu/drm/msm/msm_drv.h b/drivers/gpu/drm/msm/msm_drv.h
-index 2e5403847156..e6c4f32cb88d 100644
+index 2e5403847156b..e6c4f32cb88d1 100644
 --- a/drivers/gpu/drm/msm/msm_drv.h
 +++ b/drivers/gpu/drm/msm/msm_drv.h
 @@ -301,6 +301,8 @@ bool msm_dsi_is_cmd_mode(struct msm_dsi *msm_dsi);
@@ -204,7 +204,7 @@ index 2e5403847156..e6c4f32cb88d 100644
  {
  	return NULL;
 diff --git a/drivers/gpu/drm/msm/registers/display/dsi.xml b/drivers/gpu/drm/msm/registers/display/dsi.xml
-index e40125f75175..90746003b1b9 100644
+index e40125f751757..90746003b1b97 100644
 --- a/drivers/gpu/drm/msm/registers/display/dsi.xml
 +++ b/drivers/gpu/drm/msm/registers/display/dsi.xml
 @@ -362,6 +362,13 @@ xsi:schemaLocation="https://gitlab.freedesktop.org/freedreno/ rules-fd.xsd">
@@ -221,3 +221,6 @@ index e40125f75175..90746003b1b9 100644
  	<reg32 offset="0x001f0" name="VERSION">
  		<bitfield name="MAJOR" low="24" high="31" type="uint"/>
  	</reg32>
+-- 
+2.43.0
+

@@ -2,8 +2,8 @@ From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Ram=C3=B3n=20Jes=C3=BAs=20Miranda?=
  <ramonjesusmiranda@gmail.com>
 Date: Sun, 18 Oct 2026 15:54:24 +0000
-Subject: [PATCH 09/30] soc: qcom: icc-bwmon: drop the bandwidth vote across
- system suspend
+Subject: [PATCH] soc: qcom: icc-bwmon: drop the bandwidth vote across system
+ suspend
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -30,7 +30,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 30 insertions(+)
 
 diff --git a/drivers/soc/qcom/icc-bwmon.c b/drivers/soc/qcom/icc-bwmon.c
-index e46975da7..c05fd12a8 100644
+index 4cf1bf30d6d25..822c72841218d 100644
 --- a/drivers/soc/qcom/icc-bwmon.c
 +++ b/drivers/soc/qcom/icc-bwmon.c
 @@ -815,6 +815,35 @@ static void bwmon_remove(struct platform_device *pdev)

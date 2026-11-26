@@ -58,7 +58,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 213 insertions(+), 23 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 4f8d0b2f6826..f06f8d2c7e34 100644
+index 3c4b1abf9e1e5..82cbd18b2d923 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -443,6 +443,11 @@ struct qcom_battmgr {
@@ -426,3 +426,6 @@ index 4f8d0b2f6826..f06f8d2c7e34 100644
  
  	queue_delayed_work(system_dfl_long_wq, &battmgr->cid_work, msecs_to_jiffies(next));
  }
+-- 
+2.43.0
+

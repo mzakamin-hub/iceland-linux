@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 7 Nov 2026 00:18:35 +0200
-Subject: [PATCH 5/8] thermal: add the OnePlus Pad 4 shell temperature estimate
+Subject: [PATCH] thermal: add the OnePlus Pad 4 shell temperature estimate
  (stock Horae model)
 
 The stock thermal daemon of the OnePlus Pad 4 (Horae) estimates the shell
@@ -24,7 +24,6 @@ oplus_shell_temp.c (iceland-mainline-kernel-linux f3e9d0fe7ac7, posted
 without a Signed-off-by); this driver is a separate implementation, no
 code was copied.
 
-Based-on: SuperTurtleDev iceland-mainline-kernel-linux f3e9d0fe7ac7, oplus_shell_temp.c (idea only)
 Signed-off-by: mzak <mzak.amin@gmail.com>
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 ---
@@ -35,7 +34,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  create mode 100644 drivers/thermal/iceland_horae_shell.c
 
 diff --git a/drivers/thermal/Kconfig b/drivers/thermal/Kconfig
-index e18ec7418..deed5a608 100644
+index e18ec741897d2..deed5a6084f21 100644
 --- a/drivers/thermal/Kconfig
 +++ b/drivers/thermal/Kconfig
 @@ -489,6 +489,18 @@ config THERMAL_WEIGHTED_SENSOR
@@ -58,7 +57,7 @@ index e18ec7418..deed5a608 100644
  	tristate "Generic ADC based thermal sensor"
  	depends on IIO
 diff --git a/drivers/thermal/Makefile b/drivers/thermal/Makefile
-index a44b3baef..eda925d1c 100644
+index a44b3baef93e6..eda925d1cbbf4 100644
 --- a/drivers/thermal/Makefile
 +++ b/drivers/thermal/Makefile
 @@ -64,6 +64,7 @@ obj-$(CONFIG_HISI_THERMAL)     += hisi_thermal.o
@@ -71,7 +70,7 @@ index a44b3baef..eda925d1c 100644
  obj-y				+= spacemit/
 diff --git a/drivers/thermal/iceland_horae_shell.c b/drivers/thermal/iceland_horae_shell.c
 new file mode 100644
-index 000000000..c1c40d10c
+index 0000000000000..c1c40d10c5ac7
 --- /dev/null
 +++ b/drivers/thermal/iceland_horae_shell.c
 @@ -0,0 +1,306 @@

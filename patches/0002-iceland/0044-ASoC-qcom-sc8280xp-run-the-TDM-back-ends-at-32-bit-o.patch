@@ -18,7 +18,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 11 insertions(+)
 
 diff --git a/sound/soc/qcom/sc8280xp.c b/sound/soc/qcom/sc8280xp.c
-index 33488f940486..43f6f73566db 100644
+index 8e7f4b8e24989..6ed0e284eabf0 100644
 --- a/sound/soc/qcom/sc8280xp.c
 +++ b/sound/soc/qcom/sc8280xp.c
 @@ -316,6 +316,17 @@ static int sc8280xp_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
@@ -39,3 +39,6 @@ index 33488f940486..43f6f73566db 100644
  	default:
  		break;
  	}
+-- 
+2.43.0
+

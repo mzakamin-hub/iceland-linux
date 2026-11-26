@@ -12,7 +12,7 @@ Signed-off-by: Rob Clark <robin.clark@oss.qualcomm.com>
  2 files changed, 18 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
-index 00cbed64cf56..4511b7112bd8 100644
+index 00cbed64cf56b..4511b7112bd8f 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
 @@ -348,6 +348,9 @@ void a6xx_flush(struct msm_gpu *gpu, struct msm_ringbuffer *ring);
@@ -26,7 +26,7 @@ index 00cbed64cf56..4511b7112bd8 100644
  void a8xx_aperture_release(struct msm_gpu *gpu, unsigned long flags);
  void a8xx_aperture_clear(struct msm_gpu *gpu);
 diff --git a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
-index 52cbf239bc86..77422d1a9506 100644
+index 52cbf239bc868..77422d1a9506b 100644
 --- a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
 +++ b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
 @@ -16,7 +16,8 @@
@@ -82,3 +82,6 @@ index 52cbf239bc86..77422d1a9506 100644
  	val = gpu_read(gpu, offset);
  	spin_unlock_irqrestore(&a6xx_gpu->aperture_lock, flags);
  
+-- 
+2.43.0
+

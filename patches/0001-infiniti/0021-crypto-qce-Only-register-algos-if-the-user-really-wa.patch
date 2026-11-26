@@ -22,7 +22,7 @@ Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
  1 file changed, 9 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/crypto/qce/core.c b/drivers/crypto/qce/core.c
-index bf3c1bc3ba7b..5b1bf7a50f88 100644
+index a009c791417b7..30e67ca6da8ee 100644
 --- a/drivers/crypto/qce/core.c
 +++ b/drivers/crypto/qce/core.c
 @@ -10,6 +10,7 @@
@@ -58,3 +58,6 @@ index bf3c1bc3ba7b..5b1bf7a50f88 100644
  
  	/* Configure autosuspend after successful init */
  	pm_runtime_set_autosuspend_delay(dev, 100);
+-- 
+2.43.0
+

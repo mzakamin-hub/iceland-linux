@@ -14,7 +14,7 @@ Signed-off-by: Rob Clark <robin.clark@oss.qualcomm.com>
 
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_snapshot.h b/drivers/gpu/drm/msm/adreno/adreno_snapshot.h
 new file mode 100644
-index 000000000000..f9956e0bc1d5
+index 0000000000000..f9956e0bc1d5f
 --- /dev/null
 +++ b/drivers/gpu/drm/msm/adreno/adreno_snapshot.h
 @@ -0,0 +1,321 @@
@@ -339,3 +339,6 @@ index 000000000000..f9956e0bc1d5
 +	u32 value;
 +} __packed;
 +
+-- 
+2.43.0
+

@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Edouard Durand <edouard.durand@gmail.com>
 Date: Thu, 13 Aug 2026 10:10:47 +0800
-Subject: [PATCH 5/5] wifi: ath12k: warn when the system sleeps with the device
+Subject: [PATCH] wifi: ath12k: warn when the system sleeps with the device
  still up
 
 The suspend callbacks do their work only when the hardware has reached
@@ -39,7 +39,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 11 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/core.c b/drivers/net/wireless/ath/ath12k/core.c
-index 9af516218..5025cfaba 100644
+index ddf03f5e70c5a..63a0132810083 100644
 --- a/drivers/net/wireless/ath/ath12k/core.c
 +++ b/drivers/net/wireless/ath/ath12k/core.c
 @@ -208,11 +208,21 @@ EXPORT_SYMBOL(ath12k_core_suspend);

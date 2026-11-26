@@ -12,7 +12,7 @@ Signed-off-by: Rob Clark <robin.clark@oss.qualcomm.com>
  2 files changed, 6 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
-index 8091106390f4..00cbed64cf56 100644
+index 8091106390f47..00cbed64cf56b 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
 @@ -348,6 +348,9 @@ void a6xx_flush(struct msm_gpu *gpu, struct msm_ringbuffer *ring);
@@ -26,7 +26,7 @@ index 8091106390f4..00cbed64cf56 100644
  int a8xx_fault_handler(void *arg, unsigned long iova, int flags, void *data);
  void a8xx_flush(struct msm_gpu *gpu, struct msm_ringbuffer *ring);
 diff --git a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
-index 2bc334644402..52cbf239bc86 100644
+index 2bc3346444029..52cbf239bc868 100644
 --- a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
 +++ b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
 @@ -32,7 +32,7 @@ static void a8xx_aperture_slice_set(struct msm_gpu *gpu, enum adreno_pipe pipe,
@@ -56,3 +56,6 @@ index 2bc334644402..52cbf239bc86 100644
  {
  	unsigned long flags;
  
+-- 
+2.43.0
+

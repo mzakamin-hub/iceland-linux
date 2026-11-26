@@ -21,7 +21,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 27 insertions(+), 2 deletions(-)
 
 diff --git a/sound/soc/qcom/qdsp6/topology.c b/sound/soc/qcom/qdsp6/topology.c
-index 715f2890d2b9..84595ea7c7aa 100644
+index 958ee0912fa21..489ab39aed493 100644
 --- a/sound/soc/qcom/qdsp6/topology.c
 +++ b/sound/soc/qcom/qdsp6/topology.c
 @@ -988,6 +988,19 @@ static int audioreach_widget_load_mixer(struct snd_soc_component *component,
@@ -57,7 +57,7 @@ index 715f2890d2b9..84595ea7c7aa 100644
  		audioreach_gain_set_vol_ctrl(apm, mod, mod->gain);
  		break;
  	default:
-@@ -1327,9 +1344,17 @@ static int audioreach_put_vol_ctrl_audio_mixer(struct snd_kcontrol *kcontrol,
+@@ -1329,9 +1346,17 @@ static int audioreach_put_vol_ctrl_audio_mixer(struct snd_kcontrol *kcontrol,
  					       struct snd_ctl_elem_value *ucontrol)
  {
  	struct snd_soc_dapm_widget *dw = snd_soc_dapm_kcontrol_to_widget(kcontrol);
@@ -76,3 +76,6 @@ index 715f2890d2b9..84595ea7c7aa 100644
  
  	return 1;
  }
+-- 
+2.43.0
+

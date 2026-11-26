@@ -33,7 +33,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_buffer.c b/drivers/media/platform/qcom/iris/iris_buffer.c
-index eb8de60c1177..31cba99a665c 100644
+index eb8de60c1177f..31cba99a665c1 100644
 --- a/drivers/media/platform/qcom/iris/iris_buffer.c
 +++ b/drivers/media/platform/qcom/iris/iris_buffer.c
 @@ -865,9 +865,11 @@ static void iris_get_ts_metadata(struct iris_inst *inst, u64 timestamp_ns,
@@ -50,3 +50,6 @@ index eb8de60c1177..31cba99a665c 100644
  }
  
  int iris_vb2_buffer_done(struct iris_inst *inst, struct iris_buffer *buf)
+-- 
+2.43.0
+

@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 2 Nov 2026 09:19:08 +0200
-Subject: [PATCH 24/32] ASoC: codecs: wcd939x: fix the HPH volume register and
- scale
+Subject: [PATCH] ASoC: codecs: wcd939x: fix the HPH volume register and scale
 
 The "HPHL Volume" and "HPHR Volume" controls write bits 4:0 of HPH_L_EN /
 HPH_R_EN, the layout of the WCD938x. On the WCD939x those bits are spare
@@ -35,7 +34,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 6 insertions(+), 3 deletions(-)
 
 diff --git a/sound/soc/codecs/wcd939x.c b/sound/soc/codecs/wcd939x.c
-index 974ca92aabca..7bc5c6f30771 100644
+index 9a826a1010cb4..a84942bee7a1a 100644
 --- a/sound/soc/codecs/wcd939x.c
 +++ b/sound/soc/codecs/wcd939x.c
 @@ -222,7 +222,8 @@ static const char * const wcd939x_supplies[] = {
@@ -61,3 +60,6 @@ index 974ca92aabca..7bc5c6f30771 100644
  	SOC_SINGLE_EXT("LDOH Enable Switch", SND_SOC_NOPM, 0, 1, 0,
  		       wcd939x_ldoh_get, wcd939x_ldoh_put),
  
+-- 
+2.43.0
+

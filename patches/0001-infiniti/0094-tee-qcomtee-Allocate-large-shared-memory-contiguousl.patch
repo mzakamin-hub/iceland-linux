@@ -12,7 +12,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 53 insertions(+)
 
 diff --git a/drivers/tee/qcomtee/shm.c b/drivers/tee/qcomtee/shm.c
-index b67909ef3f46..a89ecc85295c 100644
+index b67909ef3f467..a89ecc85295cd 100644
 --- a/drivers/tee/qcomtee/shm.c
 +++ b/drivers/tee/qcomtee/shm.c
 @@ -6,6 +6,7 @@
@@ -90,3 +90,6 @@ index b67909ef3f46..a89ecc85295c 100644
  	tee_dyn_shm_free_helper(shm, qcomtee_shm_unregister);
  }
  
+-- 
+2.43.0
+

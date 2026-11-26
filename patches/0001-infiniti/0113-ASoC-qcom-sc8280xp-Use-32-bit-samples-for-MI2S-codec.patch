@@ -10,7 +10,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 7 insertions(+)
 
 diff --git a/sound/soc/qcom/sc8280xp.c b/sound/soc/qcom/sc8280xp.c
-index a3916c57a6da..33488f940486 100644
+index c1cede8a850fb..8e7f4b8e24989 100644
 --- a/sound/soc/qcom/sc8280xp.c
 +++ b/sound/soc/qcom/sc8280xp.c
 @@ -292,6 +292,7 @@ static int sc8280xp_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
@@ -34,3 +34,6 @@ index a3916c57a6da..33488f940486 100644
  	default:
  		break;
  	}
+-- 
+2.43.0
+

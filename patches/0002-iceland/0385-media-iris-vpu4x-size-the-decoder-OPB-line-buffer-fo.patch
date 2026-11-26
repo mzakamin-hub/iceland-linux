@@ -46,7 +46,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 17 insertions(+), 10 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
-index ca4951421e2b..56bac2d60c80 100644
+index ca4951421e2b7..56bac2d60c80e 100644
 --- a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
 +++ b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
 @@ -2072,16 +2072,21 @@ static u32 iris_vpu_ar50lt_enc_vpss_size(struct iris_inst *inst)
@@ -137,3 +137,6 @@ index ca4951421e2b..56bac2d60c80 100644
  	else if (inst->codec == V4L2_PIX_FMT_AV1)
  		return hfi_buffer_line_av1d(width, height, is_opb, num_vpp_pipes);
  
+-- 
+2.43.0
+

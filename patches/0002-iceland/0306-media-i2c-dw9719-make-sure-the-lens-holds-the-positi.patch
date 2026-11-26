@@ -24,7 +24,7 @@ Assisted-by: LLM
  1 file changed, 41 insertions(+)
 
 diff --git a/drivers/media/i2c/dw9719.c b/drivers/media/i2c/dw9719.c
-index b4bf9178370e..7be9b8524f48 100644
+index 1ba44f79d49ec..ab14ac7fa80b1 100644
 --- a/drivers/media/i2c/dw9719.c
 +++ b/drivers/media/i2c/dw9719.c
 @@ -22,6 +22,8 @@
@@ -89,3 +89,6 @@ index b4bf9178370e..7be9b8524f48 100644
  	return 0;
  
  err_power_down:
+-- 
+2.43.0
+

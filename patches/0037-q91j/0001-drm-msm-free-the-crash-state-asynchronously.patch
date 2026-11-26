@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Nico Angelo Dela Cruz <nicoangelodelacruz@gmail.com>
 Date: Mon, 2 Nov 2026 01:55:51 +0800
-Subject: [PATCH 01/30] drm/msm: free the crash state asynchronously
+Subject: [PATCH] drm/msm: free the crash state asynchronously
 
 msm_gpu_crashstate_capture() sets gpu->crashstate and calls
 dev_coredumpm() while the caller (recover_worker() or
@@ -39,7 +39,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  2 files changed, 26 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/gpu/drm/msm/msm_gpu.c b/drivers/gpu/drm/msm/msm_gpu.c
-index da89ed49e..88d6f5e75 100644
+index f0d9fb5f9ab7a..9981d4afba363 100644
 --- a/drivers/gpu/drm/msm/msm_gpu.c
 +++ b/drivers/gpu/drm/msm/msm_gpu.c
 @@ -175,6 +175,14 @@ int msm_gpu_hw_init(struct msm_gpu *gpu)
@@ -92,7 +92,7 @@ index da89ed49e..88d6f5e75 100644
  		msm_ringbuffer_destroy(gpu->rb[i]);
  		gpu->rb[i] = NULL;
 diff --git a/drivers/gpu/drm/msm/msm_gpu.h b/drivers/gpu/drm/msm/msm_gpu.h
-index 71449dcae..c8b0ffa85 100644
+index 71449dcae9314..c8b0ffa852765 100644
 --- a/drivers/gpu/drm/msm/msm_gpu.h
 +++ b/drivers/gpu/drm/msm/msm_gpu.h
 @@ -261,6 +261,12 @@ struct msm_gpu {

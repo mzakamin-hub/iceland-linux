@@ -26,7 +26,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/usb/typec/ucsi/ucsi.c b/drivers/usb/typec/ucsi/ucsi.c
-index 5aab8ab9f013..3368bd59da58 100644
+index 9e453d216c169..57f15679e3e10 100644
 --- a/drivers/usb/typec/ucsi/ucsi.c
 +++ b/drivers/usb/typec/ucsi/ucsi.c
 @@ -1576,7 +1576,7 @@ void ucsi_connector_change(struct ucsi *ucsi, u8 num)
@@ -38,3 +38,6 @@ index 5aab8ab9f013..3368bd59da58 100644
  }
  EXPORT_SYMBOL_GPL(ucsi_connector_change);
  
+-- 
+2.43.0
+

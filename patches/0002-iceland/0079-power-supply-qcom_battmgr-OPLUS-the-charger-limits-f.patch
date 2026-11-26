@@ -31,7 +31,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 27 insertions(+)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 8027040e46ff..a89c78361d20 100644
+index 80fe4690aa970..1c622d1817037 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -419,6 +419,9 @@ struct qcom_battmgr {
@@ -89,3 +89,6 @@ index 8027040e46ff..a89c78361d20 100644
  		next = OPLUS_CID_IDLE_POLL_MS;
  		goto out_unlock;
  	}
+-- 
+2.43.0
+

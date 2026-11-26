@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Rupesh Majhi <zoone.rupert@gmail.com>
 Date: Tue, 27 Oct 2026 14:49:46 +0200
-Subject: [PATCH 17/30] iio: adc: qcom-spmi-adc5-gen3: fix lock annotations on
- mutex helpers
+Subject: [PATCH] iio: adc: qcom-spmi-adc5-gen3: fix lock annotations on mutex
+ helpers
 
 Since commit 5b63d0ae94cc ("compiler-context-analysis: Remove Sparse
 support"), __acquires() and __releases() only feed context analysis.
@@ -28,10 +28,10 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/iio/adc/qcom-spmi-adc5-gen3.c b/drivers/iio/adc/qcom-spmi-adc5-gen3.c
-index 810d25b66..74b3e4570 100644
+index 051a1d9a76a17..ddd06e8116b82 100644
 --- a/drivers/iio/adc/qcom-spmi-adc5-gen3.c
 +++ b/drivers/iio/adc/qcom-spmi-adc5-gen3.c
-@@ -741,7 +741,7 @@ static int adc5_gen3_add_aux_tm_device(struct adc5_chip *adc)
+@@ -741,7 +741,7 @@ static int adc5_gen3_add_aux_tm_device(struct adc5_chip *adc, int id)
  }
  
  void adc5_gen3_mutex_lock(struct device *dev)

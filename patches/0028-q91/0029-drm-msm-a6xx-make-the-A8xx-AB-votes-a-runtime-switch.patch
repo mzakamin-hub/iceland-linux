@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 2 Nov 2026 11:09:59 +0200
-Subject: [PATCH 29/32] drm/msm/a6xx: make the A8xx AB votes a runtime switch
+Subject: [PATCH] drm/msm/a6xx: make the A8xx AB votes a runtime switch
 
 Konrad Dybcio's "Send AB GMU votes on A8xx" (pw 1197017) changes the
 DDR votes of every GPU level. Keep it in the kernel but behind
@@ -16,7 +16,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 12 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
-index 099a6ed397ff..fcb567ec9078 100644
+index 099a6ed397ff7..fcb567ec90780 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 @@ -217,6 +217,16 @@ bool a8xx_gmu_gx_is_on(struct adreno_gpu *adreno_gpu)
@@ -46,3 +46,6 @@ index 099a6ed397ff..fcb567ec9078 100644
  			u64 tmp;
  
  			/* For now, vote for 25% of the bandwidth */
+-- 
+2.43.0
+

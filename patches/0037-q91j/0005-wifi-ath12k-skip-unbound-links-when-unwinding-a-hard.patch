@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Yibo Wang <wyibo6109@gmail.com>
 Date: Thu, 5 Nov 2026 23:27:04 -0600
-Subject: [PATCH 05/30] wifi: ath12k: skip unbound links when unwinding a
- hardware scan
+Subject: [PATCH] wifi: ath12k: skip unbound links when unwinding a hardware
+ scan
 
 - Avoid dereferencing a missing radio after vdev creation or recovery fails.
 - Preserve the existing scan cleanup for links that still have a radio.
@@ -16,7 +16,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 3 insertions(+)
 
 diff --git a/drivers/net/wireless/ath/ath12k/mac.c b/drivers/net/wireless/ath/ath12k/mac.c
-index 41459fb4f..0c6a29bb6 100644
+index 9930f81ab164f..87fec0893891b 100644
 --- a/drivers/net/wireless/ath/ath12k/mac.c
 +++ b/drivers/net/wireless/ath/ath12k/mac.c
 @@ -5966,6 +5966,9 @@ int ath12k_mac_op_hw_scan(struct ieee80211_hw *hw,

@@ -11,7 +11,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 5 insertions(+), 1 deletion(-)
 
 diff --git a/sound/soc/qcom/qdsp6/q6apm-dai.c b/sound/soc/qcom/qdsp6/q6apm-dai.c
-index 58beaf906b9f..e01d82ca718b 100644
+index 3dcbaa64f2c0b..057cb1e6f8719 100644
 --- a/sound/soc/qcom/qdsp6/q6apm-dai.c
 +++ b/sound/soc/qcom/qdsp6/q6apm-dai.c
 @@ -222,7 +222,8 @@ static const struct snd_pcm_hardware q6apm_dai_hardware_playback = {
@@ -34,3 +34,6 @@ index 58beaf906b9f..e01d82ca718b 100644
  	default:
  		return -EINVAL;
  	}
+-- 
+2.43.0
+

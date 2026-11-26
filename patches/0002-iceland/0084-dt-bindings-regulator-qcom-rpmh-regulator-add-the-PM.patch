@@ -16,7 +16,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml b/Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
-index 9115885e7985..07bf39fcbf83 100644
+index 9115885e7985b..07bf39fcbf836 100644
 --- a/Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
 +++ b/Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
 @@ -53,7 +53,7 @@ description: |
@@ -42,3 +42,6 @@ index 9115885e7985..07bf39fcbf83 100644
      dependencies:
        regulator-allow-set-load: [ regulator-allowed-modes ]
  
+-- 
+2.43.0
+

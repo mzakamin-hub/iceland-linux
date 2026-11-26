@@ -22,10 +22,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/media/platform/qcom/camss/camss-tpg.c b/drivers/media/platform/qcom/camss/camss-tpg.c
-index 5764a60fa34c..9b66eb04afe1 100644
+index 3caa95819b393..5bfb463a4f07d 100644
 --- a/drivers/media/platform/qcom/camss/camss-tpg.c
 +++ b/drivers/media/platform/qcom/camss/camss-tpg.c
-@@ -490,6 +490,7 @@ int msm_tpg_register_entity(struct tpg_device *tpg,
+@@ -489,6 +489,7 @@ int msm_tpg_register_entity(struct tpg_device *tpg,
  
  	tpg->pad.flags = MEDIA_PAD_FL_SOURCE;
  
@@ -33,3 +33,6 @@ index 5764a60fa34c..9b66eb04afe1 100644
  	sd->entity.ops = &tpg_media_ops;
  	ret = media_entity_pads_init(&sd->entity, 1, &tpg->pad);
  	if (ret < 0) {
+-- 
+2.43.0
+

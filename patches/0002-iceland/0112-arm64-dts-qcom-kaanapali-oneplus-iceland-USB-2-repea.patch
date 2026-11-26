@@ -14,7 +14,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 601b47203660..816ca3b822ef 100644
+index 601b472036609..816ca3b822efd 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1697,6 +1697,8 @@ &pmih0108_e1_eusb2_repeater {
@@ -26,3 +26,6 @@ index 601b47203660..816ca3b822ef 100644
  };
  
  &pmk8850_gpios {
+-- 
+2.43.0
+

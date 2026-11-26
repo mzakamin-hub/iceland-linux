@@ -18,7 +18,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  2 files changed, 27 insertions(+)
 
 diff --git a/drivers/input/touchscreen/nt36536/nt36xxx.c b/drivers/input/touchscreen/nt36536/nt36xxx.c
-index 1ec7fd9e239d..e1850fc15fe8 100644
+index 1ec7fd9e239d5..e1850fc15fe84 100644
 --- a/drivers/input/touchscreen/nt36536/nt36xxx.c
 +++ b/drivers/input/touchscreen/nt36536/nt36xxx.c
 @@ -725,6 +725,8 @@ static void release_pen_event(void) {
@@ -104,7 +104,7 @@ index 1ec7fd9e239d..e1850fc15fe8 100644
  	}
  
 diff --git a/drivers/input/touchscreen/nt36536/nt36xxx.h b/drivers/input/touchscreen/nt36536/nt36xxx.h
-index 0d7b4375f88d..97cf0972d218 100644
+index 0d7b4375f88de..97cf0972d2185 100644
 --- a/drivers/input/touchscreen/nt36536/nt36xxx.h
 +++ b/drivers/input/touchscreen/nt36536/nt36xxx.h
 @@ -21,6 +21,7 @@
@@ -115,3 +115,6 @@ index 0d7b4375f88d..97cf0972d218 100644
  #include <linux/spi/spi.h>
  #include <linux/uaccess.h>
  #include <linux/version.h>
+-- 
+2.43.0
+

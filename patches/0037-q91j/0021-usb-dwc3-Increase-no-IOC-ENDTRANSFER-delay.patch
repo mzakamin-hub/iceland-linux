@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Elson Serrao <elson.serrao@oss.qualcomm.com>
 Date: Tue, 3 Nov 2026 10:29:53 -0800
-Subject: [PATCH 21/30] usb: dwc3: Increase no-IOC ENDTRANSFER delay
+Subject: [PATCH] usb: dwc3: Increase no-IOC ENDTRANSFER delay
 
 When ENDTRANSFER is issued without CMDIOC, software does not wait for
 command completion and instead relies on a fixed delay before continuing
@@ -24,7 +24,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/usb/dwc3/gadget.c b/drivers/usb/dwc3/gadget.c
-index ee8372356..dd28514cb 100644
+index a76f669a796c2..a907fdfac8d71 100644
 --- a/drivers/usb/dwc3/gadget.c
 +++ b/drivers/usb/dwc3/gadget.c
 @@ -445,7 +445,7 @@ int dwc3_send_gadget_ep_cmd(struct dwc3_ep *dep, unsigned int cmd,
@@ -36,7 +36,7 @@ index ee8372356..dd28514cb 100644
  
  	if (saved_config) {
  		reg = dwc3_readl(dwc, DWC3_GUSB2PHYCFG(0));
-@@ -4108,7 +4108,7 @@ void dwc3_stop_active_transfer(struct dwc3_ep *dep, bool force,
+@@ -4158,7 +4158,7 @@ void dwc3_stop_active_transfer(struct dwc3_ep *dep, bool force,
  	 * returning from this function.
  	 *
  	 * This mode is NOT available on the DWC_usb31 IP.  In this

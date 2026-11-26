@@ -34,7 +34,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  3 files changed, 51 insertions(+), 27 deletions(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/dp_rx.c b/drivers/net/wireless/ath/ath12k/dp_rx.c
-index 35d3f96d812b..c7b371e824d6 100644
+index 35d3f96d812b4..c7b371e824d63 100644
 --- a/drivers/net/wireless/ath/ath12k/dp_rx.c
 +++ b/drivers/net/wireless/ath/ath12k/dp_rx.c
 @@ -1099,11 +1099,11 @@ static void ath12k_dp_rx_h_undecap_nwifi(struct ath12k_pdev_dp *dp_pdev,
@@ -135,7 +135,7 @@ index 35d3f96d812b..c7b371e824d6 100644
  EXPORT_SYMBOL(ath12k_dp_rx_h_undecap);
  
 diff --git a/drivers/net/wireless/ath/ath12k/dp_rx.h b/drivers/net/wireless/ath/ath12k/dp_rx.h
-index 4d84d9a1e5b8..7a73d280ec5c 100644
+index 4d84d9a1e5b8b..7a73d280ec5cd 100644
 --- a/drivers/net/wireless/ath/ath12k/dp_rx.h
 +++ b/drivers/net/wireless/ath/ath12k/dp_rx.h
 @@ -198,11 +198,11 @@ static inline void ath12k_dp_unmap_rx_buf(struct ath12k_dp *dp,
@@ -156,7 +156,7 @@ index 4d84d9a1e5b8..7a73d280ec5c 100644
  			       struct sk_buff *msdu,
  			       struct hal_rx_desc_data *rx_info);
 diff --git a/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c b/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
-index 7e7c2867f056..e46c914f039b 100644
+index 7e7c2867f0566..e46c914f039b0 100644
 --- a/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
 +++ b/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
 @@ -344,6 +344,7 @@ static int ath12k_wifi7_dp_rx_h_mpdu(struct ath12k_pdev_dp *dp_pdev,
@@ -209,3 +209,6 @@ index 7e7c2867f056..e46c914f039b 100644
  	return false;
  }
  
+-- 
+2.43.0
+

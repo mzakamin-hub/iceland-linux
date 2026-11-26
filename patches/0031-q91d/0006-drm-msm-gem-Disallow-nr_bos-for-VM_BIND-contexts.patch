@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Rob Clark <robin.clark@oss.qualcomm.com>
 Date: Mon, 2 Nov 2026 09:19:58 -0800
-Subject: [PATCH 06/27] drm/msm/gem: Disallow nr_bos for VM_BIND contexts
+Subject: [PATCH] drm/msm/gem: Disallow nr_bos for VM_BIND contexts
 
 If using VM_BIND, it is invalid to attach BOs to a GEM_SUBMIT ioctl.
 Only the VM_BIND ioctl should be used for binding objects.
@@ -16,7 +16,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 4 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/gpu/drm/msm/msm_gem_submit.c b/drivers/gpu/drm/msm/msm_gem_submit.c
-index 1215b388c..f8aa0767b 100644
+index 1215b388cb405..f8aa0767b4de6 100644
 --- a/drivers/gpu/drm/msm/msm_gem_submit.c
 +++ b/drivers/gpu/drm/msm/msm_gem_submit.c
 @@ -272,7 +272,7 @@ static int submit_lock_objects_vmbind(struct msm_gem_submit *submit)

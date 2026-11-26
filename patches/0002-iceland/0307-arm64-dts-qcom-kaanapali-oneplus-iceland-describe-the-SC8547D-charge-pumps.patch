@@ -30,7 +30,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 58 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 1af140298172..31851f4f22fa 100644
+index 1af140298172f..31851f4f22fa4 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1398,6 +1398,27 @@ &qup_i2c9_data_clk {
@@ -112,3 +112,6 @@ index 1af140298172..31851f4f22fa 100644
  	/* the pogo data line as a GPIO: low = a dock is attached and unpowered or asleep (stock uart_wake_gpio) */
  	pogo_detect_default: pogo-detect-default-state {
  		pins = "gpio151";
+-- 
+2.43.0
+

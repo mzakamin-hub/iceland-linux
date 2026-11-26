@@ -55,7 +55,7 @@ Co-Authored-By: Claude ZCode <noreply@anthropic.com>
  create mode 100644 tools/virt/gunyah/gh_sharetest.py
 
 diff --git a/Documentation/virt/gunyah/port_adaptations.md b/Documentation/virt/gunyah/port_adaptations.md
-index 76686c0655ea..b854aad55104 100644
+index 76686c0655eac..b854aad55104d 100644
 --- a/Documentation/virt/gunyah/port_adaptations.md
 +++ b/Documentation/virt/gunyah/port_adaptations.md
 @@ -74,8 +74,8 @@ The RM validates the VMM-supplied DTB at VM_INIT and answers
@@ -165,7 +165,7 @@ index 76686c0655ea..b854aad55104 100644
 +The RM misc device gets a 64-bit DMA mask at probe so it can serve as the
 +DMA-BUF importer device.
 diff --git a/drivers/virt/gunyah/Kconfig b/drivers/virt/gunyah/Kconfig
-index 649147a45939..439cacd800ba 100644
+index 649147a459399..439cacd800baf 100644
 --- a/drivers/virt/gunyah/Kconfig
 +++ b/drivers/virt/gunyah/Kconfig
 @@ -14,6 +14,7 @@ config GUNYAH
@@ -177,7 +177,7 @@ index 649147a45939..439cacd800ba 100644
  	select SYS_HYPERVISOR
  	help
 diff --git a/drivers/virt/gunyah/Makefile b/drivers/virt/gunyah/Makefile
-index a1dee0e223ae..06e116a9d6ff 100644
+index a1dee0e223aeb..06e116a9d6ff7 100644
 --- a/drivers/virt/gunyah/Makefile
 +++ b/drivers/virt/gunyah/Makefile
 @@ -2,7 +2,7 @@
@@ -190,7 +190,7 @@ index a1dee0e223ae..06e116a9d6ff 100644
  obj-$(CONFIG_GUNYAH) += gunyah_rsc_mgr.o gunyah_vcpu.o
  obj-$(CONFIG_GUNYAH_QCOM_TRUSTED_VM) += gunyah_qtvm.o
 diff --git a/drivers/virt/gunyah/rsc_mgr.c b/drivers/virt/gunyah/rsc_mgr.c
-index b3ec2c9685e8..e607c70ce8a7 100644
+index b3ec2c9685e8f..e607c70ce8a7e 100644
 --- a/drivers/virt/gunyah/rsc_mgr.c
 +++ b/drivers/virt/gunyah/rsc_mgr.c
 @@ -6,6 +6,7 @@
@@ -235,7 +235,7 @@ index b3ec2c9685e8..e607c70ce8a7 100644
  	if (ret) {
  		pr_err("Failed to add gh_rm_core device\n");
 diff --git a/drivers/virt/gunyah/vm_mgr.c b/drivers/virt/gunyah/vm_mgr.c
-index c964642d0dd0..46c01e794bad 100644
+index c964642d0dd0a..46c01e794bad1 100644
 --- a/drivers/virt/gunyah/vm_mgr.c
 +++ b/drivers/virt/gunyah/vm_mgr.c
 @@ -713,6 +713,8 @@ static __must_check struct gunyah_vm *gunyah_vm_alloc(struct gunyah_rm *rm)
@@ -318,7 +318,7 @@ index c964642d0dd0..46c01e794bad 100644
  	mt_for_each(&ghvm->bindings, b, index, ULONG_MAX) {
  		mtree_erase(&ghvm->bindings, gunyah_gpa_to_gfn(b->guest_phys_addr));
 diff --git a/drivers/virt/gunyah/vm_mgr.h b/drivers/virt/gunyah/vm_mgr.h
-index 135139996287..fe07f81b6fea 100644
+index 1351399962874..fe07f81b6fea2 100644
 --- a/drivers/virt/gunyah/vm_mgr.h
 +++ b/drivers/virt/gunyah/vm_mgr.h
 @@ -111,6 +111,9 @@ long gunyah_dev_vm_mgr_ioctl(struct gunyah_rm *rm, unsigned int cmd,
@@ -357,7 +357,7 @@ index 135139996287..fe07f81b6fea 100644
  void gunyah_cma_mem_exit(void);
 diff --git a/drivers/virt/gunyah/vm_mgr_pshare.c b/drivers/virt/gunyah/vm_mgr_pshare.c
 new file mode 100644
-index 000000000000..b1b846929d75
+index 0000000000000..b1b846929d754
 --- /dev/null
 +++ b/drivers/virt/gunyah/vm_mgr_pshare.c
 @@ -0,0 +1,485 @@
@@ -847,7 +847,7 @@ index 000000000000..b1b846929d75
 +
 +MODULE_IMPORT_NS("DMA_BUF");
 diff --git a/include/uapi/linux/gunyah.h b/include/uapi/linux/gunyah.h
-index f6f427be5e75..bbaf486dc760 100644
+index f6f427be5e752..bbaf486dc760e 100644
 --- a/include/uapi/linux/gunyah.h
 +++ b/include/uapi/linux/gunyah.h
 @@ -475,6 +475,88 @@ struct gunyah_auth_desc {
@@ -941,7 +941,7 @@ index f6f427be5e75..bbaf486dc760 100644
  #endif
 diff --git a/tools/virt/gunyah/gh_accepttest.py b/tools/virt/gunyah/gh_accepttest.py
 new file mode 100644
-index 000000000000..5f2d3b73c973
+index 0000000000000..5f2d3b73c9734
 --- /dev/null
 +++ b/tools/virt/gunyah/gh_accepttest.py
 @@ -0,0 +1,288 @@
@@ -1235,7 +1235,7 @@ index 000000000000..5f2d3b73c973
 +    sys.exit(min(main(), 125))
 diff --git a/tools/virt/gunyah/gh_rmproxy.S b/tools/virt/gunyah/gh_rmproxy.S
 new file mode 100644
-index 000000000000..7bb3c749cf7e
+index 0000000000000..7bb3c749cf7e9
 --- /dev/null
 +++ b/tools/virt/gunyah/gh_rmproxy.S
 @@ -0,0 +1,105 @@
@@ -1346,7 +1346,7 @@ index 000000000000..7bb3c749cf7e
 +	b	.
 diff --git a/tools/virt/gunyah/gh_sharetest.py b/tools/virt/gunyah/gh_sharetest.py
 new file mode 100644
-index 000000000000..8a1d9e2d58e5
+index 0000000000000..8a1d9e2d58e58
 --- /dev/null
 +++ b/tools/virt/gunyah/gh_sharetest.py
 @@ -0,0 +1,154 @@
@@ -1505,7 +1505,7 @@ index 000000000000..8a1d9e2d58e5
 +if __name__ == "__main__":
 +    sys.exit(min(main(), 125))
 diff --git a/tools/virt/gunyah/gh_vmtest.py b/tools/virt/gunyah/gh_vmtest.py
-index b8e64c2177f2..1734951093ba 100755
+index b8e64c2177f28..1734951093baf 100755
 --- a/tools/virt/gunyah/gh_vmtest.py
 +++ b/tools/virt/gunyah/gh_vmtest.py
 @@ -57,8 +57,11 @@ class FDT:
@@ -1532,3 +1532,6 @@ index b8e64c2177f2..1734951093ba 100755
      if shared and variant == "shm":
          f.begin("shm-0"); f.s("vdevice-type", "shm"); f.prop("peer-default"); f.u64("dma_base", 0)
          f.begin("memory"); f.prop("optional"); f.u32("label", shared[2]); f.u32("#address-cells", 2); f.u64("base", shared[0]); f.end()
+-- 
+2.43.0
+

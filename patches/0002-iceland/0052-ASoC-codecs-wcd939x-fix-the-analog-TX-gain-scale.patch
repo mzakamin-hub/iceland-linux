@@ -18,7 +18,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/sound/soc/codecs/wcd939x.c b/sound/soc/codecs/wcd939x.c
-index aea27dc48e2e..6d96b39328f8 100644
+index df961c8cb47a2..5f66f352a9455 100644
 --- a/sound/soc/codecs/wcd939x.c
 +++ b/sound/soc/codecs/wcd939x.c
 @@ -218,7 +218,7 @@ static const char * const wcd939x_supplies[] = {
@@ -30,3 +30,6 @@ index aea27dc48e2e..6d96b39328f8 100644
  
  static const struct wcd_mbhc_field wcd_mbhc_fields[WCD_MBHC_REG_FUNC_MAX] = {
  	WCD_MBHC_FIELD(WCD_MBHC_L_DET_EN, WCD939X_ANA_MBHC_MECH, 0x80),
+-- 
+2.43.0
+

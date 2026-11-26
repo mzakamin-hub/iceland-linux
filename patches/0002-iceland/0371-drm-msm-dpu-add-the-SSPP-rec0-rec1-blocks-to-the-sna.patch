@@ -27,7 +27,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 14 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
-index 2951984edffa..8d01ac5be62c 100644
+index cbd73d782d1ee..27429ef857780 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
 @@ -1027,6 +1027,20 @@ static void dpu_kms_mdp_snapshot(struct msm_disp_state *disp_state, struct msm_k
@@ -51,3 +51,6 @@ index 2951984edffa..8d01ac5be62c 100644
  	}
  
  	/* dump LM sub-blocks HW regs info */
+-- 
+2.43.0
+

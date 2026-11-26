@@ -15,7 +15,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 7 insertions(+)
 
 diff --git a/Documentation/devicetree/bindings/eeprom/at24.yaml b/Documentation/devicetree/bindings/eeprom/at24.yaml
-index ef88f46928a4..b5d2cd9c6fc3 100644
+index ef88f46928a40..b5d2cd9c6fc36 100644
 --- a/Documentation/devicetree/bindings/eeprom/at24.yaml
 +++ b/Documentation/devicetree/bindings/eeprom/at24.yaml
 @@ -213,6 +213,13 @@ properties:
@@ -32,3 +32,6 @@ index ef88f46928a4..b5d2cd9c6fc3 100644
  required:
    - compatible
    - reg
+-- 
+2.43.0
+

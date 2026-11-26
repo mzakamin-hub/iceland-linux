@@ -21,7 +21,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  create mode 100644 drivers/media/platform/qcom/iris/iris_platform_kaanapali.h
 
 diff --git a/drivers/media/platform/qcom/iris/iris_platform_common.h b/drivers/media/platform/qcom/iris/iris_platform_common.h
-index cddab9a9c375..d99ea180d79e 100644
+index cddab9a9c375a..d99ea180d79eb 100644
 --- a/drivers/media/platform/qcom/iris/iris_platform_common.h
 +++ b/drivers/media/platform/qcom/iris/iris_platform_common.h
 @@ -70,6 +70,7 @@ extern const struct iris_platform_data sm8250_data;
@@ -34,7 +34,7 @@ index cddab9a9c375..d99ea180d79e 100644
  enum platform_clk_type {
 diff --git a/drivers/media/platform/qcom/iris/iris_platform_kaanapali.h b/drivers/media/platform/qcom/iris/iris_platform_kaanapali.h
 new file mode 100644
-index 000000000000..247fb9d7cb63
+index 0000000000000..247fb9d7cb632
 --- /dev/null
 +++ b/drivers/media/platform/qcom/iris/iris_platform_kaanapali.h
 @@ -0,0 +1,63 @@
@@ -102,7 +102,7 @@ index 000000000000..247fb9d7cb63
 +
 +#endif /* __IRIS_PLATFORM_KAANAPALI_H__ */
 diff --git a/drivers/media/platform/qcom/iris/iris_platform_vpu3x.c b/drivers/media/platform/qcom/iris/iris_platform_vpu3x.c
-index e963cb116313..016ce234d7ba 100644
+index e963cb116313f..016ce234d7ba8 100644
 --- a/drivers/media/platform/qcom/iris/iris_platform_vpu3x.c
 +++ b/drivers/media/platform/qcom/iris/iris_platform_vpu3x.c
 @@ -16,6 +16,7 @@
@@ -163,7 +163,7 @@ index e963cb116313..016ce234d7ba 100644
   * Shares most of SM8550 data except:
   * - clk_tbl and opp_clk_tbl for x1p42100
 diff --git a/drivers/media/platform/qcom/iris/iris_probe.c b/drivers/media/platform/qcom/iris/iris_probe.c
-index 41dec90f3e2b..1ca8c5efeef3 100644
+index 343e44c6b9c46..14a0f776a84ab 100644
 --- a/drivers/media/platform/qcom/iris/iris_probe.c
 +++ b/drivers/media/platform/qcom/iris/iris_probe.c
 @@ -450,6 +450,10 @@ static const struct of_device_id iris_dt_match[] = {
@@ -177,3 +177,6 @@ index 41dec90f3e2b..1ca8c5efeef3 100644
  	{
  		.compatible = "qcom,x1p42100-iris",
  		.data = &x1p42100_data,
+-- 
+2.43.0
+

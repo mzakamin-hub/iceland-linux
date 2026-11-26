@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Bart Van Assche <bvanassche@acm.org>
 Date: Mon, 26 Oct 2026 12:58:08 -0700
-Subject: [PATCH 10/30] drm/msm: Fix a lock leak in
- msm_ioctl_gem_info_set_metadata()
+Subject: [PATCH] drm/msm: Fix a lock leak in msm_ioctl_gem_info_set_metadata()
 
 If krealloc() fails, msm_ioctl_gem_info_set_metadata() returns without
 unlocking the GEM object. Fix this by jumping to a new label that
@@ -24,7 +23,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/gpu/drm/msm/msm_drv.c b/drivers/gpu/drm/msm/msm_drv.c
-index 5e8f3ce26..7ab808322 100644
+index c3111deaa6468..3675df277f6a6 100644
 --- a/drivers/gpu/drm/msm/msm_drv.c
 +++ b/drivers/gpu/drm/msm/msm_drv.c
 @@ -571,13 +571,14 @@ static int msm_ioctl_gem_info_set_metadata(struct drm_gem_object *obj,

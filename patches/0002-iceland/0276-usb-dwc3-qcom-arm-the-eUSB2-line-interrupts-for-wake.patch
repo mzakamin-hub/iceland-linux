@@ -31,7 +31,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 43 insertions(+), 10 deletions(-)
 
 diff --git a/drivers/usb/dwc3/dwc3-qcom.c b/drivers/usb/dwc3/dwc3-qcom.c
-index 0664fdb842a3..3c8d3eef9a14 100644
+index 114f49d3a0065..e9f7c0cce003d 100644
 --- a/drivers/usb/dwc3/dwc3-qcom.c
 +++ b/drivers/usb/dwc3/dwc3-qcom.c
 @@ -85,6 +85,7 @@ struct dwc3_qcom {
@@ -167,3 +167,6 @@ index 0664fdb842a3..3c8d3eef9a14 100644
  
  	qcom->resets = devm_reset_control_array_get_optional_exclusive(dev);
  	if (IS_ERR(qcom->resets)) {
+-- 
+2.43.0
+

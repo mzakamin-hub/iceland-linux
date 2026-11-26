@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Mukesh Kumar Savaliya <mukesh.savaliya@oss.qualcomm.com>
 Date: Tue, 31 Mar 2026 17:17:40 +0530
-Subject: [PATCH 1/8] FROMLIST: dmaengine: qcom: gpi: Add lock/unlock TREs for
+Subject: [PATCH] FROMLIST: dmaengine: qcom: gpi: Add lock/unlock TREs for
  multi-owner I2C transfers
 
 Some platforms use a QUP-based I2C controller in a configuration where the
@@ -27,7 +27,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  2 files changed, 62 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/dma/qcom/gpi.c b/drivers/dma/qcom/gpi.c
-index c41bfac65..7eb38c691 100644
+index d3c3d0f35afbe..a4dd33463d2ec 100644
 --- a/drivers/dma/qcom/gpi.c
 +++ b/drivers/dma/qcom/gpi.c
 @@ -2,6 +2,7 @@
@@ -116,7 +116,7 @@ index c41bfac65..7eb38c691 100644
  
  	for (i = 0; i < tre_idx; i++)
 diff --git a/include/linux/dma/qcom-gpi-dma.h b/include/linux/dma/qcom-gpi-dma.h
-index 332be2842..f10fa9371 100644
+index 332be28427e47..f10fa93713f96 100644
 --- a/include/linux/dma/qcom-gpi-dma.h
 +++ b/include/linux/dma/qcom-gpi-dma.h
 @@ -1,6 +1,7 @@

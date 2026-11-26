@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Vishnu Reddy <busanna.reddy@oss.qualcomm.com>
 Date: Sat, 31 Oct 2026 01:49:10 +0530
-Subject: [PATCH 15/24] media: iris: Skip redundant HFI_PROP_TIER updates
+Subject: [PATCH] media: iris: Skip redundant HFI_PROP_TIER updates
 
 HFI_PROP_TIER is already programmed by iris_hfi_gen2_set_tier(), which
 selects TIER or TIER_AV1 based on the active codec. The TIER and TIER_AV1
@@ -22,7 +22,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 2 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_hfi_gen2.c b/drivers/media/platform/qcom/iris/iris_hfi_gen2.c
-index 9a3245bd1a12..02bb477bd469 100644
+index 9a3245bd1a121..02bb477bd4693 100644
 --- a/drivers/media/platform/qcom/iris/iris_hfi_gen2.c
 +++ b/drivers/media/platform/qcom/iris/iris_hfi_gen2.c
 @@ -1055,7 +1055,6 @@ static const struct platform_inst_fw_cap inst_fw_cap_sm8550_dec[] = {
@@ -41,3 +41,6 @@ index 9a3245bd1a12..02bb477bd469 100644
  	},
  	{
  		.cap_id = DRAP,
+-- 
+2.43.0
+

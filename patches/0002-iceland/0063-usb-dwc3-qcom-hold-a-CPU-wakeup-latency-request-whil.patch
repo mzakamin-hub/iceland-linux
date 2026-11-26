@@ -23,7 +23,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 17 insertions(+)
 
 diff --git a/drivers/usb/dwc3/dwc3-qcom.c b/drivers/usb/dwc3/dwc3-qcom.c
-index ac68b4218b56..0664fdb842a3 100644
+index a2608416e04ec..114f49d3a0065 100644
 --- a/drivers/usb/dwc3/dwc3-qcom.c
 +++ b/drivers/usb/dwc3/dwc3-qcom.c
 @@ -15,6 +15,7 @@
@@ -99,3 +99,6 @@ index ac68b4218b56..0664fdb842a3 100644
  
  	pm_runtime_put_noidle(qcom->dev);
  }
+-- 
+2.43.0
+

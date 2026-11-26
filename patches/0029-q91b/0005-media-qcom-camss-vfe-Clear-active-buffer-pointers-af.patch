@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Loic Poulain <loic.poulain@oss.qualcomm.com>
 Date: Fri, 30 Oct 2026 10:47:31 +0100
-Subject: [PATCH 05/24] media: qcom: camss: vfe: Clear active buffer pointers
- after flushing
+Subject: [PATCH] media: qcom: camss: vfe: Clear active buffer pointers after
+ flushing
 
 vfe_flush_buffers() returns all active buffers to vb2 but it leaves
 output->buf[0] and output->buf[1] pointing to the completed buffers
@@ -28,7 +28,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 6 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/camss/camss-vfe.c b/drivers/media/platform/qcom/camss/camss-vfe.c
-index 3acef6ba97dc..26443f0412cf 100644
+index 0f9a8c0d8d641..77934e6e2a585 100644
 --- a/drivers/media/platform/qcom/camss/camss-vfe.c
 +++ b/drivers/media/platform/qcom/camss/camss-vfe.c
 @@ -1191,11 +1191,15 @@ int vfe_flush_buffers(struct camss_video *vid,
@@ -49,3 +49,6 @@ index 3acef6ba97dc..26443f0412cf 100644
  
  	if (output->last_buffer) {
  		vb2_buffer_done(&output->last_buffer->vb.vb2_buf, state);
+-- 
+2.43.0
+

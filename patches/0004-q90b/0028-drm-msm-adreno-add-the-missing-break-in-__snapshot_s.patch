@@ -17,7 +17,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_snapshot.h b/drivers/gpu/drm/msm/adreno/adreno_snapshot.h
-index e8ff102a628b..6e301a9eb97e 100644
+index e8ff102a628b7..6e301a9eb97e4 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_snapshot.h
 +++ b/drivers/gpu/drm/msm/adreno/adreno_snapshot.h
 @@ -391,6 +391,7 @@ __snapshot_sect_init(struct adreno_gpu_state *state, uint16_t id, size_t extra_s
@@ -28,3 +28,6 @@ index e8ff102a628b..6e301a9eb97e 100644
  	default:
  		break;
  	}
+-- 
+2.43.0
+

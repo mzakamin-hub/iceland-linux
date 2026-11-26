@@ -19,7 +19,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  7 files changed, 52 insertions(+), 15 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/camss/camss-csid-gen4.c b/drivers/media/platform/qcom/camss/camss-csid-gen4.c
-index bc52e4a1135c..3b7a72154bf1 100644
+index bc52e4a1135cf..3b7a72154bf1a 100644
 --- a/drivers/media/platform/qcom/camss/camss-csid-gen4.c
 +++ b/drivers/media/platform/qcom/camss/camss-csid-gen4.c
 @@ -63,6 +63,7 @@
@@ -39,7 +39,7 @@ index bc52e4a1135c..3b7a72154bf1 100644
  	if (camss->tpg && csid->tpg_linked &&
  	    camss->tpg[phy->csiphy_id].testgen.mode != TPG_PAYLOAD_MODE_DISABLED) {
 diff --git a/drivers/media/platform/qcom/camss/camss-csid.c b/drivers/media/platform/qcom/camss/camss-csid.c
-index a00791b00feb..6636b15c4ade 100644
+index 51f20907ffde6..5bbb44bfea1c1 100644
 --- a/drivers/media/platform/qcom/camss/camss-csid.c
 +++ b/drivers/media/platform/qcom/camss/camss-csid.c
 @@ -547,7 +547,8 @@ static int csid_set_clock_rates(struct csid_device *csid)
@@ -52,7 +52,7 @@ index a00791b00feb..6636b15c4ade 100644
  	if (link_freq < 0)
  		link_freq = 0;
  
-@@ -1279,6 +1280,7 @@ static int csid_link_setup(struct media_entity *entity,
+@@ -1276,6 +1277,7 @@ static int csid_link_setup(struct media_entity *entity,
  			csid->phy.lane_cnt = tpg->res->lane_cnt;
  			csid->phy.csiphy_id = tpg->id;
  			csid->phy.lane_assign = csid_get_lane_assign(NULL, csid->phy.lane_cnt);
@@ -60,7 +60,7 @@ index a00791b00feb..6636b15c4ade 100644
  			csid->tpg_linked = true;
  		} else {
  			csiphy = v4l2_get_subdevdata(sd);
-@@ -1293,6 +1295,10 @@ static int csid_link_setup(struct media_entity *entity,
+@@ -1290,6 +1292,10 @@ static int csid_link_setup(struct media_entity *entity,
  			lane_cfg = &csiphy->cfg.csi2->lane_cfg;
  			csid->phy.lane_cnt = lane_cfg->num_data;
  			csid->phy.lane_assign = csid_get_lane_assign(lane_cfg, lane_cfg->num_data);
@@ -72,7 +72,7 @@ index a00791b00feb..6636b15c4ade 100644
  		}
  	}
 diff --git a/drivers/media/platform/qcom/camss/camss-csid.h b/drivers/media/platform/qcom/camss/camss-csid.h
-index 4f31ad303c4e..6d66c193038a 100644
+index 4f31ad303c4e8..6d66c193038a4 100644
 --- a/drivers/media/platform/qcom/camss/camss-csid.h
 +++ b/drivers/media/platform/qcom/camss/camss-csid.h
 @@ -44,6 +44,11 @@ enum csid_testgen_mode {
@@ -96,7 +96,7 @@ index 4f31ad303c4e..6d66c193038a 100644
  
  struct csid_device;
 diff --git a/drivers/media/platform/qcom/camss/camss-csiphy.c b/drivers/media/platform/qcom/camss/camss-csiphy.c
-index f99eea2ef228..5dbcae34970b 100644
+index cdb803843792c..3bf09450f938c 100644
 --- a/drivers/media/platform/qcom/camss/camss-csiphy.c
 +++ b/drivers/media/platform/qcom/camss/camss-csiphy.c
 @@ -147,7 +147,9 @@ static int csiphy_set_clock_rates_legacy(struct csiphy_device *csiphy)
@@ -133,7 +133,7 @@ index f99eea2ef228..5dbcae34970b 100644
  	if (link_freq <= 0) {
  		dev_err(dev,
 diff --git a/drivers/media/platform/qcom/camss/camss-csiphy.h b/drivers/media/platform/qcom/camss/camss-csiphy.h
-index 8c3319f2ca1c..1e4f803f1887 100644
+index 8c3319f2ca1cf..1e4f803f18875 100644
 --- a/drivers/media/platform/qcom/camss/camss-csiphy.h
 +++ b/drivers/media/platform/qcom/camss/camss-csiphy.h
 @@ -32,11 +32,13 @@ struct csiphy_lane {
@@ -151,7 +151,7 @@ index 8c3319f2ca1c..1e4f803f1887 100644
  	struct csiphy_lane *data;
  	struct csiphy_lane clk;
 diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
-index 12b4207f42f8..dfbbf0dc158e 100644
+index 12a18ec5ade14..d9ac694f53232 100644
 --- a/drivers/media/platform/qcom/camss/camss.c
 +++ b/drivers/media/platform/qcom/camss/camss.c
 @@ -4828,12 +4828,16 @@ struct media_pad *camss_find_sensor_pad(struct media_entity *entity)
@@ -220,11 +220,11 @@ index 12b4207f42f8..dfbbf0dc158e 100644
 +		lncfg->clk.pol = mipi_csi2->lane_polarities[0];
 +	}
 +
- 	lncfg->data = devm_kcalloc(dev,
- 				   lncfg->num_data, sizeof(*lncfg->data),
- 				   GFP_KERNEL);
+ 	lncfg->data = devm_kzalloc_objs(dev, *lncfg->data, lncfg->num_data);
+ 	if (!lncfg->data)
+ 		return -ENOMEM;
 diff --git a/drivers/media/platform/qcom/camss/camss.h b/drivers/media/platform/qcom/camss/camss.h
-index 0551211f7948..4997ca998462 100644
+index 0551211f79481..4997ca9984628 100644
 --- a/drivers/media/platform/qcom/camss/camss.h
 +++ b/drivers/media/platform/qcom/camss/camss.h
 @@ -173,7 +173,7 @@ int camss_enable_clocks(int nclocks, struct camss_clock *clock,
@@ -236,3 +236,6 @@ index 0551211f7948..4997ca998462 100644
  int camss_get_pixel_clock(struct media_entity *entity, u64 *pixel_clock);
  int camss_pm_domain_on(struct camss *camss, int id);
  void camss_pm_domain_off(struct camss *camss, int id);
+-- 
+2.43.0
+

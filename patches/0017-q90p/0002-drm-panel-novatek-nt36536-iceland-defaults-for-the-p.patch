@@ -17,7 +17,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 42 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/gpu/drm/panel/panel-novatek-nt36536.c b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
-index 30eeb21343e1..d11ff1617232 100644
+index 30eeb21343e1e..d11ff16172321 100644
 --- a/drivers/gpu/drm/panel/panel-novatek-nt36536.c
 +++ b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
 @@ -73,7 +73,36 @@ static const struct regulator_bulk_data novatek_supplies[] = {
@@ -86,3 +86,6 @@ index 30eeb21343e1..d11ff1617232 100644
  	ctx = devm_drm_panel_alloc(dev, struct novatek, panel,
  				   &novatek_panel_funcs,
  				   DRM_MODE_CONNECTOR_DSI);
+-- 
+2.43.0
+

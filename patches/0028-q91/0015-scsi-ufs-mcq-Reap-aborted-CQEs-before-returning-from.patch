@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jeuk Kim <jeuk20.kim@samsung.com>
 Date: Fri, 30 Oct 2026 10:13:21 +0900
-Subject: [PATCH 15/32] scsi: ufs: mcq: Reap aborted CQEs before returning from
- abort
+Subject: [PATCH] scsi: ufs: mcq: Reap aborted CQEs before returning from abort
 
 ufshcd_mcq_abort() can return before the OCS_ABORTED CQE is reaped.
 If the command is retried or reused, the late CQE can unmap its new
@@ -32,11 +31,11 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  3 files changed, 70 insertions(+), 16 deletions(-)
 
 diff --git a/drivers/ufs/core/ufs-mcq.c b/drivers/ufs/core/ufs-mcq.c
-index 25e392f8ede2..b130a2dfc88a 100644
+index 005a704624730..ab0deb50c66a1 100644
 --- a/drivers/ufs/core/ufs-mcq.c
 +++ b/drivers/ufs/core/ufs-mcq.c
-@@ -554,6 +554,19 @@ static int ufshcd_mcq_sq_start(struct ufs_hba *hba, struct ufs_hw_queue *hwq)
- 	return err;
+@@ -571,6 +571,19 @@ static enum utp_ocs ufshcd_mcq_poll_ocs(struct ufs_hba *hba,
+ 	return lrbp->utr_descriptor_ptr->header.ocs;
  }
  
 +static bool ufshcd_mcq_cmd_completed(struct ufs_hba *hba,
@@ -55,7 +54,7 @@ index 25e392f8ede2..b130a2dfc88a 100644
  /**
   * ufshcd_mcq_sq_cleanup - Clean up submission queue resources
   * associated with the pending command.
-@@ -570,6 +583,7 @@ int ufshcd_mcq_sq_cleanup(struct ufs_hba *hba, int task_tag)
+@@ -587,6 +600,7 @@ int ufshcd_mcq_sq_cleanup(struct ufs_hba *hba, int task_tag)
  	struct ufs_hw_queue *hwq;
  	void __iomem *reg, *opr_sqd_base;
  	u32 nexus, id, val;
@@ -63,7 +62,7 @@ index 25e392f8ede2..b130a2dfc88a 100644
  	int err;
  
  	if (hba->quirks & UFSHCD_QUIRK_MCQ_BROKEN_RTC)
-@@ -616,6 +630,20 @@ int ufshcd_mcq_sq_cleanup(struct ufs_hba *hba, int task_tag)
+@@ -650,6 +664,20 @@ int ufshcd_mcq_sq_cleanup(struct ufs_hba *hba, int task_tag)
  	if (ufshcd_mcq_sq_start(hba, hwq))
  		err = -ETIMEDOUT;
  
@@ -85,7 +84,7 @@ index 25e392f8ede2..b130a2dfc88a 100644
  }
  
 diff --git a/drivers/ufs/core/ufshcd.c b/drivers/ufs/core/ufshcd.c
-index b521e1d75d90..f9c24e8d2ed7 100644
+index ddaa760485091..5004a0b1cdc97 100644
 --- a/drivers/ufs/core/ufshcd.c
 +++ b/drivers/ufs/core/ufshcd.c
 @@ -2433,6 +2433,8 @@ static inline void ufshcd_send_command(struct ufs_hba *hba,
@@ -115,7 +114,7 @@ index b521e1d75d90..f9c24e8d2ed7 100644
  	return 0;
  }
  
-@@ -6040,6 +6046,7 @@ void ufshcd_compl_one_cqe(struct ufs_hba *hba, int task_tag,
+@@ -6048,6 +6054,7 @@ void ufshcd_compl_one_cqe(struct ufs_hba *hba, int task_tag,
  			(struct utp_upiu_req *)lrbp->ucd_rsp_ptr);
  		cmd->result = 0;
  	}
@@ -123,7 +122,7 @@ index b521e1d75d90..f9c24e8d2ed7 100644
  	/* Do not touch lrbp after scsi_done() has been called. */
  	scsi_done(cmd);
  }
-@@ -6143,6 +6150,7 @@ static int ufshcd_poll(struct Scsi_Host *shost, unsigned int queue_num)
+@@ -6151,6 +6158,7 @@ static int ufshcd_poll(struct Scsi_Host *shost, unsigned int queue_num)
  static bool ufshcd_mcq_force_compl_one(struct request *rq, void *priv)
  {
  	struct scsi_cmnd *cmd = blk_mq_rq_to_pdu(rq);
@@ -131,7 +130,7 @@ index b521e1d75d90..f9c24e8d2ed7 100644
  	struct scsi_device *sdev = rq->q->queuedata;
  	struct Scsi_Host *shost = sdev->host;
  	struct ufs_hba *hba = shost_priv(shost);
-@@ -6153,13 +6161,18 @@ static bool ufshcd_mcq_force_compl_one(struct request *rq, void *priv)
+@@ -6161,13 +6169,18 @@ static bool ufshcd_mcq_force_compl_one(struct request *rq, void *priv)
  
  	/*
  	 * For those cmds of which the cqes are not present in the cq, complete
@@ -154,7 +153,7 @@ index b521e1d75d90..f9c24e8d2ed7 100644
  		}
  	}
  
-@@ -7991,31 +8004,34 @@ int ufshcd_advanced_rpmb_req_handler(struct ufs_hba *hba, struct utp_upiu_req *r
+@@ -7999,31 +8012,34 @@ int ufshcd_advanced_rpmb_req_handler(struct ufs_hba *hba, struct utp_upiu_req *r
  	return err ? : result;
  }
  
@@ -198,7 +197,7 @@ index b521e1d75d90..f9c24e8d2ed7 100644
  
  	if (ufshcd_clear_outstanding_reqs(hba, BIT(tag)))
  		ufshcd_compl_one_cqe(hba, tag, NULL);
-@@ -8030,6 +8046,7 @@ static bool ufshcd_clear_lu_cmds(struct request *req, void *priv)
+@@ -8038,6 +8054,7 @@ static bool ufshcd_clear_lu_cmds(struct request *req, void *priv)
   */
  static int ufshcd_eh_device_reset_handler(struct scsi_cmnd *cmd)
  {
@@ -206,7 +205,7 @@ index b521e1d75d90..f9c24e8d2ed7 100644
  	struct Scsi_Host *host;
  	struct ufs_hba *hba;
  	int err;
-@@ -8047,7 +8064,8 @@ static int ufshcd_eh_device_reset_handler(struct scsi_cmnd *cmd)
+@@ -8055,7 +8072,8 @@ static int ufshcd_eh_device_reset_handler(struct scsi_cmnd *cmd)
  		/* clear the commands that were pending for corresponding LUN */
  		blk_mq_tagset_busy_iter(&hba->host->tag_set,
  					ufshcd_clear_lu_cmds,
@@ -216,7 +215,7 @@ index b521e1d75d90..f9c24e8d2ed7 100644
  	}
  
  	hba->req_abort_count = 0;
-@@ -9662,6 +9680,7 @@ static void ufshcd_async_scan(void *data, async_cookie_t cookie)
+@@ -9675,6 +9693,7 @@ static void ufshcd_async_scan(void *data, async_cookie_t cookie)
  
  static enum scsi_timeout_action ufshcd_eh_timed_out(struct scsi_cmnd *scmd)
  {
@@ -224,7 +223,7 @@ index b521e1d75d90..f9c24e8d2ed7 100644
  	struct ufs_hba *hba = shost_priv(scmd->device->host);
  
  	if (!hba->pm_op_in_progress) {
-@@ -9696,6 +9715,7 @@ static enum scsi_timeout_action ufshcd_eh_timed_out(struct scsi_cmnd *scmd)
+@@ -9709,6 +9728,7 @@ static enum scsi_timeout_action ufshcd_eh_timed_out(struct scsi_cmnd *scmd)
  			set_host_byte(scmd, DID_TIME_OUT);
  		}
  
@@ -233,7 +232,7 @@ index b521e1d75d90..f9c24e8d2ed7 100644
  	}
  
 diff --git a/include/ufs/ufshcd.h b/include/ufs/ufshcd.h
-index be62165b785e..69e49d25f6ce 100644
+index be62165b785e0..69e49d25f6ce4 100644
 --- a/include/ufs/ufshcd.h
 +++ b/include/ufs/ufshcd.h
 @@ -151,6 +151,10 @@ struct ufs_pm_lvl_states {
@@ -263,3 +262,6 @@ index be62165b785e..69e49d25f6ce 100644
  	ktime_t issue_time_stamp;
  	u64 issue_time_stamp_local_clock;
  	ktime_t compl_time_stamp;
+-- 
+2.43.0
+

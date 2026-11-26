@@ -44,10 +44,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  2 files changed, 66 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/usb/typec/ucsi/ucsi.c b/drivers/usb/typec/ucsi/ucsi.c
-index bdad3b89089d..8f12412f5bcb 100644
+index 5941b6e12d47d..2c448be26db40 100644
 --- a/drivers/usb/typec/ucsi/ucsi.c
 +++ b/drivers/usb/typec/ucsi/ucsi.c
-@@ -2529,6 +2529,7 @@ void ucsi_unregister(struct ucsi *ucsi)
+@@ -2546,6 +2546,7 @@ void ucsi_unregister(struct ucsi *ucsi)
  	}
  
  	kfree(ucsi->connector);
@@ -56,7 +56,7 @@ index bdad3b89089d..8f12412f5bcb 100644
  EXPORT_SYMBOL_GPL(ucsi_unregister);
  
 diff --git a/drivers/usb/typec/ucsi/ucsi_glink.c b/drivers/usb/typec/ucsi/ucsi_glink.c
-index a8207bfb719a..20728efd0cc8 100644
+index 447822242f1b4..82bfa953d3f6b 100644
 --- a/drivers/usb/typec/ucsi/ucsi_glink.c
 +++ b/drivers/usb/typec/ucsi/ucsi_glink.c
 @@ -84,6 +84,10 @@ struct pmic_glink_ucsi {
@@ -160,3 +160,6 @@ index a8207bfb719a..20728efd0cc8 100644
  	.id_table = pmic_glink_ucsi_id_table,
  };
  
+-- 
+2.43.0
+

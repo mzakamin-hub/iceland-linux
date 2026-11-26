@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Vladyslav Tymoshchuk <tvlad744@gmail.com>
 Date: Thu, 12 Nov 2026 13:00:06 +0200
-Subject: [PATCH 37/38] wifi: ath12k: do not wait in resume for a reset that
- cannot finish there
+Subject: [PATCH] wifi: ath12k: do not wait in resume for a reset that cannot
+ finish there
 
 ath12k_core_resume() waits up to 20 s for restart_completed. When the
 firmware crashes during the cold boot started by
@@ -38,7 +38,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  2 files changed, 7 insertions(+)
 
 diff --git a/drivers/net/wireless/ath/ath12k/core.c b/drivers/net/wireless/ath/ath12k/core.c
-index 5025cfabafd4..1aa964e0da37 100644
+index 63a0132810083..6b3a4e7c17546 100644
 --- a/drivers/net/wireless/ath/ath12k/core.c
 +++ b/drivers/net/wireless/ath/ath12k/core.c
 @@ -252,6 +252,7 @@ int ath12k_core_resume_early(struct ath12k_base *ab)
@@ -69,7 +69,7 @@ index 5025cfabafd4..1aa964e0da37 100644
  		ath12k_warn(ab, "ignore reset dev flags 0x%lx\n", ab->dev_flags);
  		return;
 diff --git a/drivers/net/wireless/ath/ath12k/core.h b/drivers/net/wireless/ath/ath12k/core.h
-index d785f17ece4d..f5c93ebfd315 100644
+index d785f17ece4dd..f5c93ebfd315b 100644
 --- a/drivers/net/wireless/ath/ath12k/core.h
 +++ b/drivers/net/wireless/ath/ath12k/core.h
 @@ -1058,6 +1058,7 @@ struct ath12k_base {

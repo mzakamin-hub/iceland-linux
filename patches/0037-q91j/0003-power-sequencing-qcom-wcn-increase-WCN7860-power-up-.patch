@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sun, 8 Nov 2026 00:25:09 +0200
-Subject: [PATCH 03/30] power: sequencing: qcom-wcn: increase WCN7860 power-up
- delay
+Subject: [PATCH] power: sequencing: qcom-wcn: increase WCN7860 power-up delay
 
 WCN7860 shares the WCN7850 power-up sequence and its cold-start
 behaviour: when Bluetooth asserts BT_EN while WLAN_EN is still low, the
@@ -17,7 +16,6 @@ WLAN power-up also waits 50 ms longer.
 Not measured on WCN7860 yet (OnePlus Pad 4): the BT-first cold start is
 checked with rfkill cycles while WLAN is down.
 
-Based-on: bd60a639b621 ("power: sequencing: qcom-wcn: increase WCN7850 power-up delay", Shuai Zhang <shuai.zhang@oss.qualcomm.com>)
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 Signed-off-by: mzak <mzak.amin@gmail.com>
 ---
@@ -25,7 +23,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/power/sequencing/pwrseq-qcom-wcn.c b/drivers/power/sequencing/pwrseq-qcom-wcn.c
-index 0a70efe86..ab934312c 100644
+index 402d47f7e6dc2..1174f72be4250 100644
 --- a/drivers/power/sequencing/pwrseq-qcom-wcn.c
 +++ b/drivers/power/sequencing/pwrseq-qcom-wcn.c
 @@ -444,7 +444,7 @@ static const char *const pwrseq_wcn7860_vregs[] = {

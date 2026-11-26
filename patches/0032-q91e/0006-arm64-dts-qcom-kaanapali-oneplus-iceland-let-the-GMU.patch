@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 7 Nov 2026 06:35:41 +0200
-Subject: [PATCH 6/8] arm64: dts: qcom: kaanapali-oneplus-iceland: let the
- GMU's suppliers sync
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: let the GMU's
+ suppliers sync
 
 No driver binds the GMU device: msm reaches it through
 of_find_device_by_node() from a6xx_gmu_init(). fw_devlink therefore keeps
@@ -27,7 +27,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 10 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 7ac40870b..636041daa 100644
+index 7ac40870b192d..636041daa387a 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -1168,6 +1168,16 @@ csiphy5_out: endpoint {

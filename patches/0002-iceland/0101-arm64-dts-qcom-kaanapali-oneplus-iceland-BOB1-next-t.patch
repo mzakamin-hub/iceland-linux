@@ -22,7 +22,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 5 insertions(+), 1 deletion(-)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 073eaee1fd56..f2c3acb8be5d 100644
+index 073eaee1fd561..f2c3acb8be5de 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -520,9 +520,13 @@ regulators-0 {
@@ -40,3 +40,6 @@ index 073eaee1fd56..f2c3acb8be5d 100644
  			regulator-max-microvolt = <4000000>;
  			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
  		};
+-- 
+2.43.0
+

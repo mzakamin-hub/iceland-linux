@@ -24,7 +24,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  2 files changed, 264 insertions(+), 6 deletions(-)
 
 diff --git a/Documentation/devicetree/bindings/display/panel/novatek,nt36536.yaml b/Documentation/devicetree/bindings/display/panel/novatek,nt36536.yaml
-index 1e86f5329b22..3eb66f9d8b32 100644
+index 1e86f5329b222..3eb66f9d8b32c 100644
 --- a/Documentation/devicetree/bindings/display/panel/novatek,nt36536.yaml
 +++ b/Documentation/devicetree/bindings/display/panel/novatek,nt36536.yaml
 @@ -13,7 +13,7 @@ description:
@@ -45,7 +45,7 @@ index 1e86f5329b22..3eb66f9d8b32 100644
  
    reg:
 diff --git a/drivers/gpu/drm/panel/panel-novatek-nt36536.c b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
-index 8bd125650168..8d0ac3bc6397 100644
+index 8bd1256501680..8d0ac3bc63973 100644
 --- a/drivers/gpu/drm/panel/panel-novatek-nt36536.c
 +++ b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
 @@ -2,6 +2,7 @@
@@ -359,3 +359,6 @@ index 8bd125650168..8d0ac3bc6397 100644
  	{ /* sentinel */ }
  };
  MODULE_DEVICE_TABLE(of, novatek_of_match);
+-- 
+2.43.0
+

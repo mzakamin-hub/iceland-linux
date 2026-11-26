@@ -13,7 +13,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_dsc_1_2.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_dsc_1_2.c
-index b3395e9c34a1..7228ed31c8e1 100644
+index b3395e9c34a19..7228ed31c8e19 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_dsc_1_2.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_dsc_1_2.c
 @@ -124,6 +124,10 @@ static void dpu_hw_dsc_config_1_2(struct dpu_hw_dsc *hw_dsc,
@@ -36,3 +36,6 @@ index b3395e9c34a1..7228ed31c8e1 100644
  
  	DPU_REG_WRITE(hw, sblk->ctl.base + DSC_CFG, data);
  }
+-- 
+2.43.0
+

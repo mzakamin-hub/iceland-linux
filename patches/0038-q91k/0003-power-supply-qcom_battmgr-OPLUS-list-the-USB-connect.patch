@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sun, 8 Nov 2026 03:59:06 +0200
-Subject: [PATCH 3/3] power: supply: qcom_battmgr: OPLUS: list the USB
- connector temperature
+Subject: [PATCH] power: supply: qcom_battmgr: OPLUS: list the USB connector
+ temperature
 
 The previous commit reads the connector temperature (USB property 10,
 USB_TEMP, the downstream battery charger's numbering) for the SM8350
@@ -20,7 +20,6 @@ supply uevent skips, instead of the firmware's raw result or a timeout.
 
 No DT change: the value comes over the existing pmic_glink channel.
 
-Based-on: "power: supply: qcom_battmgr: Expose USB connector temperature" (Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>, lore 20261020-topic-usb_temp-v1-1-3dbe390f9834)
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 Signed-off-by: mzak <mzak.amin@gmail.com>
 ---
@@ -28,7 +27,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 8 insertions(+)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index d2baec2ee..7a0603525 100644
+index a9fe83979b402..2cdaf0a495946 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -1701,6 +1701,13 @@ static int qcom_battmgr_usb_get_property(struct power_supply *psy,

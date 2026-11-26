@@ -19,7 +19,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 17 insertions(+)
 
 diff --git a/arch/arm64/kernel/cpuinfo.c b/arch/arm64/kernel/cpuinfo.c
-index 94e6cd211d70..b6a69e527c82 100644
+index 94e6cd211d70e..b6a69e527c828 100644
 --- a/arch/arm64/kernel/cpuinfo.c
 +++ b/arch/arm64/kernel/cpuinfo.c
 @@ -205,6 +205,21 @@ static const char *const compat_hwcap2_str[] = {
@@ -53,3 +53,6 @@ index 94e6cd211d70..b6a69e527c82 100644
  
  	seq_printf(m, "BogoMIPS\t: %lu.%02lu\n",
  		   loops_per_jiffy / (500000UL/HZ),
+-- 
+2.43.0
+

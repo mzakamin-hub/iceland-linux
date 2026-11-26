@@ -37,7 +37,7 @@ Signed-off-by: Jishnu Prakash <jishnu.prakash@oss.qualcomm.com>
  4 files changed, 195 insertions(+), 50 deletions(-)
 
 diff --git a/drivers/iio/adc/qcom-spmi-adc5-gen3.c b/drivers/iio/adc/qcom-spmi-adc5-gen3.c
-index c68c6c5f6aca..810d25b665b1 100644
+index 308d431e62179..051a1d9a76a17 100644
 --- a/drivers/iio/adc/qcom-spmi-adc5-gen3.c
 +++ b/drivers/iio/adc/qcom-spmi-adc5-gen3.c
 @@ -86,7 +86,9 @@ int adc5_gen3_write(struct adc5_device_data *adc, unsigned int sdam_index,
@@ -292,7 +292,7 @@ index c68c6c5f6aca..810d25b665b1 100644
  	unsigned int index = 0;
  	int ret;
  
-@@ -582,10 +659,11 @@ static int adc5_get_fw_data(struct adc5_chip *adc)
+@@ -581,10 +658,11 @@ static int adc5_get_fw_data(struct adc5_chip *adc)
  			return ret;
  
  		chan_props->chip = adc;
@@ -330,7 +330,7 @@ index c68c6c5f6aca..810d25b665b1 100644
  EXPORT_SYMBOL_NS_GPL(adc5_gen3_therm_code_to_temp, "QCOM_SPMI_ADC5_GEN3");
  
 diff --git a/drivers/iio/adc/qcom-vadc-common.c b/drivers/iio/adc/qcom-vadc-common.c
-index b03cf584b165..cb23d0d178c7 100644
+index b03cf584b1657..cb23d0d178c74 100644
 --- a/drivers/iio/adc/qcom-vadc-common.c
 +++ b/drivers/iio/adc/qcom-vadc-common.c
 @@ -301,6 +301,10 @@ static const struct u32_fract adc5_prescale_ratios[] = {
@@ -387,7 +387,7 @@ index b03cf584b165..cb23d0d178c7 100644
  				const struct u32_fract *prescale,
  				const struct adc5_data *data,
 diff --git a/include/linux/iio/adc/qcom-adc5-gen3-common.h b/include/linux/iio/adc/qcom-adc5-gen3-common.h
-index b3e2c2f50e8f..6b15f8c97529 100644
+index b3e2c2f50e8f5..6b15f8c97529e 100644
 --- a/include/linux/iio/adc/qcom-adc5-gen3-common.h
 +++ b/include/linux/iio/adc/qcom-adc5-gen3-common.h
 @@ -40,7 +40,8 @@
@@ -477,7 +477,7 @@ index b3e2c2f50e8f..6b15f8c97529 100644
  
  /**
 diff --git a/include/linux/iio/adc/qcom-vadc-common.h b/include/linux/iio/adc/qcom-vadc-common.h
-index 3bf4c49726a7..4be682083843 100644
+index 3bf4c49726a73..4be6820838434 100644
 --- a/include/linux/iio/adc/qcom-vadc-common.h
 +++ b/include/linux/iio/adc/qcom-vadc-common.h
 @@ -54,6 +54,7 @@
@@ -505,3 +505,6 @@ index 3bf4c49726a7..4be682083843 100644
  	/* private: */
  	SCALE_HW_CALIB_INVALID,
  };
+-- 
+2.43.0
+

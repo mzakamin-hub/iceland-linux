@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Xilin Wu <sophon@radxa.com>
 Date: Thu, 29 Oct 2026 11:58:09 +0800
-Subject: [PATCH 12/24] media: iris: Preserve timestamps on error buffers
+Subject: [PATCH] media: iris: Preserve timestamps on error buffers
 
 Clearing timestamps on error buffers prevents clients such as libva-v4l2
 from identifying the failed picture and can cause synchronization timeouts.
@@ -16,7 +16,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_buffer.c b/drivers/media/platform/qcom/iris/iris_buffer.c
-index 35129cecd6e8..67384e948028 100644
+index 35129cecd6e84..67384e9480282 100644
 --- a/drivers/media/platform/qcom/iris/iris_buffer.c
 +++ b/drivers/media/platform/qcom/iris/iris_buffer.c
 @@ -901,7 +901,8 @@ int iris_vb2_buffer_done(struct iris_inst *inst, struct iris_buffer *buf)
@@ -29,3 +29,6 @@ index 35129cecd6e8..67384e948028 100644
  		v4l2_m2m_buf_done(vbuf, state);
  		return 0;
  	}
+-- 
+2.43.0
+

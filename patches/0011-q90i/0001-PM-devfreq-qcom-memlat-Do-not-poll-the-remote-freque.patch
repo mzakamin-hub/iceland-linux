@@ -33,7 +33,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 10 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/devfreq/scmi-qcom-memlat-devfreq.c b/drivers/devfreq/scmi-qcom-memlat-devfreq.c
-index 9ca85b2f4c1a..6d19fc36528e 100644
+index 9ca85b2f4c1a3..6d19fc36528ed 100644
 --- a/drivers/devfreq/scmi-qcom-memlat-devfreq.c
 +++ b/drivers/devfreq/scmi-qcom-memlat-devfreq.c
 @@ -1176,12 +1176,17 @@ static int scmi_qcom_memlat_configure_events(struct scmi_device *sdev,
@@ -59,3 +59,6 @@ index 9ca85b2f4c1a..6d19fc36528e 100644
  		profile->get_cur_freq = scmi_qcom_devfreq_get_cur_freq;
  		profile->initial_freq = range->max_freq_khz > 1 ?
  					(unsigned long)((u64)range->min_freq_khz * HZ_PER_KHZ) :
+-- 
+2.43.0
+

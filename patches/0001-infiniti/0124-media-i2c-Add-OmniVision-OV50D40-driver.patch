@@ -15,7 +15,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  create mode 100644 drivers/media/i2c/ov50d40.c
 
 diff --git a/drivers/media/i2c/Kconfig b/drivers/media/i2c/Kconfig
-index 0bbf222c8704..2f4649b1da3c 100644
+index 0bbf222c87042..2f4649b1da3c3 100644
 --- a/drivers/media/i2c/Kconfig
 +++ b/drivers/media/i2c/Kconfig
 @@ -611,6 +611,17 @@ config VIDEO_OV4689
@@ -37,7 +37,7 @@ index 0bbf222c8704..2f4649b1da3c 100644
  	tristate "OmniVision OV5640 sensor support"
  	depends on OF
 diff --git a/drivers/media/i2c/Makefile b/drivers/media/i2c/Makefile
-index 9bc5a257d628..6c9c32288a8b 100644
+index 9bc5a257d628a..6c9c32288a8b4 100644
 --- a/drivers/media/i2c/Makefile
 +++ b/drivers/media/i2c/Makefile
 @@ -108,6 +108,7 @@ obj-$(CONFIG_VIDEO_OV2732) += ov2732.o
@@ -50,7 +50,7 @@ index 9bc5a257d628..6c9c32288a8b 100644
  obj-$(CONFIG_VIDEO_OV5647) += ov5647.o
 diff --git a/drivers/media/i2c/ov50d40.c b/drivers/media/i2c/ov50d40.c
 new file mode 100644
-index 000000000000..bf491f7201b8
+index 0000000000000..bf491f7201b86
 --- /dev/null
 +++ b/drivers/media/i2c/ov50d40.c
 @@ -0,0 +1,2465 @@
@@ -2519,3 +2519,6 @@ index 000000000000..bf491f7201b8
 +
 +MODULE_DESCRIPTION("OmniVision OV50D40 camera sensor driver");
 +MODULE_LICENSE("GPL");
+-- 
+2.43.0
+

@@ -11,7 +11,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1 insertion(+)
 
 diff --git a/sound/soc/qcom/sc8280xp.c b/sound/soc/qcom/sc8280xp.c
-index 9aae6aadd43d..a3916c57a6da 100644
+index e136407c56bfd..c1cede8a850fb 100644
 --- a/sound/soc/qcom/sc8280xp.c
 +++ b/sound/soc/qcom/sc8280xp.c
 @@ -590,6 +590,7 @@ static const struct qcom_snd_soc_common kaanapali_priv_data = {
@@ -22,3 +22,6 @@ index 9aae6aadd43d..a3916c57a6da 100644
  	.wcd_jack = true,
  };
  
+-- 
+2.43.0
+

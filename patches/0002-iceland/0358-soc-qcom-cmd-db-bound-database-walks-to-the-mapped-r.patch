@@ -35,7 +35,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 66 insertions(+), 15 deletions(-)
 
 diff --git a/drivers/soc/qcom/cmd-db.c b/drivers/soc/qcom/cmd-db.c
-index 3f1eee784387..84ef7c166d93 100644
+index 3f1eee7843876..84ef7c166d934 100644
 --- a/drivers/soc/qcom/cmd-db.c
 +++ b/drivers/soc/qcom/cmd-db.c
 @@ -4,6 +4,8 @@
@@ -202,3 +202,6 @@ index 3f1eee784387..84ef7c166d93 100644
  	debugfs_create_file("cmd-db", 0400, NULL, NULL, &cmd_db_debugfs_ops);
  
  	device_set_pm_not_required(&pdev->dev);
+-- 
+2.43.0
+

@@ -14,7 +14,7 @@ Acked-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
  1 file changed, 6 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
-index 77422d1a9506..4ef8598fc1bd 100644
+index 77422d1a9506b..4ef8598fc1bd7 100644
 --- a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
 +++ b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
 @@ -379,6 +379,7 @@ static void a8xx_set_ubwc_config(struct msm_gpu *gpu)
@@ -38,3 +38,6 @@ index 77422d1a9506..4ef8598fc1bd 100644
  		}
  
  		a8xx_aperture_release(gpu, flags);
+-- 
+2.43.0
+

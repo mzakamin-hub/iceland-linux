@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Joonhoe Kim <26rote@gmail.com>
 Date: Fri, 6 Nov 2026 23:32:01 +0200
-Subject: [PATCH 26/27] usb: dwc3: qcom: Leave DP-only mode from the mux
- callback
+Subject: [PATCH] usb: dwc3: qcom: Leave DP-only mode from the mux callback
 
 Switching back to the PIPE clock only on a role change misses a replug
 where the role notification comes before the mux state. A change of pin
@@ -36,7 +35,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  2 files changed, 30 insertions(+), 23 deletions(-)
 
 diff --git a/drivers/usb/dwc3/Kconfig b/drivers/usb/dwc3/Kconfig
-index 18169727a..282f366de 100644
+index 18169727a413e..282f366de9afe 100644
 --- a/drivers/usb/dwc3/Kconfig
 +++ b/drivers/usb/dwc3/Kconfig
 @@ -132,6 +132,7 @@ config USB_DWC3_QCOM
@@ -48,7 +47,7 @@ index 18169727a..282f366de 100644
  	help
  	  Some Qualcomm SoCs use DesignWare Core IP for USB2/3
 diff --git a/drivers/usb/dwc3/dwc3-qcom.c b/drivers/usb/dwc3/dwc3-qcom.c
-index 50ca097b9..6a2d1a616 100644
+index 644039f0b80c1..1d0bb7b254e35 100644
 --- a/drivers/usb/dwc3/dwc3-qcom.c
 +++ b/drivers/usb/dwc3/dwc3-qcom.c
 @@ -122,6 +122,7 @@ struct dwc3_qcom {

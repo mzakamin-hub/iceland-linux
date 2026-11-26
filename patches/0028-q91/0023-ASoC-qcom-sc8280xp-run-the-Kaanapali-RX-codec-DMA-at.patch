@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 2 Nov 2026 09:19:09 +0200
-Subject: [PATCH 23/32] ASoC: qcom: sc8280xp: run the Kaanapali RX codec DMA at
- 24 bit
+Subject: [PATCH] ASoC: qcom: sc8280xp: run the Kaanapali RX codec DMA at 24
+ bit
 
 On Kaanapali the back-end fixup forces every codec DMA interface to
 16-bit samples. The RX macro then receives nothing from RX_CODEC_DMA_RX_0
@@ -26,7 +26,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 15 insertions(+)
 
 diff --git a/sound/soc/qcom/sc8280xp.c b/sound/soc/qcom/sc8280xp.c
-index a2e5b6ae7e01..a4f2a8a973b6 100644
+index 169b7f1abfb02..134bc033d5cce 100644
 --- a/sound/soc/qcom/sc8280xp.c
 +++ b/sound/soc/qcom/sc8280xp.c
 @@ -94,6 +94,7 @@ struct qcom_snd_soc_common {
@@ -79,3 +79,6 @@ index a2e5b6ae7e01..a4f2a8a973b6 100644
  };
  
  static const struct qcom_snd_soc_common maili_priv_data = {
+-- 
+2.43.0
+

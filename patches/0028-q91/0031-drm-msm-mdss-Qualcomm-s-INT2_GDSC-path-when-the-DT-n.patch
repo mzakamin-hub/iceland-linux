@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 2 Nov 2026 11:09:59 +0200
-Subject: [PATCH 31/32] drm/msm/mdss: Qualcomm's INT2_GDSC path when the DT
- names the domains
+Subject: [PATCH] drm/msm/mdss: Qualcomm's INT2_GDSC path when the DT names the
+ domains
 
 Qualcomm's "drm/msm/mdss: Enable INT2_GDSC alongside CORE_GDSC"
 (Yongxing Mou, qualcomm-linux kernel-topics 4262c30940f7, posted to
@@ -23,7 +23,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 54 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/msm_mdss.c b/drivers/gpu/drm/msm/msm_mdss.c
-index 797868e3ab5c..cf560e23be78 100644
+index 223c6c092ecff..4c82d9305d3c9 100644
 --- a/drivers/gpu/drm/msm/msm_mdss.c
 +++ b/drivers/gpu/drm/msm/msm_mdss.c
 @@ -46,6 +46,7 @@ struct msm_mdss {
@@ -90,7 +90,7 @@ index 797868e3ab5c..cf560e23be78 100644
  	return 0;
  }
  
-@@ -507,10 +536,33 @@ static struct msm_mdss *msm_mdss_init(struct platform_device *pdev, bool is_mdp5
+@@ -508,10 +537,33 @@ static struct msm_mdss *msm_mdss_init(struct platform_device *pdev, bool is_mdp5
  	 */
  	if (of_count_phandle_with_args(pdev->dev.of_node, "power-domains",
  				       "#power-domain-cells") > 1) {
@@ -125,3 +125,6 @@ index 797868e3ab5c..cf560e23be78 100644
  	}
  
  	ret = msm_mdss_reset(msm_mdss);
+-- 
+2.43.0
+

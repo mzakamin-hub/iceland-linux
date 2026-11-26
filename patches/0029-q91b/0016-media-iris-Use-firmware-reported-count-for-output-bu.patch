@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Vishnu Reddy <busanna.reddy@oss.qualcomm.com>
 Date: Sat, 31 Oct 2026 01:49:11 +0530
-Subject: [PATCH 16/24] media: iris: Use firmware reported count for output
- buffers
+Subject: [PATCH] media: iris: Use firmware reported count for output buffers
 
 Once the firmware reports its minimum output buffer count, the driver
 still caps it to 4 for VP9 and AV1 when split mode is enabled. After a
@@ -22,7 +21,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 2 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
-index 56bac2d60c80..04f1fd3e97d2 100644
+index 56bac2d60c80e..04f1fd3e97d28 100644
 --- a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
 +++ b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
 @@ -2457,14 +2457,8 @@ static int output_min_count(struct iris_inst *inst)
@@ -42,3 +41,6 @@ index 56bac2d60c80..04f1fd3e97d2 100644
  
  	if (inst->codec == V4L2_PIX_FMT_VP9)
  		output_min_count = 9;
+-- 
+2.43.0
+

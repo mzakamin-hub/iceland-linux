@@ -23,7 +23,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 60 insertions(+)
 
 diff --git a/drivers/media/i2c/sc1320cs.c b/drivers/media/i2c/sc1320cs.c
-index 8beabb6131d1..bbff03cc6940 100644
+index 8beabb6131d10..bbff03cc69405 100644
 --- a/drivers/media/i2c/sc1320cs.c
 +++ b/drivers/media/i2c/sc1320cs.c
 @@ -148,6 +148,8 @@ struct sc_sensor {
@@ -128,3 +128,6 @@ index 8beabb6131d1..bbff03cc6940 100644
  
  	ret = sc_power_on(dev);
  	if (ret)
+-- 
+2.43.0
+

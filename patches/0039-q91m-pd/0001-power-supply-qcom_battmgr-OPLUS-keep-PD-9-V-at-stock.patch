@@ -45,7 +45,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 207 insertions(+), 36 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 7a0603525198..7fd8a70eed45 100644
+index 2cdaf0a495946..e790165741f5f 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -481,6 +481,9 @@ struct qcom_battmgr {

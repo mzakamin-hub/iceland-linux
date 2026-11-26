@@ -44,7 +44,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  7 files changed, 38 insertions(+), 48 deletions(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/core.h b/drivers/net/wireless/ath/ath12k/core.h
-index 53954886ff43..6212c7e69dd7 100644
+index 53954886ff438..6212c7e69dd78 100644
 --- a/drivers/net/wireless/ath/ath12k/core.h
 +++ b/drivers/net/wireless/ath/ath12k/core.h
 @@ -149,6 +149,7 @@ struct ath12k_skb_rxcb {
@@ -56,7 +56,7 @@ index 53954886ff43..6212c7e69dd7 100644
  
  enum ath12k_hw_rev {
 diff --git a/drivers/net/wireless/ath/ath12k/dp.c b/drivers/net/wireless/ath/ath12k/dp.c
-index 35a9047c770d..f129b7fb1e4d 100644
+index 35a9047c770d2..f129b7fb1e4d5 100644
 --- a/drivers/net/wireless/ath/ath12k/dp.c
 +++ b/drivers/net/wireless/ath/ath12k/dp.c
 @@ -5,6 +5,7 @@
@@ -80,7 +80,7 @@ index 35a9047c770d..f129b7fb1e4d 100644
  			}
  
 diff --git a/drivers/net/wireless/ath/ath12k/dp_mon.c b/drivers/net/wireless/ath/ath12k/dp_mon.c
-index 709507d44d8e..295d999f2bdc 100644
+index ae14e118fe364..4223f604eec00 100644
 --- a/drivers/net/wireless/ath/ath12k/dp_mon.c
 +++ b/drivers/net/wireless/ath/ath12k/dp_mon.c
 @@ -5,6 +5,7 @@
@@ -127,7 +127,7 @@ index 709507d44d8e..295d999f2bdc 100644
  
  		num_remain--;
 diff --git a/drivers/net/wireless/ath/ath12k/dp_rx.c b/drivers/net/wireless/ath/ath12k/dp_rx.c
-index b6b9440da07d..35d3f96d812b 100644
+index b6b9440da07d2..35d3f96d812b4 100644
 --- a/drivers/net/wireless/ath/ath12k/dp_rx.c
 +++ b/drivers/net/wireless/ath/ath12k/dp_rx.c
 @@ -160,6 +160,7 @@ int ath12k_dp_rx_bufs_replenish(struct ath12k_dp *dp,
@@ -149,7 +149,7 @@ index b6b9440da07d..35d3f96d812b 100644
  	}
  
 diff --git a/drivers/net/wireless/ath/ath12k/dp_rx.h b/drivers/net/wireless/ath/ath12k/dp_rx.h
-index bc465a68b624..4d84d9a1e5b8 100644
+index bc465a68b6249..4d84d9a1e5b8b 100644
 --- a/drivers/net/wireless/ath/ath12k/dp_rx.h
 +++ b/drivers/net/wireless/ath/ath12k/dp_rx.h
 @@ -187,6 +187,17 @@ void ath12k_dp_extract_rx_desc_data(struct ath12k_hal *hal,
@@ -171,7 +171,7 @@ index bc465a68b624..4d84d9a1e5b8 100644
  			    enum hal_encrypt_type enctype,
  			    bool decrypted,
 diff --git a/drivers/net/wireless/ath/ath12k/wifi7/dp_mon.c b/drivers/net/wireless/ath/ath12k/wifi7/dp_mon.c
-index 1e29c13ad66d..2327ac05e073 100644
+index 1e29c13ad66d9..2327ac05e073b 100644
 --- a/drivers/net/wireless/ath/ath12k/wifi7/dp_mon.c
 +++ b/drivers/net/wireless/ath/ath12k/wifi7/dp_mon.c
 @@ -2722,10 +2722,7 @@ ath12k_wifi7_dp_rx_mon_mpdu_pop(struct ath12k *ar, int mac_id,
@@ -220,7 +220,7 @@ index 1e29c13ad66d..2327ac05e073 100644
  		end_reason = u32_get_bits(info0, HAL_MON_DEST_INFO0_END_REASON);
  
 diff --git a/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c b/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
-index 4846f56ff512..7e7c2867f056 100644
+index 4846f56ff5122..7e7c2867f0566 100644
 --- a/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
 +++ b/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
 @@ -741,11 +741,7 @@ int ath12k_wifi7_dp_rx_process(struct ath12k_dp *dp, int ring_id,
@@ -349,3 +349,6 @@ index 4846f56ff512..7e7c2867f056 100644
  		rxcb->err_rel_src = err_info.err_rel_src;
  		rxcb->err_code = err_info.err_code;
  		rxcb->is_first_msdu = err_info.first_msdu;
+-- 
+2.43.0
+

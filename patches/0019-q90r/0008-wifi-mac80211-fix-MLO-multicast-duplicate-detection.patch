@@ -42,7 +42,7 @@ Signed-off-by: Igor Borodin <hatemosphere@protonmail.com>
  3 files changed, 47 insertions(+), 6 deletions(-)
 
 diff --git a/net/mac80211/ieee80211_i.h b/net/mac80211/ieee80211_i.h
-index 1a6cbbb5a17d..067354bc0931 100644
+index 7a64aef6890d6..a4d7b38e7e3db 100644
 --- a/net/mac80211/ieee80211_i.h
 +++ b/net/mac80211/ieee80211_i.h
 @@ -533,6 +533,8 @@ struct ieee80211_adv_ttlm_info {
@@ -68,7 +68,7 @@ index 1a6cbbb5a17d..067354bc0931 100644
  
  	bool status_acked;
  	bool status_received;
-@@ -2041,6 +2048,7 @@ void ieee80211_uhr_disable_dbe_all_stas(struct ieee80211_link_data *link);
+@@ -2044,6 +2051,7 @@ void ieee80211_uhr_disable_dbe_all_stas(struct ieee80211_link_data *link);
  
  /* STA code */
  void ieee80211_sta_setup_sdata(struct ieee80211_sub_if_data *sdata);
@@ -77,7 +77,7 @@ index 1a6cbbb5a17d..067354bc0931 100644
  		       struct cfg80211_auth_request *req);
  int ieee80211_mgd_assoc(struct ieee80211_sub_if_data *sdata,
 diff --git a/net/mac80211/mlme.c b/net/mac80211/mlme.c
-index 6ec45a9f7221..c13c9783d38b 100644
+index b5efc6ccc9853..1022591c6f046 100644
 --- a/net/mac80211/mlme.c
 +++ b/net/mac80211/mlme.c
 @@ -4755,7 +4755,7 @@ static void ieee80211_set_disassoc(struct ieee80211_sub_if_data *sdata,
@@ -89,7 +89,7 @@ index 6ec45a9f7221..c13c9783d38b 100644
  
  	ifmgd->epcs.enabled = false;
  	ifmgd->epcs.dialog_token = 0;
-@@ -9557,6 +9557,16 @@ static void ieee80211_ml_sta_reconf_timeout(struct wiphy *wiphy,
+@@ -9560,6 +9560,16 @@ static void ieee80211_ml_sta_reconf_timeout(struct wiphy *wiphy,
  }
  
  /* interface setup */
@@ -106,7 +106,7 @@ index 6ec45a9f7221..c13c9783d38b 100644
  void ieee80211_sta_setup_sdata(struct ieee80211_sub_if_data *sdata)
  {
  	struct ieee80211_if_managed *ifmgd = &sdata->u.mgd;
-@@ -9594,7 +9604,7 @@ void ieee80211_sta_setup_sdata(struct ieee80211_sub_if_data *sdata)
+@@ -9597,7 +9607,7 @@ void ieee80211_sta_setup_sdata(struct ieee80211_sub_if_data *sdata)
  	spin_lock_init(&ifmgd->teardown_lock);
  	ifmgd->teardown_skb = NULL;
  	ifmgd->orig_teardown_skb = NULL;
@@ -116,7 +116,7 @@ index 6ec45a9f7221..c13c9783d38b 100644
  
  static void ieee80211_recalc_smps_work(struct wiphy *wiphy,
 diff --git a/net/mac80211/rx.c b/net/mac80211/rx.c
-index ecee9348c70d..12d734b54a03 100644
+index f8cfd04c0c6c3..2dba4f592bc36 100644
 --- a/net/mac80211/rx.c
 +++ b/net/mac80211/rx.c
 @@ -1497,6 +1497,31 @@ static void ieee80211_rx_reorder_ampdu(struct ieee80211_rx_data *rx,
@@ -164,3 +164,6 @@ index ecee9348c70d..12d734b54a03 100644
  		return RX_CONTINUE;
  	}
  
+-- 
+2.43.0
+

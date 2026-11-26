@@ -21,7 +21,7 @@ Link: https://lore.kernel.org/r/20251109-arm-psci-system_reset2-vendor-reboots-v
  2 files changed, 17 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/power/reset/reboot-mode.c b/drivers/power/reset/reboot-mode.c
-index 3611bed341e1..a8ef487a1be4 100644
+index 3611bed341e14..a8ef487a1be4b 100644
 --- a/drivers/power/reset/reboot-mode.c
 +++ b/drivers/power/reset/reboot-mode.c
 @@ -164,18 +164,26 @@ static int reboot_mode_create_device(struct reboot_mode_driver *reboot)
@@ -70,7 +70,7 @@ index 3611bed341e1..a8ef487a1be4 100644
  		devres_free(dr);
  		return rc;
 diff --git a/include/linux/reboot-mode.h b/include/linux/reboot-mode.h
-index 4a2abb38d1d6..22f707ade4ba 100644
+index 4a2abb38d1d61..22f707ade4ba9 100644
 --- a/include/linux/reboot-mode.h
 +++ b/include/linux/reboot-mode.h
 @@ -2,6 +2,8 @@
@@ -91,3 +91,6 @@ index 4a2abb38d1d6..22f707ade4ba 100644
  int reboot_mode_unregister(struct reboot_mode_driver *reboot);
  int devm_reboot_mode_register(struct device *dev,
  			      struct reboot_mode_driver *reboot);
+-- 
+2.43.0
+

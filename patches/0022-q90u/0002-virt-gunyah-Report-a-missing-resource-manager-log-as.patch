@@ -18,7 +18,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 5 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/virt/gunyah/rsc_mgr.c b/drivers/virt/gunyah/rsc_mgr.c
-index 9aacd013df20..7d7a5b569390 100644
+index 9aacd013df201..7d7a5b5693904 100644
 --- a/drivers/virt/gunyah/rsc_mgr.c
 +++ b/drivers/virt/gunyah/rsc_mgr.c
 @@ -780,7 +780,11 @@ static int gunyah_rm_sysfs_register(struct gunyah_rm *rm)
@@ -34,3 +34,6 @@ index 9aacd013df20..7d7a5b569390 100644
  		return 0;
  	}
  
+-- 
+2.43.0
+

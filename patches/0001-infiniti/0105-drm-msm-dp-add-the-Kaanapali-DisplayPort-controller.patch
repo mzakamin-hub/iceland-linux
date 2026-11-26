@@ -9,7 +9,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 6 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/dp/dp_display.c b/drivers/gpu/drm/msm/dp/dp_display.c
-index 9299ce616fdb..348eb6967abf 100644
+index c0c150e2c5758..731b45f1210cc 100644
 --- a/drivers/gpu/drm/msm/dp/dp_display.c
 +++ b/drivers/gpu/drm/msm/dp/dp_display.c
 @@ -158,6 +158,11 @@ static const struct msm_dp_desc msm_dp_desc_sm8650[] = {
@@ -32,3 +32,6 @@ index 9299ce616fdb..348eb6967abf 100644
  	{ .compatible = "qcom,sa8775p-dp", .data = &msm_dp_desc_sa8775p },
  	{ .compatible = "qcom,sc7180-dp", .data = &msm_dp_desc_sc7180 },
  	{ .compatible = "qcom,sc7280-dp", .data = &msm_dp_desc_sc7280 },
+-- 
+2.43.0
+

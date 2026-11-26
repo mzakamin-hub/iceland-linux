@@ -25,7 +25,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 33 insertions(+), 17 deletions(-)
 
 diff --git a/Documentation/devicetree/bindings/firmware/gunyah-cma-mem.yaml b/Documentation/devicetree/bindings/firmware/gunyah-cma-mem.yaml
-index 0bc499faf1d8..6345bfcf8e47 100644
+index 0bc499faf1d8e..6345bfcf8e47c 100644
 --- a/Documentation/devicetree/bindings/firmware/gunyah-cma-mem.yaml
 +++ b/Documentation/devicetree/bindings/firmware/gunyah-cma-mem.yaml
 @@ -10,7 +10,7 @@ maintainers:
@@ -102,3 +102,6 @@ index 0bc499faf1d8..6345bfcf8e47 100644
 +        memory-region = <&trust_ui_vm_mem>, <&oem_vm_mem>;
 +        memory-region-names = "trustedvm_cma", "oemvm_cma";
 +    };
+-- 
+2.43.0
+

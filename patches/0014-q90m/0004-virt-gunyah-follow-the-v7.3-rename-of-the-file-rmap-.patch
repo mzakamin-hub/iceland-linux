@@ -19,7 +19,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/virt/gunyah/vm_mgr.h b/drivers/virt/gunyah/vm_mgr.h
-index 84f0e60b0ccc..135139996287 100644
+index 84f0e60b0ccc7..1351399962874 100644
 --- a/drivers/virt/gunyah/vm_mgr.h
 +++ b/drivers/virt/gunyah/vm_mgr.h
 @@ -166,14 +166,14 @@ int gunyah_vm_mmio_write(struct gunyah_vm *ghvm, u64 addr, u32 len, u64 data);
@@ -39,3 +39,6 @@ index 84f0e60b0ccc..135139996287 100644
  				  folio->index + folio_nr_pages(folio)) {
  		ret = true;
  		break;
+-- 
+2.43.0
+

@@ -57,7 +57,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  5 files changed, 47 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/dsi/dsi.h b/drivers/gpu/drm/msm/dsi/dsi.h
-index a409627c0598..91aa1cfdaeb5 100644
+index a409627c0598f..91aa1cfdaeb55 100644
 --- a/drivers/gpu/drm/msm/dsi/dsi.h
 +++ b/drivers/gpu/drm/msm/dsi/dsi.h
 @@ -151,6 +151,7 @@ void msm_dsi_phy_disable(struct msm_dsi_phy *phy);
@@ -69,7 +69,7 @@ index a409627c0598..91aa1cfdaeb5 100644
  void msm_dsi_phy_snapshot(struct msm_disp_state *disp_state, struct msm_dsi_phy *phy);
  bool msm_dsi_phy_set_continuous_clock(struct msm_dsi_phy *phy, bool enable);
 diff --git a/drivers/gpu/drm/msm/dsi/dsi_manager.c b/drivers/gpu/drm/msm/dsi/dsi_manager.c
-index 531d4ff78f56..c23ab2f88145 100644
+index 531d4ff78f56a..c23ab2f881459 100644
 --- a/drivers/gpu/drm/msm/dsi/dsi_manager.c
 +++ b/drivers/gpu/drm/msm/dsi/dsi_manager.c
 @@ -368,6 +368,9 @@ static void dsi_mgr_bridge_post_disable(struct drm_bridge *bridge,
@@ -83,7 +83,7 @@ index 531d4ff78f56..c23ab2f88145 100644
  	ret = msm_dsi_host_power_off(host);
  	if (ret)
 diff --git a/drivers/gpu/drm/msm/dsi/phy/dsi_phy.c b/drivers/gpu/drm/msm/dsi/phy/dsi_phy.c
-index 737b44ec3787..e7e157d29879 100644
+index 7c3c2c85f02fe..6373e76b7ca13 100644
 --- a/drivers/gpu/drm/msm/dsi/phy/dsi_phy.c
 +++ b/drivers/gpu/drm/msm/dsi/phy/dsi_phy.c
 @@ -4,12 +4,24 @@
@@ -111,7 +111,7 @@ index 737b44ec3787..e7e157d29879 100644
  #define S_DIV_ROUND_UP(n, d)	\
  	(((n) >= 0) ? (((n) + (d) - 1) / (d)) : (((n) - (d) + 1) / (d)))
  
-@@ -791,9 +803,12 @@ int msm_dsi_phy_enable(struct msm_dsi_phy *phy,
+@@ -790,9 +802,12 @@ int msm_dsi_phy_enable(struct msm_dsi_phy *phy,
  	 * Resetting DSI PHY silently changes its PLL registers to reset status,
  	 * which will confuse clock driver and result in wrong output rate of
  	 * link clocks. Restore PLL status if its PLL is being used as clock
@@ -126,7 +126,7 @@ index 737b44ec3787..e7e157d29879 100644
  		ret = msm_dsi_phy_pll_restore_state(phy);
  		if (ret) {
  			DRM_DEV_ERROR(dev, "%s: failed to restore phy state, %d\n",
-@@ -850,6 +865,27 @@ void msm_dsi_phy_pll_save_state(struct msm_dsi_phy *phy)
+@@ -849,6 +864,27 @@ void msm_dsi_phy_pll_save_state(struct msm_dsi_phy *phy)
  	}
  }
  
@@ -155,7 +155,7 @@ index 737b44ec3787..e7e157d29879 100644
  {
  	int ret;
 diff --git a/drivers/gpu/drm/msm/dsi/phy/dsi_phy.h b/drivers/gpu/drm/msm/dsi/phy/dsi_phy.h
-index e658dd283be8..ad5f32d686d3 100644
+index e658dd283be8c..ad5f32d686d37 100644
 --- a/drivers/gpu/drm/msm/dsi/phy/dsi_phy.h
 +++ b/drivers/gpu/drm/msm/dsi/phy/dsi_phy.h
 @@ -37,6 +37,8 @@ struct msm_dsi_phy_cfg {
@@ -177,7 +177,7 @@ index e658dd283be8..ad5f32d686d3 100644
  
  /*
 diff --git a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
-index f9debc05591c..c2ed4b13d1d2 100644
+index ea2754fb99efc..fb3a152db1f00 100644
 --- a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
 +++ b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
 @@ -1555,6 +1555,7 @@ const struct msm_dsi_phy_cfg dsi_phy_3nm_8750_cfgs = {
@@ -188,3 +188,6 @@ index f9debc05591c..c2ed4b13d1d2 100644
  	.regulator_data = dsi_phy_7nm_98000uA_regulators,
  	.num_regulators = ARRAY_SIZE(dsi_phy_7nm_98000uA_regulators),
  	.ops = {
+-- 
+2.43.0
+

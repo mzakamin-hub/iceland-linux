@@ -51,7 +51,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  2 files changed, 22 insertions(+), 28 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
-index 75328d6ee33b..7ac2b133f9bb 100644
+index 75328d6ee33bf..7ac2b133f9bbb 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 @@ -1527,6 +1527,21 @@ static bool dpu_crtc_needs_dspp(const struct drm_crtc_state *state)
@@ -116,7 +116,7 @@ index 75328d6ee33b..7ac2b133f9bb 100644
  		if (rc < 0)
  			return rc;
 diff --git a/drivers/gpu/drm/msm/msm_atomic.c b/drivers/gpu/drm/msm/msm_atomic.c
-index a8babf1dbe0d..7b480981becc 100644
+index a8babf1dbe0d3..7b480981becc5 100644
 --- a/drivers/gpu/drm/msm/msm_atomic.c
 +++ b/drivers/gpu/drm/msm/msm_atomic.c
 @@ -185,22 +185,7 @@ int msm_atomic_check(struct drm_device *dev, struct drm_atomic_commit *state)
@@ -143,3 +143,6 @@ index a8babf1dbe0d..7b480981becc 100644
  
  	if (kms && kms->funcs && kms->funcs->check_mode_changed)
  		ret = kms->funcs->check_mode_changed(kms, state);
+-- 
+2.43.0
+

@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Hangtian Zhu <hangtian.zhu@oss.qualcomm.com>
 Date: Tue, 15 Sep 2026 05:51:17 +0000
-Subject: [PATCH 20/32] FROMLIST: wifi: ath12k: set STA EHT MU mode before peer
- assoc
+Subject: [PATCH] FROMLIST: wifi: ath12k: set STA EHT MU mode before peer assoc
 
 Currently, ath12k_bss_assoc() sets HE MU mode with
 WMI_VDEV_PARAM_SET_HEMU_MODE before ath12k_wmi_send_peer_assoc_cmd(),
@@ -28,10 +27,10 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 91 insertions(+)
 
 diff --git a/drivers/net/wireless/ath/ath12k/mac.c b/drivers/net/wireless/ath/ath12k/mac.c
-index d8d233eb90ce..daf3ba12b375 100644
+index 85739893cc6ca..1e18efa03067e 100644
 --- a/drivers/net/wireless/ath/ath12k/mac.c
 +++ b/drivers/net/wireless/ath/ath12k/mac.c
-@@ -3781,6 +3781,79 @@ static int ath12k_mac_vif_recalc_sta_he_txbf(struct ath12k *ar,
+@@ -3792,6 +3792,79 @@ static int ath12k_mac_vif_recalc_sta_he_txbf(struct ath12k *ar,
  	return 0;
  }
  
@@ -111,7 +110,7 @@ index d8d233eb90ce..daf3ba12b375 100644
  static int ath12k_mac_set_eht_txbf_conf(struct ath12k_link_vif *arvif)
  {
  	struct ath12k_vif *ahvif = arvif->ahvif;
-@@ -3924,6 +3997,7 @@ static void ath12k_bss_assoc(struct ath12k *ar,
+@@ -3935,6 +4008,7 @@ static void ath12k_bss_assoc(struct ath12k *ar,
  	struct ath12k_sta *ahsta;
  	struct ath12k_dp_link_peer *peer;
  	bool is_auth = false;
@@ -119,7 +118,7 @@ index d8d233eb90ce..daf3ba12b375 100644
  	u32 hemode = 0;
  	int ret;
  	struct ath12k_dp *dp = ath12k_ab_to_dp(ar->ab);
-@@ -3978,6 +4052,14 @@ static void ath12k_bss_assoc(struct ath12k *ar,
+@@ -3989,6 +4063,14 @@ static void ath12k_bss_assoc(struct ath12k *ar,
  		return;
  	}
  
@@ -134,7 +133,7 @@ index d8d233eb90ce..daf3ba12b375 100644
  	rcu_read_unlock();
  
  	/* keep this before ath12k_wmi_send_peer_assoc_cmd() */
-@@ -3989,6 +4071,15 @@ static void ath12k_bss_assoc(struct ath12k *ar,
+@@ -4000,6 +4082,15 @@ static void ath12k_bss_assoc(struct ath12k *ar,
  		return;
  	}
  
@@ -150,3 +149,6 @@ index d8d233eb90ce..daf3ba12b375 100644
  	peer_arg->is_assoc = true;
  
  	ret = ath12k_mac_peer_assoc(ar, peer_arg);
+-- 
+2.43.0
+

@@ -32,7 +32,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  3 files changed, 27 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/dp/dp_ctrl.c b/drivers/gpu/drm/msm/dp/dp_ctrl.c
-index 656316650c3e..a3510ce4b0ba 100644
+index 6cfb69598d25d..51be575018b9a 100644
 --- a/drivers/gpu/drm/msm/dp/dp_ctrl.c
 +++ b/drivers/gpu/drm/msm/dp/dp_ctrl.c
 @@ -2106,6 +2106,15 @@ static int msm_dp_ctrl_link_maintenance(struct msm_dp_ctrl_private *ctrl,
@@ -52,7 +52,7 @@ index 656316650c3e..a3510ce4b0ba 100644
  
  static void msm_dp_ctrl_send_phy_pattern(struct msm_dp_ctrl_private *ctrl,
 diff --git a/drivers/gpu/drm/msm/dp/dp_ctrl.h b/drivers/gpu/drm/msm/dp/dp_ctrl.h
-index 80d9258501b4..64ce27ba6bac 100644
+index 80d9258501b49..64ce27ba6bac3 100644
 --- a/drivers/gpu/drm/msm/dp/dp_ctrl.h
 +++ b/drivers/gpu/drm/msm/dp/dp_ctrl.h
 @@ -30,6 +30,8 @@ irqreturn_t msm_dp_ctrl_isr(struct msm_dp_ctrl *msm_dp_ctrl,
@@ -65,7 +65,7 @@ index 80d9258501b4..64ce27ba6bac 100644
  				    struct msm_dp_link *link,
  				    struct drm_dp_aux *aux,
 diff --git a/drivers/gpu/drm/msm/dp/dp_display.c b/drivers/gpu/drm/msm/dp/dp_display.c
-index 5b3934674b15..a82738e7cb7d 100644
+index 8ce34db9e4672..d5cafe3c660f4 100644
 --- a/drivers/gpu/drm/msm/dp/dp_display.c
 +++ b/drivers/gpu/drm/msm/dp/dp_display.c
 @@ -56,6 +56,8 @@ struct msm_dp_display_private {
@@ -105,3 +105,6 @@ index 5b3934674b15..a82738e7cb7d 100644
  	/* Don't forget modes for eDP */
  	if (!dp->msm_dp_display.is_edp)
  		drm_edid_connector_update(dp->msm_dp_display.connector, NULL);
+-- 
+2.43.0
+

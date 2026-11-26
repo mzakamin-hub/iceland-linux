@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Fri, 6 Nov 2026 23:32:25 +0200
-Subject: [PATCH 27/27] drm/msm/a6xx: mask the GMU-to-host interrupts before
- the GMU boots
+Subject: [PATCH] drm/msm/a6xx: mask the GMU-to-host interrupts before the GMU
+ boots
 
 GMU2HOST_INTR_MASK resets to 0 when the GMU power domain goes off, and
 a6xx_gmu_resume() programs it only after a6xx_hfi_start(). Until then
@@ -22,7 +22,6 @@ Re-implemented from the idea of armada-os PR 662 (SuperTurtleDev
 iceland-mainline-kernel-linux e04a83af3cce, posted without a
 Signed-off-by); no code was copied.
 
-Based-on: SuperTurtleDev iceland-mainline-kernel-linux e04a83af3cce (idea only; armada-os PR 662)
 Link: https://github.com/armada-os/armada/pull/662
 Signed-off-by: mzak <mzak.amin@gmail.com>
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
@@ -31,7 +30,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 8 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
-index fcb567ec9..b85734e5a 100644
+index fcb567ec90780..b85734e5ac0ff 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 @@ -1485,6 +1485,14 @@ int a6xx_gmu_resume(struct a6xx_gpu *a6xx_gpu)

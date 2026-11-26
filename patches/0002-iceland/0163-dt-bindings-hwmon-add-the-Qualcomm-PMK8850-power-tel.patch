@@ -25,7 +25,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 
 diff --git a/Documentation/devicetree/bindings/hwmon/qcom,pmk8850-qpt.yaml b/Documentation/devicetree/bindings/hwmon/qcom,pmk8850-qpt.yaml
 new file mode 100644
-index 000000000000..8ac5f39f5fd2
+index 0000000000000..8ac5f39f5fd22
 --- /dev/null
 +++ b/Documentation/devicetree/bindings/hwmon/qcom,pmk8850-qpt.yaml
 @@ -0,0 +1,111 @@
@@ -141,7 +141,7 @@ index 000000000000..8ac5f39f5fd2
 +    };
 +...
 diff --git a/Documentation/devicetree/bindings/mfd/qcom,spmi-pmic.yaml b/Documentation/devicetree/bindings/mfd/qcom,spmi-pmic.yaml
-index 7a889d888383..9f0644372ee7 100644
+index 7a889d8883835..9f0644372ee7b 100644
 --- a/Documentation/devicetree/bindings/mfd/qcom,spmi-pmic.yaml
 +++ b/Documentation/devicetree/bindings/mfd/qcom,spmi-pmic.yaml
 @@ -129,6 +129,10 @@ properties:
@@ -155,3 +155,6 @@ index 7a889d888383..9f0644372ee7 100644
    pwm:
      type: object
      $ref: /schemas/leds/leds-qcom-lpg.yaml#
+-- 
+2.43.0
+

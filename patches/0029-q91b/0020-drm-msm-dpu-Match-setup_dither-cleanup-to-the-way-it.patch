@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Xi Zhang <xz.ca.cn@gmail.com>
 Date: Mon, 26 Oct 2026 17:25:45 -0300
-Subject: [PATCH 20/24] drm/msm/dpu: Match setup_dither cleanup to the way it
- was set up
+Subject: [PATCH] drm/msm/dpu: Match setup_dither cleanup to the way it was set
+ up
 
 Cleanup hw_pp->ops.setup_dither with NULL for all PINGPONGs,
 matching the way it was setup during enable.
@@ -14,7 +14,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 5 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
-index f72c0264ae3d..0caf6ed31fe6 100644
+index f72c0264ae3d4..0caf6ed31fe6a 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 @@ -2475,7 +2475,7 @@ static void _dpu_encoder_virt_enable_helper(struct drm_encoder *drm_enc)
@@ -39,3 +39,6 @@ index f72c0264ae3d..0caf6ed31fe6 100644
  
  	if (dpu_enc->cwb_mask)
  		dpu_encoder_helper_phys_setup_cwb(phys_enc, false);
+-- 
+2.43.0
+

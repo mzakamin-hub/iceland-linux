@@ -17,7 +17,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 6 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/video/backlight/ktz8869_iceland.c b/drivers/video/backlight/ktz8869_iceland.c
-index f6dd2c61a676..d1196bd0300a 100644
+index f6dd2c61a6767..d1196bd0300a2 100644
 --- a/drivers/video/backlight/ktz8869_iceland.c
 +++ b/drivers/video/backlight/ktz8869_iceland.c
 @@ -183,8 +183,12 @@ static int ktz8869_probe(struct i2c_client *client)
@@ -35,3 +35,6 @@ index f6dd2c61a676..d1196bd0300a 100644
  		return dev_err_probe(&client->dev, ret, "get regulator vddio failed\n");
  
  	if (id->driver_data == 2) {
+-- 
+2.43.0
+

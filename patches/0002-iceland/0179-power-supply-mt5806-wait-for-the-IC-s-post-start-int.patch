@@ -51,7 +51,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 32 insertions(+)
 
 diff --git a/drivers/power/supply/mt5806_pen_charger.c b/drivers/power/supply/mt5806_pen_charger.c
-index f450871bce4a..78523bc9a7f1 100644
+index f450871bce4a8..78523bc9a7f12 100644
 --- a/drivers/power/supply/mt5806_pen_charger.c
 +++ b/drivers/power/supply/mt5806_pen_charger.c
 @@ -135,6 +135,7 @@
@@ -128,3 +128,6 @@ index f450871bce4a..78523bc9a7f1 100644
  
  	disable_irq(chip->irq);
  
+-- 
+2.43.0
+

@@ -51,7 +51,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  4 files changed, 696 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
-index 2744fc6311c4..d7a48d2fa205 100644
+index 2744fc6311c40..d7a48d2fa2058 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 @@ -295,14 +295,14 @@ static bool dpu_crtc_get_scanout_position(struct drm_crtc *crtc,
@@ -73,7 +73,7 @@ index 2744fc6311c4..d7a48d2fa205 100644
  		line -= vactive_start;
  	else if (line > vactive_end)
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
-index 90b3eed181e3..0f51c8e02bd3 100644
+index 90b3eed181e33..0f51c8e02bd31 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 @@ -9,12 +9,17 @@
@@ -841,7 +841,7 @@ index 90b3eed181e3..0f51c8e02bd3 100644
  	if (ret) {
  		DPU_ERROR("failed to setup encoder\n");
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h
-index 7dfaa3ed4dff..05908cccb012 100644
+index 7dfaa3ed4dff4..05908cccb0125 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h
 @@ -68,6 +68,11 @@ struct drm_encoder *dpu_encoder_init(struct drm_device *dev,
@@ -857,7 +857,7 @@ index 7dfaa3ed4dff..05908cccb012 100644
  
  bool dpu_encoder_is_widebus_enabled(const struct drm_encoder *drm_enc);
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
-index 1b64f7406157..963e85fabe51 100644
+index 96b16ee14e4dc..4cbe2d01b0368 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
 @@ -915,6 +915,13 @@ static void dpu_kms_destroy(struct msm_kms *kms)
@@ -874,3 +874,6 @@ index 1b64f7406157..963e85fabe51 100644
  	_dpu_kms_hw_destroy(dpu_kms);
  
  	msm_kms_destroy(&dpu_kms->base);
+-- 
+2.43.0
+

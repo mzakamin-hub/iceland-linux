@@ -21,7 +21,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 12 insertions(+)
 
 diff --git a/sound/soc/codecs/wcd-mbhc-v2.c b/sound/soc/codecs/wcd-mbhc-v2.c
-index 850be84d65ce..3eb2a5fca0f6 100644
+index 850be84d65ceb..3eb2a5fca0f6c 100644
 --- a/sound/soc/codecs/wcd-mbhc-v2.c
 +++ b/sound/soc/codecs/wcd-mbhc-v2.c
 @@ -516,6 +516,17 @@ static void mbhc_plug_detect_fn(struct work_struct *work)
@@ -50,3 +50,6 @@ index 850be84d65ce..3eb2a5fca0f6 100644
  }
  
  static irqreturn_t wcd_mbhc_mech_plug_detect_irq(int irq, void *data)
+-- 
+2.43.0
+

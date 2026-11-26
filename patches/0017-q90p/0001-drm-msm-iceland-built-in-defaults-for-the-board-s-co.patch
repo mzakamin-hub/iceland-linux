@@ -39,7 +39,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  create mode 100644 drivers/gpu/drm/msm/msm_iceland.h
 
 diff --git a/drivers/gpu/drm/msm/Kconfig b/drivers/gpu/drm/msm/Kconfig
-index ed1c4775d1e9..3fee914f50b6 100644
+index ed1c4775d1e92..3fee914f50b6c 100644
 --- a/drivers/gpu/drm/msm/Kconfig
 +++ b/drivers/gpu/drm/msm/Kconfig
 @@ -71,6 +71,21 @@ config DRM_MSM_KMS
@@ -65,7 +65,7 @@ index ed1c4775d1e9..3fee914f50b6 100644
  	def_bool DRM_FBDEV_EMULATION
  	depends on DRM_MSM_KMS
 diff --git a/drivers/gpu/drm/msm/Makefile b/drivers/gpu/drm/msm/Makefile
-index b5d64ee7eb74..fdb216e1112a 100644
+index b5d64ee7eb741..fdb216e1112a4 100644
 --- a/drivers/gpu/drm/msm/Makefile
 +++ b/drivers/gpu/drm/msm/Makefile
 @@ -167,6 +167,7 @@ msm-display-$(CONFIG_DRM_MSM_DSI_10NM_PHY) += dsi/phy/dsi_phy_10nm.o
@@ -77,7 +77,7 @@ index b5d64ee7eb74..fdb216e1112a 100644
  
  obj-$(CONFIG_DRM_MSM)	+= msm.o
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gpu.c b/drivers/gpu/drm/msm/adreno/a6xx_gpu.c
-index 3f1aeeb5ab07..b21f860255bc 100644
+index 3f1aeeb5ab072..b21f860255bcf 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gpu.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gpu.c
 @@ -2749,6 +2749,8 @@ static struct msm_gpu *a6xx_gpu_init(struct drm_device *dev)
@@ -90,7 +90,7 @@ index 3f1aeeb5ab07..b21f860255bc 100644
  	    (info->quirks & ADRENO_QUIRK_PREEMPTION)))
  		nr_rings = 4;
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_device.c b/drivers/gpu/drm/msm/adreno/adreno_device.c
-index 62a1f6e88a4e..b2ec0146c9fe 100644
+index 62a1f6e88a4e2..b2ec0146c9fe0 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_device.c
 +++ b/drivers/gpu/drm/msm/adreno/adreno_device.c
 @@ -6,7 +6,10 @@
@@ -184,7 +184,7 @@ index 62a1f6e88a4e..b2ec0146c9fe 100644
  static bool skip_gpu;
  MODULE_PARM_DESC(skip_gpu, "Disable GPU driver register (0=enable GPU driver register (default), 1=skip GPU driver register");
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_gpu.h b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
-index 3a8f6a78200b..719b822cedad 100644
+index 3a8f6a78200b5..719b822cedada 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_gpu.h
 +++ b/drivers/gpu/drm/msm/adreno/adreno_gpu.h
 @@ -21,6 +21,14 @@
@@ -203,7 +203,7 @@ index 3a8f6a78200b..719b822cedad 100644
  extern bool a8xx_safe_recover;
  extern bool a8xx_legacy_protect;
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
-index c0a625b13211..1d02172f9950 100644
+index c0a625b132119..1d02172f99502 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 @@ -24,6 +24,7 @@
@@ -265,7 +265,7 @@ index c0a625b13211..1d02172f9950 100644
   * dpu_encoder_init - initialize virtual encoder object
   * @dev:        Pointer to drm device structure
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h
-index 956779c60bf6..97c2dd0c2f3f 100644
+index 956779c60bf63..97c2dd0c2f3f8 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h
 @@ -62,6 +62,8 @@ void dpu_encoder_virt_runtime_resume(struct drm_encoder *encoder);
@@ -278,7 +278,7 @@ index 956779c60bf6..97c2dd0c2f3f 100644
  		int drm_enc_mode,
  		struct msm_display_info *disp_info);
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
-index 2e53bb503c62..9d8f22c5b288 100644
+index 82eca09233c82..913a821e037e2 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
 @@ -1342,6 +1342,8 @@ static int dpu_kms_init(struct drm_device *ddev)
@@ -292,7 +292,7 @@ index 2e53bb503c62..9d8f22c5b288 100644
  		DPU_ERROR("failed to init kms, ret=%d\n", ret);
 diff --git a/drivers/gpu/drm/msm/msm_iceland.c b/drivers/gpu/drm/msm/msm_iceland.c
 new file mode 100644
-index 000000000000..b4fe770b9fe9
+index 0000000000000..b4fe770b9fe9a
 --- /dev/null
 +++ b/drivers/gpu/drm/msm/msm_iceland.c
 @@ -0,0 +1,95 @@
@@ -393,7 +393,7 @@ index 000000000000..b4fe770b9fe9
 +};
 diff --git a/drivers/gpu/drm/msm/msm_iceland.h b/drivers/gpu/drm/msm/msm_iceland.h
 new file mode 100644
-index 000000000000..9df4669c8e9b
+index 0000000000000..9df4669c8e9b9
 --- /dev/null
 +++ b/drivers/gpu/drm/msm/msm_iceland.h
 @@ -0,0 +1,34 @@
@@ -431,3 +431,6 @@ index 000000000000..9df4669c8e9b
 +#endif
 +
 +#endif /* __MSM_ICELAND_H__ */
+-- 
+2.43.0
+

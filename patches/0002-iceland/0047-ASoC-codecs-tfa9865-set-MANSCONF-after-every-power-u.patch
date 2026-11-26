@@ -20,7 +20,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 25 insertions(+), 1 deletion(-)
 
 diff --git a/sound/soc/codecs/tfa9865.c b/sound/soc/codecs/tfa9865.c
-index 76a31369f420..906dfc2d40e1 100644
+index 76a31369f420f..906dfc2d40e12 100644
 --- a/sound/soc/codecs/tfa9865.c
 +++ b/sound/soc/codecs/tfa9865.c
 @@ -38,6 +38,9 @@
@@ -69,3 +69,6 @@ index 76a31369f420..906dfc2d40e1 100644
  };
  
  static const struct snd_soc_dapm_route tfa9865_dapm_routes[] = {
+-- 
+2.43.0
+

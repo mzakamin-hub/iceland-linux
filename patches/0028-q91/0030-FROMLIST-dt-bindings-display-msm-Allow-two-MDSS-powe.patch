@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Yongxing Mou <yongxing.mou@oss.qualcomm.com>
 Date: Sun, 2 Aug 2026 16:57:34 +0800
-Subject: [PATCH 30/32] FROMLIST: dt-bindings: display: msm: Allow two MDSS
- power domains
+Subject: [PATCH] FROMLIST: dt-bindings: display: msm: Allow two MDSS power
+ domains
 
 Kaanapali (SM8750) and Glymur use two display power domains.
 CORE_GDSC powers the main display hardware while INT2_GDSC
@@ -21,7 +21,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  3 files changed, 26 insertions(+), 3 deletions(-)
 
 diff --git a/Documentation/devicetree/bindings/display/msm/mdss-common.yaml b/Documentation/devicetree/bindings/display/msm/mdss-common.yaml
-index c6305a6e0334..c0b650ffd9ef 100644
+index c6305a6e03346..c0b650ffd9ef8 100644
 --- a/Documentation/devicetree/bindings/display/msm/mdss-common.yaml
 +++ b/Documentation/devicetree/bindings/display/msm/mdss-common.yaml
 @@ -31,7 +31,8 @@ properties:
@@ -35,7 +35,7 @@ index c6305a6e0334..c0b650ffd9ef 100644
    clocks:
      minItems: 2
 diff --git a/Documentation/devicetree/bindings/display/msm/qcom,glymur-mdss.yaml b/Documentation/devicetree/bindings/display/msm/qcom,glymur-mdss.yaml
-index 64dde43373ac..685bedb26a12 100644
+index 64dde43373ac7..685bedb26a124 100644
 --- a/Documentation/devicetree/bindings/display/msm/qcom,glymur-mdss.yaml
 +++ b/Documentation/devicetree/bindings/display/msm/qcom,glymur-mdss.yaml
 @@ -38,6 +38,16 @@ properties:
@@ -66,7 +66,7 @@ index 64dde43373ac..685bedb26a12 100644
              iommus = <&apps_smmu 0x1c00 0x2>;
  
 diff --git a/Documentation/devicetree/bindings/display/msm/qcom,kaanapali-mdss.yaml b/Documentation/devicetree/bindings/display/msm/qcom,kaanapali-mdss.yaml
-index ccaaee8bdc74..f64204daf0c5 100644
+index ccaaee8bdc740..f64204daf0c54 100644
 --- a/Documentation/devicetree/bindings/display/msm/qcom,kaanapali-mdss.yaml
 +++ b/Documentation/devicetree/bindings/display/msm/qcom,kaanapali-mdss.yaml
 @@ -40,6 +40,16 @@ properties:
@@ -96,3 +96,6 @@ index ccaaee8bdc74..f64204daf0c5 100644
  
          iommus = <&apps_smmu 0x800 0x2>;
  
+-- 
+2.43.0
+

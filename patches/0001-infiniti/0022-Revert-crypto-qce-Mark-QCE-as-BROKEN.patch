@@ -19,7 +19,7 @@ Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
  3 files changed, 15 insertions(+), 9 deletions(-)
 
 diff --git a/arch/arm/configs/multi_v7_defconfig b/arch/arm/configs/multi_v7_defconfig
-index 069d5a49f01c..d611e85c62e9 100644
+index 069d5a49f01cb..d611e85c62e93 100644
 --- a/arch/arm/configs/multi_v7_defconfig
 +++ b/arch/arm/configs/multi_v7_defconfig
 @@ -1315,6 +1315,7 @@ CONFIG_CRYPTO_DEV_ATMEL_AES=m
@@ -31,7 +31,7 @@ index 069d5a49f01c..d611e85c62e9 100644
  CONFIG_CRYPTO_DEV_STM32_HASH=m
  CONFIG_CRYPTO_DEV_STM32_CRYP=m
 diff --git a/arch/arm64/configs/defconfig b/arch/arm64/configs/defconfig
-index 7b4985b29b21..52654d3b97c8 100644
+index 7b4985b29b21c..52654d3b97c8e 100644
 --- a/arch/arm64/configs/defconfig
 +++ b/arch/arm64/configs/defconfig
 @@ -1845,6 +1845,7 @@ CONFIG_CRYPTO_AES_ARM64_CE_CCM=y
@@ -43,7 +43,7 @@ index 7b4985b29b21..52654d3b97c8 100644
  CONFIG_CRYPTO_DEV_ZYNQMP_AES=m
  CONFIG_CRYPTO_DEV_ZYNQMP_SHA3=m
 diff --git a/drivers/crypto/Kconfig b/drivers/crypto/Kconfig
-index 0189dfdcbbe1..adcbe1585189 100644
+index 0189dfdcbbe11..adcbe15851899 100644
 --- a/drivers/crypto/Kconfig
 +++ b/drivers/crypto/Kconfig
 @@ -527,17 +527,21 @@ source "drivers/crypto/marvell/Kconfig"
@@ -77,3 +77,6 @@ index 0189dfdcbbe1..adcbe1585189 100644
  
  config CRYPTO_DEV_QCE_SKCIPHER
  	bool
+-- 
+2.43.0
+

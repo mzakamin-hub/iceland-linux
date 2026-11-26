@@ -19,7 +19,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 7 insertions(+)
 
 diff --git a/Documentation/devicetree/bindings/usb/qcom,snps-dwc3.yaml b/Documentation/devicetree/bindings/usb/qcom,snps-dwc3.yaml
-index b77c02c64d45..bc1ca4669b7d 100644
+index b77c02c64d45a..bc1ca4669b7d0 100644
 --- a/Documentation/devicetree/bindings/usb/qcom,snps-dwc3.yaml
 +++ b/Documentation/devicetree/bindings/usb/qcom,snps-dwc3.yaml
 @@ -158,6 +158,13 @@ properties:
@@ -36,3 +36,6 @@ index b77c02c64d45..bc1ca4669b7d 100644
    wakeup-source: true
  
  required:
+-- 
+2.43.0
+

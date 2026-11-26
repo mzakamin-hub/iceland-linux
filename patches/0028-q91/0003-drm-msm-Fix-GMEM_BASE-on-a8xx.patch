@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Connor Abbott <cwabbott0@gmail.com>
 Date: Thu, 29 Oct 2026 19:02:30 -0400
-Subject: [PATCH 03/32] drm/msm: Fix GMEM_BASE on a8xx
+Subject: [PATCH] drm/msm: Fix GMEM_BASE on a8xx
 
 This was missed during initial bringup because GMEM_BASE is not used
 anymore for textures on a8xx. However other things such as mesh shading
@@ -17,7 +17,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_gpu.c b/drivers/gpu/drm/msm/adreno/adreno_gpu.c
-index 9218fc567144..76a1cae7b05b 100644
+index 9218fc5671446..76a1cae7b05b8 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_gpu.c
 +++ b/drivers/gpu/drm/msm/adreno/adreno_gpu.c
 @@ -383,7 +383,9 @@ int adreno_get_param(struct msm_gpu *gpu, struct msm_context *ctx,
@@ -31,3 +31,6 @@ index 9218fc567144..76a1cae7b05b 100644
  			*value = 0;
  		else
  			*value = 0x100000;
+-- 
+2.43.0
+

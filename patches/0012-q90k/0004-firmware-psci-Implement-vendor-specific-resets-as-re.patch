@@ -53,7 +53,7 @@ Link: https://lore.kernel.org/r/20251109-arm-psci-system_reset2-vendor-reboots-v
  2 files changed, 92 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/firmware/psci/Kconfig b/drivers/firmware/psci/Kconfig
-index 97944168b5e6..93ff7b071a0c 100644
+index 97944168b5e66..93ff7b071a0c3 100644
 --- a/drivers/firmware/psci/Kconfig
 +++ b/drivers/firmware/psci/Kconfig
 @@ -1,6 +1,8 @@
@@ -66,7 +66,7 @@ index 97944168b5e6..93ff7b071a0c 100644
  config ARM_PSCI_CHECKER
  	bool "ARM PSCI checker"
 diff --git a/drivers/firmware/psci/psci.c b/drivers/firmware/psci/psci.c
-index e73bae6cb23a..82f99c7a410f 100644
+index e73bae6cb23a3..82f99c7a410f9 100644
 --- a/drivers/firmware/psci/psci.c
 +++ b/drivers/firmware/psci/psci.c
 @@ -8,15 +8,18 @@
@@ -197,3 +197,6 @@ index e73bae6cb23a..82f99c7a410f 100644
  static void __init psci_init_system_reset2(void)
  {
  	int ret;
+-- 
+2.43.0
+

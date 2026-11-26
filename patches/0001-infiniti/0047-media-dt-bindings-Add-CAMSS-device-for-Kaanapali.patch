@@ -22,7 +22,7 @@ Signed-off-by: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
 
 diff --git a/Documentation/devicetree/bindings/media/qcom,kaanapali-camss.yaml b/Documentation/devicetree/bindings/media/qcom,kaanapali-camss.yaml
 new file mode 100644
-index 000000000000..5bbcd35f053c
+index 0000000000000..5bbcd35f053ca
 --- /dev/null
 +++ b/Documentation/devicetree/bindings/media/qcom,kaanapali-camss.yaml
 @@ -0,0 +1,375 @@
@@ -401,3 +401,6 @@ index 000000000000..5bbcd35f053c
 +            };
 +        };
 +    };
+-- 
+2.43.0
+

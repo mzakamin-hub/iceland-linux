@@ -24,7 +24,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 21 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
-index fdcd6d48bb97..88c7c2ab4d41 100644
+index fdcd6d48bb973..88c7c2ab4d411 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 @@ -949,11 +949,31 @@ static void dpu_idle_rr_raise(struct dpu_encoder_virt *dpu_enc)
@@ -60,3 +60,6 @@ index fdcd6d48bb97..88c7c2ab4d41 100644
  		return;
  
  	WRITE_ONCE(dpu_idle_rr_last_input, jiffies);
+-- 
+2.43.0
+

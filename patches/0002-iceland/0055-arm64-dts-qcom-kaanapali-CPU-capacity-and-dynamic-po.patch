@@ -19,7 +19,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 16 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index de622f1c1e17..9dc5f932abc5 100644
+index de622f1c1e178..9dc5f932abc5e 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -46,6 +46,8 @@ cpu0: cpu@0 {
@@ -94,3 +94,6 @@ index de622f1c1e17..9dc5f932abc5 100644
  			d-cache-size = <0x18000>;
  			d-cache-line-size = <64>;
  			d-cache-sets = <256>;
+-- 
+2.43.0
+

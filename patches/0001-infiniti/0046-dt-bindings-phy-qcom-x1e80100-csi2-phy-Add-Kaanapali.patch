@@ -14,7 +14,7 @@ Signed-off-by: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml b/Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml
-index 1f1e2a4993b2..6e9eb8e265df 100644
+index 1f1e2a4993b2a..6e9eb8e265df9 100644
 --- a/Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml
 +++ b/Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml
 @@ -17,7 +17,9 @@ description:
@@ -28,3 +28,6 @@ index 1f1e2a4993b2..6e9eb8e265df 100644
        - items:
            - const: qcom,glymur-csi2-phy
            - const: qcom,x1e80100-csi2-phy
+-- 
+2.43.0
+

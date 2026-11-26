@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 7 Nov 2026 11:29:44 +0200
-Subject: [PATCH 4/9] arm64: dts: qcom: kaanapali-oneplus-iceland: drop the
- -optin names of the default thermal includes
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: drop the -optin
+ names of the default thermal includes
 
 The shell zone, the QMX backstops and the Horae shell sensor are part of
 the default device tree since q91e-r2, but their include files still carry
@@ -30,7 +30,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland-horae-optin.dtsi
 similarity index 94%
 rename from arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland-horae-optin.dtsi
 rename to arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland-horae.dtsi
-index c0c976d93..27e2ca64d 100644
+index c0c976d9310f0..27e2ca64d2acd 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland-horae-optin.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland-horae.dtsi
 @@ -1,6 +1,6 @@
@@ -45,7 +45,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland-qmx-optin.dtsi b
 similarity index 94%
 rename from arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland-qmx-optin.dtsi
 rename to arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland-qmx.dtsi
-index b272ea8cc..513617c95 100644
+index b272ea8cc428f..513617c958373 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland-qmx-optin.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland-qmx.dtsi
 @@ -1,8 +1,8 @@
@@ -63,7 +63,7 @@ diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland-thermal-optin.dt
 similarity index 97%
 rename from arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland-thermal-optin.dtsi
 rename to arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland-thermal.dtsi
-index 8066d376b..2760a99e7 100644
+index 8066d376b7747..2760a99e7ac27 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland-thermal-optin.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland-thermal.dtsi
 @@ -1,7 +1,7 @@
@@ -86,7 +86,7 @@ index 8066d376b..2760a99e7 100644
  	trips {
  		cpullc_0_0_backstop: cpullc-0-0-backstop {
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 3e05e3463..e66681bb8 100644
+index 3e05e3463026a..e66681bb8ef0c 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -3938,6 +3938,6 @@ smp2p-sleepstate {

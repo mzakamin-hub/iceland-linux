@@ -12,7 +12,7 @@ Signed-off-by: Rob Clark <robin.clark@oss.qualcomm.com>
  1 file changed, 4 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
-index 4ef8598fc1bd..d3efef7460bb 100644
+index 4ef8598fc1bd7..d3efef7460bb2 100644
 --- a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
 +++ b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
 @@ -376,7 +376,7 @@ static void a8xx_set_ubwc_config(struct msm_gpu *gpu)
@@ -62,3 +62,6 @@ index 4ef8598fc1bd..d3efef7460bb 100644
  	a8xx_aperture_clear(gpu);
  
  	if (!a6xx_gpu->pwrup_reglist_emitted) {
+-- 
+2.43.0
+

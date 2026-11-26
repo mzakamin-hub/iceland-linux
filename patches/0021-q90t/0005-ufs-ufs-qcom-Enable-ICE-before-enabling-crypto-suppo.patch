@@ -29,7 +29,7 @@ Signed-off-by: Kuldeep Singh <kuldeep.singh@oss.qualcomm.com>
  1 file changed, 20 insertions(+), 9 deletions(-)
 
 diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
-index 47fc785612ad..be23d20c29c1 100644
+index a9ee9cd97b524..5c23119f7a32e 100644
 --- a/drivers/ufs/host/ufs-qcom.c
 +++ b/drivers/ufs/host/ufs-qcom.c
 @@ -157,13 +157,15 @@ static void ufs_qcom_config_ice_allocator(struct ufs_qcom_host *host)
@@ -109,3 +109,6 @@ index 47fc785612ad..be23d20c29c1 100644
  		break;
  	default:
  		dev_err(hba->dev, "Invalid status %d\n", status);
+-- 
+2.43.0
+

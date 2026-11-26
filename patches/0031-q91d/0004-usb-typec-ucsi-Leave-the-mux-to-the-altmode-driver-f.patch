@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Joonhoe Kim <26rote@gmail.com>
 Date: Tue, 3 Nov 2026 22:50:46 +0900
-Subject: [PATCH 04/27] usb: typec: ucsi: Leave the mux to the altmode driver
- for alt mode partners
+Subject: [PATCH] usb: typec: ucsi: Leave the mux to the altmode driver for alt
+ mode partners
 
 Commit 25a2bc21c863 ("usb: typec: ucsi: call typec_set_mode on
 non-altmode partner change") set TYPEC_STATE_USB only when the partner
@@ -32,7 +32,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/usb/typec/ucsi/ucsi.c b/drivers/usb/typec/ucsi/ucsi.c
-index 8f12412f5..dd0451303 100644
+index 2c448be26db40..6aedf56d8f214 100644
 --- a/drivers/usb/typec/ucsi/ucsi.c
 +++ b/drivers/usb/typec/ucsi/ucsi.c
 @@ -1451,7 +1451,8 @@ static void ucsi_partner_change(struct ucsi_connector *con)

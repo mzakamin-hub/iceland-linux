@@ -23,7 +23,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 65 insertions(+), 11 deletions(-)
 
 diff --git a/sound/soc/codecs/wcd939x.c b/sound/soc/codecs/wcd939x.c
-index 3bffd5abd09d..69078dc25a38 100644
+index 2607df627d908..f848ba320fbea 100644
 --- a/sound/soc/codecs/wcd939x.c
 +++ b/sound/soc/codecs/wcd939x.c
 @@ -2033,26 +2033,49 @@ static const struct zdet_param wcd939x_mbhc_zdet_param = {
@@ -150,3 +150,6 @@ index 3bffd5abd09d..69078dc25a38 100644
  static void wcd939x_mbhc_gnd_det_ctrl(struct snd_soc_component *component,
  				      bool enable)
  {
+-- 
+2.43.0
+

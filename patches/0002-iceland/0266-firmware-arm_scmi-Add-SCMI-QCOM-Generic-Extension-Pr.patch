@@ -24,7 +24,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
 
 diff --git a/drivers/firmware/arm_scmi/vendors/qcom/qcom_generic.rst b/drivers/firmware/arm_scmi/vendors/qcom/qcom_generic.rst
 new file mode 100644
-index 000000000000..42e327d53841
+index 0000000000000..42e327d538414
 --- /dev/null
 +++ b/drivers/firmware/arm_scmi/vendors/qcom/qcom_generic.rst
 @@ -0,0 +1,954 @@
@@ -982,3 +982,6 @@ index 000000000000..42e327d53841
 ++------------------+-----------------------------------------------------------+
 +|int32 status      |SUCCESS / INVALID_PARAMETERS if method is not 0 or 1.      |
 ++------------------+-----------------------------------------------------------+
+-- 
+2.43.0
+

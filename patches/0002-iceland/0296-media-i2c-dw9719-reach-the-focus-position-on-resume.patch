@@ -18,7 +18,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/media/i2c/dw9719.c b/drivers/media/i2c/dw9719.c
-index 7ea976df9247..22ae711d7cd3 100644
+index e20c4f8c128a3..49c70cffae1c3 100644
 --- a/drivers/media/i2c/dw9719.c
 +++ b/drivers/media/i2c/dw9719.c
 @@ -304,7 +304,7 @@ static int dw9719_resume(struct device *dev)
@@ -30,3 +30,6 @@ index 7ea976df9247..22ae711d7cd3 100644
  	     val += DW9719_CTRL_STEPS) {
  		ret = dw9719_t_focus_abs(dw9719, val);
  		if (ret)
+-- 
+2.43.0
+

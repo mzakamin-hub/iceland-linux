@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Yongxing Mou <yongxing.mou@oss.qualcomm.com>
 Date: Thu, 24 Sep 2026 15:22:31 +0800
-Subject: [PATCH 13/27] FROMLIST: soc: qcom: pmic-glink-altmode: skip retimer
- reset on DP IRQ
+Subject: [PATCH] FROMLIST: soc: qcom: pmic-glink-altmode: skip retimer reset
+ on DP IRQ
 
 A DP HPD IRQ reports a sink-side event and does not imply a Type-C
 routing change. Reprogramming the retimer for every IRQ can reset or
@@ -25,7 +25,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 37 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/soc/qcom/pmic_glink_altmode.c b/drivers/soc/qcom/pmic_glink_altmode.c
-index a96be1aef..c9fcd04bb 100644
+index 9d233ebbc5ffd..96d9504ad96b8 100644
 --- a/drivers/soc/qcom/pmic_glink_altmode.c
 +++ b/drivers/soc/qcom/pmic_glink_altmode.c
 @@ -122,6 +122,12 @@ struct pmic_glink_altmode_port {

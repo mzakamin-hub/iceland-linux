@@ -38,7 +38,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/mdp5/mdp5_encoder.c b/drivers/gpu/drm/msm/disp/mdp5/mdp5_encoder.c
-index eaba3b2d73b5..e9eb1db92775 100644
+index eaba3b2d73b50..e9eb1db927752 100644
 --- a/drivers/gpu/drm/msm/disp/mdp5/mdp5_encoder.c
 +++ b/drivers/gpu/drm/msm/disp/mdp5/mdp5_encoder.c
 @@ -164,10 +164,11 @@ static void mdp5_vid_encoder_enable(struct drm_encoder *encoder)
@@ -54,3 +54,6 @@ index eaba3b2d73b5..e9eb1db92775 100644
  
  	mdp5_ctl_set_encoder_state(ctl, pipeline, true);
  
+-- 
+2.43.0
+

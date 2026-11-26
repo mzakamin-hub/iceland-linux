@@ -24,7 +24,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  3 files changed, 225 insertions(+)
 
 diff --git a/drivers/net/wireless/ath/ath12k/hw.h b/drivers/net/wireless/ath/ath12k/hw.h
-index 52558dd126a0..b5fbcefdb6cc 100644
+index 52558dd126a04..b5fbcefdb6cc3 100644
 --- a/drivers/net/wireless/ath/ath12k/hw.h
 +++ b/drivers/net/wireless/ath/ath12k/hw.h
 @@ -96,6 +96,7 @@ struct ieee80211_rx_status;
@@ -36,7 +36,7 @@ index 52558dd126a0..b5fbcefdb6cc 100644
  #define ATH12K_REGDB_FILE_NAME		"regdb.bin"
  
 diff --git a/drivers/net/wireless/ath/ath12k/qmi.c b/drivers/net/wireless/ath/ath12k/qmi.c
-index 817bd820623d..d4efde426c52 100644
+index 817bd820623d2..d4efde426c522 100644
 --- a/drivers/net/wireless/ath/ath12k/qmi.c
 +++ b/drivers/net/wireless/ath/ath12k/qmi.c
 @@ -1619,6 +1619,113 @@ static const struct qmi_elem_info qmi_wlanfw_bdf_download_resp_msg_v01_ei[] = {
@@ -264,7 +264,7 @@ index 817bd820623d..d4efde426c52 100644
  }
  
 diff --git a/drivers/net/wireless/ath/ath12k/qmi.h b/drivers/net/wireless/ath/ath12k/qmi.h
-index 1b1c88906f1e..28ca7be46185 100644
+index 1b1c88906f1e9..28ca7be46185c 100644
 --- a/drivers/net/wireless/ath/ath12k/qmi.h
 +++ b/drivers/net/wireless/ath/ath12k/qmi.h
 @@ -518,6 +518,27 @@ struct qmi_wlanfw_bdf_download_resp_msg_v01 {
@@ -295,3 +295,6 @@ index 1b1c88906f1e..28ca7be46185 100644
  #define QMI_WLANFW_M3_INFO_REQ_MSG_V01_MAX_MSG_LEN	18
  #define QMI_WLANFW_M3_INFO_REQ_V01		0x003C
  
+-- 
+2.43.0
+

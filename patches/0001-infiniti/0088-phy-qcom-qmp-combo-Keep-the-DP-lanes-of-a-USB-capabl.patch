@@ -13,7 +13,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 8 insertions(+)
 
 diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
-index 0cf9caaaa030..08c8eb2e6029 100644
+index 2c111e9ceadbc..407ed84be08ae 100644
 --- a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
 +++ b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
 @@ -2637,6 +2637,7 @@ struct qmp_combo {
@@ -24,7 +24,7 @@ index 0cf9caaaa030..08c8eb2e6029 100644
  
  	struct phy *usb4_phy;
  	enum tbt_phy_submode usb4_phy_submode;
-@@ -5178,6 +5179,7 @@ static int qmp_combo_typec_mux_set(struct typec_mux_dev *mux, struct typec_mux_s
+@@ -5177,6 +5178,7 @@ static int qmp_combo_typec_mux_set(struct typec_mux_dev *mux, struct typec_mux_s
  		return 0;
  
  	if (svid == USB_TYPEC_DP_SID) {
@@ -32,7 +32,7 @@ index 0cf9caaaa030..08c8eb2e6029 100644
  		switch (state->mode) {
  		/* DP Only */
  		case TYPEC_DP_STATE_C:
-@@ -5194,7 +5196,13 @@ static int qmp_combo_typec_mux_set(struct typec_mux_dev *mux, struct typec_mux_s
+@@ -5193,7 +5195,13 @@ static int qmp_combo_typec_mux_set(struct typec_mux_dev *mux, struct typec_mux_s
  			new_mode = QMPPHY_MODE_USB3DP;
  			break;
  		}
@@ -46,3 +46,6 @@ index 0cf9caaaa030..08c8eb2e6029 100644
  		/* No DP SVID => don't care, assume it's just USB3 */
  		new_mode = QMPPHY_MODE_USB3_ONLY;
  	}
+-- 
+2.43.0
+

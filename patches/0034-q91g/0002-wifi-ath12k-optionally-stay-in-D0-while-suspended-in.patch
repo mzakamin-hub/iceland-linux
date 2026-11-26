@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 7 Nov 2026 11:36:09 +0200
-Subject: [PATCH 2/3] wifi: ath12k: optionally stay in D0 while suspended into
+Subject: [PATCH] wifi: ath12k: optionally stay in D0 while suspended into
  Wake-on-WLAN
 
 From D3hot the WCN7850 family signals neither WAKE# nor a PME that
@@ -15,10 +15,7 @@ suspend_late, which keeps the PCI core from moving it to D3hot.
 Based on denialwm/linux-perpetua c53368376f27 (Doctor Logix), here as an
 opt-in for the Kaanapali bring-up, where the host keeps the link.
 
-Co-developed-by: Doctor Logix <doctor.logix@gmail.com>
-Based-on: denialwm/linux-perpetua c53368376f27
 Signed-off-by: mzak <mzak.amin@gmail.com>
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 ---
  drivers/net/wireless/ath/ath12k/core.c |  8 ++++++++
  drivers/net/wireless/ath/ath12k/core.h |  1 +
@@ -26,7 +23,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  3 files changed, 24 insertions(+)
 
 diff --git a/drivers/net/wireless/ath/ath12k/core.c b/drivers/net/wireless/ath/ath12k/core.c
-index 5592cc7a8..9af516218 100644
+index 3d53d0991c5a2..ddf03f5e70c5a 100644
 --- a/drivers/net/wireless/ath/ath12k/core.c
 +++ b/drivers/net/wireless/ath/ath12k/core.c
 @@ -225,6 +225,14 @@ int ath12k_core_suspend_late(struct ath12k_base *ab)
@@ -45,7 +42,7 @@ index 5592cc7a8..9af516218 100644
  {
  	int ret;
 diff --git a/drivers/net/wireless/ath/ath12k/core.h b/drivers/net/wireless/ath/ath12k/core.h
-index f0fdb4d20..d785f17ec 100644
+index f0fdb4d20a2cd..d785f17ece4dd 100644
 --- a/drivers/net/wireless/ath/ath12k/core.h
 +++ b/drivers/net/wireless/ath/ath12k/core.h
 @@ -1274,6 +1274,7 @@ int ath12k_core_resume_early(struct ath12k_base *ab);
@@ -57,7 +54,7 @@ index f0fdb4d20..d785f17ec 100644
  u8 ath12k_get_num_partner_link(struct ath12k *ar);
  
 diff --git a/drivers/net/wireless/ath/ath12k/pci.c b/drivers/net/wireless/ath/ath12k/pci.c
-index dba07b75f..7d780b3fa 100644
+index dba07b75f09ee..7d780b3fa521b 100644
 --- a/drivers/net/wireless/ath/ath12k/pci.c
 +++ b/drivers/net/wireless/ath/ath12k/pci.c
 @@ -1852,6 +1852,11 @@ static __maybe_unused int ath12k_pci_pm_resume(struct device *dev)

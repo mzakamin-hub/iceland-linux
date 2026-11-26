@@ -22,7 +22,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 
 diff --git a/Documentation/devicetree/bindings/thermal/weighted-thermal-sensor.yaml b/Documentation/devicetree/bindings/thermal/weighted-thermal-sensor.yaml
 new file mode 100644
-index 000000000000..2f4c01819459
+index 0000000000000..2f4c018194591
 --- /dev/null
 +++ b/Documentation/devicetree/bindings/thermal/weighted-thermal-sensor.yaml
 @@ -0,0 +1,56 @@
@@ -82,3 +82,6 @@ index 000000000000..2f4c01819459
 +        weights = <50 35 15>;
 +    };
 +...
+-- 
+2.43.0
+

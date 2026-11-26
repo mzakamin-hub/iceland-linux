@@ -45,7 +45,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 164 insertions(+), 16 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 48d09bdb1483..0557cc96205b 100644
+index 55b0b50d41352..37c44e1796e22 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -419,6 +419,12 @@ struct qcom_battmgr {
@@ -339,3 +339,6 @@ index 48d09bdb1483..0557cc96205b 100644
  	if (battmgr->variant == QCOM_BATTMGR_OPLUS)
  		battmgr->chg_stock_limits = device_is_compatible(dev->parent,
  								 "oneplus,iceland-pmic-glink");
+-- 
+2.43.0
+

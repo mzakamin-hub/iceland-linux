@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Sarannya S <sarannya.s@oss.qualcomm.com>
 Date: Wed, 28 Oct 2026 10:33:49 +0100
-Subject: [PATCH 34/38] soc: qcom: smem: validate private entry list walks
+Subject: [PATCH] soc: qcom: smem: validate private entry list walks
 
 When walking private entries, use the uncached/cached free offsets as
 the list bounds, require room for a header before dereferencing, and
@@ -29,7 +29,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 37 insertions(+), 14 deletions(-)
 
 diff --git a/drivers/soc/qcom/smem.c b/drivers/soc/qcom/smem.c
-index 36a4a10f3aec..b14c1ee41c2f 100644
+index 6c4e1fa4747f9..f1a017a1ea757 100644
 --- a/drivers/soc/qcom/smem.c
 +++ b/drivers/soc/qcom/smem.c
 @@ -422,6 +422,7 @@ static int qcom_smem_alloc_private(struct qcom_smem *smem,

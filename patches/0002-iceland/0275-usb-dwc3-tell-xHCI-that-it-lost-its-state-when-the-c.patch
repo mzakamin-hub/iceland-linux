@@ -50,7 +50,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  3 files changed, 19 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/usb/dwc3/core.c b/drivers/usb/dwc3/core.c
-index fd5c2cd36c59..b5490b9a8474 100644
+index 372737f4750b1..1881869530131 100644
 --- a/drivers/usb/dwc3/core.c
 +++ b/drivers/usb/dwc3/core.c
 @@ -2572,8 +2572,10 @@ static int dwc3_suspend_common(struct dwc3 *dwc, pm_message_t msg)
@@ -65,10 +65,10 @@ index fd5c2cd36c59..b5490b9a8474 100644
  		/* Let controller to suspend HSPHY before PHY driver suspends */
  		if (dwc->dis_u2_susphy_quirk ||
 diff --git a/drivers/usb/dwc3/core.h b/drivers/usb/dwc3/core.h
-index f3dabb37f806..5caf737f4981 100644
+index 267c922ca11bb..888c1e79e970b 100644
 --- a/drivers/usb/dwc3/core.h
 +++ b/drivers/usb/dwc3/core.h
-@@ -1133,6 +1133,8 @@ struct dwc3_glue_ops {
+@@ -1134,6 +1134,8 @@ struct dwc3_glue_ops {
   * @usb3_lpm_capable: set if hadrware supports Link Power Management
   * @usb2_lpm_disable: set to disable usb2 lpm for host
   * @usb2_gadget_lpm_disable: set to disable usb2 lpm for gadget
@@ -77,7 +77,7 @@ index f3dabb37f806..5caf737f4981 100644
   * @needs_full_reinit: set to indicate the core may lose power and need full
   *			initialization during system pm
   * @disable_scramble_quirk: set if we enable the disable scramble quirk
-@@ -1402,6 +1404,7 @@ struct dwc3 {
+@@ -1403,6 +1405,7 @@ struct dwc3 {
  	unsigned		usb3_lpm_capable:1;
  	unsigned		usb2_lpm_disable:1;
  	unsigned		usb2_gadget_lpm_disable:1;
@@ -86,7 +86,7 @@ index f3dabb37f806..5caf737f4981 100644
  
  	unsigned		disable_scramble_quirk:1;
 diff --git a/drivers/usb/dwc3/host.c b/drivers/usb/dwc3/host.c
-index c5674161b2b0..bc2951a4f750 100644
+index c5674161b2b08..bc2951a4f750d 100644
 --- a/drivers/usb/dwc3/host.c
 +++ b/drivers/usb/dwc3/host.c
 @@ -14,9 +14,7 @@
@@ -121,3 +121,6 @@ index c5674161b2b0..bc2951a4f750 100644
  	.plat_start = dwc3_xhci_plat_start,
  };
  
+-- 
+2.43.0
+

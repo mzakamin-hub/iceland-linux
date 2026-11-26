@@ -31,7 +31,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 4 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
-index ca63b8cc2365..60b679698c1c 100644
+index ca63b8cc23659..60b679698c1c9 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 @@ -2060,9 +2060,10 @@ static void dpu_encoder_virt_atomic_mode_set(struct drm_encoder *drm_enc,
@@ -48,3 +48,6 @@ index ca63b8cc2365..60b679698c1c 100644
  	}
  
  	dpu_enc->dsc_mask = dsc_mask;
+-- 
+2.43.0
+

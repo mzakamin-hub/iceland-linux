@@ -29,7 +29,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 33 insertions(+), 9 deletions(-)
 
 diff --git a/drivers/soc/qcom/pmic_glink.c b/drivers/soc/qcom/pmic_glink.c
-index 84fd0c82c0c4..cf6a8ffbc219 100644
+index 0e354fcd87c9f..ee96724983495 100644
 --- a/drivers/soc/qcom/pmic_glink.c
 +++ b/drivers/soc/qcom/pmic_glink.c
 @@ -53,6 +53,8 @@ struct pmic_glink {
@@ -117,3 +117,6 @@ index 84fd0c82c0c4..cf6a8ffbc219 100644
  	mutex_unlock(&__pmic_glink_lock);
  
  	return 0;
+-- 
+2.43.0
+

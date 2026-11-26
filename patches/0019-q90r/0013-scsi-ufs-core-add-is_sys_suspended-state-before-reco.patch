@@ -32,10 +32,10 @@ Signed-off-by: HOYOUNG SEO <hy50.seo@samsung.com>
  1 file changed, 6 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/ufs/core/ufshcd.c b/drivers/ufs/core/ufshcd.c
-index a9e07ae286a1..cc5b0090e0c5 100644
+index 40457786071e4..ddaa760485091 100644
 --- a/drivers/ufs/core/ufshcd.c
 +++ b/drivers/ufs/core/ufshcd.c
-@@ -7088,9 +7088,14 @@ static void ufshcd_err_handler(struct work_struct *work)
+@@ -7099,9 +7099,14 @@ static void ufshcd_err_handler(struct work_struct *work)
  		 * runtime resume. This avoids potential deadlocks that could
  		 * happen if we tried to resume the device while a PM operation
  		 * is already in progress.
@@ -51,3 +51,6 @@ index a9e07ae286a1..cc5b0090e0c5 100644
  			ufshcd_link_recovery(hba);
  			ufshcd_rpm_put(hba);
  			return;
+-- 
+2.43.0
+

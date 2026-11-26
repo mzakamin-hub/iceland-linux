@@ -24,7 +24,7 @@ Link: https://lore.kernel.org/r/20260912-priv_call_runtime_handlers-v1-1-fc0c3a1
  1 file changed, 14 insertions(+)
 
 diff --git a/drivers/iommu/arm/arm-smmu/arm-smmu-qcom.c b/drivers/iommu/arm/arm-smmu/arm-smmu-qcom.c
-index 0ee9a9cfdf8e..0ea1f61b5744 100644
+index 0ee9a9cfdf8ec..0ea1f61b57444 100644
 --- a/drivers/iommu/arm/arm-smmu/arm-smmu-qcom.c
 +++ b/drivers/iommu/arm/arm-smmu/arm-smmu-qcom.c
 @@ -129,6 +129,18 @@ static void qcom_adreno_smmu_get_fault_info(const void *cookie,
@@ -55,3 +55,6 @@ index 0ee9a9cfdf8e..0ea1f61b5744 100644
  }
  
  static void qcom_adreno_smmu_set_stall(const void *cookie, bool enabled)
+-- 
+2.43.0
+

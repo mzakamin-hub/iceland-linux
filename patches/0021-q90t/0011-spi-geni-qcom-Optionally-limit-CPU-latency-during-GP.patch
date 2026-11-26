@@ -30,7 +30,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 49 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/spi/spi-geni-qcom.c b/drivers/spi/spi-geni-qcom.c
-index 91e75e213f92..59580a7792df 100644
+index 91e75e213f929..59580a7792dfb 100644
 --- a/drivers/spi/spi-geni-qcom.c
 +++ b/drivers/spi/spi-geni-qcom.c
 @@ -19,6 +19,7 @@
@@ -128,3 +128,6 @@ index 91e75e213f92..59580a7792df 100644
  	pm_runtime_use_autosuspend(&pdev->dev);
  	pm_runtime_set_autosuspend_delay(&pdev->dev, 250);
  	ret = devm_pm_runtime_enable(dev);
+-- 
+2.43.0
+

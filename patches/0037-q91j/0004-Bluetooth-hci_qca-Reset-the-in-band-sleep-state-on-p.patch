@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Birk Skyum <birk.skyum@pm.me>
 Date: Wed, 14 Oct 2026 18:02:03 +0000
-Subject: [PATCH 04/30] Bluetooth: hci_qca: Reset the in-band sleep state on
- power off
+Subject: [PATCH] Bluetooth: hci_qca: Reset the in-band sleep state on power
+ off
 
 qca_power_off() cuts the power of the controller but leaves the host
 side of the in-band sleep (IBS) protocol as it was. tx_ibs_state and
@@ -66,10 +66,10 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 15 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/bluetooth/hci_qca.c b/drivers/bluetooth/hci_qca.c
-index b36387322..6588e9985 100644
+index d614b2219a97c..9b241f8652eaa 100644
 --- a/drivers/bluetooth/hci_qca.c
 +++ b/drivers/bluetooth/hci_qca.c
-@@ -2313,12 +2313,25 @@ static void qca_power_off(struct hci_uart *hu)
+@@ -2347,12 +2347,25 @@ static void qca_power_off(struct hci_uart *hu)
  	struct qca_power *power;
  
  	/* From this point we go into power off state. But serial port may

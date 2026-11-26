@@ -22,7 +22,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 7 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/power/reset/nvmem-reboot-mode.c b/drivers/power/reset/nvmem-reboot-mode.c
-index 4479c874077c..326fe50bb1da 100644
+index 9946dc975e8d2..c34b0617c6369 100644
 --- a/drivers/power/reset/nvmem-reboot-mode.c
 +++ b/drivers/power/reset/nvmem-reboot-mode.c
 @@ -37,10 +37,15 @@ static int nvmem_reboot_mode_write(struct reboot_mode_driver *reboot, u64 magic)
@@ -43,3 +43,6 @@ index 4479c874077c..326fe50bb1da 100644
  	if (ret < 0)
  		dev_err(reboot->dev, "update reboot mode bits failed\n");
  
+-- 
+2.43.0
+

@@ -20,7 +20,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/gpu/drm/panel/panel-novatek-nt36536.c b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
-index 8d0ac3bc6397..0d9b7ec4e228 100644
+index 8d0ac3bc63973..0d9b7ec4e2289 100644
 --- a/drivers/gpu/drm/panel/panel-novatek-nt36536.c
 +++ b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
 @@ -629,11 +629,11 @@ static int csot_iceland_init_seq(struct mipi_dsi_multi_context *dsi_ctx,
@@ -39,3 +39,6 @@ index 8d0ac3bc6397..0d9b7ec4e228 100644
  		.vdisplay = 2400,
  		.vsync_start = 2400 + 26,
  		.vsync_end = 2400 + 26 + 2,
+-- 
+2.43.0
+

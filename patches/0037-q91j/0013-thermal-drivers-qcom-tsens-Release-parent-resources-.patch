@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Daniel Lezcano <daniel.lezcano@oss.qualcomm.com>
 Date: Wed, 21 Oct 2026 10:57:46 +0200
-Subject: [PATCH 13/30] thermal/drivers/qcom/tsens: Release parent resources on
- probe failure
+Subject: [PATCH] thermal/drivers/qcom/tsens: Release parent resources on probe
+ failure
 
 On legacy MSM8960/APQ8064 device trees without a separate TSENS child
 node, the Global Clock Controller (GCC) driver creates a qcom-tsens
@@ -34,7 +34,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 36 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/thermal/qcom/tsens.c b/drivers/thermal/qcom/tsens.c
-index cc62c0eeb..eeadf6cc5 100644
+index b7e89708b89c8..5d3677312842c 100644
 --- a/drivers/thermal/qcom/tsens.c
 +++ b/drivers/thermal/qcom/tsens.c
 @@ -1403,7 +1403,7 @@ static int tsens_register(struct tsens_priv *priv)
@@ -46,7 +46,7 @@ index cc62c0eeb..eeadf6cc5 100644
  {
  	int ret, i;
  	struct device *dev;
-@@ -1481,6 +1481,41 @@ static int tsens_probe(struct platform_device *pdev)
+@@ -1479,6 +1479,41 @@ static int tsens_probe(struct platform_device *pdev)
  	return ret;
  }
  

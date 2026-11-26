@@ -21,7 +21,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 6 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/video/backlight/ktz8869_iceland.c b/drivers/video/backlight/ktz8869_iceland.c
-index 16279b9ab486..f6dd2c61a676 100644
+index 16279b9ab4863..f6dd2c61a6767 100644
 --- a/drivers/video/backlight/ktz8869_iceland.c
 +++ b/drivers/video/backlight/ktz8869_iceland.c
 @@ -101,8 +101,11 @@ struct ktz8869_reg {
@@ -47,3 +47,6 @@ index 16279b9ab486..f6dd2c61a676 100644
  	{ PWM_RAMP_TIME, 0xF8 }, { BL_EN, 0x77 },
  };
  
+-- 
+2.43.0
+

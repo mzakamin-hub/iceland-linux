@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Miaoqing Pan <miaoqing.pan@oss.qualcomm.com>
 Date: Tue, 1 Sep 2026 16:35:23 +0800
-Subject: [PATCH 03/24] FROMLIST: wifi: ath12k: fix incorrect channel survey
- index
+Subject: [PATCH] FROMLIST: wifi: ath12k: fix incorrect channel survey index
 
 A wrong channel survey index was introduced in
 ath12k_mac_op_get_survey by [1], which can cause ACS to fail.
@@ -24,10 +23,10 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/mac.c b/drivers/net/wireless/ath/ath12k/mac.c
-index 484bc6d2dbd8..2acfa065a147 100644
+index 5e010e4409de6..9336d8cc3326a 100644
 --- a/drivers/net/wireless/ath/ath12k/mac.c
 +++ b/drivers/net/wireless/ath/ath12k/mac.c
-@@ -13885,7 +13885,7 @@ int ath12k_mac_op_get_survey(struct ieee80211_hw *hw, int idx,
+@@ -13898,7 +13898,7 @@ int ath12k_mac_op_get_survey(struct ieee80211_hw *hw, int idx,
  		return -ENOENT;
  	}
  
@@ -36,3 +35,6 @@ index 484bc6d2dbd8..2acfa065a147 100644
  
  	ath12k_mac_update_bss_chan_survey(ar, &sband->channels[sband_idx]);
  
+-- 
+2.43.0
+

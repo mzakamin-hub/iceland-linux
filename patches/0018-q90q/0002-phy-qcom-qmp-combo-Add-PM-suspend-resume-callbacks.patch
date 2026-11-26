@@ -14,7 +14,7 @@ Signed-off-by: Prashanth K <prashanth.k@oss.qualcomm.com>
  1 file changed, 17 insertions(+)
 
 diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
-index c5c963916cd4..f5fe18bb1a52 100644
+index fe9d94a92ed15..c0ea1c597dd97 100644
 --- a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
 +++ b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
 @@ -4862,9 +4862,26 @@ static int __maybe_unused qmp_combo_runtime_resume(struct device *dev)
@@ -44,3 +44,6 @@ index c5c963916cd4..f5fe18bb1a52 100644
  };
  
  static int qmp_combo_reset_init(struct qmp_combo *qmp)
+-- 
+2.43.0
+

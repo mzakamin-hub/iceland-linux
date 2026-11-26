@@ -15,7 +15,7 @@ Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_firmware.c b/drivers/media/platform/qcom/iris/iris_firmware.c
-index 21f57d37da18..ed2bd0e83797 100644
+index 21f57d37da187..ed2bd0e837970 100644
 --- a/drivers/media/platform/qcom/iris/iris_firmware.c
 +++ b/drivers/media/platform/qcom/iris/iris_firmware.c
 @@ -262,5 +262,5 @@ int iris_fw_unload(struct iris_core *core)
@@ -25,3 +25,6 @@ index 21f57d37da18..ed2bd0e83797 100644
 -	return qcom_pas_set_remote_state(resume, 0);
 +	return qcom_pas_set_remote_state(resume, IRIS_PAS_ID);
  }
+-- 
+2.43.0
+

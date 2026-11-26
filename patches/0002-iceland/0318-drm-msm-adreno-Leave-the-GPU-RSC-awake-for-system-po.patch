@@ -29,7 +29,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  2 files changed, 9 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
-index 662f09bec9d5..848bcba5a84a 100644
+index 662f09bec9d52..848bcba5a84af 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 @@ -658,6 +658,10 @@ static void a6xx_rpmh_stop(struct a6xx_gmu *gmu)
@@ -44,7 +44,7 @@ index 662f09bec9d5..848bcba5a84a 100644
  		bitmask = BIT(30);
  
 diff --git a/drivers/gpu/drm/msm/adreno/adreno_device.c b/drivers/gpu/drm/msm/adreno/adreno_device.c
-index bf86b6cacf0e..3d2b47682eef 100644
+index bf86b6cacf0e5..3d2b47682eefd 100644
 --- a/drivers/gpu/drm/msm/adreno/adreno_device.c
 +++ b/drivers/gpu/drm/msm/adreno/adreno_device.c
 @@ -292,6 +292,11 @@ static void adreno_remove(struct platform_device *pdev)
@@ -59,3 +59,6 @@ index bf86b6cacf0e..3d2b47682eef 100644
  	WARN_ON_ONCE(adreno_system_suspend(&pdev->dev));
  }
  
+-- 
+2.43.0
+

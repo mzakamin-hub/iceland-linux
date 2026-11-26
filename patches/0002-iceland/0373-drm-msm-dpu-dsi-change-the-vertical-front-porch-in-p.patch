@@ -61,7 +61,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  9 files changed, 288 insertions(+), 28 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
-index 3430eb4ffbb1..729042b5fa41 100644
+index 3430eb4ffbb12..729042b5fa412 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 @@ -1567,6 +1567,41 @@ int dpu_crtc_check_mode_changed(struct drm_crtc_state *old_crtc_state,
@@ -120,7 +120,7 @@ index 3430eb4ffbb1..729042b5fa41 100644
  	if (crtc_state->mode_changed || crtc_state->connectors_changed ||
  	    crtc_state->color_mgmt_changed) {
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
-index 8879cd96f966..6290a845bd31 100644
+index 8879cd96f9663..6290a845bd312 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 @@ -133,8 +133,10 @@ enum dpu_enc_rc_states {
@@ -449,7 +449,7 @@ index 8879cd96f966..6290a845bd31 100644
  	return 0;
  }
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h
-index 05908cccb012..956779c60bf6 100644
+index 05908cccb0125..956779c60bf63 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h
 @@ -68,6 +68,10 @@ struct drm_encoder *dpu_encoder_init(struct drm_device *dev,
@@ -464,7 +464,7 @@ index 05908cccb012..956779c60bf6 100644
  			     int mode_vtotal);
  
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h
-index 7af6113b6ad5..483ac7f5e11b 100644
+index 7af6113b6ad5d..483ac7f5e11bb 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h
 @@ -92,6 +92,7 @@ struct dpu_encoder_phys;
@@ -486,7 +486,7 @@ index 7af6113b6ad5..483ac7f5e11b 100644
  	void (*prepare_wb_job)(struct dpu_encoder_phys *phys_enc,
  			struct drm_writeback_job *job);
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
-index 69f78e4ef7f0..261254ebac47 100644
+index 69f78e4ef7f06..261254ebac478 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
 @@ -277,19 +277,21 @@ static void dpu_encoder_phys_vid_intf_mode(struct dpu_encoder_phys *phys_enc,
@@ -516,7 +516,7 @@ index 69f78e4ef7f0..261254ebac47 100644
  	return !programmable_fetch_get_num_lines(phys_enc, &timing);
  }
 diff --git a/drivers/gpu/drm/msm/dsi/dsi.c b/drivers/gpu/drm/msm/dsi/dsi.c
-index 67acb41e3e0f..61732caacadf 100644
+index f6725085ecb77..8720eb1ba956f 100644
 --- a/drivers/gpu/drm/msm/dsi/dsi.c
 +++ b/drivers/gpu/drm/msm/dsi/dsi.c
 @@ -38,6 +38,15 @@ int msm_dsi_set_vtotal(struct msm_dsi *msm_dsi, u32 vtotal)
@@ -536,7 +536,7 @@ index 67acb41e3e0f..61732caacadf 100644
  {
  	struct platform_device *pdev = msm_dsi->pdev;
 diff --git a/drivers/gpu/drm/msm/dsi/dsi.h b/drivers/gpu/drm/msm/dsi/dsi.h
-index 4ad98ee4c363..a409627c0598 100644
+index 4ad98ee4c363a..a409627c0598f 100644
 --- a/drivers/gpu/drm/msm/dsi/dsi.h
 +++ b/drivers/gpu/drm/msm/dsi/dsi.h
 @@ -78,6 +78,8 @@ int msm_dsi_host_power_on(struct mipi_dsi_host *host,
@@ -549,7 +549,7 @@ index 4ad98ee4c363..a409627c0598 100644
  				  const struct drm_display_mode *mode);
  enum drm_mode_status msm_dsi_host_check_dsc(struct mipi_dsi_host *host,
 diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
-index e09afae16756..b233ad47e565 100644
+index 4cf06ba05afd4..27cc9afe00067 100644
 --- a/drivers/gpu/drm/msm/dsi/dsi_host.c
 +++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
 @@ -2666,6 +2666,43 @@ int msm_dsi_host_set_vtotal(struct mipi_dsi_host *host, u32 vtotal)
@@ -597,7 +597,7 @@ index e09afae16756..b233ad47e565 100644
  				  const struct drm_display_mode *mode)
  {
 diff --git a/drivers/gpu/drm/msm/msm_drv.h b/drivers/gpu/drm/msm/msm_drv.h
-index e6c4f32cb88d..3cef7aae2440 100644
+index e6c4f32cb88d1..3cef7aae2440e 100644
 --- a/drivers/gpu/drm/msm/msm_drv.h
 +++ b/drivers/gpu/drm/msm/msm_drv.h
 @@ -303,6 +303,8 @@ bool msm_dsi_is_master_dsi(struct msm_dsi *msm_dsi);
@@ -622,3 +622,6 @@ index e6c4f32cb88d..3cef7aae2440 100644
  static inline struct drm_dsc_config *msm_dsi_get_dsc_config(struct msm_dsi *msm_dsi)
  {
  	return NULL;
+-- 
+2.43.0
+

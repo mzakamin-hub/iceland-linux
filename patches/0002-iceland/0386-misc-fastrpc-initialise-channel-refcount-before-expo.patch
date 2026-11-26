@@ -49,7 +49,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/misc/fastrpc.c b/drivers/misc/fastrpc.c
-index 021f7b62b747..3b8e69464877 100644
+index 932d83c64d379..a412da4bd4f2d 100644
 --- a/drivers/misc/fastrpc.c
 +++ b/drivers/misc/fastrpc.c
 @@ -2603,6 +2603,7 @@ static int fastrpc_rpmsg_probe(struct rpmsg_device *rpdev)
@@ -68,3 +68,6 @@ index 021f7b62b747..3b8e69464877 100644
  	atomic_set(&data->ctx_seq, 0);
  
  	rdev->dma_mask = &data->dma_mask;
+-- 
+2.43.0
+

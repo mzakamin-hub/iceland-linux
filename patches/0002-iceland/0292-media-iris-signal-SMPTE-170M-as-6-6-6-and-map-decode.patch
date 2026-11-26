@@ -39,7 +39,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  2 files changed, 34 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_hfi_common.c b/drivers/media/platform/qcom/iris/iris_hfi_common.c
-index dad906d03fdc..de4d53f31983 100644
+index dad906d03fdcb..de4d53f319831 100644
 --- a/drivers/media/platform/qcom/iris/iris_hfi_common.c
 +++ b/drivers/media/platform/qcom/iris/iris_hfi_common.c
 @@ -27,8 +27,8 @@ u32 iris_hfi_get_v4l2_color_primaries(u32 hfi_primaries)
@@ -75,7 +75,7 @@ index dad906d03fdc..de4d53f31983 100644
  		return V4L2_YCBCR_ENC_601;
  	case HFI_MATRIX_COEFF_SMPTE_ST240:
 diff --git a/drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c b/drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c
-index 388a36ff2b07..57ccdbf5dc33 100644
+index 388a36ff2b07b..57ccdbf5dc336 100644
 --- a/drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c
 +++ b/drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c
 @@ -368,11 +368,36 @@ static int iris_hfi_gen2_set_colorspace(struct iris_inst *inst, u32 plane)
@@ -117,3 +117,6 @@ index 388a36ff2b07..57ccdbf5dc33 100644
  	}
  
  	if (pixmp->quantization != V4L2_QUANTIZATION_DEFAULT) {
+-- 
+2.43.0
+

@@ -11,7 +11,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
 
 diff --git a/Documentation/devicetree/bindings/media/i2c/ovti,ov50d40.yaml b/Documentation/devicetree/bindings/media/i2c/ovti,ov50d40.yaml
 new file mode 100644
-index 000000000000..3df0f6be0cd8
+index 0000000000000..3df0f6be0cd88
 --- /dev/null
 +++ b/Documentation/devicetree/bindings/media/i2c/ovti,ov50d40.yaml
 @@ -0,0 +1,100 @@
@@ -115,3 +115,6 @@ index 000000000000..3df0f6be0cd8
 +        };
 +    };
 +...
+-- 
+2.43.0
+

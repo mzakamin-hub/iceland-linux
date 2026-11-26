@@ -29,7 +29,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 151 insertions(+), 14 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 00058cbe9444..48d09bdb1483 100644
+index 501294f2aa794..55b0b50d41352 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -8,6 +8,8 @@
@@ -275,3 +275,6 @@ index 00058cbe9444..48d09bdb1483 100644
  	if (setup_charger)
  		qcom_battmgr_oplus_setup_charger(battmgr);
  
+-- 
+2.43.0
+

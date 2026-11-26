@@ -21,7 +21,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 24 insertions(+)
 
 diff --git a/drivers/soc/qcom/pmic_glink.c b/drivers/soc/qcom/pmic_glink.c
-index cf6a8ffbc219..bdc16c6517c4 100644
+index ee96724983495..3897f7903012f 100644
 --- a/drivers/soc/qcom/pmic_glink.c
 +++ b/drivers/soc/qcom/pmic_glink.c
 @@ -21,6 +21,7 @@ enum {
@@ -91,3 +91,6 @@ index cf6a8ffbc219..bdc16c6517c4 100644
  	{ .compatible = "qcom,glymur-pmic-glink", .data = &pmic_glink_soccp_data },
  	{ .compatible = "qcom,kaanapali-pmic-glink", .data = &pmic_glink_soccp_data },
  	{ .compatible = "qcom,pmic-glink", .data = &pmic_glink_adsp_data },
+-- 
+2.43.0
+

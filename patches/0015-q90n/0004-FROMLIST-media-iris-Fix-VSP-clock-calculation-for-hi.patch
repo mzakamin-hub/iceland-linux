@@ -26,7 +26,7 @@ Signed-off-by: Nagesh Jamakhandi <njamakha@qti.qualcomm.com>
  1 file changed, 28 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_vpu_common.c b/drivers/media/platform/qcom/iris/iris_vpu_common.c
-index 3dc1580d92b1..90c5a5c5293b 100644
+index 3dc1580d92b1a..90c5a5c5293b6 100644
 --- a/drivers/media/platform/qcom/iris/iris_vpu_common.c
 +++ b/drivers/media/platform/qcom/iris/iris_vpu_common.c
 @@ -460,11 +460,32 @@ u64 iris_vpu2_calculate_frequency(struct iris_inst *inst, size_t data_size)
@@ -77,3 +77,6 @@ index 3dc1580d92b1..90c5a5c5293b 100644
  	/* VSP FW overhead 1.05 */
  	vsp_cycles = div_u64(vsp_cycles * 21, 20);
  
+-- 
+2.43.0
+

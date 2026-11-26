@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Daniel Lezcano <daniel.lezcano@oss.qualcomm.com>
 Date: Wed, 21 Oct 2026 10:57:48 +0200
-Subject: [PATCH 15/30] thermal/drivers/qcom/tsens: Disable hardware on probe
- failure
+Subject: [PATCH] thermal/drivers/qcom/tsens: Disable hardware on probe failure
 
 Hardware initialization enables TSENS interrupts before calibration and
 thermal zone and IRQ registration have completed. If calibration or
@@ -29,7 +28,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 20 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/thermal/qcom/tsens.c b/drivers/thermal/qcom/tsens.c
-index 5d59aa1d7..a82148053 100644
+index 6e41062aea051..cfca049414bdb 100644
 --- a/drivers/thermal/qcom/tsens.c
 +++ b/drivers/thermal/qcom/tsens.c
 @@ -1403,6 +1403,13 @@ static int tsens_register(struct tsens_priv *priv)
@@ -46,7 +45,7 @@ index 5d59aa1d7..a82148053 100644
  static int tsens_probe_common(struct platform_device *pdev)
  {
  	int ret, i;
-@@ -1479,15 +1486,22 @@ static int tsens_probe_common(struct platform_device *pdev)
+@@ -1477,15 +1484,22 @@ static int tsens_probe_common(struct platform_device *pdev)
  
  	if (priv->ops->calibrate) {
  		ret = priv->ops->calibrate(priv);
@@ -74,7 +73,7 @@ index 5d59aa1d7..a82148053 100644
  	return ret;
  }
  
-@@ -1531,9 +1545,7 @@ static void tsens_remove(struct platform_device *pdev)
+@@ -1529,9 +1543,7 @@ static void tsens_remove(struct platform_device *pdev)
  	struct tsens_priv *priv = platform_get_drvdata(pdev);
  
  	debugfs_remove_recursive(priv->debug_root);

@@ -34,7 +34,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 7 insertions(+)
 
 diff --git a/net/qrtr/ns.c b/net/qrtr/ns.c
-index bcb090ee79d4..33a9c4449d6f 100644
+index bcb090ee79d49..33a9c4449d6f8 100644
 --- a/net/qrtr/ns.c
 +++ b/net/qrtr/ns.c
 @@ -5,6 +5,7 @@
@@ -59,3 +59,6 @@ index bcb090ee79d4..33a9c4449d6f 100644
  		if (ret < 0) {
  			if (ret == -ENODEV)
  				continue;
+-- 
+2.43.0
+

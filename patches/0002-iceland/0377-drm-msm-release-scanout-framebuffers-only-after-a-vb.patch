@@ -60,7 +60,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  11 files changed, 190 insertions(+), 15 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
-index 729042b5fa41..53b72867f275 100644
+index 729042b5fa412..53b72867f2754 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 @@ -1224,7 +1224,7 @@ static void dpu_crtc_disable(struct drm_crtc *crtc,
@@ -82,7 +82,7 @@ index 729042b5fa41..53b72867f275 100644
  
  static bool dpu_crtc_needs_dirtyfb(struct drm_crtc_state *cstate)
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_wb.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_wb.c
-index 22433bfbea1e..5db33e49c345 100644
+index 22433bfbea1e0..5db33e49c3457 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_wb.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_wb.c
 @@ -615,7 +615,7 @@ static void dpu_encoder_phys_wb_cleanup_wb_job(struct dpu_encoder_phys *phys_enc
@@ -95,7 +95,7 @@ index 22433bfbea1e..5db33e49c345 100644
  	wb_enc->wb_conn = NULL;
  }
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_plane.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_plane.c
-index 1a471cdf767b..6b44ea303f82 100644
+index 1a471cdf767b1..6b44ea303f82b 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_plane.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_plane.c
 @@ -684,7 +684,8 @@ static void dpu_plane_cleanup_fb(struct drm_plane *plane,
@@ -109,7 +109,7 @@ index 1a471cdf767b..6b44ea303f82 100644
  
  static int dpu_plane_check_inline_rotation(struct dpu_plane *pdpu,
 diff --git a/drivers/gpu/drm/msm/disp/mdp4/mdp4_crtc.c b/drivers/gpu/drm/msm/disp/mdp4/mdp4_crtc.c
-index 93050b3c3548..f638ee7cbcea 100644
+index 93050b3c3548c..f638ee7cbcead 100644
 --- a/drivers/gpu/drm/msm/disp/mdp4/mdp4_crtc.c
 +++ b/drivers/gpu/drm/msm/disp/mdp4/mdp4_crtc.c
 @@ -267,7 +267,7 @@ static void mdp4_crtc_atomic_disable(struct drm_crtc *crtc,
@@ -131,7 +131,7 @@ index 93050b3c3548..f638ee7cbcea 100644
  	mdp_irq_register(&mdp4_kms->base, &mdp4_crtc->err);
  
 diff --git a/drivers/gpu/drm/msm/disp/mdp4/mdp4_plane.c b/drivers/gpu/drm/msm/disp/mdp4/mdp4_plane.c
-index f9067e508f4c..4134fe78e59c 100644
+index f9067e508f4cb..4134fe78e59c0 100644
 --- a/drivers/gpu/drm/msm/disp/mdp4/mdp4_plane.c
 +++ b/drivers/gpu/drm/msm/disp/mdp4/mdp4_plane.c
 @@ -97,7 +97,7 @@ static void mdp4_plane_cleanup_fb(struct drm_plane *plane,
@@ -144,7 +144,7 @@ index f9067e508f4c..4134fe78e59c 100644
  
  
 diff --git a/drivers/gpu/drm/msm/disp/mdp5/mdp5_crtc.c b/drivers/gpu/drm/msm/disp/mdp5/mdp5_crtc.c
-index 1e1fff37380c..f595cbbc1277 100644
+index 1e1fff37380c7..f595cbbc12770 100644
 --- a/drivers/gpu/drm/msm/disp/mdp5/mdp5_crtc.c
 +++ b/drivers/gpu/drm/msm/disp/mdp5/mdp5_crtc.c
 @@ -499,7 +499,7 @@ static void mdp5_crtc_atomic_disable(struct drm_crtc *crtc,
@@ -166,7 +166,7 @@ index 1e1fff37380c..f595cbbc1277 100644
  
  static void mdp5_crtc_atomic_enable(struct drm_crtc *crtc,
 diff --git a/drivers/gpu/drm/msm/disp/mdp5/mdp5_plane.c b/drivers/gpu/drm/msm/disp/mdp5/mdp5_plane.c
-index 7e878c698247..2b74d9c25651 100644
+index 7e878c6982477..2b74d9c256513 100644
 --- a/drivers/gpu/drm/msm/disp/mdp5/mdp5_plane.c
 +++ b/drivers/gpu/drm/msm/disp/mdp5/mdp5_plane.c
 @@ -151,7 +151,7 @@ static void mdp5_plane_cleanup_fb(struct drm_plane *plane,
@@ -179,7 +179,7 @@ index 7e878c698247..2b74d9c25651 100644
  
  static int mdp5_plane_atomic_check_with_state(struct drm_crtc_state *crtc_state,
 diff --git a/drivers/gpu/drm/msm/msm_drv.h b/drivers/gpu/drm/msm/msm_drv.h
-index 3cef7aae2440..1df4fc111509 100644
+index 3cef7aae2440e..1df4fc111509b 100644
 --- a/drivers/gpu/drm/msm/msm_drv.h
 +++ b/drivers/gpu/drm/msm/msm_drv.h
 @@ -254,7 +254,9 @@ int msm_gem_prime_pin(struct drm_gem_object *obj);
@@ -194,7 +194,7 @@ index 3cef7aae2440..1df4fc111509 100644
  struct drm_gem_object *msm_framebuffer_bo(struct drm_framebuffer *fb, int plane);
  const struct msm_format *msm_framebuffer_format(struct drm_framebuffer *fb);
 diff --git a/drivers/gpu/drm/msm/msm_fb.c b/drivers/gpu/drm/msm/msm_fb.c
-index 792d47b4acc4..cc71c42d4e12 100644
+index 792d47b4acc43..cc71c42d4e12d 100644
 --- a/drivers/gpu/drm/msm/msm_fb.c
 +++ b/drivers/gpu/drm/msm/msm_fb.c
 @@ -130,13 +130,10 @@ int msm_framebuffer_prepare(struct drm_framebuffer *fb, bool needs_dirtyfb)
@@ -234,7 +234,7 @@ index 792d47b4acc4..cc71c42d4e12 100644
  {
  	struct msm_framebuffer *msm_fb = to_msm_framebuffer(fb);
 diff --git a/drivers/gpu/drm/msm/msm_kms.c b/drivers/gpu/drm/msm/msm_kms.c
-index 54f42aa62ae3..c1bf5961676d 100644
+index 54f42aa62ae34..c1bf5961676d4 100644
 --- a/drivers/gpu/drm/msm/msm_kms.c
 +++ b/drivers/gpu/drm/msm/msm_kms.c
 @@ -11,8 +11,10 @@
@@ -396,7 +396,7 @@ index 54f42aa62ae3..c1bf5961676d 100644
  {
  	struct msm_kms *kms = arg;
 diff --git a/drivers/gpu/drm/msm/msm_kms.h b/drivers/gpu/drm/msm/msm_kms.h
-index f25b31e502d2..72d1b6e1bce8 100644
+index f25b31e502d21..72d1b6e1bce82 100644
 --- a/drivers/gpu/drm/msm/msm_kms.h
 +++ b/drivers/gpu/drm/msm/msm_kms.h
 @@ -135,6 +135,13 @@ struct msm_drm_thread {
@@ -441,3 +441,6 @@ index f25b31e502d2..72d1b6e1bce8 100644
  	kms->funcs = funcs;
  
  	kms->wq = alloc_ordered_workqueue("msm", 0);
+-- 
+2.43.0
+

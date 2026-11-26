@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Rob Clark <robin.clark@oss.qualcomm.com>
 Date: Mon, 2 Nov 2026 09:19:57 -0800
-Subject: [PATCH 05/27] drm/msm/gem: Fix VM_BIND range check
+Subject: [PATCH] drm/msm/gem: Fix VM_BIND range check
 
 Use size_add() to guard against overflow.
 
@@ -16,7 +16,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/msm_gem_vma.c b/drivers/gpu/drm/msm/msm_gem_vma.c
-index f687a6296..bd1c3ceee 100644
+index f687a629629d3..bd1c3ceeea51e 100644
 --- a/drivers/gpu/drm/msm/msm_gem_vma.c
 +++ b/drivers/gpu/drm/msm/msm_gem_vma.c
 @@ -1012,10 +1012,10 @@ lookup_op(struct msm_vm_bind_job *job, const struct drm_msm_vm_bind_op *op)

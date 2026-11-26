@@ -11,7 +11,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 5 insertions(+)
 
 diff --git a/drivers/pci/pwrctrl/pci-pwrctrl-pwrseq.c b/drivers/pci/pwrctrl/pci-pwrctrl-pwrseq.c
-index c5ced87944b6..17fbf29effff 100644
+index f034fbcdee049..76116c5b13e54 100644
 --- a/drivers/pci/pwrctrl/pci-pwrctrl-pwrseq.c
 +++ b/drivers/pci/pwrctrl/pci-pwrctrl-pwrseq.c
 @@ -122,6 +122,11 @@ static const struct of_device_id pwrseq_pwrctrl_of_match[] = {
@@ -26,3 +26,6 @@ index c5ced87944b6..17fbf29effff 100644
  	{ }
  };
  MODULE_DEVICE_TABLE(of, pwrseq_pwrctrl_of_match);
+-- 
+2.43.0
+

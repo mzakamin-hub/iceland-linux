@@ -9,7 +9,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1 insertion(+)
 
 diff --git a/Documentation/devicetree/bindings/arm/qcom.yaml b/Documentation/devicetree/bindings/arm/qcom.yaml
-index 121ca557ce1e..661899e73915 100644
+index 121ca557ce1ef..661899e739154 100644
 --- a/Documentation/devicetree/bindings/arm/qcom.yaml
 +++ b/Documentation/devicetree/bindings/arm/qcom.yaml
 @@ -175,6 +175,7 @@ properties:
@@ -20,3 +20,6 @@ index 121ca557ce1e..661899e73915 100644
                - qcom,kaanapali-mtp
                - qcom,kaanapali-qrd
            - const: qcom,kaanapali
+-- 
+2.43.0
+

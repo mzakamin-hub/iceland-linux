@@ -24,7 +24,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 197 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index 3b0def8eb726..0fd09849969d 100644
+index 3b0def8eb7266..0fd09849969db 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -5,6 +5,8 @@
@@ -259,3 +259,6 @@ index 3b0def8eb726..0fd09849969d 100644
  &pmk8850_vadc {
  	pinctrl-0 = <&usbtemp_l_default>, <&usbtemp_r_default>;
  	pinctrl-names = "default";
+-- 
+2.43.0
+

@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Val Packett <val@packett.cool>
 Date: Tue, 20 Oct 2026 14:03:28 -0300
-Subject: [PATCH 09/27] ASoC: codecs: wcd939x: fix ref leak and NULL deref with
- USB-C audio
+Subject: [PATCH] ASoC: codecs: wcd939x: fix ref leak and NULL deref with USB-C
+ audio
 
 Some code issues were found during review of a port of typec code from
 wcd939x to wcd937x, pointed out by sashiko-bot:
@@ -27,7 +27,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 16 insertions(+), 5 deletions(-)
 
 diff --git a/sound/soc/codecs/wcd939x.c b/sound/soc/codecs/wcd939x.c
-index 7bc5c6f30..8783b4bbc 100644
+index a84942bee7a1a..9dd4b1d8ff651 100644
 --- a/sound/soc/codecs/wcd939x.c
 +++ b/sound/soc/codecs/wcd939x.c
 @@ -2547,6 +2547,7 @@ static int wcd939x_mbhc_init(struct snd_soc_component *component)

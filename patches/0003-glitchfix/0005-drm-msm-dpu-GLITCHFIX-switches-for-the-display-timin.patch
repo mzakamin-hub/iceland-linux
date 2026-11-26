@@ -38,7 +38,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  5 files changed, 88 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
-index 7ac2b133f9bb..83bde0db9c18 100644
+index 7ac2b133f9bbb..83bde0db9c187 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
 @@ -11,6 +11,7 @@
@@ -144,7 +144,7 @@ index 7ac2b133f9bb..83bde0db9c18 100644
  
  	dpu_crtc->play_count++;
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
-index 08fe4cb5c75e..fdcd6d48bb97 100644
+index 08fe4cb5c75e4..fdcd6d48bb973 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 @@ -375,6 +375,32 @@ MODULE_PARM_DESC(dpu_idle_refresh_hz,
@@ -220,7 +220,7 @@ index 08fe4cb5c75e..fdcd6d48bb97 100644
  				timer_delete(&dpu_enc->frame_done_timer);
  			}
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h
-index 483ac7f5e11b..01b026be572b 100644
+index 483ac7f5e11bb..01b026be572b1 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys.h
 @@ -198,6 +198,7 @@ struct dpu_encoder_phys {
@@ -241,7 +241,7 @@ index 483ac7f5e11b..01b026be572b 100644
  
  bool dpu_encoder_needs_periph_flush(struct dpu_encoder_phys *phys_enc);
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
-index 261254ebac47..4255b8addd60 100644
+index 261254ebac478..4255b8addd604 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
 @@ -668,7 +668,7 @@ static void dpu_encoder_phys_vid_disable(struct dpu_encoder_phys *phys_enc)
@@ -254,7 +254,7 @@ index 261254ebac47..4255b8addd60 100644
  		return;
  	}
 diff --git a/drivers/gpu/drm/msm/msm_fb.c b/drivers/gpu/drm/msm/msm_fb.c
-index cc71c42d4e12..8fe726f000e7 100644
+index cc71c42d4e12d..8fe726f000e73 100644
 --- a/drivers/gpu/drm/msm/msm_fb.c
 +++ b/drivers/gpu/drm/msm/msm_fb.c
 @@ -11,6 +11,8 @@
@@ -293,3 +293,6 @@ index cc71c42d4e12..8fe726f000e7 100644
  		return;
  
  	msm_framebuffer_unpin(fb);
+-- 
+2.43.0
+

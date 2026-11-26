@@ -56,7 +56,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  create mode 100644 drivers/android/tests/binder_alloc_kunit.c
 
 diff --git a/drivers/android/Kconfig b/drivers/android/Kconfig
-index c920d52c0221..606a9d07f774 100644
+index c920d52c02216..606a9d07f7747 100644
 --- a/drivers/android/Kconfig
 +++ b/drivers/android/Kconfig
 @@ -1,11 +1,10 @@
@@ -125,7 +125,7 @@ index c920d52c0221..606a9d07f774 100644
 +
  endmenu
 diff --git a/drivers/android/Makefile b/drivers/android/Makefile
-index f83d39d16f6e..e0c650d3898e 100644
+index f83d39d16f6e9..e0c650d3898ed 100644
 --- a/drivers/android/Makefile
 +++ b/drivers/android/Makefile
 @@ -1,4 +1,7 @@
@@ -138,7 +138,7 @@ index f83d39d16f6e..e0c650d3898e 100644
  obj-$(CONFIG_ANDROID_BINDER_IPC_RUST)	+= binder/
 diff --git a/drivers/android/binder.c b/drivers/android/binder.c
 new file mode 100644
-index 000000000000..8f2ef1bd539f
+index 0000000000000..8f2ef1bd539f1
 --- /dev/null
 +++ b/drivers/android/binder.c
 @@ -0,0 +1,7186 @@
@@ -7329,7 +7329,7 @@ index 000000000000..8f2ef1bd539f
 +#define CREATE_TRACE_POINTS
 +#include "binder_trace.h"
 diff --git a/drivers/android/binder/Makefile b/drivers/android/binder/Makefile
-index fe474628a94e..7e0cd9782a8b 100644
+index fe474628a94e2..7e0cd9782a8b2 100644
 --- a/drivers/android/binder/Makefile
 +++ b/drivers/android/binder/Makefile
 @@ -1,8 +1,8 @@
@@ -7344,7 +7344,7 @@ index fe474628a94e..7e0cd9782a8b 100644
  	rust_binderfs.o		\
  	rust_binder_events.o
 diff --git a/drivers/android/binder/rust_binder_main.rs b/drivers/android/binder/rust_binder_main.rs
-index 56c786475237..a9c939c21976 100644
+index 56c786475237d..a9c939c219763 100644
 --- a/drivers/android/binder/rust_binder_main.rs
 +++ b/drivers/android/binder/rust_binder_main.rs
 @@ -81,7 +81,7 @@ fn default() -> Self {
@@ -7357,7 +7357,7 @@ index 56c786475237..a9c939c21976 100644
      description: "Android Binder",
      license: "GPL",
 diff --git a/drivers/android/binder/rust_binderfs.c b/drivers/android/binder/rust_binderfs.c
-index 5f020226720d..4cc1f56b765c 100644
+index 5f020226720db..4cc1f56b765c0 100644
 --- a/drivers/android/binder/rust_binderfs.c
 +++ b/drivers/android/binder/rust_binderfs.c
 @@ -50,7 +50,7 @@ DEFINE_SHOW_ATTRIBUTE(rust_binder_transaction_log);
@@ -7371,7 +7371,7 @@ index 5f020226720d..4cc1f56b765c 100644
  module_param_named(debug_mask, rust_binder_debug_mask, uint, 0644);
 diff --git a/drivers/android/binder_alloc.c b/drivers/android/binder_alloc.c
 new file mode 100644
-index 000000000000..e4488ad86a65
+index 0000000000000..e4488ad86a655
 --- /dev/null
 +++ b/drivers/android/binder_alloc.c
 @@ -0,0 +1,1409 @@
@@ -8786,7 +8786,7 @@ index 000000000000..e4488ad86a65
 +}
 diff --git a/drivers/android/binder_alloc.h b/drivers/android/binder_alloc.h
 new file mode 100644
-index 000000000000..d6f1f6f2d00e
+index 0000000000000..d6f1f6f2d00e7
 --- /dev/null
 +++ b/drivers/android/binder_alloc.h
 @@ -0,0 +1,189 @@
@@ -8981,7 +8981,7 @@ index 000000000000..d6f1f6f2d00e
 +
 diff --git a/drivers/android/binder_internal.h b/drivers/android/binder_internal.h
 new file mode 100644
-index 000000000000..342574bfd28a
+index 0000000000000..342574bfd28a8
 --- /dev/null
 +++ b/drivers/android/binder_internal.h
 @@ -0,0 +1,597 @@
@@ -9584,7 +9584,7 @@ index 000000000000..342574bfd28a
 +#endif /* _LINUX_BINDER_INTERNAL_H */
 diff --git a/drivers/android/binder_netlink.c b/drivers/android/binder_netlink.c
 new file mode 100644
-index 000000000000..81e8432b5904
+index 0000000000000..81e8432b5904f
 --- /dev/null
 +++ b/drivers/android/binder_netlink.c
 @@ -0,0 +1,32 @@
@@ -9622,7 +9622,7 @@ index 000000000000..81e8432b5904
 +};
 diff --git a/drivers/android/binder_netlink.h b/drivers/android/binder_netlink.h
 new file mode 100644
-index 000000000000..57399942a5e3
+index 0000000000000..57399942a5e3e
 --- /dev/null
 +++ b/drivers/android/binder_netlink.h
 @@ -0,0 +1,21 @@
@@ -9649,7 +9649,7 @@ index 000000000000..57399942a5e3
 +#endif /* _LINUX_BINDER_GEN_H */
 diff --git a/drivers/android/binder_trace.h b/drivers/android/binder_trace.h
 new file mode 100644
-index 000000000000..fa5eb61cf580
+index 0000000000000..fa5eb61cf5805
 --- /dev/null
 +++ b/drivers/android/binder_trace.h
 @@ -0,0 +1,448 @@
@@ -10103,7 +10103,7 @@ index 000000000000..fa5eb61cf580
 +#include <trace/define_trace.h>
 diff --git a/drivers/android/binderfs.c b/drivers/android/binderfs.c
 new file mode 100644
-index 000000000000..087eae6ca8ec
+index 0000000000000..087eae6ca8ecf
 --- /dev/null
 +++ b/drivers/android/binderfs.c
 @@ -0,0 +1,786 @@
@@ -10895,7 +10895,7 @@ index 000000000000..087eae6ca8ec
 +}
 diff --git a/drivers/android/dbitmap.h b/drivers/android/dbitmap.h
 new file mode 100644
-index 000000000000..c7299ce8b374
+index 0000000000000..c7299ce8b3741
 --- /dev/null
 +++ b/drivers/android/dbitmap.h
 @@ -0,0 +1,169 @@
@@ -11070,7 +11070,7 @@ index 000000000000..c7299ce8b374
 +#endif
 diff --git a/drivers/android/tests/.kunitconfig b/drivers/android/tests/.kunitconfig
 new file mode 100644
-index 000000000000..39b76bab9d9a
+index 0000000000000..39b76bab9d9a1
 --- /dev/null
 +++ b/drivers/android/tests/.kunitconfig
 @@ -0,0 +1,7 @@
@@ -11083,7 +11083,7 @@ index 000000000000..39b76bab9d9a
 +CONFIG_ANDROID_BINDER_ALLOC_KUNIT_TEST=y
 diff --git a/drivers/android/tests/Makefile b/drivers/android/tests/Makefile
 new file mode 100644
-index 000000000000..27268418eb03
+index 0000000000000..27268418eb033
 --- /dev/null
 +++ b/drivers/android/tests/Makefile
 @@ -0,0 +1,6 @@
@@ -11095,7 +11095,7 @@ index 000000000000..27268418eb03
 +obj-$(CONFIG_ANDROID_BINDER_ALLOC_KUNIT_TEST)	+= binder_alloc_kunit.o
 diff --git a/drivers/android/tests/binder_alloc_kunit.c b/drivers/android/tests/binder_alloc_kunit.c
 new file mode 100644
-index 000000000000..7f9cc003bbe3
+index 0000000000000..7f9cc003bbe3b
 --- /dev/null
 +++ b/drivers/android/tests/binder_alloc_kunit.c
 @@ -0,0 +1,572 @@
@@ -11672,7 +11672,7 @@ index 000000000000..7f9cc003bbe3
 +MODULE_DESCRIPTION("Binder Alloc KUnit tests");
 +MODULE_LICENSE("GPL");
 diff --git a/tools/testing/selftests/filesystems/binderfs/binderfs_test.c b/tools/testing/selftests/filesystems/binderfs/binderfs_test.c
-index cd82c89f558f..a1a79a6fef17 100644
+index cd82c89f558fd..a1a79a6fef172 100644
 --- a/tools/testing/selftests/filesystems/binderfs/binderfs_test.c
 +++ b/tools/testing/selftests/filesystems/binderfs/binderfs_test.c
 @@ -414,7 +414,7 @@ TEST(binderfs_stress)
@@ -11685,10 +11685,13 @@ index cd82c89f558f..a1a79a6fef17 100644
  		}
  
 diff --git a/tools/testing/selftests/filesystems/binderfs/config b/tools/testing/selftests/filesystems/binderfs/config
-index 80e4221c2d82..7b4fc6ee6205 100644
+index 80e4221c2d825..7b4fc6ee62057 100644
 --- a/tools/testing/selftests/filesystems/binderfs/config
 +++ b/tools/testing/selftests/filesystems/binderfs/config
 @@ -1 +1,2 @@
 -CONFIG_ANDROID_BINDER_IPC_RUST=y
 +CONFIG_ANDROID_BINDERFS=y
 +CONFIG_ANDROID_BINDER_IPC=y
+-- 
+2.43.0
+

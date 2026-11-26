@@ -15,7 +15,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 7 insertions(+)
 
 diff --git a/drivers/virt/gunyah/gunyah.c b/drivers/virt/gunyah/gunyah.c
-index eac9593956d2..1048ec238775 100644
+index eac9593956d26..1048ec238775f 100644
 --- a/drivers/virt/gunyah/gunyah.c
 +++ b/drivers/virt/gunyah/gunyah.c
 @@ -116,5 +116,12 @@ static int __init gunyah_init(void)
@@ -31,3 +31,6 @@ index eac9593956d2..1048ec238775 100644
 +
  MODULE_LICENSE("GPL");
  MODULE_DESCRIPTION("Gunyah Driver");
+-- 
+2.43.0
+

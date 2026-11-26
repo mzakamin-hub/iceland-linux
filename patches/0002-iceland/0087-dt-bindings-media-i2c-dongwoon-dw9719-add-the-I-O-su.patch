@@ -15,7 +15,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 5 insertions(+)
 
 diff --git a/Documentation/devicetree/bindings/media/i2c/dongwoon,dw9719.yaml b/Documentation/devicetree/bindings/media/i2c/dongwoon,dw9719.yaml
-index 8e8d62436e0d..7290628354d1 100644
+index 8e8d62436e0d0..7290628354d18 100644
 --- a/Documentation/devicetree/bindings/media/i2c/dongwoon,dw9719.yaml
 +++ b/Documentation/devicetree/bindings/media/i2c/dongwoon,dw9719.yaml
 @@ -29,6 +29,11 @@ properties:
@@ -30,3 +30,6 @@ index 8e8d62436e0d..7290628354d1 100644
    dongwoon,sac-mode:
      description: |
        Slew Rate Control mode to use: direct, LSC (Linear Slope Control) or
+-- 
+2.43.0
+

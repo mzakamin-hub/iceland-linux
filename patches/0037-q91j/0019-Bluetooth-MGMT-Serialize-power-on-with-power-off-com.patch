@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Cen Zhang <zzzccc427@gmail.com>
 Date: Thu, 22 Oct 2026 20:15:15 +0800
-Subject: [PATCH 19/30] Bluetooth: MGMT: Serialize power-on with power-off
- completion
+Subject: [PATCH] Bluetooth: MGMT: Serialize power-on with power-off completion
 
 mgmt_set_powered_complete() must consume only its own SET_POWERED
 command. __mgmt_power_off() frees that command before its destroy callback
@@ -117,10 +116,10 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 47 insertions(+), 14 deletions(-)
 
 diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
-index 3b9c82bd2..ada8ba7d1 100644
+index b9262ec134a29..d901b4ce3a436 100644
 --- a/net/bluetooth/mgmt.c
 +++ b/net/bluetooth/mgmt.c
-@@ -1342,20 +1342,24 @@ static void mgmt_set_powered_complete(struct hci_dev *hdev, void *data, int err)
+@@ -1344,20 +1344,24 @@ static void mgmt_set_powered_complete(struct hci_dev *hdev, void *data, int err)
  	struct mgmt_pending_cmd *cmd = data;
  	struct mgmt_mode *cp;
  
@@ -149,7 +148,7 @@ index 3b9c82bd2..ada8ba7d1 100644
  		}
  
  		send_settings_rsp(cmd->sk, cmd->opcode, hdev);
-@@ -1371,6 +1375,9 @@ static void mgmt_set_powered_complete(struct hci_dev *hdev, void *data, int err)
+@@ -1373,6 +1377,9 @@ static void mgmt_set_powered_complete(struct hci_dev *hdev, void *data, int err)
  	}
  
  	mgmt_pending_free(cmd);
@@ -159,7 +158,7 @@ index 3b9c82bd2..ada8ba7d1 100644
  }
  
  static int set_powered_sync(struct hci_dev *hdev, void *data)
-@@ -1380,8 +1387,9 @@ static int set_powered_sync(struct hci_dev *hdev, void *data)
+@@ -1382,8 +1389,9 @@ static int set_powered_sync(struct hci_dev *hdev, void *data)
  
  	mutex_lock(&hdev->mgmt_pending_lock);
  
@@ -171,7 +170,7 @@ index 3b9c82bd2..ada8ba7d1 100644
  		mutex_unlock(&hdev->mgmt_pending_lock);
  		return -ECANCELED;
  	}
-@@ -1395,19 +1403,13 @@ static int set_powered_sync(struct hci_dev *hdev, void *data)
+@@ -1397,19 +1405,13 @@ static int set_powered_sync(struct hci_dev *hdev, void *data)
  	return hci_set_powered_sync(hdev, cp.val);
  }
  
@@ -193,7 +192,7 @@ index 3b9c82bd2..ada8ba7d1 100644
  	hci_dev_lock(hdev);
  
  	if (!cp->val) {
-@@ -1454,6 +1456,32 @@ static int set_powered(struct sock *sk, struct hci_dev *hdev, void *data,
+@@ -1456,6 +1458,32 @@ static int set_powered(struct sock *sk, struct hci_dev *hdev, void *data,
  	return err;
  }
  
@@ -226,7 +225,7 @@ index 3b9c82bd2..ada8ba7d1 100644
  int mgmt_new_settings(struct hci_dev *hdev)
  {
  	return new_settings(hdev, NULL);
-@@ -1469,6 +1497,11 @@ static void settings_rsp(struct mgmt_pending_cmd *cmd, void *data)
+@@ -1471,6 +1499,11 @@ static void settings_rsp(struct mgmt_pending_cmd *cmd, void *data)
  {
  	struct cmd_lookup *match = data;
  

@@ -39,7 +39,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/soc/qcom/icc-bwmon.c b/drivers/soc/qcom/icc-bwmon.c
-index 597f9025e422..e46975da7dba 100644
+index 1ee9f5ce35cd8..4cf1bf30d6d25 100644
 --- a/drivers/soc/qcom/icc-bwmon.c
 +++ b/drivers/soc/qcom/icc-bwmon.c
 @@ -830,7 +830,7 @@ static const struct icc_bwmon_data msm8998_bwmon_data = {
@@ -60,3 +60,6 @@ index 597f9025e422..e46975da7dba 100644
  	.zone3_thres_count = 1,
  	.quirks = BWMON_NEEDS_FORCE_CLEAR,
  	.regmap_fields = sdm845_llcc_bwmon_reg_fields,
+-- 
+2.43.0
+

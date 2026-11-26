@@ -16,7 +16,7 @@ Signed-off-by: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
  3 files changed, 36 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/camss/camss-csid-gen4.c b/drivers/media/platform/qcom/camss/camss-csid-gen4.c
-index 4ff2f41f70f7..bc52e4a1135c 100644
+index 4ff2f41f70f7e..bc52e4a1135cf 100644
 --- a/drivers/media/platform/qcom/camss/camss-csid-gen4.c
 +++ b/drivers/media/platform/qcom/camss/camss-csid-gen4.c
 @@ -63,6 +63,8 @@
@@ -53,7 +53,7 @@ index 4ff2f41f70f7..bc52e4a1135c 100644
  
  	val = CSI2_RX_CFG1_ECC_CORRECTION_EN;
 diff --git a/drivers/media/platform/qcom/camss/camss-tpg-gen1.c b/drivers/media/platform/qcom/camss/camss-tpg-gen1.c
-index d29de5f93c18..770a9e5d5ba5 100644
+index d29de5f93c18e..770a9e5d5ba5f 100644
 --- a/drivers/media/platform/qcom/camss/camss-tpg-gen1.c
 +++ b/drivers/media/platform/qcom/camss/camss-tpg-gen1.c
 @@ -22,6 +22,7 @@
@@ -112,10 +112,10 @@ index d29de5f93c18..770a9e5d5ba5 100644
  	return 0;
  }
 diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
-index 44fd039d73f2..12b4207f42f8 100644
+index a269c1bfd5a82..12a18ec5ade14 100644
 --- a/drivers/media/platform/qcom/camss/camss.c
 +++ b/drivers/media/platform/qcom/camss/camss.c
-@@ -5869,11 +5869,13 @@ static const struct camss_resources kaanapali_resources = {
+@@ -5865,11 +5865,13 @@ static const struct camss_resources kaanapali_resources = {
  	.version = CAMSS_KAANAPALI,
  	.pd_name = "top",
  	.csiphy_res = csiphy_res_kaanapali,
@@ -129,3 +129,6 @@ index 44fd039d73f2..12b4207f42f8 100644
  	.csid_num = ARRAY_SIZE(csid_res_kaanapali),
  	.vfe_num = ARRAY_SIZE(vfe_res_kaanapali),
  };
+-- 
+2.43.0
+

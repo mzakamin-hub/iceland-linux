@@ -22,7 +22,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 6e6b69fe1319..28cfa0bdbf10 100644
+index 6e6b69fe13190..28cfa0bdbf105 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -5034,6 +5034,7 @@ &mc_virt SLAVE_EBI1 QCOM_ICC_TAG_ALWAYS>,
@@ -33,3 +33,6 @@ index 6e6b69fe1319..28cfa0bdbf10 100644
  			tx-fifo-resize;
  			dma-coherent;
  
+-- 
+2.43.0
+

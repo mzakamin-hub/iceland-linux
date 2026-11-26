@@ -23,7 +23,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 3 insertions(+)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_vidc.c b/drivers/media/platform/qcom/iris/iris_vidc.c
-index 05aab6e3005d..8c96b007b391 100644
+index 05aab6e3005d5..8c96b007b3915 100644
 --- a/drivers/media/platform/qcom/iris/iris_vidc.c
 +++ b/drivers/media/platform/qcom/iris/iris_vidc.c
 @@ -140,6 +140,9 @@ iris_m2m_queue_init(void *priv, struct vb2_queue *src_vq, struct vb2_queue *dst_
@@ -36,3 +36,6 @@ index 05aab6e3005d..8c96b007b391 100644
  	dst_vq->dev = inst->core->dev;
  	dst_vq->lock = &inst->ctx_q_lock;
  
+-- 
+2.43.0
+

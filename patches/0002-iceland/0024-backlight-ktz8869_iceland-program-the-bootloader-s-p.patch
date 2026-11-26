@@ -20,7 +20,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 58 insertions(+), 15 deletions(-)
 
 diff --git a/drivers/video/backlight/ktz8869_iceland.c b/drivers/video/backlight/ktz8869_iceland.c
-index 52532a3034cc..16279b9ab486 100644
+index 52532a3034cc7..16279b9ab4863 100644
 --- a/drivers/video/backlight/ktz8869_iceland.c
 +++ b/drivers/video/backlight/ktz8869_iceland.c
 @@ -95,23 +95,66 @@ static const struct backlight_ops ktz8869_backlight_ops = {
@@ -105,3 +105,6 @@ index 52532a3034cc..16279b9ab486 100644
  }
  
  static int ktz8869_probe(struct i2c_client *client)
+-- 
+2.43.0
+

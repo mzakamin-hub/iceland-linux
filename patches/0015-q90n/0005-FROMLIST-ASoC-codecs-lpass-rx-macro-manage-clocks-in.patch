@@ -20,7 +20,7 @@ Signed-off-by: Aiyaz Patel <aiyapate@qti.qualcomm.com>
  1 file changed, 52 insertions(+), 22 deletions(-)
 
 diff --git a/sound/soc/codecs/lpass-rx-macro.c b/sound/soc/codecs/lpass-rx-macro.c
-index c41eb8de6160..3cfaf4fe0ab2 100644
+index ab8a1c2b0489b..5253ad4381888 100644
 --- a/sound/soc/codecs/lpass-rx-macro.c
 +++ b/sound/soc/codecs/lpass-rx-macro.c
 @@ -6,7 +6,6 @@
@@ -147,3 +147,6 @@ index c41eb8de6160..3cfaf4fe0ab2 100644
  
  static struct platform_driver rx_macro_driver = {
  	.driver = {
+-- 
+2.43.0
+

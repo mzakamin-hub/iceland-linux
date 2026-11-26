@@ -28,7 +28,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
  1 file changed, 8 insertions(+)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 0557cc96205b..8027040e46ff 100644
+index 37c44e1796e22..80fe4690aa970 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -2100,6 +2100,14 @@ static void qcom_battmgr_sm8350_callback(struct qcom_battmgr *battmgr,
@@ -46,3 +46,6 @@ index 0557cc96205b..8027040e46ff 100644
  		break;
  	default:
  		dev_warn(battmgr->dev, "unknown message %#x\n", opcode);
+-- 
+2.43.0
+

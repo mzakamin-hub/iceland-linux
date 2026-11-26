@@ -32,7 +32,7 @@ Signed-off-by: Birk Skyum <birk.skyum@pm.me>
  1 file changed, 14 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/i2c/busses/i2c-qcom-cci.c b/drivers/i2c/busses/i2c-qcom-cci.c
-index 76a5dedf659f..51ce174d5740 100644
+index 476526b099c35..7a1c5d41cd05a 100644
 --- a/drivers/i2c/busses/i2c-qcom-cci.c
 +++ b/drivers/i2c/busses/i2c-qcom-cci.c
 @@ -651,7 +651,20 @@ static int __maybe_unused cci_resume_runtime(struct device *dev)
@@ -57,3 +57,6 @@ index 76a5dedf659f..51ce174d5740 100644
  }
  
  static const struct dev_pm_ops qcom_cci_pm = {
+-- 
+2.43.0
+

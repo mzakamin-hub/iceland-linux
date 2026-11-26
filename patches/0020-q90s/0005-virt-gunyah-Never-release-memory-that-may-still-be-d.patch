@@ -46,7 +46,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  4 files changed, 77 insertions(+), 16 deletions(-)
 
 diff --git a/drivers/virt/gunyah/gunyah_qcom.c b/drivers/virt/gunyah/gunyah_qcom.c
-index 622d6a07db02..c9c2c3624a4b 100644
+index 622d6a07db02c..c9c2c3624a4bd 100644
 --- a/drivers/virt/gunyah/gunyah_qcom.c
 +++ b/drivers/virt/gunyah/gunyah_qcom.c
 @@ -104,13 +104,22 @@ qcom_scm_gunyah_rm_post_mem_reclaim(struct gunyah_rm *rm,
@@ -78,7 +78,7 @@ index 622d6a07db02..c9c2c3624a4b 100644
  	return ret;
  }
 diff --git a/drivers/virt/gunyah/rsc_mgr_rpc.c b/drivers/virt/gunyah/rsc_mgr_rpc.c
-index 59b6471d055e..7c5db953548b 100644
+index 59b6471d055e7..7c5db953548b1 100644
 --- a/drivers/virt/gunyah/rsc_mgr_rpc.c
 +++ b/drivers/virt/gunyah/rsc_mgr_rpc.c
 @@ -298,7 +298,12 @@ int gunyah_rm_mem_share(struct gunyah_rm *rm, struct gunyah_rm_mem_parcel *p)
@@ -96,7 +96,7 @@ index 59b6471d055e..7c5db953548b 100644
  	}
  
 diff --git a/drivers/virt/gunyah/vm_mgr_mem.c b/drivers/virt/gunyah/vm_mgr_mem.c
-index f6fe84517af6..c48d3ba4489e 100644
+index f6fe84517af68..c48d3ba4489ee 100644
 --- a/drivers/virt/gunyah/vm_mgr_mem.c
 +++ b/drivers/virt/gunyah/vm_mgr_mem.c
 @@ -239,21 +239,38 @@ int gunyah_vm_provide_folio(struct gunyah_vm *ghvm, struct folio *folio,
@@ -196,7 +196,7 @@ index f6fe84517af6..c48d3ba4489e 100644
  
  	parcel->mem_handle = GUNYAH_MEM_HANDLE_INVAL;
 diff --git a/drivers/virt/gunyah/vm_mgr_pshare.c b/drivers/virt/gunyah/vm_mgr_pshare.c
-index b1b846929d75..10c510b89226 100644
+index b1b846929d754..10c510b892264 100644
 --- a/drivers/virt/gunyah/vm_mgr_pshare.c
 +++ b/drivers/virt/gunyah/vm_mgr_pshare.c
 @@ -217,7 +217,7 @@ static int gunyah_vm_pshare_submit(struct gunyah_vm *ghvm,
@@ -235,3 +235,6 @@ index b1b846929d75..10c510b89226 100644
  	if (ret)
  		goto free_parcel;
  	return 0;
+-- 
+2.43.0
+

@@ -43,7 +43,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  create mode 100644 drivers/soc/qcom/smp2p_sleepstate.c
 
 diff --git a/drivers/soc/qcom/Kconfig b/drivers/soc/qcom/Kconfig
-index 67d54d5211ff..cf44ab92ae57 100644
+index 67d54d5211ff2..cf44ab92ae57d 100644
 --- a/drivers/soc/qcom/Kconfig
 +++ b/drivers/soc/qcom/Kconfig
 @@ -212,6 +212,18 @@ config QCOM_SMP2P
@@ -66,7 +66,7 @@ index 67d54d5211ff..cf44ab92ae57 100644
  	tristate "Qualcomm Shared Memory State Machine"
  	depends on MAILBOX
 diff --git a/drivers/soc/qcom/Makefile b/drivers/soc/qcom/Makefile
-index 9ef0f11d0158..de9789ace0df 100644
+index 9ef0f11d01585..de9789ace0df6 100644
 --- a/drivers/soc/qcom/Makefile
 +++ b/drivers/soc/qcom/Makefile
 @@ -30,6 +30,7 @@ obj-$(CONFIG_QCOM_SMEM) +=	qcom_smem.o
@@ -79,7 +79,7 @@ index 9ef0f11d0158..de9789ace0df 100644
  obj-$(CONFIG_QCOM_SPM)		+= spm.o
 diff --git a/drivers/soc/qcom/smp2p_sleepstate.c b/drivers/soc/qcom/smp2p_sleepstate.c
 new file mode 100644
-index 000000000000..70f1a4e6e866
+index 0000000000000..70f1a4e6e866a
 --- /dev/null
 +++ b/drivers/soc/qcom/smp2p_sleepstate.c
 @@ -0,0 +1,135 @@
@@ -218,3 +218,6 @@ index 000000000000..70f1a4e6e866
 +
 +MODULE_DESCRIPTION("Qualcomm SMP2P sleep-state notifier");
 +MODULE_LICENSE("GPL");
+-- 
+2.43.0
+

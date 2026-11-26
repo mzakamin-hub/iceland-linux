@@ -20,7 +20,7 @@ Signed-off-by: Aiyaz Patel <aiyapate@qti.qualcomm.com>
  1 file changed, 55 insertions(+), 31 deletions(-)
 
 diff --git a/sound/soc/codecs/lpass-wsa-macro.c b/sound/soc/codecs/lpass-wsa-macro.c
-index 899c8bee4645..de9add321153 100644
+index e3fe8d0af8be6..362e17343a1d7 100644
 --- a/sound/soc/codecs/lpass-wsa-macro.c
 +++ b/sound/soc/codecs/lpass-wsa-macro.c
 @@ -12,7 +12,6 @@
@@ -160,3 +160,6 @@ index 899c8bee4645..de9add321153 100644
  
  static const struct of_device_id wsa_macro_dt_match[] = {
  	{
+-- 
+2.43.0
+

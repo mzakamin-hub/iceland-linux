@@ -20,7 +20,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 21 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
-index 28cfa0bdbf10..39667f09a19a 100644
+index 28cfa0bdbf105..39667f09a19aa 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 +++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
 @@ -2894,6 +2894,27 @@ ice: crypto@1d88000 {
@@ -51,3 +51,6 @@ index 28cfa0bdbf10..39667f09a19a 100644
  		};
  
  		cryptobam: dma-controller@1dc4000 {
+-- 
+2.43.0
+

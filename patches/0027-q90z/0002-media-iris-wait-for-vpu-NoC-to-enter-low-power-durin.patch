@@ -27,7 +27,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 2 insertions(+)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_vpu4x.c b/drivers/media/platform/qcom/iris/iris_vpu4x.c
-index ca9bb8710685..131a86ddd8e8 100644
+index ca9bb8710685d..131a86ddd8e89 100644
 --- a/drivers/media/platform/qcom/iris/iris_vpu4x.c
 +++ b/drivers/media/platform/qcom/iris/iris_vpu4x.c
 @@ -318,6 +318,8 @@ static void iris_vpu4x_power_off_hardware(struct iris_core *core)
@@ -39,3 +39,6 @@ index ca9bb8710685..131a86ddd8e8 100644
  	writel(0x0, core->reg_base + AON_WRAPPER_MVP_NOC_LPI_CONTROL);
  
  	writel(MVP_NOC_RESET_REQ_MASK, core->reg_base + AON_WRAPPER_MVP_NOC_RESET_REQ);
+-- 
+2.43.0
+

@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jizhou Tong <fqwqf@fqwqf.xyz>
 Date: Thu, 5 Nov 2026 19:19:05 +0000
-Subject: [PATCH 4/8] dmaengine: qcom: gpi: match control interrupts to the
- pending command
+Subject: [PATCH] dmaengine: qcom: gpi: match control interrupts to the pending
+ command
 
 Each GPI instance shares one command completion between its two transfer
 channels and event ring. Both control interrupt handlers complete that
@@ -29,7 +29,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 18 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/dma/qcom/gpi.c b/drivers/dma/qcom/gpi.c
-index 7eb38c691..70209b382 100644
+index a4dd33463d2ec..847d7834f8870 100644
 --- a/drivers/dma/qcom/gpi.c
 +++ b/drivers/dma/qcom/gpi.c
 @@ -523,6 +523,8 @@ struct gpii {

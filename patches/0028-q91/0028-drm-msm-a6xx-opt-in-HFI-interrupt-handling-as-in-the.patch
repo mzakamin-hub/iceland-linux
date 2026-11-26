@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 2 Nov 2026 10:54:28 +0200
-Subject: [PATCH 28/32] drm/msm/a6xx: opt-in HFI interrupt handling as in the
+Subject: [PATCH] drm/msm/a6xx: opt-in HFI interrupt handling as in the
  downstream driver
 
 a6xx_hfi_irq() unmasks bit 23 of GMU2HOST_INTR_INFO as the CM3 fault and
@@ -26,8 +26,6 @@ The analysis and the idea are denialwm's linux-perpetua commits
 6e05869b966d, 1cdc91f508a2 and 16b0b620cb99 (seen on an A740); this is
 our own code, with the bit layout checked against KGSL gen8.
 
-Suggested-by: Doctor Logix <doctor.logix@gmail.com>
-Based-on: denialwm/linux-perpetua 6e05869b966d, 1cdc91f508a2, 16b0b620cb99 (analysis; our code)
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 Signed-off-by: mzak <mzak.amin@gmail.com>
 ---
@@ -37,7 +35,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  3 files changed, 53 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
-index cefdd4246c9e..099a6ed397ff 100644
+index cefdd4246c9e7..099a6ed397ff7 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gmu.c
 @@ -57,11 +57,58 @@ static irqreturn_t a6xx_gmu_irq(int irq, void *data)
@@ -129,7 +127,7 @@ index cefdd4246c9e..099a6ed397ff 100644
  
  	/* Set the GPU to the current freq */
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
-index 71a00de9cbfa..ffc60814c5a0 100644
+index 71a00de9cbfaf..ffc60814c5a0a 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
 @@ -302,6 +302,7 @@ int a6xx_gmu_wait_for_active(struct a6xx_gmu *gmu);
@@ -141,7 +139,7 @@ index 71a00de9cbfa..ffc60814c5a0 100644
  void a6xx_gmu_clear_oob(struct a6xx_gmu *gmu, enum a6xx_gmu_oob_state state);
  
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_hfi.c b/drivers/gpu/drm/msm/adreno/a6xx_hfi.c
-index 8518e9abcff4..580ac27e54c3 100644
+index 854148732140c..103da938d3ce7 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_hfi.c
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_hfi.c
 @@ -132,7 +132,8 @@ static int a6xx_hfi_wait_for_msg_interrupt(struct a6xx_gmu *gmu, u32 id, u32 seq
@@ -154,3 +152,6 @@ index 8518e9abcff4..580ac27e54c3 100644
  	} while (true);
  
  	if (ret) {
+-- 
+2.43.0
+

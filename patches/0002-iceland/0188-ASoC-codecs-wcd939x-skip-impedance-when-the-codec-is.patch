@@ -21,7 +21,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 11 insertions(+)
 
 diff --git a/sound/soc/codecs/wcd939x.c b/sound/soc/codecs/wcd939x.c
-index 6d96b39328f8..3bffd5abd09d 100644
+index 5f66f352a9455..2607df627d908 100644
 --- a/sound/soc/codecs/wcd939x.c
 +++ b/sound/soc/codecs/wcd939x.c
 @@ -2168,6 +2168,17 @@ static void wcd939x_wcd_mbhc_calc_impedance(struct snd_soc_component *component,
@@ -42,3 +42,6 @@ index 6d96b39328f8..3bffd5abd09d 100644
  	reg0 = snd_soc_component_read(component, WCD939X_ANA_MBHC_BTN5);
  	reg1 = snd_soc_component_read(component, WCD939X_ANA_MBHC_BTN6);
  	reg2 = snd_soc_component_read(component, WCD939X_ANA_MBHC_BTN7);
+-- 
+2.43.0
+

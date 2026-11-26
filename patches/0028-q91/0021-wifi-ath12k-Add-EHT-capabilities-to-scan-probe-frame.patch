@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Gaole Zhang <gaole.zhang@oss.qualcomm.com>
 Date: Fri, 9 Oct 2026 17:55:38 +0800
-Subject: [PATCH 21/32] wifi: ath12k: Add EHT capabilities to scan probe frame
+Subject: [PATCH] wifi: ath12k: Add EHT capabilities to scan probe frame
 
 ath12k hardware scan Probe Request frames do not include the EHT
 Capabilities element. Without this element, an AP cannot identify the
@@ -49,7 +49,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  5 files changed, 106 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/core.h b/drivers/net/wireless/ath/ath12k/core.h
-index c8c5169789f7..f0fdb4d20a2c 100644
+index c8c5169789f78..f0fdb4d20a2cd 100644
 --- a/drivers/net/wireless/ath/ath12k/core.h
 +++ b/drivers/net/wireless/ath/ath12k/core.h
 @@ -1422,6 +1422,12 @@ static inline struct ath12k_base *ath12k_ag_to_ab(struct ath12k_hw_group *ag,
@@ -66,10 +66,10 @@ index c8c5169789f7..f0fdb4d20a2c 100644
  {
  	lockdep_assert_held(&ar->data_lock);
 diff --git a/drivers/net/wireless/ath/ath12k/mac.c b/drivers/net/wireless/ath/ath12k/mac.c
-index daf3ba12b375..f5937837d4f1 100644
+index 1e18efa03067e..2d8f8618bb510 100644
 --- a/drivers/net/wireless/ath/ath12k/mac.c
 +++ b/drivers/net/wireless/ath/ath12k/mac.c
-@@ -5706,6 +5706,25 @@ ath12k_mac_find_link_id_by_ar(struct ath12k_vif *ahvif, struct ath12k *ar)
+@@ -5717,6 +5717,25 @@ ath12k_mac_find_link_id_by_ar(struct ath12k_vif *ahvif, struct ath12k *ar)
  	return ATH12K_FIRST_SCAN_LINK;
  }
  
@@ -95,7 +95,7 @@ index daf3ba12b375..f5937837d4f1 100644
  static int ath12k_mac_initiate_hw_scan(struct ieee80211_hw *hw,
  				       struct ieee80211_vif *vif,
  				       struct ieee80211_scan_request *hw_req,
-@@ -5822,6 +5841,11 @@ static int ath12k_mac_initiate_hw_scan(struct ieee80211_hw *hw,
+@@ -5833,6 +5852,11 @@ static int ath12k_mac_initiate_hw_scan(struct ieee80211_hw *hw,
  			goto exit;
  		}
  		arg->extraie.len = req->ie_len;
@@ -107,7 +107,7 @@ index daf3ba12b375..f5937837d4f1 100644
  	}
  
  	if (req->n_ssids) {
-@@ -9087,8 +9111,7 @@ static void ath12k_mac_copy_eht_cap(struct ath12k *ar,
+@@ -9100,8 +9124,7 @@ static void ath12k_mac_copy_eht_cap(struct ath12k *ar,
  
  	memset(eht_cap, 0, sizeof(struct ieee80211_sta_eht_cap));
  
@@ -118,7 +118,7 @@ index daf3ba12b375..f5937837d4f1 100644
  
  	eht_cap->has_eht = true;
 diff --git a/drivers/net/wireless/ath/ath12k/reg.c b/drivers/net/wireless/ath/ath12k/reg.c
-index cf69d46feb04..78bf1ad12932 100644
+index cf69d46feb044..78bf1ad129321 100644
 --- a/drivers/net/wireless/ath/ath12k/reg.c
 +++ b/drivers/net/wireless/ath/ath12k/reg.c
 @@ -140,6 +140,7 @@ int ath12k_reg_update_chan_list(struct ath12k *ar, bool wait)
@@ -147,7 +147,7 @@ index cf69d46feb04..78bf1ad12932 100644
  			ch->dfs_set =
  				!!(channel->flags & IEEE80211_CHAN_RADAR);
 diff --git a/drivers/net/wireless/ath/ath12k/wmi.c b/drivers/net/wireless/ath/ath12k/wmi.c
-index d267d12e6ccc..e7ecae9b7070 100644
+index d267d12e6cccb..e7ecae9b70703 100644
 --- a/drivers/net/wireless/ath/ath12k/wmi.c
 +++ b/drivers/net/wireless/ath/ath12k/wmi.c
 @@ -2005,6 +2005,54 @@ int ath12k_wmi_p2p_go_bcn_ie(struct ath12k *ar, u32 vdev_id,
@@ -215,7 +215,7 @@ index d267d12e6ccc..e7ecae9b7070 100644
  				chan_info->info |= cpu_to_le32(WMI_CHAN_INFO_HALF_RATE);
  			if (channel_arg->quarter_rate)
 diff --git a/drivers/net/wireless/ath/ath12k/wmi.h b/drivers/net/wireless/ath/ath12k/wmi.h
-index 13d063659977..b6b4fa6fc9bb 100644
+index 13d063659977e..b6b4fa6fc9bbf 100644
 --- a/drivers/net/wireless/ath/ath12k/wmi.h
 +++ b/drivers/net/wireless/ath/ath12k/wmi.h
 @@ -3084,6 +3084,7 @@ struct ath12k_wmi_channel_arg {
@@ -267,3 +267,6 @@ index 13d063659977..b6b4fa6fc9bb 100644
  int ath12k_wmi_vdev_install_key(struct ath12k *ar,
  				struct wmi_vdev_install_key_arg *arg);
  int ath12k_wmi_pdev_bss_chan_info_request(struct ath12k *ar,
+-- 
+2.43.0
+

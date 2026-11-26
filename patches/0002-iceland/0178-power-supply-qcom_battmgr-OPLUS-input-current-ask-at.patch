@@ -27,7 +27,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 19 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index c7de330bf586..3b168f43758d 100644
+index b4e40f61b5ebf..320ff4dbab319 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -2608,7 +2608,7 @@ static unsigned int qcom_battmgr_iceland_aicl(struct qcom_battmgr *battmgr, unsi
@@ -89,3 +89,6 @@ index c7de330bf586..3b168f43758d 100644
  		 battmgr->chg_inhibit ? ", charging inhibited" :
  		 battmgr->chg_limit_hold ? ", charging held by the charge limit" : "");
  }
+-- 
+2.43.0
+

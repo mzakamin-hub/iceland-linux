@@ -27,7 +27,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 20 insertions(+), 16 deletions(-)
 
 diff --git a/drivers/input/keyboard/oneplus-pogo-keyboard.c b/drivers/input/keyboard/oneplus-pogo-keyboard.c
-index 1fe56c886472..38ee1d9e1667 100644
+index 1fe56c8864727..38ee1d9e1667a 100644
 --- a/drivers/input/keyboard/oneplus-pogo-keyboard.c
 +++ b/drivers/input/keyboard/oneplus-pogo-keyboard.c
 @@ -444,7 +444,6 @@ struct pogo {
@@ -105,3 +105,6 @@ index 1fe56c886472..38ee1d9e1667 100644
  	dev_info(dev, "UART at %u baud, data line %s\n", baud,
  		 pogo_line_low(pogo) ? "low: a dock is there" : "high: no dock");
  
+-- 
+2.43.0
+

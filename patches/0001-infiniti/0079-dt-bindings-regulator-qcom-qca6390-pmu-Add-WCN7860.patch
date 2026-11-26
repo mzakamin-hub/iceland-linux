@@ -11,7 +11,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 21 insertions(+)
 
 diff --git a/Documentation/devicetree/bindings/regulator/qcom,qca6390-pmu.yaml b/Documentation/devicetree/bindings/regulator/qcom,qca6390-pmu.yaml
-index 105174df7df2..7ccbb07c1580 100644
+index 105174df7df27..7ccbb07c15800 100644
 --- a/Documentation/devicetree/bindings/regulator/qcom,qca6390-pmu.yaml
 +++ b/Documentation/devicetree/bindings/regulator/qcom,qca6390-pmu.yaml
 @@ -27,6 +27,7 @@ properties:
@@ -56,3 +56,6 @@ index 105174df7df2..7ccbb07c1580 100644
  
  additionalProperties: false
  
+-- 
+2.43.0
+

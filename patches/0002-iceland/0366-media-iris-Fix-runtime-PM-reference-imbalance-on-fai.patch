@@ -24,7 +24,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_hfi_queue.c b/drivers/media/platform/qcom/iris/iris_hfi_queue.c
-index bf6db23b53e2..545bbe75e174 100644
+index bf6db23b53e21..545bbe75e1740 100644
 --- a/drivers/media/platform/qcom/iris/iris_hfi_queue.c
 +++ b/drivers/media/platform/qcom/iris/iris_hfi_queue.c
 @@ -132,7 +132,7 @@ int iris_hfi_queue_cmd_write(struct iris_core *core, void *pkt, u32 pkt_size)
@@ -36,3 +36,6 @@ index bf6db23b53e2..545bbe75e174 100644
  
  	mutex_lock(&core->lock);
  	ret = iris_hfi_queue_cmd_write_locked(core, pkt, pkt_size);
+-- 
+2.43.0
+

@@ -28,7 +28,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 24 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/dp_rx.c b/drivers/net/wireless/ath/ath12k/dp_rx.c
-index c7b371e824d6..97d2d88d4018 100644
+index c7b371e824d63..97d2d88d40182 100644
 --- a/drivers/net/wireless/ath/ath12k/dp_rx.c
 +++ b/drivers/net/wireless/ath/ath12k/dp_rx.c
 @@ -1439,13 +1439,22 @@ void ath12k_dp_rx_h_ppdu(struct ath12k_pdev_dp *dp_pdev,
@@ -76,3 +76,6 @@ index c7b371e824d6..97d2d88d4018 100644
  		goto h_rate;
  	}
  
+-- 
+2.43.0
+

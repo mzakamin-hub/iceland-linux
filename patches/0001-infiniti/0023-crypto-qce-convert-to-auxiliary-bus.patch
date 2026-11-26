@@ -25,7 +25,7 @@ Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
  6 files changed, 66 insertions(+), 70 deletions(-)
 
 diff --git a/drivers/crypto/Kconfig b/drivers/crypto/Kconfig
-index adcbe1585189..b3fa1f6135bc 100644
+index adcbe15851899..b3fa1f6135bce 100644
 --- a/drivers/crypto/Kconfig
 +++ b/drivers/crypto/Kconfig
 @@ -530,6 +530,8 @@ config CRYPTO_DEV_QCE
@@ -38,7 +38,7 @@ index adcbe1585189..b3fa1f6135bc 100644
  	  This driver supports Qualcomm crypto engine offloader hardware. To
  	  compile this driver as a module, choose M here. The module will be
 diff --git a/drivers/crypto/qce/aead.c b/drivers/crypto/qce/aead.c
-index 37199cb50744..a7bb2b7b2139 100644
+index 37199cb50744f..a7bb2b7b2139d 100644
 --- a/drivers/crypto/qce/aead.c
 +++ b/drivers/crypto/qce/aead.c
 @@ -44,9 +44,9 @@ static void qce_aead_done(void *data)
@@ -83,7 +83,7 @@ index 37199cb50744..a7bb2b7b2139 100644
  	if (IS_CCM(rctx->flags) && rctx->assoclen) {
  		sg_free_table(&rctx->src_tbl);
 diff --git a/drivers/crypto/qce/core.c b/drivers/crypto/qce/core.c
-index 5b1bf7a50f88..31f1ad8938ab 100644
+index 30e67ca6da8ee..26a4278656c25 100644
 --- a/drivers/crypto/qce/core.c
 +++ b/drivers/crypto/qce/core.c
 @@ -3,15 +3,16 @@
@@ -170,7 +170,7 @@ index 5b1bf7a50f88..31f1ad8938ab 100644
 +	struct resource res;
  	int ret;
  
- 	qce = devm_kzalloc(dev, sizeof(*qce), GFP_KERNEL);
+ 	qce = devm_kzalloc_obj(dev, *qce);
 @@ -205,13 +215,18 @@ static int qce_crypto_probe(struct platform_device *pdev)
  		return -ENOMEM;
  
@@ -308,7 +308,7 @@ index 5b1bf7a50f88..31f1ad8938ab 100644
 -MODULE_ALIAS("platform:" KBUILD_MODNAME);
  MODULE_AUTHOR("The Linux Foundation");
 diff --git a/drivers/crypto/qce/core.h b/drivers/crypto/qce/core.h
-index eb6fa7a8b64a..6eda6e617b81 100644
+index eb6fa7a8b64a8..6eda6e617b811 100644
 --- a/drivers/crypto/qce/core.h
 +++ b/drivers/crypto/qce/core.h
 @@ -20,6 +20,9 @@
@@ -332,7 +332,7 @@ index eb6fa7a8b64a..6eda6e617b81 100644
  	int burst_size;
  	unsigned int pipe_pair_id;
 diff --git a/drivers/crypto/qce/sha.c b/drivers/crypto/qce/sha.c
-index 8c12c072f4a9..58114d06e60c 100644
+index 8c12c072f4a9d..58114d06e60cd 100644
 --- a/drivers/crypto/qce/sha.c
 +++ b/drivers/crypto/qce/sha.c
 @@ -47,8 +47,8 @@ static void qce_ahash_done(void *data)
@@ -375,7 +375,7 @@ index 8c12c072f4a9..58114d06e60c 100644
  }
  
 diff --git a/drivers/crypto/qce/skcipher.c b/drivers/crypto/qce/skcipher.c
-index 7abc1d7b1cf0..37c16fbfe245 100644
+index 7abc1d7b1cf04..37c16fbfe245c 100644
 --- a/drivers/crypto/qce/skcipher.c
 +++ b/drivers/crypto/qce/skcipher.c
 @@ -49,8 +49,8 @@ static void qce_skcipher_done(void *data)
@@ -418,3 +418,6 @@ index 7abc1d7b1cf0..37c16fbfe245 100644
  error_free:
  	sg_free_table(&rctx->dst_tbl);
  	return ret;
+-- 
+2.43.0
+

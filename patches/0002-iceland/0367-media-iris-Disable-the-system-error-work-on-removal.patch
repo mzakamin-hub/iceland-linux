@@ -32,7 +32,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_probe.c b/drivers/media/platform/qcom/iris/iris_probe.c
-index 1ca8c5efeef3..8ee807c45564 100644
+index 14a0f776a84ab..a118b65e86674 100644
 --- a/drivers/media/platform/qcom/iris/iris_probe.c
 +++ b/drivers/media/platform/qcom/iris/iris_probe.c
 @@ -251,7 +251,7 @@ static void iris_remove(struct platform_device *pdev)
@@ -44,3 +44,6 @@ index 1ca8c5efeef3..8ee807c45564 100644
  
  	iris_core_deinit(core);
  
+-- 
+2.43.0
+

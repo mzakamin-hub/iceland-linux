@@ -14,7 +14,7 @@ Signed-off-by: Prashanth K <prashanth.k@oss.qualcomm.com>
  1 file changed, 17 insertions(+)
 
 diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-usb.c b/drivers/phy/qualcomm/phy-qcom-qmp-usb.c
-index 6a9faa0ce3bb..0876715900ea 100644
+index 6348bb68d8225..ce9cf10edb3a0 100644
 --- a/drivers/phy/qualcomm/phy-qcom-qmp-usb.c
 +++ b/drivers/phy/qualcomm/phy-qcom-qmp-usb.c
 @@ -2126,9 +2126,26 @@ static int __maybe_unused qmp_usb_runtime_resume(struct device *dev)
@@ -44,3 +44,6 @@ index 6a9faa0ce3bb..0876715900ea 100644
  };
  
  static int qmp_usb_reset_init(struct qmp_usb *qmp,
+-- 
+2.43.0
+

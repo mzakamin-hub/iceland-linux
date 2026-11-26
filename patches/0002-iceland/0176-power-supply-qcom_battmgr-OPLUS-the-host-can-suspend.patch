@@ -49,7 +49,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 173 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index cd8c0154d45e..0a9b22cbf500 100644
+index 9c3917b0671d8..14453ebdc7fc2 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -122,6 +122,15 @@ enum qcom_battmgr_variant {
@@ -310,3 +310,6 @@ index cd8c0154d45e..0a9b22cbf500 100644
  		if (IS_ERR(battmgr->usb_psy))
  			return dev_err_probe(dev, PTR_ERR(battmgr->usb_psy),
  					     "failed to register USB power supply\n");
+-- 
+2.43.0
+

@@ -41,10 +41,10 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  create mode 100644 drivers/devfreq/scmi-qcom-memlat-devfreq.c
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 4dfc61cda402..8527be96422a 100644
+index 155128f1ba072..15229c4c62fdc 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -23159,6 +23159,14 @@ F:	Documentation/networking/device_drivers/cellular/qualcomm/rmnet.rst
+@@ -23250,6 +23250,14 @@ F:	Documentation/networking/device_drivers/cellular/qualcomm/rmnet.rst
  F:	drivers/net/ethernet/qualcomm/rmnet/
  F:	include/linux/if_rmnet.h
  
@@ -60,7 +60,7 @@ index 4dfc61cda402..8527be96422a 100644
  M:	Abel Vesa <abelvesa@kernel.org>
  M:	David Collins <david.collins@oss.qualcomm.com>
 diff --git a/drivers/devfreq/Kconfig b/drivers/devfreq/Kconfig
-index 2caa87554914..fdf6484fc72c 100644
+index 2caa875549141..fdf6484fc72c9 100644
 --- a/drivers/devfreq/Kconfig
 +++ b/drivers/devfreq/Kconfig
 @@ -169,6 +169,21 @@ config ARM_SUN8I_A33_MBUS_DEVFREQ
@@ -86,7 +86,7 @@ index 2caa87554914..fdf6484fc72c 100644
  
  endif # PM_DEVFREQ
 diff --git a/drivers/devfreq/Makefile b/drivers/devfreq/Makefile
-index cde57c8cda76..b11f94e2f485 100644
+index cde57c8cda764..b11f94e2f4855 100644
 --- a/drivers/devfreq/Makefile
 +++ b/drivers/devfreq/Makefile
 @@ -17,6 +17,7 @@ obj-$(CONFIG_ARM_MEDIATEK_CCI_DEVFREQ)	+= mtk-cci-devfreq.o
@@ -99,7 +99,7 @@ index cde57c8cda76..b11f94e2f485 100644
  obj-$(CONFIG_PM_DEVFREQ_EVENT)		+= event/
 diff --git a/drivers/devfreq/scmi-qcom-memlat-devfreq.c b/drivers/devfreq/scmi-qcom-memlat-devfreq.c
 new file mode 100644
-index 000000000000..9ca85b2f4c1a
+index 0000000000000..9ca85b2f4c1a3
 --- /dev/null
 +++ b/drivers/devfreq/scmi-qcom-memlat-devfreq.c
 @@ -0,0 +1,1331 @@
@@ -1434,3 +1434,6 @@ index 000000000000..9ca85b2f4c1a
 +MODULE_AUTHOR("Sibi Sankar <sibi.sankar@oss.qualcomm.com>");
 +MODULE_DESCRIPTION("Qualcomm SCMI memlat devfreq driver");
 +MODULE_LICENSE("GPL");
+-- 
+2.43.0
+

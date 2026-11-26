@@ -28,7 +28,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 31 insertions(+), 12 deletions(-)
 
 diff --git a/sound/soc/codecs/wcd939x.c b/sound/soc/codecs/wcd939x.c
-index 69078dc25a38..a52ae36ce250 100644
+index f848ba320fbea..cd742586a7d11 100644
 --- a/sound/soc/codecs/wcd939x.c
 +++ b/sound/soc/codecs/wcd939x.c
 @@ -203,6 +203,8 @@ struct wcd939x_priv {
@@ -109,3 +109,6 @@ index 69078dc25a38..a52ae36ce250 100644
  	ret = snd_soc_register_component(dev, &soc_codec_dev_wcd939x,
  					 wcd939x_dais, ARRAY_SIZE(wcd939x_dais));
  	if (ret) {
+-- 
+2.43.0
+

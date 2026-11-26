@@ -41,7 +41,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 22 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/msm_fb.c b/drivers/gpu/drm/msm/msm_fb.c
-index 60c108d35d2a..a38e5b3a1d1e 100644
+index 60c108d35d2a1..a38e5b3a1d1e9 100644
 --- a/drivers/gpu/drm/msm/msm_fb.c
 +++ b/drivers/gpu/drm/msm/msm_fb.c
 @@ -22,9 +22,12 @@ struct msm_framebuffer {
@@ -117,3 +117,6 @@ index 60c108d35d2a..a38e5b3a1d1e 100644
  	drm_dbg_state(dev, "create: FB ID: %d (%p)\n", fb->base.id, fb);
  
  	return fb;
+-- 
+2.43.0
+

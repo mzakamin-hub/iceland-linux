@@ -27,7 +27,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 14 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
-index 14df37deeb2e..de7940eb8ef0 100644
+index 14df37deeb2eb..de7940eb8ef08 100644
 --- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 +++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
 @@ -354,6 +354,18 @@ module_param(dpu_vid_idle_irq_off, bool, 0644);
@@ -59,3 +59,6 @@ index 14df37deeb2e..de7940eb8ef0 100644
  	ctl->ops.reset(ctl);
  
  	dpu_encoder_helper_reset_mixers(phys_enc);
+-- 
+2.43.0
+

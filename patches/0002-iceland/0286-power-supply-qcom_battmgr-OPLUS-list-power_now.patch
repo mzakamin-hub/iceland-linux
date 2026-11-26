@@ -21,7 +21,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 5e53b1795a6b..4f8d0b2f6826 100644
+index f08f1dee51df4..3c4b1abf9e1e5 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -1426,6 +1426,7 @@ static const enum power_supply_property oplus_bat_props[] = {
@@ -32,3 +32,6 @@ index 5e53b1795a6b..4f8d0b2f6826 100644
  	POWER_SUPPLY_PROP_TEMP,
  	POWER_SUPPLY_PROP_CHARGE_FULL,
  	POWER_SUPPLY_PROP_CHARGE_NOW,
+-- 
+2.43.0
+

@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Loic Poulain <loic.poulain@oss.qualcomm.com>
 Date: Tue, 27 Oct 2026 14:42:13 +0100
-Subject: [PATCH 11/32] misc: fastrpc: fix use-after-free of fastrpc_user in
- dma_buf release
+Subject: [PATCH] misc: fastrpc: fix use-after-free of fastrpc_user in dma_buf
+ release
 
 When a process closes its fastrpc device file descriptor, the release
 function drops the fl refcount via fastrpc_user_put(). If that was the
@@ -42,7 +42,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 4 insertions(+)
 
 diff --git a/drivers/misc/fastrpc.c b/drivers/misc/fastrpc.c
-index ee512b45edd6..706ab142d00e 100644
+index 78628d9a68fbf..a7050db966ee8 100644
 --- a/drivers/misc/fastrpc.c
 +++ b/drivers/misc/fastrpc.c
 @@ -809,8 +809,10 @@ static void fastrpc_unmap_dma_buf(struct dma_buf_attachment *attach,
@@ -69,3 +69,6 @@ index ee512b45edd6..706ab142d00e 100644
  		return err;
  	}
  
+-- 
+2.43.0
+

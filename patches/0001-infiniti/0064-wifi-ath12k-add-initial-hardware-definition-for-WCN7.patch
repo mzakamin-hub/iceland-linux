@@ -16,7 +16,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  4 files changed, 118 insertions(+)
 
 diff --git a/drivers/net/wireless/ath/ath12k/core.h b/drivers/net/wireless/ath/ath12k/core.h
-index 99d71dab7c04..53954886ff43 100644
+index 99d71dab7c04c..53954886ff438 100644
 --- a/drivers/net/wireless/ath/ath12k/core.h
 +++ b/drivers/net/wireless/ath/ath12k/core.h
 @@ -156,6 +156,7 @@ enum ath12k_hw_rev {
@@ -28,7 +28,7 @@ index 99d71dab7c04..53954886ff43 100644
  	ATH12K_HW_IPQ5424_HW10,
  };
 diff --git a/drivers/net/wireless/ath/ath12k/wifi7/hal.c b/drivers/net/wireless/ath/ath12k/wifi7/hal.c
-index a0a1902fb491..744ac7b06b62 100644
+index a0a1902fb4915..744ac7b06b624 100644
 --- a/drivers/net/wireless/ath/ath12k/wifi7/hal.c
 +++ b/drivers/net/wireless/ath/ath12k/wifi7/hal.c
 @@ -43,6 +43,13 @@ static const struct ath12k_hw_version_map ath12k_wifi7_hw_ver_map[] = {
@@ -46,7 +46,7 @@ index a0a1902fb491..744ac7b06b62 100644
  		.hal_ops = &hal_qcc2072_ops,
  		.hal_desc_sz = sizeof(struct hal_rx_desc_qcc2072),
 diff --git a/drivers/net/wireless/ath/ath12k/wifi7/hw.c b/drivers/net/wireless/ath/ath12k/wifi7/hw.c
-index b1c17cc197df..3bd3a233308a 100644
+index b1c17cc197dfd..3bd3a233308a3 100644
 --- a/drivers/net/wireless/ath/ath12k/wifi7/hw.c
 +++ b/drivers/net/wireless/ath/ath12k/wifi7/hw.c
 @@ -723,6 +723,94 @@ static const struct ath12k_hw_params ath12k_wifi7_hw_params[] = {
@@ -145,7 +145,7 @@ index b1c17cc197df..3bd3a233308a 100644
  		.name = "qcc2072 hw1.0",
  		.hw_rev = ATH12K_HW_QCC2072_HW10,
 diff --git a/drivers/net/wireless/ath/ath12k/wifi7/pci.c b/drivers/net/wireless/ath/ath12k/wifi7/pci.c
-index 6c96b52dec13..893474de488d 100644
+index 6c96b52dec131..893474de488db 100644
 --- a/drivers/net/wireless/ath/ath12k/wifi7/pci.c
 +++ b/drivers/net/wireless/ath/ath12k/wifi7/pci.c
 @@ -19,6 +19,7 @@
@@ -191,3 +191,6 @@ index 6c96b52dec13..893474de488d 100644
  	case QCC2072_DEVICE_ID:
  		ab->id.bdf_search = ATH12K_BDF_SEARCH_BUS_AND_BOARD;
  		ab_pci->msi_config = &ath12k_wifi7_msi_config[0];
+-- 
+2.43.0
+

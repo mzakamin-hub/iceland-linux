@@ -31,7 +31,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  3 files changed, 52 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
-index 1e5d891c87db..8be039d5061f 100644
+index 1e5d891c87db2..8be039d5061fc 100644
 --- a/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
 +++ b/drivers/gpu/drm/msm/adreno/a6xx_gpu.h
 @@ -69,6 +69,8 @@ struct a6xx_info {
@@ -44,7 +44,7 @@ index 1e5d891c87db..8be039d5061f 100644
  	u32 bcl_data;
  	u32 max_slices;
 diff --git a/drivers/gpu/drm/msm/adreno/a8xx_catalog.c b/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
-index 01942eed25d9..736bfa12272a 100644
+index 01942eed25d96..736bfa12272a5 100644
 --- a/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
 +++ b/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
 @@ -672,9 +672,33 @@ static const struct adreno_reglist_pipe a840_kgsl_eco_regs[] = {
@@ -90,7 +90,7 @@ index 01942eed25d9..736bfa12272a 100644
  			.bcl_data = (62 << 15) | (75 << 8) | (83 << 1) | 0x1,
  			.pwrup_reglist = &a840_pwrup_reglist,
 diff --git a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
-index 56efa1fdc8d5..4452cd65a677 100644
+index 56efa1fdc8d53..4452cd65a677c 100644
 --- a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
 +++ b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
 @@ -392,8 +392,9 @@ static void a8xx_nonctxt_config(struct msm_gpu *gpu)
@@ -158,3 +158,6 @@ index 56efa1fdc8d5..4452cd65a677 100644
  }
  
  static void a8xx_patch_pwrup_reglist(struct msm_gpu *gpu)
+-- 
+2.43.0
+

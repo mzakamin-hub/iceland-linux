@@ -28,7 +28,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 51 insertions(+)
 
 diff --git a/drivers/gpu/drm/panel/panel-novatek-nt36536.c b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
-index 5fb58b1fbeb1..30eeb21343e1 100644
+index 5fb58b1fbeb1d..30eeb21343e1e 100644
 --- a/drivers/gpu/drm/panel/panel-novatek-nt36536.c
 +++ b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
 @@ -34,6 +34,8 @@ struct novatek {
@@ -131,3 +131,6 @@ index 5fb58b1fbeb1..30eeb21343e1 100644
  	.unprepare = novatek_unprepare,
  	.get_modes = novatek_get_modes,
  };
+-- 
+2.43.0
+

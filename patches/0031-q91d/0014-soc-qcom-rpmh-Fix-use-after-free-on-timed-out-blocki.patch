@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Abel Vesa <abel.vesa@oss.qualcomm.com>
 Date: Mon, 2 Nov 2026 12:46:40 +0200
-Subject: [PATCH 14/27] soc: qcom: rpmh: Fix use-after-free on timed out
- blocking requests
+Subject: [PATCH] soc: qcom: rpmh: Fix use-after-free on timed out blocking
+ requests
 
 rpmh_write(), rpmh_read() and the ACTIVE_ONLY path of rpmh_write_batch()
 hand a request to the RSC controller and wait for it to complete with
@@ -52,7 +52,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  2 files changed, 186 insertions(+), 112 deletions(-)
 
 diff --git a/drivers/soc/qcom/rpmh-internal.h b/drivers/soc/qcom/rpmh-internal.h
-index 39441a25a..9d49b304b 100644
+index 39441a25af9ba..9d49b304ba17d 100644
 --- a/drivers/soc/qcom/rpmh-internal.h
 +++ b/drivers/soc/qcom/rpmh-internal.h
 @@ -8,6 +8,8 @@
@@ -85,7 +85,7 @@ index 39441a25a..9d49b304b 100644
  
  /**
 diff --git a/drivers/soc/qcom/rpmh.c b/drivers/soc/qcom/rpmh.c
-index 360242a31..9c307e959 100644
+index 360242a315e37..9c307e9594bc5 100644
 --- a/drivers/soc/qcom/rpmh.c
 +++ b/drivers/soc/qcom/rpmh.c
 @@ -24,7 +24,7 @@

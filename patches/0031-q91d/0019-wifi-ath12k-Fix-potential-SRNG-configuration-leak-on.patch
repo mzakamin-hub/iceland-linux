@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Guangshuo Li <liguangshuo@mail.sdu.edu.cn>
 Date: Wed, 4 Nov 2026 10:33:44 +0800
-Subject: [PATCH 19/27] wifi: ath12k: Fix potential SRNG configuration leak on
- init failure
+Subject: [PATCH] wifi: ath12k: Fix potential SRNG configuration leak on init
+ failure
 
 If either DMA pointer-buffer allocation fails after the SRNG
 configuration is copied, HAL initialization returns without freeing
@@ -23,7 +23,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/net/wireless/ath/ath12k/hal.c b/drivers/net/wireless/ath/ath12k/hal.c
-index fbe4dc41e..0b931953c 100644
+index fbe4dc41e34ba..0b931953c5dc2 100644
 --- a/drivers/net/wireless/ath/ath12k/hal.c
 +++ b/drivers/net/wireless/ath/ath12k/hal.c
 @@ -745,7 +745,7 @@ int ath12k_hal_srng_init(struct ath12k_base *ab)

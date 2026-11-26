@@ -49,7 +49,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  5 files changed, 86 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/media/platform/qcom/iris/iris_ctrls.c b/drivers/media/platform/qcom/iris/iris_ctrls.c
-index d87fe8bab35b..800a6b3e86ab 100644
+index d87fe8bab35bd..800a6b3e86abf 100644
 --- a/drivers/media/platform/qcom/iris/iris_ctrls.c
 +++ b/drivers/media/platform/qcom/iris/iris_ctrls.c
 @@ -15,6 +15,17 @@
@@ -166,7 +166,7 @@ index d87fe8bab35b..800a6b3e86ab 100644
  {
  	const struct iris_hfi_session_ops *hfi_ops = inst->hfi_session_ops;
 diff --git a/drivers/media/platform/qcom/iris/iris_ctrls.h b/drivers/media/platform/qcom/iris/iris_ctrls.h
-index 08db80744420..055d7bbdf133 100644
+index 08db807444203..055d7bbdf133c 100644
 --- a/drivers/media/platform/qcom/iris/iris_ctrls.h
 +++ b/drivers/media/platform/qcom/iris/iris_ctrls.h
 @@ -14,6 +14,7 @@ struct iris_inst;
@@ -178,7 +178,7 @@ index 08db80744420..055d7bbdf133 100644
  int iris_set_pipe(struct iris_inst *inst, enum platform_inst_fw_cap_type cap_id);
  int iris_set_u32(struct iris_inst *inst, enum platform_inst_fw_cap_type cap_id);
 diff --git a/drivers/media/platform/qcom/iris/iris_hfi_gen2.c b/drivers/media/platform/qcom/iris/iris_hfi_gen2.c
-index 79bbd06ef8d2..945c7ad72ed9 100644
+index 79bbd06ef8d2b..945c7ad72ed99 100644
 --- a/drivers/media/platform/qcom/iris/iris_hfi_gen2.c
 +++ b/drivers/media/platform/qcom/iris/iris_hfi_gen2.c
 @@ -1106,6 +1106,24 @@ static const struct platform_inst_fw_cap inst_fw_cap_sm8550_dec[] = {
@@ -207,7 +207,7 @@ index 79bbd06ef8d2..945c7ad72ed9 100644
  
  static const struct platform_inst_fw_cap inst_fw_cap_sm8550_enc[] = {
 diff --git a/drivers/media/platform/qcom/iris/iris_hfi_gen2_defines.h b/drivers/media/platform/qcom/iris/iris_hfi_gen2_defines.h
-index 2b8b057d35a9..e89ed4075526 100644
+index 2b8b057d35a9b..e89ed4075526b 100644
 --- a/drivers/media/platform/qcom/iris/iris_hfi_gen2_defines.h
 +++ b/drivers/media/platform/qcom/iris/iris_hfi_gen2_defines.h
 @@ -130,6 +130,7 @@ enum hfi_flip {
@@ -219,7 +219,7 @@ index 2b8b057d35a9..e89ed4075526 100644
  #define HFI_PROP_DEC_DEFAULT_HEADER		0x03000168
  #define HFI_PROP_DEC_START_FROM_RAP_FRAME	0x03000169
 diff --git a/drivers/media/platform/qcom/iris/iris_platform_common.h b/drivers/media/platform/qcom/iris/iris_platform_common.h
-index 4751e47505e7..03120cbafbbf 100644
+index 4751e47505e7a..03120cbafbbfd 100644
 --- a/drivers/media/platform/qcom/iris/iris_platform_common.h
 +++ b/drivers/media/platform/qcom/iris/iris_platform_common.h
 @@ -212,6 +212,8 @@ enum platform_inst_fw_cap_type {
@@ -231,3 +231,6 @@ index 4751e47505e7..03120cbafbbf 100644
  	INST_FW_CAP_MAX,
  };
  
+-- 
+2.43.0
+

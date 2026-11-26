@@ -14,7 +14,7 @@ Acked-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
  1 file changed, 13 insertions(+), 288 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/adreno/a8xx_catalog.c b/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
-index bc79013165c1..5f5f71d86df9 100644
+index bc79013165c13..5f5f71d86df93 100644
 --- a/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
 +++ b/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
 @@ -18,58 +18,6 @@
@@ -407,3 +407,6 @@ index bc79013165c1..5f5f71d86df9 100644
 +	BUILD_BUG_ON(milos_protect.count > milos_protect.count_max);
 +	BUILD_BUG_ON(pakala_protect.count > pakala_protect.count_max);
  }
+-- 
+2.43.0
+

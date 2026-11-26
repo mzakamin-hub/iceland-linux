@@ -31,7 +31,7 @@ Reviewed-by: Peter Chen <peter.chen@oss.qualcomm.com>
  1 file changed, 3 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/usb/dwc3/dwc3-qcom.c b/drivers/usb/dwc3/dwc3-qcom.c
-index cb6e828ca7f1..fddad078a214 100644
+index f01280f32a45c..55cd50a9f5cac 100644
 --- a/drivers/usb/dwc3/dwc3-qcom.c
 +++ b/drivers/usb/dwc3/dwc3-qcom.c
 @@ -338,7 +338,7 @@ static bool dwc3_qcom_is_host(struct dwc3_qcom *qcom)
@@ -55,3 +55,6 @@ index cb6e828ca7f1..fddad078a214 100644
  #endif
  	if (!udev)
  		return USB_SPEED_UNKNOWN;
+-- 
+2.43.0
+

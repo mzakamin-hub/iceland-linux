@@ -13,7 +13,7 @@ Signed-off-by: Victor Fuentes <victor@vlinkz.dev>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/clk/qcom/dispcc-kaanapali.c b/drivers/clk/qcom/dispcc-kaanapali.c
-index f8832482bd7a..d4301edde7d3 100644
+index f8832482bd7a1..d4301edde7d3c 100644
 --- a/drivers/clk/qcom/dispcc-kaanapali.c
 +++ b/drivers/clk/qcom/dispcc-kaanapali.c
 @@ -688,7 +688,7 @@ static struct clk_rcg2 disp_cc_mdss_mdp_clk_src = {
@@ -25,3 +25,6 @@ index f8832482bd7a..d4301edde7d3 100644
  	},
  };
  
+-- 
+2.43.0
+

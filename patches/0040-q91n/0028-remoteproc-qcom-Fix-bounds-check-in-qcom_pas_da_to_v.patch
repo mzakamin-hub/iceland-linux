@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Atul Akella <atul.akella@gmail.com>
 Date: Sat, 7 Nov 2026 00:13:09 +0530
-Subject: [PATCH 28/38] remoteproc: qcom: Fix bounds check in
- qcom_pas_da_to_va()
+Subject: [PATCH] remoteproc: qcom: Fix bounds check in qcom_pas_da_to_va()
 
 offset is calculated as da - pas->mem_reloc and stored in a
 32 bit signed int, while da and pas->mem_reloc are both u64.
@@ -36,7 +35,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/remoteproc/qcom_q6v5_pas.c b/drivers/remoteproc/qcom_q6v5_pas.c
-index a1ea271051e2..79fc2a54db17 100644
+index 6c1fc23406084..63981efe3d303 100644
 --- a/drivers/remoteproc/qcom_q6v5_pas.c
 +++ b/drivers/remoteproc/qcom_q6v5_pas.c
 @@ -474,10 +474,12 @@ static int qcom_pas_stop(struct rproc *rproc)

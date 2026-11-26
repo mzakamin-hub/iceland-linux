@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Mon, 2 Nov 2026 09:19:08 +0200
-Subject: [PATCH 25/32] ASoC: qcom: q6apm-dai: allow 32-bit capture
+Subject: [PATCH] ASoC: qcom: q6apm-dai: allow 32-bit capture
 
 Playback front ends accept S32_LE, capture front ends only S16_LE and
 S24_LE. S24_LE is described to the DSP with 24 bits per sample, i.e. as
@@ -19,7 +19,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/sound/soc/qcom/qdsp6/q6apm-dai.c b/sound/soc/qcom/qdsp6/q6apm-dai.c
-index e01d82ca718b..9002acf0e0cd 100644
+index 057cb1e6f8719..9a5d6f5c79f76 100644
 --- a/sound/soc/qcom/qdsp6/q6apm-dai.c
 +++ b/sound/soc/qcom/qdsp6/q6apm-dai.c
 @@ -202,7 +202,8 @@ static const struct snd_pcm_hardware q6apm_dai_hardware_capture = {
@@ -32,3 +32,6 @@ index e01d82ca718b..9002acf0e0cd 100644
  	.rates =                SNDRV_PCM_RATE_8000_48000,
  	.rate_min =             8000,
  	.rate_max =             48000,
+-- 
+2.43.0
+

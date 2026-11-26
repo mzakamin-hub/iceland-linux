@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: mzak <mzak.amin@gmail.com>
 Date: Sat, 7 Nov 2026 00:08:33 +0200
-Subject: [PATCH 2/9] arm64: dts: qcom: kaanapali-oneplus-iceland: QMX CPU
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: QMX CPU
  backstops
 
 Add passive trips at 95 C (5 C hysteresis, 250 ms passive polling) on the
@@ -13,8 +13,6 @@ which throttles the Pad 4 at 90 C; we keep our 95 C.
 Promoted to the default device tree after the q91e opt-in rows passed
 (7 Nov 2026, owner rule: what passes becomes the default).
 
-Suggested-by: Doctor Logix <doctor.logix@gmail.com>
-Based-on: denialwm/linux-perpetua 8bd03159587a (zone set; the 95 C value is ours)
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 Signed-off-by: mzak <mzak.amin@gmail.com>
 ---
@@ -25,7 +23,7 @@ Signed-off-by: mzak <mzak.amin@gmail.com>
 
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland-qmx-optin.dtsi b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland-qmx-optin.dtsi
 new file mode 100644
-index 000000000..b272ea8cc
+index 0000000000000..b272ea8cc428f
 --- /dev/null
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland-qmx-optin.dtsi
 @@ -0,0 +1,159 @@
@@ -189,7 +187,7 @@ index 000000000..b272ea8cc
 +	};
 +};
 diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
-index dad6b0372..1a4e7b462 100644
+index dad6b037249d6..1a4e7b462c768 100644
 --- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 +++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
 @@ -3939,3 +3939,4 @@ smp2p-sleepstate {
