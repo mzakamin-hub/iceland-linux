@@ -1,0 +1,138 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sun, 22 Nov 2026 14:22:52 +0200
+Subject: [PATCH] Revert "drm/msm: lock the resident BOs of a VM_BIND submit
+ last"
+
+This reverts commit 189c0b4831f6 (linux-next f3473658eda3, "drm/msm: lock
+the resident BOs of a VM_BIND submit last") for the iceland kernel.
+
+On the OnePlus Pad 4 (Adreno 840, Mesa 26.3.1 turnip, which always uses
+VM_BIND) it cuts vkmark from 24167 to 8811: the GPU stays 93-96 % busy at
+1200 MHz in every scene and needs about 4.5x more GPU time per frame
+(17-40 us -> 71-150 us). freedreno GL does not use VM_BIND and is
+unchanged. Bisected 22 Nov 2026: q91o-plus2 without the three gpuvm /
+msm two-pass commits 23924, without this commit alone 23167, without
+only the RESV_PROTECTED commit 8863 (+ a drm_gpuvm_exec_pass_needs_split
+warning, as expected: this commit needs it).
+
+The two prerequisites (drm/gpuvm two-pass locking, RESV_PROTECTED for
+VM_BIND VMs) stay: without this user they measured fast.
+
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/msm_gem_submit.c | 84 ++++++----------------------
+ 1 file changed, 18 insertions(+), 66 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/msm_gem_submit.c b/drivers/gpu/drm/msm/msm_gem_submit.c
+index 7220971ef5819..8b9e32ca8445c 100644
+--- a/drivers/gpu/drm/msm/msm_gem_submit.c
++++ b/drivers/gpu/drm/msm/msm_gem_submit.c
+@@ -273,71 +273,6 @@ static int submit_lookup_cmds(struct msm_gem_submit *submit,
+ 	return ret;
+ }
+ 
+-/*
+- * Lock and validate every BO mapped in a VM_BIND VM.  Unlike the legacy path,
+- * where submit_pin_objects() only validates the BOs userspace attached to the
+- * submit, userspace does not tell us which BOs a VM_BIND submit uses, so the
+- * entire VM has to be validated.
+- *
+- * When something is evicted, the locks are taken in two passes.  The early
+- * pass locks only the external objects which need validating, i.e. the
+- * evicted ones, and validates them along with the evicted private objects,
+- * which the VM resv held from the start already covers.  The late pass then
+- * locks the external objects which were resident.  Validation means getting
+- * pages and mapping them, which is slow, and an external object can be shared
+- * with another process, so there is no point in stalling that process on the
+- * resv of a resident BO for the duration of it.  The late pass still
+- * validates, in case one of those BOs got evicted meanwhile.
+- *
+- * Both passes run in the same drm_exec transaction, nothing is unlocked in
+- * between, and they take disjoint sets of objects, so reserving one fence
+- * slot in each reserves it exactly once per object.
+- *
+- * The shrinker cannot evict a BO the early pass is about to validate, nor one
+- * it has validated already: it only evicts a BO after trylocking the resv of
+- * every VM the BO is mapped in, and the VM resv is held throughout.
+- */
+-static int submit_prepare_vm_objects(struct msm_gem_submit *submit)
+-{
+-	struct drm_gpuvm *vm = submit->vm;
+-	struct drm_exec *exec = &submit->exec;
+-	int ret;
+-
+-	ret = drm_gpuvm_prepare_vm(vm, exec, 1);
+-	if (ret)
+-		return ret;
+-
+-	/*
+-	 * With nothing evicted there is no validation to keep the resident
+-	 * objects unlocked for, so do not pay for the second walk.
+-	 */
+-	if (!drm_gpuvm_exec_pass_needs_split(vm)) {
+-		ret = drm_gpuvm_prepare_objects(vm, exec, 1);
+-		if (ret)
+-			return ret;
+-
+-		return drm_gpuvm_validate(vm, exec);
+-	}
+-
+-	ret = drm_gpuvm_exec_pass_prepare_objects(vm, exec, 1,
+-						  DRM_GPUVM_EXEC_PASS_EARLY);
+-	if (ret)
+-		return ret;
+-
+-	ret = drm_gpuvm_exec_pass_validate(vm, exec,
+-					   DRM_GPUVM_EXEC_PASS_EARLY);
+-	if (ret)
+-		return ret;
+-
+-	ret = drm_gpuvm_exec_pass_prepare_objects(vm, exec, 1,
+-						  DRM_GPUVM_EXEC_PASS_LATE);
+-	if (ret)
+-		return ret;
+-
+-	return drm_gpuvm_exec_pass_validate(vm, exec,
+-					    DRM_GPUVM_EXEC_PASS_LATE);
+-}
+-
+ static int submit_lock_objects_vmbind(struct msm_gem_submit *submit)
+ {
+ 	unsigned flags = DRM_EXEC_INTERRUPTIBLE_WAIT | DRM_EXEC_IGNORE_DUPLICATES;
+@@ -348,7 +283,12 @@ static int submit_lock_objects_vmbind(struct msm_gem_submit *submit)
+ 	submit->has_exec = true;
+ 
+ 	drm_exec_until_all_locked (&submit->exec) {
+-		ret = submit_prepare_vm_objects(submit);
++		ret = drm_gpuvm_prepare_vm(submit->vm, exec, 1);
++		drm_exec_retry_on_contention(exec);
++		if (ret)
++			break;
++
++		ret = drm_gpuvm_prepare_objects(submit->vm, exec, 1);
+ 		drm_exec_retry_on_contention(exec);
+ 		if (ret)
+ 			break;
+@@ -863,6 +803,18 @@ int msm_ioctl_gem_submit(struct drm_device *dev, void *data,
+ 
+ 	submit_attach_object_fences(submit);
+ 
++	if (msm_context_is_vmbind(ctx)) {
++		/*
++		 * If we are not using VM_BIND, submit_pin_vmas() will validate
++		 * just the BOs attached to the submit.  In that case we don't
++		 * need to validate the _entire_ vm, because userspace tracked
++		 * what BOs are associated with the submit.
++		 */
++		ret = drm_gpuvm_validate(submit->vm, &submit->exec);
++		if (ret)
++			goto out;
++	}
++
+ 	/* The scheduler owns a ref now: */
+ 	msm_gem_submit_get(submit);
+ 
+-- 
+2.43.0
+

@@ -160,6 +160,7 @@ INFINITI_COMMIT=10650ae7bef447d04eb820bfc0c2d5a98d83e4e2
 # q91o (21 Nov 2026) = the v7.4-rc4 queue + 0041-q91o: 117 upstream / list picks and our fixes (Qualcomm platform bounds and UAF fixes, GICv3 ITS, UFS, msm VM_BIND lifetime, drm_sched / dma-fence, q6apm / LPASS across DSP restart, Bluetooth L2CAP, ath12k, iris, v4l2, dwc3).
 # q91o-plus (21 Nov 2026) = q91o + 0042-q91o-plus: dappermint's iceland-supervooc driver (imported unchanged, never loads by itself) + our gates on top, PCI qcom halt / link-off switches (off), GPU devfreq up-threshold parameter.
 # q91o-plus2 (22 Nov 2026) = q91o-plus + 0043-q91o-plus2: fastrpc, ath12k WoW recovery, SoundWire restart, pmic_glink / dwc3 sleep deferral, wedged GPU, stock-like PD 9 V request, PCIe shutdown L2, io-pgtable contiguous hint, MDSS ACTLR, GMU slumber fixes - each behind a switch that is off by default.
+# q91o-plus3 (22 Nov 2026) = q91o-plus2 + 0044-q91o-plus3: revert of the last-locked resident BOs of a VM_BIND submit.
 
 # Tree hash expected after each series on v7.4-rc4 (scripts/prepare.sh checks them):
 TREE_AFTER_0001_infiniti=ab755f7a527baeef80e230d9552990af430016bb
@@ -205,3 +206,4 @@ TREE_AFTER_0040_q91n=85fbe9c8e2a7453641b8de568452e6982b7e1ff8
 TREE_AFTER_0041_q91o=66973753d873d3ab92f691c6ada93ede1c0568cb
 TREE_AFTER_0042_q91o_plus=bcb3bf3c9cad846538fd316a51ae95b5976d0584
 TREE_AFTER_0043_q91o_plus2=a5bcb11db6891e675c7e8cca6c65cbbc2b5cdca9
+TREE_AFTER_0044_q91o_plus3=575b0b135568532e2edcf533e30ad6c7b78d363e
