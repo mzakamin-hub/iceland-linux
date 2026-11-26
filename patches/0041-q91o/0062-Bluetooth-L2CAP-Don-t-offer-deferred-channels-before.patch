@@ -1,0 +1,92 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
+Date: Fri, 20 Nov 2026 10:48:16 -0500
+Subject: [PATCH 062/117] Bluetooth: L2CAP: Don't offer deferred channels
+ before security is met
+
+A BR/EDR channel is moved to BT_CONNECT2 as soon as the connection
+request is answered as pending, no matter if it is waiting for the
+information exchange, for the link security or for userspace to
+authorize it, and the socket state follows the channel state.
+
+bt_accept_poll() assumes that a child in BT_CONNECT2 of a listener
+using BT_DEFER_SETUP is waiting to be authorized, and
+bt_accept_dequeue() returns any child of such a listener, so although
+the listener is only notified once the security is met, a listener
+that doesn't wait for it can accept() the child and then authorize it
+with recvmsg() while authentication is still pending.
+l2cap_sock_defer() then moves the channel to BT_CONFIG and responds
+with L2CAP_CR_SUCCESS, and if authentication fails afterwards the
+channel is left open since l2cap_security_cfm() doesn't close channels
+in BT_CONFIG.
+
+Fix this by only moving the socket to BT_CONNECT2 when the channel is
+offered to the listener with l2cap_sock_defer_cb(), which is only
+called once the security is met, and by only letting accept() return a
+child of a listener using BT_DEFER_SETUP once it is in BT_CONNECT2, as
+bt_accept_poll() does. The child stays in the accept queue so the
+backlog limit and the cleanup done when the listener is closed are not
+affected.
+
+Fixes: f66dc81f44d9 ("Bluetooth: Add support for deferring L2CAP connection setup")
+Assisted-by: OpenCode:claude-fable-5.2
+Signed-off-by: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1217495; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ net/bluetooth/af_bluetooth.c |  6 +++++-
+ net/bluetooth/l2cap_sock.c   | 10 +++++++++-
+ 2 files changed, 14 insertions(+), 2 deletions(-)
+
+diff --git a/net/bluetooth/af_bluetooth.c b/net/bluetooth/af_bluetooth.c
+index 7758e9ea3848c..103d61d13fbf9 100644
+--- a/net/bluetooth/af_bluetooth.c
++++ b/net/bluetooth/af_bluetooth.c
+@@ -330,8 +330,12 @@ struct sock *bt_accept_dequeue(struct sock *parent, struct socket *newsock)
+ 			continue;
+ 		}
+ 
++		/* With deferred setup only a child in BT_CONNECT2 has been
++		 * offered to the listener, see bt_accept_poll().
++		 */
+ 		if (sk->sk_state == BT_CONNECTED || !newsock ||
+-		    test_bit(BT_SK_DEFER_SETUP, &bt_sk(parent)->flags)) {
++		    (test_bit(BT_SK_DEFER_SETUP, &bt_sk(parent)->flags) &&
++		     sk->sk_state == BT_CONNECT2)) {
+ 			bt_accept_unlink(sk);
+ 			if (newsock)
+ 				sock_graft(sk, newsock);
+diff --git a/net/bluetooth/l2cap_sock.c b/net/bluetooth/l2cap_sock.c
+index 6b65710845dcb..53ae8652087c9 100644
+--- a/net/bluetooth/l2cap_sock.c
++++ b/net/bluetooth/l2cap_sock.c
+@@ -1791,7 +1791,13 @@ static void l2cap_sock_state_change_cb(struct l2cap_chan *chan, int state,
+ 
+ 	lock_sock(sk);
+ 
+-	sk->sk_state = state;
++	/* BT_CONNECT2 also covers a channel still waiting for the information
++	 * exchange or link security. Only l2cap_sock_defer_cb() moves the
++	 * socket to BT_CONNECT2, once the channel can be offered to the
++	 * listener.
++	 */
++	if (state != BT_CONNECT2)
++		sk->sk_state = state;
+ 
+ 	if (err)
+ 		sk->sk_err = err;
+@@ -1859,6 +1865,8 @@ static void l2cap_sock_defer_cb(struct l2cap_chan *chan)
+ 
+ 	lock_sock(sk);
+ 
++	sk->sk_state = BT_CONNECT2;
++
+ 	parent = bt_sk(sk)->parent;
+ 	if (parent)
+ 		parent->sk_data_ready(parent);
+-- 
+2.43.0
+

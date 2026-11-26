@@ -1,0 +1,74 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ian Rogers <irogers@google.com>
+Date: Thu, 19 Nov 2026 09:05:05 -0800
+Subject: [PATCH 088/117] remoteproc: core: Format firmware carveout rsc->name
+ with %.*s
+
+In rproc_handle_carveout(), rsc->name is a 32-byte u8 array inside the
+firmware resource table. It is passed directly as the printf format string
+to both rproc_find_carveout_by_name() and rproc_mem_entry_init() (which
+call vsnprintf() with zero varargs), and printed via "%s" in dev_dbg()
+without verifying NUL termination within sizeof(rsc->name). A malformed or
+corrupt firmware resource table containing '%' specifiers or lacking a NUL
+byte in rsc->name can trigger out-of-bounds reads or invalid vararg stack
+accesses.
+
+Pass "%.*s" bounded by (int)sizeof(rsc->name) at all three sites in
+rproc_handle_carveout().
+
+Found via an x86_64 LLVM=1 (Clang 21.1.8) allyesconfig audit with
+-Wformat-security enabled; fix and changelog drafted with an AI coding
+assistant. Verified with an ASan/UBSan C test and build-tested under
+LLVM=1 W=1 and -Wformat-security; not runtime-tested with remoteproc
+firmware images.
+
+Fixes: 72029c901a02 ("remoteproc: add helper function to allocate and init rproc_mem_entry struct")
+Fixes: ffa5f9c84810 ("remoteproc: modify rproc_handle_carveout to support pre-registered region")
+Signed-off-by: Ian Rogers <irogers@google.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1216412; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/remoteproc/remoteproc_core.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/remoteproc/remoteproc_core.c b/drivers/remoteproc/remoteproc_core.c
+index d5fa9d23bd5cc..50e68b87d9d7d 100644
+--- a/drivers/remoteproc/remoteproc_core.c
++++ b/drivers/remoteproc/remoteproc_core.c
+@@ -839,14 +839,17 @@ static int rproc_handle_carveout(struct rproc *rproc,
+ 		return -EINVAL;
+ 	}
+ 
+-	dev_dbg(dev, "carveout rsc: name: %s, da 0x%x, pa 0x%x, len 0x%x, flags 0x%x\n",
+-		rsc->name, rsc->da, rsc->pa, rsc->len, rsc->flags);
++	dev_dbg(dev, "carveout rsc: name: %.*s, da 0x%x, pa 0x%x, len 0x%x, flags 0x%x\n",
++		(int)sizeof(rsc->name), rsc->name, rsc->da, rsc->pa, rsc->len,
++		rsc->flags);
+ 
+ 	/*
+ 	 * Check carveout rsc already part of a registered carveout,
+ 	 * Search by name, then check the da and length
+ 	 */
+-	carveout = rproc_find_carveout_by_name(rproc, rsc->name);
++	carveout = rproc_find_carveout_by_name(rproc, "%.*s",
++					       (int)sizeof(rsc->name),
++					       rsc->name);
+ 
+ 	if (carveout) {
+ 		if (carveout->rsc_offset != FW_RSC_ADDR_ANY) {
+@@ -868,7 +871,8 @@ static int rproc_handle_carveout(struct rproc *rproc,
+ 	/* Register carveout in list */
+ 	carveout = rproc_mem_entry_init(dev, NULL, 0, rsc->len, rsc->da,
+ 					rproc_alloc_carveout,
+-					rproc_release_carveout, rsc->name);
++					rproc_release_carveout, "%.*s",
++					(int)sizeof(rsc->name), rsc->name);
+ 	if (!carveout) {
+ 		dev_err(dev, "Can't allocate memory entry structure\n");
+ 		return -ENOMEM;
+-- 
+2.43.0
+

@@ -1,0 +1,132 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Zhao Li <enderaoelyther@gmail.com>
+Date: Thu, 19 Nov 2026 15:56:28 +0800
+Subject: [PATCH 066/117] wifi: ath12k: fail the start when a service ready
+ event fails
+
+ath12k_core_start() waits for the service ready handshake, in which the
+firmware sends SERVICE_READY, SERVICE_READY_EXT and, if it supports it,
+SERVICE_READY_EXT2. Only the last of these events completes the wait,
+whenever its own TLVs parse, so the start goes on after an earlier event
+failed (for example, on -ENOMEM or a malformed TLV), with capabilities
+that were only partly extracted. An event that arrives again, even after
+the start, is handled again and rewrites the capabilities under a
+running driver.
+
+Track the next service ready event that this start accepts. Each handler
+takes only its own event in turn, closes the handshake before parsing
+and opens it for the next event only on success. A failed event then
+makes ath12k_wmi_wait_for_service_ready() time out, and any event out of
+turn, including one after the handshake completed, is ignored.
+
+Fixes: d889913205cf ("wifi: ath12k: driver for Qualcomm Wi-Fi 7 devices")
+Cc: stable@vger.kernel.org # needs adjustments for <= 6.12
+Signed-off-by: Zhao Li <enderaoelyther@gmail.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1215825; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/net/wireless/ath/ath12k/wmi.c | 22 +++++++++++++++++++++-
+ drivers/net/wireless/ath/ath12k/wmi.h |  9 +++++++++
+ 2 files changed, 30 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/ath/ath12k/wmi.c b/drivers/net/wireless/ath/ath12k/wmi.c
+index 30ae8f23fe741..8135776e90e62 100644
+--- a/drivers/net/wireless/ath/ath12k/wmi.c
++++ b/drivers/net/wireless/ath/ath12k/wmi.c
+@@ -732,6 +732,11 @@ static int ath12k_service_ready_event(struct ath12k_base *ab, struct sk_buff *sk
+ 	struct ath12k_wmi_svc_ready_parse svc_ready = { };
+ 	int ret;
+ 
++	if (ab->wmi_ab.svc_rdy_next != ATH12K_WMI_SVC_RDY)
++		return -EPROTO;
++
++	ab->wmi_ab.svc_rdy_next = ATH12K_WMI_SVC_RDY_NONE;
++
+ 	ret = ath12k_wmi_tlv_iter(ab, skb->data, skb->len,
+ 				  ath12k_wmi_svc_rdy_parse,
+ 				  &svc_ready);
+@@ -740,6 +745,8 @@ static int ath12k_service_ready_event(struct ath12k_base *ab, struct sk_buff *sk
+ 		return ret;
+ 	}
+ 
++	ab->wmi_ab.svc_rdy_next = ATH12K_WMI_SVC_RDY_EXT;
++
+ 	return 0;
+ }
+ 
+@@ -5234,6 +5241,11 @@ static int ath12k_service_ready_ext_event(struct ath12k_base *ab,
+ 	struct ath12k_wmi_svc_rdy_ext_parse svc_rdy_ext = { };
+ 	int ret;
+ 
++	if (ab->wmi_ab.svc_rdy_next != ATH12K_WMI_SVC_RDY_EXT)
++		return -EPROTO;
++
++	ab->wmi_ab.svc_rdy_next = ATH12K_WMI_SVC_RDY_NONE;
++
+ 	ret = ath12k_wmi_tlv_iter(ab, skb->data, skb->len,
+ 				  ath12k_wmi_svc_rdy_ext_parse,
+ 				  &svc_rdy_ext);
+@@ -5242,7 +5254,9 @@ static int ath12k_service_ready_ext_event(struct ath12k_base *ab,
+ 		goto err;
+ 	}
+ 
+-	if (!test_bit(WMI_TLV_SERVICE_EXT2_MSG, ab->wmi_ab.svc_map))
++	if (test_bit(WMI_TLV_SERVICE_EXT2_MSG, ab->wmi_ab.svc_map))
++		ab->wmi_ab.svc_rdy_next = ATH12K_WMI_SVC_RDY_EXT2;
++	else
+ 		complete(&ab->wmi_ab.service_ready);
+ 
+ 	kfree(svc_rdy_ext.mac_phy_caps);
+@@ -5957,6 +5971,11 @@ static int ath12k_service_ready_ext2_event(struct ath12k_base *ab,
+ 	struct ath12k_wmi_svc_rdy_ext2_parse svc_rdy_ext2 = { };
+ 	int ret;
+ 
++	if (ab->wmi_ab.svc_rdy_next != ATH12K_WMI_SVC_RDY_EXT2)
++		return -EPROTO;
++
++	ab->wmi_ab.svc_rdy_next = ATH12K_WMI_SVC_RDY_NONE;
++
+ 	ret = ath12k_wmi_tlv_iter(ab, skb->data, skb->len,
+ 				  ath12k_wmi_svc_rdy_ext2_parse,
+ 				  &svc_rdy_ext2);
+@@ -10874,6 +10893,7 @@ int ath12k_wmi_attach(struct ath12k_base *ab)
+ 	/* TODO: Init remaining wmi soc resources required */
+ 	init_completion(&ab->wmi_ab.service_ready);
+ 	init_completion(&ab->wmi_ab.unified_ready);
++	ab->wmi_ab.svc_rdy_next = ATH12K_WMI_SVC_RDY;
+ 
+ 	return 0;
+ }
+diff --git a/drivers/net/wireless/ath/ath12k/wmi.h b/drivers/net/wireless/ath/ath12k/wmi.h
+index dd287723a33bf..7757dad972e58 100644
+--- a/drivers/net/wireless/ath/ath12k/wmi.h
++++ b/drivers/net/wireless/ath/ath12k/wmi.h
+@@ -5426,6 +5426,13 @@ struct ath12k_hw_mode_info {
+ 							    [MAX_RADIOS];
+ };
+ 
++enum ath12k_wmi_svc_rdy {
++	ATH12K_WMI_SVC_RDY_NONE,
++	ATH12K_WMI_SVC_RDY,
++	ATH12K_WMI_SVC_RDY_EXT,
++	ATH12K_WMI_SVC_RDY_EXT2,
++};
++
+ struct ath12k_wmi_base {
+ 	struct ath12k_base *ab;
+ 	struct ath12k_wmi_pdev wmi[MAX_RADIOS];
+@@ -5434,6 +5441,8 @@ struct ath12k_wmi_base {
+ 
+ 	struct completion service_ready;
+ 	struct completion unified_ready;
++	/* Next service ready event this start accepts */
++	enum ath12k_wmi_svc_rdy svc_rdy_next;
+ 	DECLARE_BITMAP(svc_map, WMI_MAX_EXT2_SERVICE);
+ 	wait_queue_head_t tx_credits_wq;
+ 	u32 num_mem_chunks;
+-- 
+2.43.0
+

@@ -1,0 +1,63 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Loic Poulain <loic.poulain@oss.qualcomm.com>
+Date: Tue, 17 Nov 2026 11:46:55 +0100
+Subject: [PATCH 078/117] media: qcom: iris: venc: reject encoder crop
+ rectangles larger than the source
+
+iris_venc_s_selection() bounded the V4L2_SEL_TGT_CROP rectangle by
+inst->fmt_src, the padded buffer geometry, instead of the visible
+resolution in enc_raw_width and enc_raw_height. fmt_src is rounded up, so
+userspace could set a crop larger than the frame it submits.
+
+iris_hfi_gen2_set_crop_offsets() then underflows
+
+	bottom_offset = inst->enc_raw_height - inst->crop.height;
+
+and the encode fails silently. All ioctls succeed and the EOS event is
+delivered, but the encoder produces no data and nothing is logged.
+
+Bound the rectangle by enc_raw_* instead.
+
+  v4l2-ctl -d /dev/video1 \
+      --set-fmt-video-out=width=1280,height=720,pixelformat=NV12 \
+      --set-selection-output=target=crop,width=1280,height=730 \
+      --stream-mmap --stream-out-mmap --stream-count=30 \
+      --stream-to=out.h264
+
+Before, 1280x730 is accepted because fmt_src is 1280x736, and out.h264 is
+0 bytes. After:
+
+  VIDIOC_S_SELECTION: failed: Invalid argument
+
+Rectangles within the source, like 1280x704 and 640x360, are still
+accepted.
+
+Fixes: d9967fa37ca9 ("media: qcom: iris: Improve format alignment for encoder")
+Signed-off-by: Loic Poulain <loic.poulain@oss.qualcomm.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1213751; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/media/platform/qcom/iris/iris_venc.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_venc.c b/drivers/media/platform/qcom/iris/iris_venc.c
+index 23b7088ad6e46..bf2227462c9f6 100644
+--- a/drivers/media/platform/qcom/iris/iris_venc.c
++++ b/drivers/media/platform/qcom/iris/iris_venc.c
+@@ -379,8 +379,8 @@ int iris_venc_s_selection(struct iris_inst *inst, struct v4l2_selection *s)
+ 		s->r.left = 0;
+ 		s->r.top = 0;
+ 
+-		if (s->r.width > inst->fmt_src->fmt.pix_mp.width ||
+-		    s->r.height > inst->fmt_src->fmt.pix_mp.height)
++		if (s->r.width > inst->enc_raw_width ||
++		    s->r.height > inst->enc_raw_height)
+ 			return -EINVAL;
+ 
+ 		inst->crop.left = s->r.left;
+-- 
+2.43.0
+

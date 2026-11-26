@@ -1,0 +1,67 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 21:45:31 +0200
+Subject: [PATCH 086/117] media: iris: print the firmware failure reason on a
+ system error
+
+On a fatal error the firmware writes a short text reason (source file,
+line, firmware version) into the SFR buffer that the driver allocates and
+passes to it, after the size word the driver stores at its start. The
+gen2 system error handler only prints the packet type, so the reason is
+lost.
+
+Print the text, bounded by the buffer size since the firmware does not
+necessarily terminate it, and only when the firmware wrote something.
+
+Idea from Reixo0's commit 19da0a2509bc ("media: iris: print the firmware's
+failure reason on a system error") in github Reixo0/linux (no
+Signed-off-by); re-implemented.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ .../qcom/iris/iris_hfi_gen2_response.c        | 21 +++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c b/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
+index 7b0ffe28e77a5..dc8aab5c753b6 100644
+--- a/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
++++ b/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
+@@ -270,6 +270,25 @@ static int iris_hfi_gen2_handle_session_error(struct iris_inst *inst,
+ 	return 0;
+ }
+ 
++/*
++ * The firmware leaves a text reason for a fatal error (source file, line and
++ * firmware version) in the SFR buffer, after the size word the driver writes
++ * at its start. The text is not necessarily terminated, so bound it.
++ */
++static void iris_hfi_gen2_print_sfr(struct iris_core *core)
++{
++	const char *reason;
++	size_t len;
++
++	if (!core->sfr_vaddr)
++		return;
++
++	reason = (const char *)core->sfr_vaddr + sizeof(u32);
++	len = strnlen(reason, SFR_SIZE - sizeof(u32));
++	if (len)
++		dev_err(core->dev, "firmware failure reason: %.*s\n", (int)len, reason);
++}
++
+ static int iris_hfi_gen2_handle_system_error(struct iris_core *core,
+ 					     struct iris_hfi_packet *pkt)
+ {
+@@ -278,6 +297,8 @@ static int iris_hfi_gen2_handle_system_error(struct iris_core *core,
+ 	if (pkt)
+ 		dev_err(core->dev, "received system error of type %#x\n", pkt->type);
+ 
++	iris_hfi_gen2_print_sfr(core);
++
+ 	core->state = IRIS_CORE_ERROR;
+ 
+ 	mutex_lock(&core->lock);
+-- 
+2.43.0
+

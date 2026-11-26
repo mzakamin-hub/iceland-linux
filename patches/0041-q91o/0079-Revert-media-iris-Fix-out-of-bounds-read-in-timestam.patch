@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 21:44:57 +0200
+Subject: [PATCH 079/117] Revert "media: iris: Fix out-of-bounds read in
+ timestamp metadata fallback"
+
+Replaced by the list's v2 of the same fix (patchwork series 1213804), which
+takes a different approach; the two must never be carried together.
+
+This reverts commit 07761a95be09 (our pick of v1, media: iris: Fix out-of-bounds read in timestamp metadata fallback).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/media/platform/qcom/iris/iris_buffer.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_buffer.c b/drivers/media/platform/qcom/iris/iris_buffer.c
+index 67384e9480282..c32706a1ca30e 100644
+--- a/drivers/media/platform/qcom/iris/iris_buffer.c
++++ b/drivers/media/platform/qcom/iris/iris_buffer.c
+@@ -865,11 +865,9 @@ static void iris_get_ts_metadata(struct iris_inst *inst, u64 timestamp_ns,
+ 		return;
+ 	}
+ 
+-	i = inst->metadata_idx ? inst->metadata_idx - 1 : 0;
+-
+ 	vbuf->flags &= ~mask;
+-	vbuf->flags |= inst->tss[i].flags;
+-	vbuf->timecode = inst->tss[i].tc;
++	vbuf->flags |= inst->tss[inst->metadata_idx].flags;
++	vbuf->timecode = inst->tss[inst->metadata_idx].tc;
+ }
+ 
+ int iris_vb2_buffer_done(struct iris_inst *inst, struct iris_buffer *buf)
+-- 
+2.43.0
+

@@ -1,0 +1,275 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Tue, 17 Nov 2026 16:21:24 +0100
+Subject: [PATCH 075/117] media: qcom: iris: venc: drop operating rate to match
+ spec
+
+Per the V4L2 Stateful Video Encoder UAPI documentation:
+  Set the raw frame interval on the OUTPUT queue via VIDIOC_S_PARM().
+  This also sets the coded frame interval on the CAPTURE queue to the same value.
+
+This implies setting the frame interval on the OUTPUT queue _should_ be
+supported as a single operation, and setting the frame interval on the
+CAPTURE queue can be considered as optional since the S_PARM on
+the OUTPUT queue will set the same frame interval on the CAPTURE
+queue.
+
+The current iris implementation maps:
+ - inst->operating_rate to OUTPUT
+ - inst->frame_rate to CAPTURE
+
+Only inst->frame_rate is set to the firmware, and inst->operating_rate
+is used in combination with inst->frame_rate to calculate
+the entire iris bandwidth in iris_check_core_mbps() plus
+returing the frame interval with G_PARM on the CAPTURE queue.
+
+So per the Documentation, the two major V4L2 Stateful Video Encoder
+client implementation (FFMpeg & GStreamer) only calls S_PARM
+on the OUTPUT queue, leaving inst->frame_rate to DEFAULT_FPS,
+and only setting inst->operating_rate.
+
+Since inst->operating_rate is currently useless and breaks the
+conformance, let's just remove operating_rate entirely
+and just set inst->frame_rate only with S_PARM on the OUTPUT
+queue.
+
+The two rate variables were probably added to allow scaling
+the iris OPP to allow faster encode speed, but wasn't yet
+properly implemented and breaks the S_PARM compliance.
+
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1214008; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ .../media/platform/qcom/iris/iris_instance.h  |  2 -
+ .../platform/qcom/iris/iris_platform_common.h |  1 -
+ .../platform/qcom/iris/iris_platform_milos.h  |  1 -
+ .../qcom/iris/iris_platform_qcs8300.h         |  1 -
+ .../platform/qcom/iris/iris_platform_sm8550.h |  1 -
+ .../platform/qcom/iris/iris_platform_vpu2.c   |  1 -
+ .../qcom/iris/iris_platform_vpu_ar50lt.c      |  1 -
+ drivers/media/platform/qcom/iris/iris_utils.c |  8 ++-
+ drivers/media/platform/qcom/iris/iris_venc.c  | 53 ++++++-------------
+ 9 files changed, 18 insertions(+), 51 deletions(-)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_instance.h b/drivers/media/platform/qcom/iris/iris_instance.h
+index 771269e705d98..8eaeae5aff5f2 100644
+--- a/drivers/media/platform/qcom/iris/iris_instance.h
++++ b/drivers/media/platform/qcom/iris/iris_instance.h
+@@ -59,7 +59,6 @@ struct iris_hfi_session_ops;
+  * @last_buf_ns: start time of received input buffer for current one second FPS window
+  * @frame_counter: input buffer counter for current one second FPS window
+  * @frame_rate: frame rate of current instance
+- * @operating_rate: operating rate of current instance
+  * @hfi_rc_type: rate control type
+  * @enc_raw_width: source image width for encoder instance
+  * @enc_raw_height: source image height for encoder instance
+@@ -107,7 +106,6 @@ struct iris_inst {
+ 	u64				last_buf_ns;
+ 	u32				frame_counter;
+ 	u32				frame_rate;
+-	u32				operating_rate;
+ 	u32				hfi_rc_type;
+ 	u32				enc_raw_width;
+ 	u32				enc_raw_height;
+diff --git a/drivers/media/platform/qcom/iris/iris_platform_common.h b/drivers/media/platform/qcom/iris/iris_platform_common.h
+index 85ed9283554f7..42e95e7566505 100644
+--- a/drivers/media/platform/qcom/iris/iris_platform_common.h
++++ b/drivers/media/platform/qcom/iris/iris_platform_common.h
+@@ -124,7 +124,6 @@ struct platform_inst_caps {
+ 	u32 mb_cycles_fw;
+ 	u32 mb_cycles_fw_vpp;
+ 	u32 max_frame_rate;
+-	u32 max_operating_rate;
+ };
+ 
+ enum platform_inst_fw_cap_type {
+diff --git a/drivers/media/platform/qcom/iris/iris_platform_milos.h b/drivers/media/platform/qcom/iris/iris_platform_milos.h
+index 8a45a4aa9e867..e92dac9723895 100644
+--- a/drivers/media/platform/qcom/iris/iris_platform_milos.h
++++ b/drivers/media/platform/qcom/iris/iris_platform_milos.h
+@@ -21,7 +21,6 @@ static struct platform_inst_caps platform_inst_cap_milos = {
+ 	.mb_cycles_vsp = 25,
+ 	.mb_cycles_vpp = 200,
+ 	.max_frame_rate = MILOS_MAXIMUM_FPS,
+-	.max_operating_rate = MILOS_MAXIMUM_FPS,
+ };
+ 
+ #endif
+diff --git a/drivers/media/platform/qcom/iris/iris_platform_qcs8300.h b/drivers/media/platform/qcom/iris/iris_platform_qcs8300.h
+index 3cfecae80d1e9..5cab6df0115c2 100644
+--- a/drivers/media/platform/qcom/iris/iris_platform_qcs8300.h
++++ b/drivers/media/platform/qcom/iris/iris_platform_qcs8300.h
+@@ -16,7 +16,6 @@ static struct platform_inst_caps platform_inst_cap_qcs8300 = {
+ 	.mb_cycles_fw = 326389,
+ 	.mb_cycles_fw_vpp = 44156,
+ 	.max_frame_rate = MAXIMUM_FPS,
+-	.max_operating_rate = MAXIMUM_FPS,
+ };
+ 
+ #endif
+diff --git a/drivers/media/platform/qcom/iris/iris_platform_sm8550.h b/drivers/media/platform/qcom/iris/iris_platform_sm8550.h
+index 3c9dae995bb24..46fed17b611e0 100644
+--- a/drivers/media/platform/qcom/iris/iris_platform_sm8550.h
++++ b/drivers/media/platform/qcom/iris/iris_platform_sm8550.h
+@@ -24,7 +24,6 @@ static struct platform_inst_caps platform_inst_cap_sm8550 = {
+ 	.mb_cycles_fw = 489583,
+ 	.mb_cycles_fw_vpp = 66234,
+ 	.max_frame_rate = MAXIMUM_FPS,
+-	.max_operating_rate = MAXIMUM_FPS,
+ };
+ 
+ #endif
+diff --git a/drivers/media/platform/qcom/iris/iris_platform_vpu2.c b/drivers/media/platform/qcom/iris/iris_platform_vpu2.c
+index becbe37765449..e31f27fa6a154 100644
+--- a/drivers/media/platform/qcom/iris/iris_platform_vpu2.c
++++ b/drivers/media/platform/qcom/iris/iris_platform_vpu2.c
+@@ -58,7 +58,6 @@ static struct platform_inst_caps platform_inst_cap_vpu2 = {
+ 	.mb_cycles_vsp = 25,
+ 	.mb_cycles_vpp = 200,
+ 	.max_frame_rate = MAXIMUM_FPS,
+-	.max_operating_rate = MAXIMUM_FPS,
+ };
+ 
+ static const struct icc_info iris_icc_info_vpu2[] = {
+diff --git a/drivers/media/platform/qcom/iris/iris_platform_vpu_ar50lt.c b/drivers/media/platform/qcom/iris/iris_platform_vpu_ar50lt.c
+index 43460b82ae77a..aebda855a5497 100644
+--- a/drivers/media/platform/qcom/iris/iris_platform_vpu_ar50lt.c
++++ b/drivers/media/platform/qcom/iris/iris_platform_vpu_ar50lt.c
+@@ -80,7 +80,6 @@ static struct platform_inst_caps platform_inst_cap_ar50lt = {
+ 	.mb_cycles_fw = 733003,
+ 	.mb_cycles_fw_vpp = 225975,
+ 	.max_frame_rate = 120,
+-	.max_operating_rate = 120,
+ };
+ 
+ const struct iris_platform_data qcm2290_data = {
+diff --git a/drivers/media/platform/qcom/iris/iris_utils.c b/drivers/media/platform/qcom/iris/iris_utils.c
+index 1096cc4b01c36..6384b4a438b6e 100644
+--- a/drivers/media/platform/qcom/iris/iris_utils.c
++++ b/drivers/media/platform/qcom/iris/iris_utils.c
+@@ -128,13 +128,11 @@ int iris_check_core_mbps(struct iris_inst *inst)
+ {
+ 	struct iris_core *core = inst->core;
+ 	struct iris_inst *instance;
+-	u32 total_mbps = 0, fps = 0;
++	u32 total_mbps = 0;
+ 
+ 	mutex_lock(&core->lock);
+-	list_for_each_entry(instance, &core->instances, list) {
+-		fps = max(instance->frame_rate, instance->operating_rate);
+-		total_mbps += iris_get_mbpf(instance) * fps;
+-	}
++	list_for_each_entry(instance, &core->instances, list)
++		total_mbps += iris_get_mbpf(instance) * instance->frame_rate;
+ 	mutex_unlock(&core->lock);
+ 
+ 	if (total_mbps > core->iris_platform_data->max_core_mbps)
+diff --git a/drivers/media/platform/qcom/iris/iris_venc.c b/drivers/media/platform/qcom/iris/iris_venc.c
+index 2f2c56bf9122c..0db6ed1056bf6 100644
+--- a/drivers/media/platform/qcom/iris/iris_venc.c
++++ b/drivers/media/platform/qcom/iris/iris_venc.c
+@@ -66,7 +66,6 @@ int iris_venc_inst_init(struct iris_inst *inst)
+ 	inst->crop.width = DEFAULT_WIDTH;
+ 	inst->crop.height = DEFAULT_HEIGHT;
+ 
+-	inst->operating_rate = DEFAULT_FPS;
+ 	inst->frame_rate = DEFAULT_FPS;
+ 
+ 	inst->enc_raw_width = DEFAULT_WIDTH;
+@@ -396,24 +395,17 @@ int iris_venc_s_param(struct iris_inst *inst, struct v4l2_streamparm *s_parm)
+ {
+ 	struct platform_inst_caps *caps = inst->core->iris_platform_data->inst_caps;
+ 	struct vb2_queue *src_q = v4l2_m2m_get_src_vq(inst->m2m_ctx);
+-	struct vb2_queue *dst_q = v4l2_m2m_get_dst_vq(inst->m2m_ctx);
+ 	struct v4l2_fract *timeperframe = NULL;
+ 	u32 default_rate = DEFAULT_FPS;
+-	bool is_frame_rate = false;
+-	u32 fps, max_rate;
++	u32 fps;
+ 
+ 	int ret = 0;
+ 
+-	if (s_parm->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
+-		timeperframe = &s_parm->parm.output.timeperframe;
+-		max_rate = caps->max_operating_rate;
+-		s_parm->parm.output.capability = V4L2_CAP_TIMEPERFRAME;
+-	} else {
+-		timeperframe = &s_parm->parm.capture.timeperframe;
+-		is_frame_rate = true;
+-		max_rate = caps->max_frame_rate;
+-		s_parm->parm.capture.capability = V4L2_CAP_TIMEPERFRAME;
+-	}
++	if (s_parm->type != V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
++		return -EINVAL;
++
++	timeperframe = &s_parm->parm.output.timeperframe;
++	s_parm->parm.output.capability = V4L2_CAP_TIMEPERFRAME;
+ 
+ 	if (!timeperframe->denominator || !timeperframe->numerator) {
+ 		if (!timeperframe->numerator)
+@@ -426,18 +418,14 @@ int iris_venc_s_param(struct iris_inst *inst, struct v4l2_streamparm *s_parm)
+ 	if (!fps)
+ 		return -EINVAL;
+ 
+-	if (fps > max_rate) {
++	if (fps > caps->max_frame_rate) {
+ 		ret = -ENOMEM;
+ 		goto reset_rate;
+ 	}
+ 
+-	if (is_frame_rate)
+-		inst->frame_rate = fps;
+-	else
+-		inst->operating_rate = fps;
++	inst->frame_rate = fps;
+ 
+-	if ((s_parm->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE && vb2_is_streaming(src_q)) ||
+-	    (s_parm->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE && vb2_is_streaming(dst_q))) {
++	if (vb2_is_streaming(src_q)) {
+ 		ret = iris_check_core_mbpf(inst);
+ 		if (ret)
+ 			goto reset_rate;
+@@ -449,12 +437,8 @@ int iris_venc_s_param(struct iris_inst *inst, struct v4l2_streamparm *s_parm)
+ 	return 0;
+ 
+ reset_rate:
+-	if (ret) {
+-		if (is_frame_rate)
+-			inst->frame_rate = default_rate;
+-		else
+-			inst->operating_rate = default_rate;
+-	}
++	if (ret)
++		inst->frame_rate = default_rate;
+ 
+ 	return ret;
+ }
+@@ -463,17 +447,10 @@ int iris_venc_g_param(struct iris_inst *inst, struct v4l2_streamparm *s_parm)
+ {
+ 	struct v4l2_fract *timeperframe = NULL;
+ 
+-	if (s_parm->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
+-		timeperframe = &s_parm->parm.output.timeperframe;
+-		timeperframe->numerator = 1;
+-		timeperframe->denominator = inst->operating_rate;
+-		s_parm->parm.output.capability = V4L2_CAP_TIMEPERFRAME;
+-	} else {
+-		timeperframe = &s_parm->parm.capture.timeperframe;
+-		timeperframe->numerator = 1;
+-		timeperframe->denominator = inst->frame_rate;
+-		s_parm->parm.capture.capability = V4L2_CAP_TIMEPERFRAME;
+-	}
++	timeperframe = &s_parm->parm.output.timeperframe;
++	timeperframe->numerator = 1;
++	timeperframe->denominator = inst->frame_rate;
++	s_parm->parm.output.capability = V4L2_CAP_TIMEPERFRAME;
+ 
+ 	return 0;
+ }
+-- 
+2.43.0
+

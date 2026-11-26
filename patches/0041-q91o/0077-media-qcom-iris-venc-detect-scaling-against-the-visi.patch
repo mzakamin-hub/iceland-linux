@@ -1,0 +1,74 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Loic Poulain <loic.poulain@oss.qualcomm.com>
+Date: Tue, 17 Nov 2026 11:46:54 +0100
+Subject: [PATCH 077/117] media: qcom: iris: venc: detect scaling against the
+ visible resolution
+
+iris_venc_s_fmt_output() decides whether the session scales by comparing
+the requested coded size against inst->fmt_src, the padded buffer
+geometry, while enc_scale_* is relative to the visible resolution in
+enc_raw_*. A 1280x720 session that sets the same 1280x720 on the CAPTURE
+queue is therefore taken for a 736 -> 720 downscale.
+
+Compare against enc_raw_* instead. iris_venc_s_fmt_input() has to seed
+fmt_dst from the visible size too, otherwise the internal S_FMT it issues
+on the CAPTURE queue hits the same mismatch. The encoder does not use
+fmt_dst for stride programming.
+
+Seeding fmt_dst from the visible size also means the codec alignment has
+to be applied on every path and not only when scaling, so that the
+CAPTURE queue keeps reporting the coded size. For 1920x1080 that is 1088,
+and the firmware signals the visible 1080 with SPS frame cropping.
+
+Fixes: d9967fa37ca9 ("media: qcom: iris: Improve format alignment for encoder")
+Signed-off-by: Loic Poulain <loic.poulain@oss.qualcomm.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1213751; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/media/platform/qcom/iris/iris_venc.c | 16 ++++++++++------
+ 1 file changed, 10 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_venc.c b/drivers/media/platform/qcom/iris/iris_venc.c
+index f897d0f29bc65..23b7088ad6e46 100644
+--- a/drivers/media/platform/qcom/iris/iris_venc.c
++++ b/drivers/media/platform/qcom/iris/iris_venc.c
+@@ -239,14 +239,18 @@ static int iris_venc_s_fmt_output(struct iris_inst *inst, struct v4l2_format *f)
+ 	 * If output format size != input format size,
+ 	 * it is considered a scaling case,
+ 	 * and the scaled size needs to be saved.
++	 * Compare against the visible source resolution.
+ 	 */
+-	if (f->fmt.pix_mp.width != inst->fmt_src->fmt.pix_mp.width ||
+-	    f->fmt.pix_mp.height != inst->fmt_src->fmt.pix_mp.height) {
++	if (f->fmt.pix_mp.width != inst->enc_raw_width ||
++	    f->fmt.pix_mp.height != inst->enc_raw_height) {
+ 		inst->enc_scale_width = f->fmt.pix_mp.width;
+ 		inst->enc_scale_height = f->fmt.pix_mp.height;
+-		fmt->fmt.pix_mp.width = ALIGN(f->fmt.pix_mp.width, codec_align);
+-		fmt->fmt.pix_mp.height = ALIGN(f->fmt.pix_mp.height, codec_align);
+ 	}
++
++	/* The CAPTURE queue reports the coded size, in whole macroblocks. */
++	fmt->fmt.pix_mp.width = ALIGN(f->fmt.pix_mp.width, codec_align);
++	fmt->fmt.pix_mp.height = ALIGN(f->fmt.pix_mp.height, codec_align);
++
+ 	fmt->fmt.pix_mp.num_planes = 1;
+ 	fmt->fmt.pix_mp.plane_fmt[0].bytesperline = 0;
+ 	fmt->fmt.pix_mp.plane_fmt[0].sizeimage = iris_get_buffer_size(inst, BUF_OUTPUT);
+@@ -292,8 +296,8 @@ static int iris_venc_s_fmt_input(struct iris_inst *inst, struct v4l2_format *f)
+ 	fmt->fmt.pix_mp.quantization = f->fmt.pix_mp.quantization;
+ 
+ 	output_fmt = inst->fmt_dst;
+-	output_fmt->fmt.pix_mp.width = fmt->fmt.pix_mp.width;
+-	output_fmt->fmt.pix_mp.height = fmt->fmt.pix_mp.height;
++	output_fmt->fmt.pix_mp.width = f->fmt.pix_mp.width;
++	output_fmt->fmt.pix_mp.height = f->fmt.pix_mp.height;
+ 	output_fmt->fmt.pix_mp.colorspace = fmt->fmt.pix_mp.colorspace;
+ 	output_fmt->fmt.pix_mp.xfer_func = fmt->fmt.pix_mp.xfer_func;
+ 	output_fmt->fmt.pix_mp.ycbcr_enc = fmt->fmt.pix_mp.ycbcr_enc;
+-- 
+2.43.0
+

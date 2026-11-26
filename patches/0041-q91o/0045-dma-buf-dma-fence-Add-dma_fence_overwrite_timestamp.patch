@@ -1,0 +1,82 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Philipp Stanner <phasta@kernel.org>
+Date: Thu, 19 Nov 2026 14:18:30 +0100
+Subject: [PATCH 045/117] dma-buf: dma-fence: Add
+ dma_fence_overwrite_timestamp()
+
+A fence's timestamp is just an opportunistic data point for debugging
+information etc. drm_sched, for example, uses the timestamps for its
+scheduling algorithms.
+
+In rare situations it can make sense to allow users to overwrite a
+timestamp with a more accurate value. This is relatively harmless since
+the timestamp has no meaning for the implementation itself.
+
+Add dma_fence_overwrite_timestamp().
+
+Cc: stable@vger.kernel.org
+Signed-off-by: Philipp Stanner <phasta@kernel.org>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1216171; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/dma-buf/dma-fence.c | 28 ++++++++++++++++++++++++++++
+ include/linux/dma-fence.h   |  1 +
+ 2 files changed, 29 insertions(+)
+
+diff --git a/drivers/dma-buf/dma-fence.c b/drivers/dma-buf/dma-fence.c
+index bd58688b81a72..f1b7e90864bfb 100644
+--- a/drivers/dma-buf/dma-fence.c
++++ b/drivers/dma-buf/dma-fence.c
+@@ -412,6 +412,34 @@ void dma_fence_signal_timestamp(struct dma_fence *fence, ktime_t timestamp)
+ }
+ EXPORT_SYMBOL(dma_fence_signal_timestamp);
+ 
++/**
++ * dma_fence_overwrite_timestamp - overwrite a fence's timestamp
++ * @fence: the fence whose timestamp shall be overwritten
++ * @timestamp: the timestamp
++ *
++ * A dma_fence's timestamp is merely an opportunistically evaluated value to
++ * obtain information such as scheduling granularity. In some situations it can
++ * make sense to overwrite with a custom value. This function provides said
++ * functionality with the correct memory ordering.
++ *
++ * Return: 0 on success, -EAGAIN if the fence was not yet signaled.
++ */
++int dma_fence_overwrite_timestamp(struct dma_fence *fence, ktime_t timestamp)
++{
++	unsigned long flags;
++	int ret = 0;
++
++	dma_fence_lock_irqsave(fence, flags);
++	if (dma_fence_test_signaled_flag(fence))
++		fence->timestamp = timestamp;
++	else
++		ret = -EAGAIN;
++	dma_fence_unlock_irqrestore(fence, flags);
++
++	return ret;
++}
++EXPORT_SYMBOL(dma_fence_overwrite_timestamp);
++
+ /**
+  * dma_fence_signal_locked - signal completion of a fence
+  * @fence: the fence to signal
+diff --git a/include/linux/dma-fence.h b/include/linux/dma-fence.h
+index 34aefb63a7fe8..815471b844f05 100644
+--- a/include/linux/dma-fence.h
++++ b/include/linux/dma-fence.h
+@@ -447,6 +447,7 @@ bool dma_fence_check_and_signal_locked(struct dma_fence *fence);
+ void dma_fence_signal_locked(struct dma_fence *fence);
+ void dma_fence_signal_timestamp(struct dma_fence *fence, ktime_t timestamp);
+ void dma_fence_signal_timestamp_locked(struct dma_fence *fence, ktime_t timestamp);
++int dma_fence_overwrite_timestamp(struct dma_fence *fence, ktime_t timestamp);
+ signed long dma_fence_default_wait(struct dma_fence *fence,
+ 				   bool intr, signed long timeout);
+ int dma_fence_add_callback(struct dma_fence *fence,
+-- 
+2.43.0
+

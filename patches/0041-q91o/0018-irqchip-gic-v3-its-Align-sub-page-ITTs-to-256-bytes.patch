@@ -1,0 +1,45 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Fuad Tabba <fuad.tabba@linux.dev>
+Date: Mon, 16 Nov 2026 19:29:31 +0000
+Subject: [PATCH 018/117] irqchip/gic-v3-its: Align sub-page ITTs to 256 bytes
+
+Commit e36d4165f0796 ("irqchip/gic-v3-its: Rely on genpool alignment")
+dropped the ALIGN() of the ITT address in MAPD, on the premise that the
+ITT pool returns 256-byte aligned blocks. However, the pool's minimum
+allocation order is get_order(ITS_ITT_ALIGN), which is 0, so its
+granule is a single byte. An ITT whose size is not a multiple of 256
+leaves the next device's ITT misaligned. MAPD drops the low bits of its
+address, so that device's ITEs land on the previous device's ITT.
+QEMU's emulated ITS has 12-byte ITEs, so two devices with 32 vectors
+each are enough to hit it.
+
+Create the pool with a granule of ITS_ITT_ALIGN.
+
+Fixes: e36d4165f0796 ("irqchip/gic-v3-its: Rely on genpool alignment")
+Reviewed-by: Suzuki K Poulose <suzuki.poulose@arm.com>
+Signed-off-by: Fuad Tabba <fuad.tabba@linux.dev>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1213108; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/irqchip/irq-gic-v3-its.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/irqchip/irq-gic-v3-its.c b/drivers/irqchip/irq-gic-v3-its.c
+index 6932dd0a02c42..5756ffe4ec13e 100644
+--- a/drivers/irqchip/irq-gic-v3-its.c
++++ b/drivers/irqchip/irq-gic-v3-its.c
+@@ -5854,7 +5854,7 @@ int __init its_init(struct fwnode_handle *handle, struct rdists *rdists,
+ 	bool has_v4_1 = false;
+ 	int err;
+ 
+-	itt_pool = gen_pool_create(get_order(ITS_ITT_ALIGN), -1);
++	itt_pool = gen_pool_create(ilog2(ITS_ITT_ALIGN), -1);
+ 	if (!itt_pool)
+ 		return -ENOMEM;
+ 
+-- 
+2.43.0
+

@@ -1,0 +1,85 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Muhammad Huda Nugroho <mhudan21@gmail.com>
+Date: Sat, 21 Nov 2026 18:37:21 +0700
+Subject: [PATCH 117/117] PCI: qcom: Do not power off a PHY whose power-on
+ failed
+
+qcom_pcie_phy_power_on() unwinds a failed phy_power_on() by calling
+qcom_pcie_phy_power_off(), which walks the whole port list - including
+the port that just failed, and every port the loop has not reached yet.
+The phy_set_mode_ext() failure path returns without unwinding at all,
+leaking the ports already powered on.
+
+The first of those is not a leak but a refcount underflow.
+phy_power_off() decrements phy->power_count unconditionally and invokes
+the provider's ->power_off only at a count of 1, while phy_power_on()
+invokes ->power_on only at a count of 0. Releasing a reference that was
+never acquired therefore drives the count to -1, and the next
+phy_power_on() returns success having silently skipped powering the PHY
+up: no error, no message, just a PHY that is never initialised again.
+
+The damage outlives the failed attempt, which is what makes it worth
+fixing. On a single-port controller the very first failure is enough to
+reach -1. It is normally invisible because a failed host init at probe
+time is fatal anyway, but it becomes reachable as soon as anything
+retries host init at runtime, as system resume does - at which point the
+controller comes back with a PHY the core believes is already on.
+
+Unwind with list_for_each_entry_continue_reverse() so that only the
+ports successfully powered on are powered off, and route the
+phy_set_mode_ext() failure through the same unwind. The PHY core already
+releases the failed acquisition itself, so the failing port must not be
+released here.
+
+Signed-off-by: Muhammad Huda Nugroho <mhudan21@gmail.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1218065; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/pci/controller/dwc/pcie-qcom.c | 23 ++++++++++++++++++-----
+ 1 file changed, 18 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/pci/controller/dwc/pcie-qcom.c b/drivers/pci/controller/dwc/pcie-qcom.c
+index f87777f34d781..c6ab05a0074a1 100644
+--- a/drivers/pci/controller/dwc/pcie-qcom.c
++++ b/drivers/pci/controller/dwc/pcie-qcom.c
+@@ -1453,16 +1453,29 @@ static int qcom_pcie_phy_power_on(struct qcom_pcie *pcie)
+ 	list_for_each_entry(port, &pcie->ports, list) {
+ 		ret = phy_set_mode_ext(port->phy, PHY_MODE_PCIE, PHY_MODE_PCIE_RC);
+ 		if (ret)
+-			return ret;
++			goto err_power_off;
+ 
+ 		ret = phy_power_on(port->phy);
+-		if (ret) {
+-			qcom_pcie_phy_power_off(pcie);
+-			return ret;
+-		}
++		if (ret)
++			goto err_power_off;
+ 	}
+ 
+ 	return 0;
++
++err_power_off:
++	/*
++	 * Only release what was actually acquired. phy_power_off() decrements
++	 * phy->power_count unconditionally and invokes the provider's callback
++	 * only at 1, while phy_power_on() invokes it only at 0, so releasing a
++	 * port whose phy_power_on() failed (or was never reached) drives the
++	 * count negative - after which the next phy_power_on() silently skips
++	 * powering the PHY up at all. The PHY core already unwinds the failed
++	 * acquisition itself.
++	 */
++	list_for_each_entry_continue_reverse(port, &pcie->ports, list)
++		phy_power_off(port->phy);
++
++	return ret;
+ }
+ 
+ static void qcom_pcie_configure_ports(struct qcom_pcie *pcie)
+-- 
+2.43.0
+

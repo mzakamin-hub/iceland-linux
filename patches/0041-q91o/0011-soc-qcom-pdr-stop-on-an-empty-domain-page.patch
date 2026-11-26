@@ -1,0 +1,50 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Shirong Zhao <shxzhaosr@163.com>
+Date: Wed, 18 Nov 2026 13:46:27 +0800
+Subject: [PATCH 011/117] soc: qcom: pdr: stop on an empty domain page
+
+pdr_locate_service() pages through the service registry by adding
+resp->domain_list_len to domains_read until it reaches
+resp->total_domains.  There is a clamp for a page that claims more
+domains than the reply contains, but nothing for an empty one.
+
+If a reply carries domain_list_len == 0 while total_domains stays
+positive, domains_read never advances and the do-while re-issues the
+same request forever.  Both fields come from the service registry
+reply, so a faulty remote can trigger it.
+
+Stop on an empty page; the loop then returns -ENXIO.
+
+Found by static analysis of the request/response loop; not observed at
+runtime.
+Signed-off-by: Shirong Zhao <shxzhaosr@163.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1214567; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/soc/qcom/pdr_interface.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/drivers/soc/qcom/pdr_interface.c b/drivers/soc/qcom/pdr_interface.c
+index 6d879e1540b0a..c532925061f0c 100644
+--- a/drivers/soc/qcom/pdr_interface.c
++++ b/drivers/soc/qcom/pdr_interface.c
+@@ -432,6 +432,13 @@ static int pdr_locate_service(struct pdr_handle *pdr, struct pdr_service *pds)
+ 		if (resp->domain_list_len > resp->total_domains)
+ 			resp->domain_list_len = resp->total_domains;
+ 
++		/*
++		 * A zero-length page that still claims more domains would
++		 * otherwise spin forever without advancing domains_read.
++		 */
++		if (!resp->domain_list_len)
++			break;
++
+ 		domains_read += resp->domain_list_len;
+ 	} while (domains_read < resp->total_domains);
+ 
+-- 
+2.43.0
+

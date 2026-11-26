@@ -1,0 +1,51 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Nitin Rawat <nitin.rawat@oss.qualcomm.com>
+Date: Mon, 13 Jul 2026 23:04:34 +0530
+Subject: [PATCH 024/117] FROMLIST: scsi: ufs: ufs-qcom: Enable only lane
+ clocks in lane clock APIs
+
+ufs_qcom_enable_lane_clks() and ufs_qcom_disable_lane_clks() currently
+use clk_bulk_prepare_enable()/clk_bulk_disable_unprepare() on the
+entire host->clks array obtained from devm_clk_bulk_get_all(). This
+array contains all device clocks, not just lane symbol clocks.
+
+Since the UFS core framework already manages the non-lane clocks via
+the setup_clocks callback, the bulk enable/disable in the lane clock
+APIs resulted in duplicate reference count increments on those shared
+clocks. The extra enable counts were never balanced by a corresponding
+disable from the framework's clock gating path, preventing the clock
+reference counts from reaching zero and ultimately blocking CXO
+shutdown during low-power states.
+
+Fix this by restricting the lane clock APIs to only prepare/enable
+and disable/unprepare the three lane symbol clocks (tx_lane0_sync_clk,
+rx_lane0_sync_clk, rx_lane1_sync_clk), leaving the handling of all
+other clocks to the UFS core framewore.
+
+Link: https://lore.kernel.org/linux-scsi/20260713173434.883386-1-nitin.rawat@oss.qualcomm.com/
+Signed-off-by: Nitin Rawat <nitin.rawat@oss.qualcomm.com>
+Signed-off-by: Giri Prasad Goriparthi <ggoripar@oss.qualcomm.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from 1d00a31a3108 (soc/kpatch/1d00a31a3108.patch); mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/ufs/host/ufs-qcom.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
+index 5721bd425f6a0..b55434be773fb 100644
+--- a/drivers/ufs/host/ufs-qcom.c
++++ b/drivers/ufs/host/ufs-qcom.c
+@@ -399,7 +399,6 @@ static int ufs_qcom_enable_lane_clks(struct ufs_qcom_host *host)
+ 		goto out_disable_rx_lane0;
+ 
+ 	host->is_lane_clks_enabled = true;
+-
+ 	return 0;
+ 
+ out_disable_rx_lane0:
+-- 
+2.43.0
+

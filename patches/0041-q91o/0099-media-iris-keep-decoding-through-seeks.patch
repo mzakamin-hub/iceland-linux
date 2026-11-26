@@ -1,0 +1,242 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 21:52:16 +0200
+Subject: [PATCH 099/117] media: iris: keep decoding through seeks
+
+On a seek the firmware reports a source change and returns the last
+capture buffer of the old sequence within about a millisecond. Clients
+such as Codec2's V4L2 decoder do not wait for that buffer and restart the
+capture queue at once, and several things then go wrong:
+
+- stopping the capture port before the last buffer is back leaves the
+  firmware stuck in the change: it never consumes input again;
+- restarting capture ends the change only if the last buffer was seen,
+  so the next source change fails the session;
+- a second source change during the first (two quick seeks), and buffers
+  the firmware returns after a stream-off took them back, are treated as
+  errors that move the session into the error state.
+
+Wait up to 200 ms for the last buffer of a pending source change before
+stopping the capture port; let any capture restart end the change and
+ignore a late last-buffer flag; let a second source change replace the
+first; and ignore (with a rate-limited warning) buffers returned after
+they were taken back.
+
+Problem analysis and approach by Reixo0 (RedMagic 11 Pro, measured with
+YouTube / Codec2), commit d4eca96af3f7 ("media: iris: keep decoding
+through seeks") in github Reixo0/linux (no Signed-off-by); re-implemented
+on our iris queue.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ .../media/platform/qcom/iris/iris_common.c    | 32 +++++++++++++++++--
+ .../qcom/iris/iris_hfi_gen2_response.c        | 27 ++++++++++------
+ .../media/platform/qcom/iris/iris_instance.h  |  2 ++
+ drivers/media/platform/qcom/iris/iris_state.c | 30 ++++++++++++++---
+ drivers/media/platform/qcom/iris/iris_vidc.c  |  1 +
+ 5 files changed, 75 insertions(+), 17 deletions(-)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_common.c b/drivers/media/platform/qcom/iris/iris_common.c
+index 2ff15edeac286..22b87e84d6e9d 100644
+--- a/drivers/media/platform/qcom/iris/iris_common.c
++++ b/drivers/media/platform/qcom/iris/iris_common.c
+@@ -10,6 +10,9 @@
+ #include "iris_instance.h"
+ #include "iris_power.h"
+ 
++/* how long a capture stop waits for the last buffer of a source change */
++#define IRIS_DRC_LAST_WAIT_MS	200
++
+ int iris_vb2_buffer_to_driver(struct vb2_buffer *vb2, struct iris_buffer *buf)
+ {
+ 	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb2);
+@@ -102,8 +105,13 @@ int iris_process_streamon_output(struct iris_inst *inst)
+ 	drain_active = inst->sub_state & IRIS_INST_SUB_DRAIN &&
+ 		inst->sub_state & IRIS_INST_SUB_DRAIN_LAST;
+ 
+-	drc_active = inst->sub_state & IRIS_INST_SUB_DRC &&
+-		inst->sub_state & IRIS_INST_SUB_DRC_LAST;
++	/*
++	 * Restarting the capture queue ends a source change, also when the
++	 * client did not dequeue its last buffer first (Codec2's V4L2 decoder
++	 * restarts right after the event on a seek). Left pending, the next
++	 * source change would fail the session.
++	 */
++	drc_active = inst->sub_state & IRIS_INST_SUB_DRC;
+ 
+ 	if (drc_active)
+ 		clear_sub_state = IRIS_INST_SUB_DRC | IRIS_INST_SUB_DRC_LAST;
+@@ -215,6 +223,26 @@ int iris_session_streamoff(struct iris_inst *inst, u32 plane)
+ 		return -EINVAL;
+ 	}
+ 
++	/*
++	 * Stopping the capture port while a source change still waits for its
++	 * last buffer leaves the firmware stuck in the change, and it never
++	 * takes input again. It normally returns that buffer within a
++	 * millisecond, so give it a short while before stopping.
++	 */
++	if (buffer_type == BUF_OUTPUT && inst->state == IRIS_INST_STREAMING &&
++	    (inst->sub_state & IRIS_INST_SUB_DRC) &&
++	    !(inst->sub_state & IRIS_INST_SUB_DRC_LAST)) {
++		unsigned long left;
++
++		mutex_unlock(&inst->lock);
++		left = wait_for_completion_timeout(&inst->drc_last_done,
++						   msecs_to_jiffies(IRIS_DRC_LAST_WAIT_MS));
++		mutex_lock(&inst->lock);
++		if (!left)
++			dev_dbg(inst->core->dev,
++				"no last buffer of the source change before capture stop\n");
++	}
++
+ 	ret = hfi_ops->session_stop(inst, plane);
+ 	if (ret)
+ 		goto error;
+diff --git a/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c b/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
+index dc8aab5c753b6..daaff08334b2f 100644
+--- a/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
++++ b/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
+@@ -350,11 +350,13 @@ static int iris_hfi_gen2_handle_input_buffer(struct iris_inst *inst,
+ 			break;
+ 		}
+ 	}
+-	if (!found)
+-		return -EINVAL;
+-
+-	if (!(buf->attr & BUF_ATTR_QUEUED))
+-		return -EINVAL;
++	/* as for capture buffers: a late return after a stream-off */
++	if (!found || !(buf->attr & BUF_ATTR_QUEUED)) {
++		dev_warn_ratelimited(inst->core->dev,
++				     "ignoring input buffer %u returned after it was taken back\n",
++				     buffer->index);
++		return 0;
++	}
+ 
+ 	buf->attr &= ~BUF_ATTR_QUEUED;
+ 	buf->attr |= BUF_ATTR_DEQUEUED;
+@@ -423,11 +425,16 @@ static int iris_hfi_gen2_handle_output_buffer(struct iris_inst *inst,
+ 			break;
+ 		}
+ 	}
+-	if (!found)
+-		return -EINVAL;
+-
+-	if (!(buf->attr & BUF_ATTR_QUEUED))
+-		return -EINVAL;
++	/*
++	 * A stream-off or a source change can take a buffer back before the
++	 * firmware returns it; that is not worth failing the session for.
++	 */
++	if (!found || !(buf->attr & BUF_ATTR_QUEUED)) {
++		dev_warn_ratelimited(inst->core->dev,
++				     "ignoring capture buffer %u returned after it was taken back\n",
++				     hfi_buffer->index);
++		return 0;
++	}
+ 
+ 	buf->data_offset = hfi_buffer->data_offset;
+ 	buf->data_size = hfi_buffer->data_size;
+diff --git a/drivers/media/platform/qcom/iris/iris_instance.h b/drivers/media/platform/qcom/iris/iris_instance.h
+index 8eaeae5aff5f2..5e64192eb727e 100644
+--- a/drivers/media/platform/qcom/iris/iris_instance.h
++++ b/drivers/media/platform/qcom/iris/iris_instance.h
+@@ -38,6 +38,7 @@ struct iris_hfi_session_ops;
+  * @compose: structure of compose info
+  * @completion: structure of signal completions
+  * @flush_completion: structure of signal completions for flush cmd
++ * @drc_last_done: completed when the last capture buffer of a source change is back
+  * @flush_responses_pending: counter to track number of pending flush responses
+  * @fw_caps: array of supported instance firmware capabilities
+  * @buffers: array of different iris buffers
+@@ -85,6 +86,7 @@ struct iris_inst {
+ 	struct iris_hfi_rect_desc	compose;
+ 	struct completion		completion;
+ 	struct completion		flush_completion;
++	struct completion		drc_last_done;
+ 	u32				flush_responses_pending;
+ 	struct platform_inst_fw_cap	fw_caps[INST_FW_CAP_MAX];
+ 	struct iris_buffers		buffers[BUF_TYPE_MAX];
+diff --git a/drivers/media/platform/qcom/iris/iris_state.c b/drivers/media/platform/qcom/iris/iris_state.c
+index 5552725c614ea..b227d10a2493d 100644
+--- a/drivers/media/platform/qcom/iris/iris_state.c
++++ b/drivers/media/platform/qcom/iris/iris_state.c
+@@ -179,8 +179,16 @@ int iris_inst_sub_state_change_drc(struct iris_inst *inst)
+ {
+ 	enum iris_inst_sub_state set_sub_state = 0;
+ 
+-	if (inst->sub_state & IRIS_INST_SUB_DRC)
+-		return -EINVAL;
++	/*
++	 * A new source change before the client finished the previous one
++	 * (two seeks in quick succession): the new sequence replaces the old
++	 * one, so wait for its last buffer again instead of failing.
++	 */
++	if (inst->sub_state & IRIS_INST_SUB_DRC) {
++		reinit_completion(&inst->drc_last_done);
++		return iris_inst_change_sub_state(inst, IRIS_INST_SUB_DRC_LAST,
++						  IRIS_INST_SUB_INPUT_PAUSE);
++	}
+ 
+ 	if (inst->state == IRIS_INST_INPUT_STREAMING ||
+ 	    inst->state == IRIS_INST_INIT)
+@@ -188,6 +196,8 @@ int iris_inst_sub_state_change_drc(struct iris_inst *inst)
+ 	else
+ 		set_sub_state = IRIS_INST_SUB_DRC | IRIS_INST_SUB_INPUT_PAUSE;
+ 
++	reinit_completion(&inst->drc_last_done);
++
+ 	return iris_inst_change_sub_state(inst, 0, set_sub_state);
+ }
+ 
+@@ -209,12 +219,19 @@ int iris_inst_sub_state_change_drain_last(struct iris_inst *inst)
+ int iris_inst_sub_state_change_drc_last(struct iris_inst *inst)
+ {
+ 	enum iris_inst_sub_state set_sub_state;
++	int ret;
+ 
+ 	if (inst->sub_state & IRIS_INST_SUB_DRC_LAST)
+ 		return -EINVAL;
+ 
+-	if (!(inst->sub_state & IRIS_INST_SUB_DRC) ||
+-	    !(inst->sub_state & IRIS_INST_SUB_INPUT_PAUSE))
++	/*
++	 * The change is already over: the client restarted the capture queue
++	 * before this last buffer came back. The flag is stale, not an error.
++	 */
++	if (!(inst->sub_state & IRIS_INST_SUB_DRC))
++		return 0;
++
++	if (!(inst->sub_state & IRIS_INST_SUB_INPUT_PAUSE))
+ 		return -EINVAL;
+ 
+ 	if (inst->sub_state & IRIS_INST_SUB_FIRST_IPSC)
+@@ -222,7 +239,10 @@ int iris_inst_sub_state_change_drc_last(struct iris_inst *inst)
+ 
+ 	set_sub_state = IRIS_INST_SUB_DRC_LAST | IRIS_INST_SUB_OUTPUT_PAUSE;
+ 
+-	return iris_inst_change_sub_state(inst, 0, set_sub_state);
++	ret = iris_inst_change_sub_state(inst, 0, set_sub_state);
++	complete_all(&inst->drc_last_done);
++
++	return ret;
+ }
+ 
+ int iris_inst_sub_state_change_pause(struct iris_inst *inst, u32 plane)
+diff --git a/drivers/media/platform/qcom/iris/iris_vidc.c b/drivers/media/platform/qcom/iris/iris_vidc.c
+index a85dc35b76f69..894aece63e24b 100644
+--- a/drivers/media/platform/qcom/iris/iris_vidc.c
++++ b/drivers/media/platform/qcom/iris/iris_vidc.c
+@@ -203,6 +203,7 @@ int iris_open(struct file *filp)
+ 	INIT_LIST_HEAD(&inst->buffers[BUF_PARTIAL].list);
+ 	init_completion(&inst->completion);
+ 	init_completion(&inst->flush_completion);
++	init_completion(&inst->drc_last_done);
+ 
+ 	iris_v4l2_fh_init(inst, filp);
+ 
+-- 
+2.43.0
+

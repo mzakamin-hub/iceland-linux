@@ -1,0 +1,221 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jiwoo Kim <arpe1618@gmail.com>
+Date: Wed, 18 Nov 2026 11:07:14 +0900
+Subject: [PATCH 034/117] drm/msm: Release the pins and ops of a killed VM_BIND
+ job
+
+msm_vma_job_run() applies the pgtable updates that vm_bind_job_prepare()
+queued for a VM_BIND job, drops the GEM object references that
+vm_op_enqueue() took for them, and unpins the BOs of the job. When the
+entity of a job is killed, e.g. on SIGKILL while the process exits, the
+scheduler frees the job without running it. msm_vma_job_free() then
+frees the queued ops without applying them and without dropping their
+references, and leaves the BOs pinned. Besides the leaks, the VM no
+longer matches its pgtables: for example, the pages of a VMA that was
+unmapped from the VM are still mapped.
+
+The scheduler only frees a killed job once its dependencies have
+signalled and the job queued before it on the same entity has run or
+been killed, so the jobs that it depends on, and those queued before it
+on its entity, have run and applied their updates by then, unless they
+were killed themselves. In msm_vma_job_free(), apply the queued updates
+the way msm_vma_job_run() does on error: skip the maps, but apply the
+unmaps, so that the references that the ops hold are only dropped once
+their pages are unmapped, and mark the VM unusable. Killed jobs can be
+freed concurrently, but as they only unmap, their order does not
+matter. If one of the unmaps comes before the map it undoes, which a
+job of another queue has not applied yet, that map is skipped, as the
+killed job marks the VM unusable under mmu_lock before it drops the
+lock. Move that part of msm_vma_job_run() into a helper for this. Also
+clear bos_pinned once msm_vma_job_run() has unpinned the BOs, as
+msm_job_run() does for submits, and unpin the BOs of a job that still
+has them pinned, taking the object lock, as the job's fence does not
+keep them busy anymore.
+
+The scheduler signals the fence of a killed job before it frees the
+job, so a job that waits for it can apply its updates first. A map into
+a range that the killed job still has to unmap then fails, as the pages
+are still mapped, and marks the VM unusable.
+
+msm_ioctl_vm_bind() frees the job when the ioctl fails, without waiting
+for its dependencies or the previous jobs of its queue, so the queued
+updates of such a job must not be applied. Move the freeing itself
+into vm_bind_job_free(), and call that directly from there.
+
+The patch and its changelog were drafted with an AI coding assistant.
+The issue has not been reproduced, and the change has only been
+compile-tested.
+
+Fixes: 2e6a8a1fe2b2 ("drm/msm: Add VM_BIND ioctl")
+Cc: stable@vger.kernel.org
+Reported-by: Sashiko <sashiko-bot@kernel.org>
+Closes: https://lore.kernel.org/r/sashiko-outbox-214234@kernel.org
+Signed-off-by: Jiwoo Kim <arpe1618@gmail.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1214467; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/msm_gem_vma.c | 94 ++++++++++++++++++++++++++-----
+ 1 file changed, 81 insertions(+), 13 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/msm_gem_vma.c b/drivers/gpu/drm/msm/msm_gem_vma.c
+index b100ce12125a8..6a99264c79ba0 100644
+--- a/drivers/gpu/drm/msm/msm_gem_vma.c
++++ b/drivers/gpu/drm/msm/msm_gem_vma.c
+@@ -782,22 +782,23 @@ vm_bind_map_done(struct msm_vm_bind_job *job, struct msm_vm_bind_done *map_done)
+ 	return !map_done || map_done == job->bind_done || map_done->done;
+ }
+ 
+-static struct dma_fence *
+-msm_vma_job_run(struct drm_sched_job *_job)
++/*
++ * Apply the pgtable updates queued for a job, and drop the references that
++ * the ops hold.  If ret is an error, or one occurs, the remaining maps are
++ * skipped, but the unmaps are still applied, as the pages they unmap must
++ * not be freed while they are still mapped.
++ */
++static int
++vm_bind_job_apply_ops(struct msm_vm_bind_job *job, int ret)
+ {
+-	struct msm_vm_bind_job *job = to_msm_vm_bind_job(_job);
+-	struct drm_device *dev = job->vm->drm;
+ 	struct msm_gem_vm *vm = to_msm_vm(job->vm);
+-	struct drm_gem_object *obj;
+-	int ret;
+-
+-	vm_dbg("");
+ 
+ 	mutex_lock(&vm->mmu_lock);
+ 	vm->mmu->prealloc = &job->prealloc;
+ 
+ 	/* vm->unusable is checked and set under mmu_lock, see below: */
+-	ret = vm->unusable ? -EINVAL : 0;
++	if (vm->unusable)
++		ret = ret ?: -EINVAL;
+ 
+ 	while (!list_empty(&job->vm_ops)) {
+ 		struct msm_vm_op *op =
+@@ -844,6 +845,21 @@ msm_vma_job_run(struct drm_sched_job *_job)
+ 	vm->mmu->prealloc = NULL;
+ 	mutex_unlock(&vm->mmu_lock);
+ 
++	return ret;
++}
++
++static struct dma_fence *
++msm_vma_job_run(struct drm_sched_job *_job)
++{
++	struct msm_vm_bind_job *job = to_msm_vm_bind_job(_job);
++	struct drm_device *dev = job->vm->drm;
++	struct drm_gem_object *obj;
++	int ret;
++
++	vm_dbg("");
++
++	ret = vm_bind_job_apply_ops(job, 0);
++
+ 	/*
+ 	 * We failed to perform at least _some_ of the pgtable updates, so
+ 	 * now the VM is in an undefined state.  Game over!
+@@ -857,16 +873,22 @@ msm_vma_job_run(struct drm_sched_job *_job)
+ 		msm_gem_unpin_active(obj);
+ 	}
+ 
++	job->bos_pinned = false;
++
+ 	mutex_unlock(&dev->gem_lru_mutex);
+ 
+ 	/* VM_BIND ops are synchronous, so no fence to wait on: */
+ 	return NULL;
+ }
+ 
++/*
++ * Free a job, whether it ran or not.  Ops that are still queued are freed
++ * without being applied, and without dropping their object references, as
++ * the pages of their unmaps may still be mapped.
++ */
+ static void
+-msm_vma_job_free(struct drm_sched_job *_job)
++vm_bind_job_free(struct msm_vm_bind_job *job)
+ {
+-	struct msm_vm_bind_job *job = to_msm_vm_bind_job(_job);
+ 	struct msm_gem_vm *vm = to_msm_vm(job->vm);
+ 	struct drm_gem_object *obj;
+ 
+@@ -874,7 +896,20 @@ msm_vma_job_free(struct drm_sched_job *_job)
+ 
+ 	atomic_sub(job->prealloc.count, &vm->prealloc_throttle.in_flight);
+ 
+-	drm_sched_job_cleanup(_job);
++	drm_sched_job_cleanup(&job->base);
++
++	/*
++	 * A job that was killed before it ran still has its BOs pinned.  The
++	 * job's fence does not keep them busy anymore, so take the object lock
++	 * to unpin them.
++	 */
++	if (job->bos_pinned) {
++		job_foreach_bo(obj, job) {
++			msm_gem_lock(obj);
++			msm_gem_unpin_locked(obj);
++			msm_gem_unlock(obj);
++		}
++	}
+ 
+ 	job_foreach_bo (obj, job)
+ 		drm_gem_object_put(obj);
+@@ -899,6 +934,34 @@ msm_vma_job_free(struct drm_sched_job *_job)
+ 	kfree(job);
+ }
+ 
++static void
++msm_vma_job_free(struct drm_sched_job *_job)
++{
++	struct msm_vm_bind_job *job = to_msm_vm_bind_job(_job);
++
++	/*
++	 * A job that the scheduler frees without having run it was killed,
++	 * e.g. because its entity was destroyed.  Its queued updates were
++	 * already applied to the VM's address space, but not to its pgtables.
++	 * The scheduler has waited for the job's dependencies, and for the job
++	 * before it on the entity to run or be killed, so apply its unmaps now,
++	 * before the references to the unmapped objects are dropped, and give
++	 * up on the VM, as its maps are skipped.  Killed jobs only unmap, so
++	 * the order in which they are freed does not matter.
++	 *
++	 * The scheduler signals the fence of a killed job before it frees the
++	 * job, so a job that waits for it can apply its updates first.  A map
++	 * into a range that this job still has to unmap then fails, and marks
++	 * the VM unusable.
++	 */
++	if (!list_empty(&job->vm_ops)) {
++		vm_bind_job_apply_ops(job, -ECANCELED);
++		msm_gem_vm_unusable(job->vm);
++	}
++
++	vm_bind_job_free(job);
++}
++
+ static const struct drm_sched_backend_ops msm_vm_bind_ops = {
+ 	.run_job = msm_vma_job_run,
+ 	.free_job = msm_vma_job_free
+@@ -1764,8 +1827,13 @@ msm_ioctl_vm_bind(struct drm_device *dev, void *data, struct drm_file *file)
+ 	}
+ 
+ 	if (!IS_ERR_OR_NULL(job)) {
++		/*
++		 * Not msm_vma_job_free(): the job's dependencies and the
++		 * previous jobs of the queue may not have completed, so its
++		 * queued updates must not be applied here.
++		 */
+ 		if (ret)
+-			msm_vma_job_free(&job->base);
++			vm_bind_job_free(job);
+ 	} else {
+ 		/*
+ 		 * If the submit hasn't yet taken ownership of the queue
+-- 
+2.43.0
+

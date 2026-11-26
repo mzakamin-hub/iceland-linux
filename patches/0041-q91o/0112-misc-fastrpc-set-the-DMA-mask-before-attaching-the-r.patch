@@ -1,0 +1,77 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 21:56:45 +0200
+Subject: [PATCH 112/117] misc: fastrpc: set the DMA mask before attaching the
+ reserved memory
+
+fastrpc_rpmsg_probe() attaches the channel's reserved memory region with
+devm_of_reserved_mem_device_init() before it gives the rpmsg device a DMA
+mask. The reserved memory core checks the region against the device's
+mask and, with none set yet, warns at every boot that the reserved
+memory is beyond the device's set DMA address range.
+
+Set the 32-bit mask right after the channel context is allocated, before
+the region is attached, and clear the device's dma_mask pointer again
+when the probe fails and the context (which holds the mask) is freed.
+
+Seen in the boot log of the OnePlus Pad 4 (Kaanapali); linux-next has the
+same order.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/misc/fastrpc.c | 17 ++++++++++++-----
+ 1 file changed, 12 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/misc/fastrpc.c b/drivers/misc/fastrpc.c
+index a7050db966ee8..a55daefb8851e 100644
+--- a/drivers/misc/fastrpc.c
++++ b/drivers/misc/fastrpc.c
+@@ -2636,9 +2636,6 @@ static int fastrpc_rpmsg_probe(struct rpmsg_device *rpdev)
+ 		return -EINVAL;
+ 	}
+ 
+-	if (devm_of_reserved_mem_device_init(rdev))
+-		dev_dbg(rdev, "no reserved DMA memory for FASTRPC\n");
+-
+ 	vmcount = of_property_read_variable_u32_array(rdev->of_node,
+ 				"qcom,vmids", &vmids[0], 0, FASTRPC_MAX_VMIDS);
+ 	if (vmcount < 0)
+@@ -2650,6 +2647,17 @@ static int fastrpc_rpmsg_probe(struct rpmsg_device *rpdev)
+ 	if (!data)
+ 		return -ENOMEM;
+ 
++	/*
++	 * Set the DMA mask before attaching the reserved memory region: the
++	 * region is checked against the mask, and without one the core warns
++	 * that the reserved memory is beyond the device's DMA address range.
++	 */
++	rdev->dma_mask = &data->dma_mask;
++	dma_set_mask_and_coherent(rdev, DMA_BIT_MASK(32));
++
++	if (devm_of_reserved_mem_device_init(rdev))
++		dev_dbg(rdev, "no reserved DMA memory for FASTRPC\n");
++
+ 	if (vmcount) {
+ 		data->vmcount = vmcount;
+ 		for (i = 0; i < data->vmcount; i++) {
+@@ -2698,8 +2706,6 @@ static int fastrpc_rpmsg_probe(struct rpmsg_device *rpdev)
+ 
+ 	atomic_set(&data->ctx_seq, 0);
+ 
+-	rdev->dma_mask = &data->dma_mask;
+-	dma_set_mask_and_coherent(rdev, DMA_BIT_MASK(32));
+ 	INIT_LIST_HEAD(&data->users);
+ 	INIT_LIST_HEAD(&data->invoke_interrupted_mmaps);
+ 	spin_lock_init(&data->lock);
+@@ -2724,6 +2730,7 @@ static int fastrpc_rpmsg_probe(struct rpmsg_device *rpdev)
+ 		misc_deregister(&data->secure_fdevice->miscdev);
+ 
+ err_free_data:
++	rdev->dma_mask = NULL;
+ 	kfree(data);
+ 	return err;
+ }
+-- 
+2.43.0
+

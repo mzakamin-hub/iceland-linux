@@ -1,0 +1,63 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Nick Rogers <nick@getfieldwork.ai>
+Date: Wed, 23 Sep 2026 17:09:36 +0100
+Subject: [PATCH 084/117] media: v4l2-ioctl: zero the ext control built for
+ VIDIOC_{G,S}_CTRL
+
+When a driver implements the extended control ioctls but has no control
+handler, v4l_g_ctrl() and v4l_s_ctrl() pass VIDIOC_G_CTRL and
+VIDIOC_S_CTRL on as a single struct v4l2_ext_control built on the stack.
+Only its id and value are set, and check_ext_ctrls() clears reserved[0]
+and reserved2[0]; the control's size and the rest of both structures are
+left uninitialized.
+
+A driver that forwards the controls rather than handling them through
+the control framework sees that stack garbage. The virtio-media driver
+under review takes a nonzero size as a payload to copy from userspace,
+so VIDIOC_G_CTRL and VIDIOC_S_CTRL fail with -EINVAL through it whenever
+the stack is dirty. GStreamer's V4L2 encoders set their profile with
+VIDIOC_S_CTRL, and cannot negotiate against such a device.
+
+Zero-initialize both structures.
+
+Signed-off-by: Nick Rogers <nick@getfieldwork.ai>
+Reviewed-by: Nicolas Dufresne <nicolas.dufresne@collabora.com>
+Signed-off-by: Hans Verkuil <hverkuil+cisco@kernel.org>
+
+[mzak: picked for q91o (21 Nov gains plan) from linux-next/maintainer tree commit b7da1c0e070f; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/media/v4l2-core/v4l2-ioctl.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/media/v4l2-core/v4l2-ioctl.c b/drivers/media/v4l2-core/v4l2-ioctl.c
+index 17ba1ae707355..b7d248ab7db2f 100644
+--- a/drivers/media/v4l2-core/v4l2-ioctl.c
++++ b/drivers/media/v4l2-core/v4l2-ioctl.c
+@@ -2357,8 +2357,8 @@ static int v4l_g_ctrl(const struct v4l2_ioctl_ops *ops, struct file *file,
+ 	struct video_device *vfd = video_devdata(file);
+ 	struct v4l2_control *p = arg;
+ 	struct v4l2_fh *vfh = file_to_v4l2_fh(file);
+-	struct v4l2_ext_controls ctrls;
+-	struct v4l2_ext_control ctrl;
++	struct v4l2_ext_controls ctrls = {};
++	struct v4l2_ext_control ctrl = {};
+ 
+ 	if (vfh && vfh->ctrl_handler)
+ 		return v4l2_g_ctrl(vfh->ctrl_handler, p);
+@@ -2388,8 +2388,8 @@ static int v4l_s_ctrl(const struct v4l2_ioctl_ops *ops, struct file *file,
+ 	struct video_device *vfd = video_devdata(file);
+ 	struct v4l2_control *p = arg;
+ 	struct v4l2_fh *vfh = file_to_v4l2_fh(file);
+-	struct v4l2_ext_controls ctrls;
+-	struct v4l2_ext_control ctrl;
++	struct v4l2_ext_controls ctrls = {};
++	struct v4l2_ext_control ctrl = {};
+ 	int ret;
+ 
+ 	if (vfh && vfh->ctrl_handler)
+-- 
+2.43.0
+

@@ -1,0 +1,78 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tvrtko Ursulin <tvrtko.ursulin@igalia.com>
+Date: Tue, 17 Nov 2026 09:43:24 +0000
+Subject: [PATCH 050/117] drm/sched: Do not overaccount job runtime
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Currently the starting timestamp of the next job on the timeline is
+adjusted to the end of a preceding job. This works if the next job has
+been submitted while the preceding job was still executing, but not if it
+was submitted in the window between it finishing and free job work running
+the timestamp adjustment.
+
+This can happen because the run job and free job work items share the same
+ordered workqueue and run job can easily submit the next job before the
+free job gets a chance to run. This over accounting window is present
+especially with single credit schedulers, but not limited too.
+
+Fix it by only adjusting the starting timestamp if it is not already after
+the finish time of the preceding job.
+
+While at it move the logic to a helper to keep indendation at bay.
+
+Signed-off-by: Tvrtko Ursulin <tvrtko.ursulin@igalia.com>
+Fixes: 1774baa64f93 ("drm/scheduler: Change scheduled fence track v2")
+Cc: Christian König <christian.koenig@amd.com>
+Cc: Danilo Krummrich <dakr@kernel.org>
+Cc: Matthew Brost <matthew.brost@intel.com>
+Cc: Philipp Stanner <phasta@kernel.org>
+Acked-by: Philipp Stanner <phasta@kernel.org>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1213682; mark C; ported onto the dma-fence timestamp ordering series (pw 1216171): comparison done under the scheduled fence lock in drm_sched_overwrite_scheduled_timestamp()]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/scheduler/sched_main.c | 17 ++++++++++++++---
+ 1 file changed, 14 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/scheduler/sched_main.c b/drivers/gpu/drm/scheduler/sched_main.c
+index 7f2a534d08513..68ed8af9efe51 100644
+--- a/drivers/gpu/drm/scheduler/sched_main.c
++++ b/drivers/gpu/drm/scheduler/sched_main.c
+@@ -903,16 +903,27 @@ drm_sched_select_entity(struct drm_gpu_scheduler *sched)
+  * drm_sched_overwrite_scheduled_timestamp - make timestamp more accurate
+  *
+  * Overwrites the timestamp of the provided scheduled fence with the one from
+- * the finished fence, if the scheduled fence is already signaled. Does nothing
+- * otherwise.
++ * the finished fence, if the scheduled fence is already signaled and the
++ * finished timestamp is the later one. Does nothing otherwise.
+  */
+ static void
+ drm_sched_overwrite_scheduled_timestamp(struct dma_fence *finished,
+ 					struct dma_fence *scheduled)
+ {
+ 	ktime_t timestamp = dma_fence_timestamp(finished);
++	unsigned long flags;
+ 
+-	dma_fence_overwrite_timestamp(scheduled, timestamp);
++	/*
++	 * If the next job has been submitted while the previous one was still
++	 * running adjust its starting timestamp to avoid accounting overlap.
++	 * Never move it back: a job submitted after the previous one finished
++	 * keeps its own start.
++	 */
++	dma_fence_lock_irqsave(scheduled, flags);
++	if (dma_fence_test_signaled_flag(scheduled) &&
++	    ktime_after(timestamp, scheduled->timestamp))
++		scheduled->timestamp = timestamp;
++	dma_fence_unlock_irqrestore(scheduled, flags);
+ }
+ 
+ /**
+-- 
+2.43.0
+

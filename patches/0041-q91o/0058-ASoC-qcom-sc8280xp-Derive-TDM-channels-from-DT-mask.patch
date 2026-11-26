@@ -1,0 +1,93 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Shawn Guo <shengchao.guo@oss.qualcomm.com>
+Date: Sat, 31 Oct 2026 16:23:18 +0800
+Subject: [PATCH 058/117] ASoC: qcom: sc8280xp: Derive TDM channels from DT
+ mask
+
+Derive the backend channel count of TDM DAIs from the cpu DAI TDM
+slot mask in the DT, using the same DAI ID ranges and tx/rx mask
+selection as q6tdm_set_tdm_slot(), so the channel count always matches
+the number of slots programmed into the DSP. Each board then gets the
+channel count its dai-link describes, e.g. 4/4 on Nord RRD, 6/4 on
+RIDE. Keep the default of two when the link has no TDM slot
+description, and fail the fixup on an invalid one.
+
+Signed-off-by: Shawn Guo <shengchao.guo@oss.qualcomm.com>
+Reviewed-by: Prasad Kumpatla <prasad.kumpatla@oss.qualcomm.com>
+Link: https://patch.msgid.link/20261031082318.1146398-1-shengchao.guo@oss.qualcomm.com
+Signed-off-by: Mark Brown <broonie@kernel.org>
+
+[mzak: picked for q91o (21 Nov gains plan) from linux-next/maintainer tree commit 45e9d148a0a7; mark C: merged with our queued "run the TDM back ends at 32 bit, one channel per slot" case for the Q6 TDM ports (S32_LE, 8 channels unless the DT slot mask gives the count) to avoid a duplicate case]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ sound/soc/qcom/sc8280xp.c | 45 +++++++++++++++++++++++++++++----------
+ 1 file changed, 34 insertions(+), 11 deletions(-)
+
+diff --git a/sound/soc/qcom/sc8280xp.c b/sound/soc/qcom/sc8280xp.c
+index 563c949220d27..2d6eb9a04f24f 100644
+--- a/sound/soc/qcom/sc8280xp.c
++++ b/sound/soc/qcom/sc8280xp.c
+@@ -307,6 +307,40 @@ static int sc8280xp_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
+ 	channels->min = 2;
+ 	channels->max = 2;
+ 	switch (cpu_dai->id) {
++	case PRIMARY_TDM_RX_0 ... QUINARY_TDM_TX_7:
++	case AIF_TDM_RX_0 ... AIF_TDM_TX_12: {
++		struct qcom_snd_tdm_slot_cfg cpu_cfg, codec_cfg;
++		unsigned int mask;
++		int ret;
++
++		if (cpu_dai->id <= QUINARY_TDM_TX_7) {
++			/*
++			 * The TDM ports run 32-bit slots with every slot active
++			 * (dai-tdm-slot-*); codecs derive their slot length from
++			 * the stream width, and the DSP's TDM endpoint wants one
++			 * channel per active slot (8 unless the DT mask says
++			 * otherwise, below).
++			 */
++			snd_mask_none(fmt);
++			snd_mask_set_format(fmt, SNDRV_PCM_FORMAT_S32_LE);
++			channels->min = 8;
++			channels->max = 8;
++		}
++
++		ret = qcom_snd_get_dai_tdm_slots(rtd, &cpu_cfg, &codec_cfg);
++		if (ret == -ENOENT)
++			break;
++		if (ret)
++			return ret;
++
++		/* Same slot mask selection as q6tdm_set_tdm_slot() */
++		mask = (cpu_dai->id & 0x1) ? cpu_cfg.tx_mask : cpu_cfg.rx_mask;
++		if (mask) {
++			channels->min = hweight32(mask);
++			channels->max = channels->min;
++		}
++		break;
++	}
+ 	case TX_CODEC_DMA_TX_0:
+ 	case TX_CODEC_DMA_TX_1:
+ 	case TX_CODEC_DMA_TX_2:
+@@ -335,17 +369,6 @@ static int sc8280xp_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
+ 			snd_mask_set_format(fmt, SNDRV_PCM_FORMAT_S32_LE);
+ 		}
+ 		break;
+-	case PRIMARY_TDM_RX_0 ... QUINARY_TDM_TX_7:
+-		/*
+-		 * The TDM ports run 32-bit slots with every slot active (dai-tdm-slot-*);
+-		 * codecs derive their slot length from the stream width, and the DSP's
+-		 * TDM endpoint wants one channel per active slot.
+-		 */
+-		snd_mask_none(fmt);
+-		snd_mask_set_format(fmt, SNDRV_PCM_FORMAT_S32_LE);
+-		channels->min = 8;
+-		channels->max = 8;
+-		break;
+ 	default:
+ 		break;
+ 	}
+-- 
+2.43.0
+

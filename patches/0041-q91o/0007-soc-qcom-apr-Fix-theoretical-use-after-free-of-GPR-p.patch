@@ -1,0 +1,65 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>
+Date: Tue, 3 Nov 2026 15:56:37 +0100
+Subject: [PATCH 007/117] soc: qcom: apr: Fix theoretical use-after-free of GPR
+ port on concurrent RX callback
+
+gpr_do_rx_callback(), executed from the RX workqueue, looks up the
+destination port in the IDR under svcs_lock, but then drops the lock to
+call port's callback.
+
+Concurrently closing a graph calls gpr_free_port(), which frees the port
+after removing it from IDR, thus a theoretical scenario (not reproduced)
+is possible:
+
+  CPU0 (RX worker)                  CPU1 (teardown)
+  ----------------                  ---------------
+  gpr_do_rx_callback()
+    lock(svcs_lock)
+    svc = idr_find()
+    unlock(svcs_lock)
+                                    q6apm_graph_close()
+                                      gpr_free_port()
+                                        idr_remove()
+                                        kfree(port)
+                                      kfree(graph)
+    svc->callback(..., svc->priv)   <- use-after-free
+
+Reported-by: Sashiko <sashiko-bot@kernel.org>
+Closes: https://sashiko.dev/#/bug/linux-1ebe255f-a874-46dc-b7cc-455e7bce402f
+Fixes: ec1471a898cc ("soc: qcom: apr: Add GPR support")
+Cc: stable@vger.kernel.org
+Signed-off-by: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>
+Reviewed-by: Abel Vesa <abel.vesa@oss.qualcomm.com>
+Link: https://patch.msgid.link/20261103145635.309032-5-krzysztof.kozlowski@oss.qualcomm.com
+Signed-off-by: Bjorn Andersson <andersson@kernel.org>
+
+[mzak: picked for q91o (21 Nov gains plan) from linux-next/maintainer tree commit a5d51dee5f57; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/soc/qcom/apr.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/drivers/soc/qcom/apr.c b/drivers/soc/qcom/apr.c
+index a2b38d637f078..792d1f3bbdcdb 100644
+--- a/drivers/soc/qcom/apr.c
++++ b/drivers/soc/qcom/apr.c
+@@ -83,6 +83,13 @@ void gpr_free_port(gpr_port_t *port)
+ 	idr_remove(&gpr->svcs_idr, port->id);
+ 	spin_unlock_irqrestore(&gpr->svcs_lock, flags);
+ 
++	/*
++	 * The port is no longer discoverable, but RX worker might have already
++	 * looked it up and be calling its callback, so wait for
++	 * gpr_do_rx_callback() to finish.
++	 */
++	flush_workqueue(gpr->rxwq);
++
+ 	kfree(port);
+ }
+ EXPORT_SYMBOL_GPL(gpr_free_port);
+-- 
+2.43.0
+

@@ -1,0 +1,84 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sam Day <me@samcday.com>
+Date: Mon, 28 Sep 2026 14:33:26 +1000
+Subject: [PATCH 037/117] drm/msm: vmalloc fall back for msm_gem_submits
+
+On low memory boards like the DragonBoard410c (1GiB), if memory
+fragmentation is severe enough, large submits will fail when allocating
+the msm_gem_submit bookkeeping struct.
+
+Mesa was consistently triggering this issue when running its full piglit
+suite on the DB410c - the vbo-subdata-many drawrangeelements test
+submits ~32k BOs, which results in submit_create() attempting to
+allocate ~1.05MB, which requires an order-9 (2MiB) allocation. When
+fragmentation is severe enough, this fails.
+
+Switch allocation to kvzalloc() so that larger submits can fall back to
+virtually contiguous memory. The msm_gem_submit struct is only used on
+the CPU side for bookkeeping that submit.
+
+Since submits are implicitly limited to KMALLOC_MAX_SIZE with the
+current kzalloc() path, we make this limit explicit with the switch to
+kvzalloc().
+
+Link: https://gitlab.freedesktop.org/mesa/mesa/-/work_items/16414
+Assisted-by: LLM
+Signed-off-by: Sam Day <me@samcday.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from yz-submit-vmalloc (peers/pt/yz-submit-vmalloc.patch); mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/msm_gem_submit.c | 15 +++++++++++----
+ 1 file changed, 11 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/msm_gem_submit.c b/drivers/gpu/drm/msm/msm_gem_submit.c
+index 1749f76efe6f1..c7b3315c69b0a 100644
+--- a/drivers/gpu/drm/msm/msm_gem_submit.c
++++ b/drivers/gpu/drm/msm/msm_gem_submit.c
+@@ -42,14 +42,21 @@ static struct msm_gem_submit *submit_create(struct drm_device *dev,
+ 	sz = size_add(struct_size(submit, bos, nr_bos),
+ 		      array_size(sizeof(submit->cmd[0]), nr_cmds));
+ 
+-	submit = kzalloc(sz, GFP_KERNEL | __GFP_NOWARN);
++	/* We previously allocated submit with kmalloc(), but that's
++	 * problematic on low-memory boards with high fragmentation. Now
++	 * vmalloc can be used so we retain the previous implicit sz limit.
++	 */
++	if (sz > KMALLOC_MAX_SIZE)
++		return ERR_PTR(-ENOMEM);
++
++	submit = kvzalloc(sz, GFP_KERNEL | __GFP_NOWARN);
+ 	if (!submit)
+ 		return ERR_PTR(-ENOMEM);
+ 
+ 	submit->hw_fence = msm_fence_alloc();
+ 	if (IS_ERR(submit->hw_fence)) {
+ 		ret = PTR_ERR(submit->hw_fence);
+-		kfree(submit);
++		kvfree(submit);
+ 		return ERR_PTR(ret);
+ 	}
+ 
+@@ -57,7 +64,7 @@ static struct msm_gem_submit *submit_create(struct drm_device *dev,
+ 				 drm_client_id);
+ 	if (ret) {
+ 		kfree(submit->hw_fence);
+-		kfree(submit);
++		kvfree(submit);
+ 		return ERR_PTR(ret);
+ 	}
+ 
+@@ -121,7 +128,7 @@ void __msm_gem_submit_destroy(struct kref *kref)
+ 	for (i = 0; i < submit->nr_cmds; i++)
+ 		kfree(submit->cmd[i].relocs);
+ 
+-	kfree(submit);
++	kvfree(submit);
+ }
+ 
+ static int submit_lookup_objects(struct msm_gem_submit *submit,
+-- 
+2.43.0
+

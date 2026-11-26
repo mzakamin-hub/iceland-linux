@@ -1,0 +1,84 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Loic Poulain <loic.poulain@oss.qualcomm.com>
+Date: Tue, 17 Nov 2026 11:46:53 +0100
+Subject: [PATCH 076/117] media: qcom: iris: venc: keep the crop rectangle in
+ visible resolution space
+
+The encoder keeps two source resolutions. inst->fmt_src holds the padded
+buffer geometry handed to userspace, with width aligned to 128 and height
+to 32. enc_raw_width and enc_raw_height hold the visible resolution sent
+to the firmware as HFI_PROP_RAW_RESOLUTION.
+
+inst->crop must use the visible resolution, because
+iris_hfi_gen2_set_crop_offsets() computes
+
+	bottom_offset = inst->enc_raw_height - inst->crop.height;
+
+iris_venc_s_fmt_input() seeded inst->crop from the padded fmt_src instead,
+so any height that is not a multiple of 32 underflows. Both offsets share
+one payload word, so the right offset is corrupted too.
+
+Seed inst->crop from the requested visible size, and report CROP_BOUNDS
+and CROP_DEFAULT from enc_raw_*, so the bounds match the real source frame.
+
+G_FMT is left as is. For contiguous NV12 pix_mp.height is the only way to
+report the vertical luma padding, and the hardware is programmed with
+scanline_y = ALIGN(h, 32).
+
+  v4l2-ctl -d /dev/video1 \
+      --set-fmt-video-out=width=1280,height=720,pixelformat=NV12 \
+      --get-selection-output=target=crop
+
+Before:
+
+  Selection Video Output: crop, Left 0, Top 0, Width 1280, Height 736
+
+After:
+
+  Selection Video Output: crop, Left 0, Top 0, Width 1280, Height 720
+
+Fixes: d9967fa37ca9 ("media: qcom: iris: Improve format alignment for encoder")
+Signed-off-by: Loic Poulain <loic.poulain@oss.qualcomm.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1213751; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/media/platform/qcom/iris/iris_venc.c | 4 ++--
+ drivers/media/platform/qcom/iris/iris_vidc.c | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_venc.c b/drivers/media/platform/qcom/iris/iris_venc.c
+index 0db6ed1056bf6..f897d0f29bc65 100644
+--- a/drivers/media/platform/qcom/iris/iris_venc.c
++++ b/drivers/media/platform/qcom/iris/iris_venc.c
+@@ -311,8 +311,8 @@ static int iris_venc_s_fmt_input(struct iris_inst *inst, struct v4l2_format *f)
+ 	    f->fmt.pix_mp.height != inst->crop.height) {
+ 		inst->crop.top = 0;
+ 		inst->crop.left = 0;
+-		inst->crop.width = fmt->fmt.pix_mp.width;
+-		inst->crop.height = fmt->fmt.pix_mp.height;
++		inst->crop.width = f->fmt.pix_mp.width;
++		inst->crop.height = f->fmt.pix_mp.height;
+ 
+ 		iris_venc_s_fmt_output(inst, output_fmt);
+ 	}
+diff --git a/drivers/media/platform/qcom/iris/iris_vidc.c b/drivers/media/platform/qcom/iris/iris_vidc.c
+index 23562c1786d86..164026c20b9ad 100644
+--- a/drivers/media/platform/qcom/iris/iris_vidc.c
++++ b/drivers/media/platform/qcom/iris/iris_vidc.c
+@@ -518,8 +518,8 @@ static int iris_g_selection(struct file *filp, void *fh, struct v4l2_selection *
+ 		switch (s->target) {
+ 		case V4L2_SEL_TGT_CROP_BOUNDS:
+ 		case V4L2_SEL_TGT_CROP_DEFAULT:
+-			s->r.width = inst->fmt_src->fmt.pix_mp.width;
+-			s->r.height = inst->fmt_src->fmt.pix_mp.height;
++			s->r.width = inst->enc_raw_width;
++			s->r.height = inst->enc_raw_height;
+ 			break;
+ 		case V4L2_SEL_TGT_CROP:
+ 			s->r.width = inst->crop.width;
+-- 
+2.43.0
+

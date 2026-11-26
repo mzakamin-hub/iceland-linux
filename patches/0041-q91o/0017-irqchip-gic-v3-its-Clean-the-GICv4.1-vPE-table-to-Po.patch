@@ -1,0 +1,48 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Fuad Tabba <fuad.tabba@linux.dev>
+Date: Mon, 16 Nov 2026 19:29:30 +0000
+Subject: [PATCH 017/117] irqchip/gic-v3-its: Clean the GICv4.1 vPE table to
+ PoC
+
+On a GICv4.1 system, allocate_vpe_l1_table() sets Z and Valid in
+GICR_VPROPBASER and points it at a freshly zeroed vPE table, but leaves
+the zeroes in the CPU's cache. A redistributor that accesses the table
+as non-shareable reads it from memory, where it might not be zero, and
+the spec makes that UNPREDICTABLE (GICR_VPROPBASER.Z, IHI 0069H.b
+12.11.39).
+
+Clean the table to PoC unconditionally, as the driver does for the
+pending table. Testing rdists_support_shareable() isn't enough, since
+GICR_VPROPBASER can read back as non-shareable even when the helper
+returns true. allocate_vpe_l2_table() already cleans the level-2 pages
+in that case. A vPE table inherited from an ITS is cleaned by
+its_setup_baser() when the ITS is non-shareable.
+
+Fixes: 5e5168461c22c ("irqchip/gic-v4.1: VPE table (aka GICR_VPROPBASER) allocation")
+Signed-off-by: Fuad Tabba <fuad.tabba@linux.dev>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1213108; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/irqchip/irq-gic-v3-its.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/irqchip/irq-gic-v3-its.c b/drivers/irqchip/irq-gic-v3-its.c
+index 9900c6a53526e..6932dd0a02c42 100644
+--- a/drivers/irqchip/irq-gic-v3-its.c
++++ b/drivers/irqchip/irq-gic-v3-its.c
+@@ -3007,6 +3007,9 @@ static int allocate_vpe_l1_table(void)
+ 	pa = virt_to_phys(page_address(page));
+ 	WARN_ON(!IS_ALIGNED(pa, psz));
+ 
++	/* Make sure the GIC will observe the zeroed table */
++	gic_flush_dcache_to_poc(page_address(page), np * PAGE_SIZE);
++
+ 	val |= FIELD_PREP(GICR_VPROPBASER_4_1_ADDR, pa >> 12);
+ 	if (rdists_support_shareable()) {
+ 		val |= GICR_VPROPBASER_RaWb;
+-- 
+2.43.0
+

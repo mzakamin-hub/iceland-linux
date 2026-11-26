@@ -1,0 +1,49 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Philip Radford <philip.radford@arm.com>
+Date: Mon, 16 Nov 2026 12:31:52 +0000
+Subject: [PATCH 021/117] firmware: arm_scmi: uninitialized reg_io_width in
+ shmem_setup_iomap()
+
+Replace switch by setting scmi_shmem_io_ops to use default and only
+changing if reg-io-width read suceeds and has a width of 4.
+
+Fixes: 2cd7f3db25fe ("firmware: arm_scmi: Support 'reg-io-width' property for shared memory")
+Reported-by: Sashiko <sashiko-bot@kernel.org>
+Closes: https://sashiko.dev/bug/linux-dd042f6f-0b76-40b8-9435-cbc53370cd08
+Signed-off-by: Philip Radford <philip.radford@arm.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1212731; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/firmware/arm_scmi/shmem.c | 11 +++--------
+ 1 file changed, 3 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/firmware/arm_scmi/shmem.c b/drivers/firmware/arm_scmi/shmem.c
+index dadb37557f8ae..8a4557a1e5c20 100644
+--- a/drivers/firmware/arm_scmi/shmem.c
++++ b/drivers/firmware/arm_scmi/shmem.c
+@@ -234,16 +234,11 @@ static void __iomem *shmem_setup_iomap(struct scmi_chan_info *cinfo,
+ 		dev_err(dev, "failed to ioremap SCMI %s shared memory\n", desc);
+ 		return IOMEM_ERR_PTR(-EADDRNOTAVAIL);
+ 	}
++	*ops = &shmem_io_ops_default;
+ 
+-	of_property_read_u32(shmem, "reg-io-width", &reg_io_width);
+-	switch (reg_io_width) {
+-	case 4:
++	if (!of_property_read_u32(shmem, "reg-io-width", &reg_io_width) &&
++	    reg_io_width == 4)
+ 		*ops = &shmem_io_ops32;
+-		break;
+-	default:
+-		*ops = &shmem_io_ops_default;
+-		break;
+-	}
+ 
+ 	return addr;
+ }
+-- 
+2.43.0
+

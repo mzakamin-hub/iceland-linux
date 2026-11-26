@@ -1,0 +1,103 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Xu Rao <raoxu@uniontech.com>
+Date: Mon, 16 Nov 2026 14:59:38 +0800
+Subject: [PATCH 083/117] media: v4l2-event: Unblock DQEVENT after device
+ unregister
+
+A blocking VIDIOC_DQEVENT can remain asleep after its video device is
+unregistered. video_unregister_device() clears V4L2_FL_REGISTERED and
+wakes event waiters, but v4l2_event_dequeue() only waits for a nonempty
+event queue. A removal wakeup with no queued event therefore sends the
+caller back to sleep, potentially indefinitely in the absence of a
+subsequent event or signal.
+
+Reproduce this by opening an event-capable node, subscribing to an event,
+draining pending events, clearing O_NONBLOCK and entering DQEVENT. Once
+the task is asleep in v4l2_event_dequeue(), unregister the node from
+another process. The ioctl must already be in progress: a new ioctl
+after unregister is normally rejected by the outer V4L2 file operations.
+Losing an input signal alone is insufficient if the node stays registered.
+
+This is reachable during legitimate use by an application with a thread
+blocked waiting for device events when the device is hot-unplugged or
+its driver is unbound. It does not require malformed input. Applications
+using nonblocking dequeue do not sleep at this wait point, and an event
+or signal can mask the problem. The frequency in real applications has
+not been measured; the runtime test below uses driver unbind rather than
+physical unplug.
+
+This was reproduced with an ov9734 UVC camera (0408:1040).
+Subscribe to V4L2_EVENT_CTRL for
+V4L2_CID_BRIGHTNESS on /dev/video0, then unbind the camera's uvcvideo
+interface. Both video nodes disappear, but the blocked ioctl does not
+return. A representative trace, collected from the test program and
+/proc/256634/{status,wchan,stack}, is shown below (timestamps omitted):
+
+  DRAIN_EMPTY errno=2 type=3 id=0x980900
+  UNBIND_COMPLETE nodes=[]
+  # About three seconds after unbind:
+  Name: dqevent_test
+  State: S (sleeping)
+  wchan: v4l2_event_dequeue
+  [<0>] v4l2_event_dequeue+0xbc/0x140 [videodev]
+  [<0>] v4l_dqevent+0x20/0x30 [videodev]
+  [<0>] __video_do_ioctl+0x1cc/0x4b0 [videodev]
+  [<0>] video_usercopy+0x15d/0x700 [videodev]
+  [<0>] video_ioctl2+0x15/0x20 [videodev]
+  [<0>] v4l2_ioctl+0x50/0x60 [videodev]
+  # Only after the test sends SIGUSR1:
+  ret=-1 errno=4(Interrupted system call) signal=10
+
+All three original-handler trials needed the test signal to finish.
+There was no Oops or hung-task report: this is an interruptible wait.
+With the changed dequeue handler temporarily installed using livepatch,
+the same unregister test returned without a signal in all three trials:
+
+  UNBIND_COMPLETE nodes=[]
+  ret=-1 errno=19(No such device) signal=0
+
+Disabling and unloading the livepatch restored the original behavior.
+This comparison used the running test kernel, not a newly
+booted mainline kernel.
+
+Include the registration state in the wait condition. Attempt to dequeue
+an event after waking and return -ENODEV if the queue is empty and the
+device is unregistered. This also handles another waiter consuming the
+last event first. An in-flight call can still return a pending event;
+nonblocking calls, signal handling and mutex reacquisition are unchanged.
+
+Fixes: c3b5b0241f62 ("V4L/DVB: V4L: Events: Add backend")
+Cc: stable@vger.kernel.org
+Signed-off-by: Xu Rao <raoxu@uniontech.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1212339; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/media/v4l2-core/v4l2-event.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/media/v4l2-core/v4l2-event.c b/drivers/media/v4l2-core/v4l2-event.c
+index 9dd2aaa95a674..17d3c53c0d93b 100644
+--- a/drivers/media/v4l2-core/v4l2-event.c
++++ b/drivers/media/v4l2-core/v4l2-event.c
+@@ -70,11 +70,14 @@ int v4l2_event_dequeue(struct v4l2_fh *fh, struct v4l2_event *event,
+ 
+ 	do {
+ 		ret = wait_event_interruptible(fh->wait,
+-					       fh->navailable != 0);
++					       fh->navailable != 0 ||
++					       !video_is_registered(fh->vdev));
+ 		if (ret < 0)
+ 			break;
+ 
+ 		ret = __v4l2_event_dequeue(fh, event);
++		if (ret == -ENOENT && !video_is_registered(fh->vdev))
++			ret = -ENODEV;
+ 	} while (ret == -ENOENT);
+ 
+ 	if (fh->vdev->lock)
+-- 
+2.43.0
+

@@ -1,0 +1,59 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chrispine Tinega <dev@chrispinetinega.com>
+Date: Sun, 15 Nov 2026 13:59:29 +0300
+Subject: [PATCH 090/117] rpmsg: char: Drop messages that arrive while the
+ device is closed
+
+A char device bound to an rpmsg channel reuses the channel's default
+endpoint, and that endpoint stays bound when the last file is closed.
+rpmsg_ept_cb() keeps running and appends an skb to eptdev->queue for
+every message, with no limit. The queue is purged only on release, so
+nothing frees it while the device stays closed.
+
+An endpoint created through RPMSG_CREATE_EPT_IOCTL does not have this
+problem: it is destroyed on release, and messages sent to it while the
+device is closed are dropped by the bus.
+
+On a TI AM62x whose M4F core sends about four 64-byte messages a
+second, kernel memory that cannot be reclaimed grew by 2.2 MB in the
+10 minutes the reading process was stopped, about 850 bytes a message.
+At that rate a reader that is down for a day holds about 320 MB.
+
+Drop a message when no file has the device open, as the bus already
+does for an endpoint that does not exist. Release already discards
+whatever the last reader left unread, so delivery across a close is
+not something a reader can depend on today.
+
+Fixes: bc69d1066569 ("rpmsg: char: Introduce the "rpmsg-raw" channel")
+Signed-off-by: Chrispine Tinega <dev@chrispinetinega.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1211787; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/rpmsg/rpmsg_char.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drivers/rpmsg/rpmsg_char.c b/drivers/rpmsg/rpmsg_char.c
+index d8868faacdc3a..18813db1affdd 100644
+--- a/drivers/rpmsg/rpmsg_char.c
++++ b/drivers/rpmsg/rpmsg_char.c
+@@ -112,6 +112,14 @@ static int rpmsg_ept_cb(struct rpmsg_device *rpdev, void *buf, int len,
+ 	if (!eptdev)
+ 		return 0;
+ 
++	/*
++	 * A channel's default endpoint stays bound while the device is closed,
++	 * so this callback keeps running. Queuing now would grow the queue
++	 * without limit until the device is opened again. Drop the message.
++	 */
++	if (!eptdev->ept)
++		return 0;
++
+ 	skb = alloc_skb(len, GFP_ATOMIC);
+ 	if (!skb)
+ 		return -ENOMEM;
+-- 
+2.43.0
+

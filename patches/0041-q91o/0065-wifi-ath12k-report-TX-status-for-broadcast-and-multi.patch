@@ -1,0 +1,81 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Vitor Soares <vitor.soares@toradex.com>
+Date: Mon, 16 Nov 2026 23:02:49 +0000
+Subject: [PATCH 065/117] wifi: ath12k: report TX status for broadcast and
+ multicast frames
+
+In AP mode, once a station is associated, broadcast and multicast frames
+sent by the AP log:
+
+  ath12k_wifi7_pci 0003:01:00.0: dp_tx: failed to find the peer with peer_id 2
+
+These frames complete against the AP's own peer. That peer has no
+station, and since commit 981050b918fc ("wifi: ath12k: Fix TX status
+reporting to mac80211 when offload is enabled") a missing station is
+treated as a missing peer: the frame is dropped and an error is logged.
+Before that commit, the TX status of these frames was reported without a
+station.
+
+Report the TX status without a station when the peer has none, and add
+rate information only when a station is present. Only drop the frame
+when the peer is not found, and log that case at debug level, as the
+HTT completion path does.
+
+Tested-on: WCN7850 hw2.0 PCI WLAN.HMT.1.1.c7-00108-QCAHMTSWPL_V1.0_V2.0_SILICONZ_UPSTREAM-3
+
+Fixes: 981050b918fc ("wifi: ath12k: Fix TX status reporting to mac80211 when offload is enabled")
+Signed-off-by: Vitor Soares <vitor.soares@toradex.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1213234; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/net/wireless/ath/ath12k/wifi7/dp_tx.c | 23 +++++++++++--------
+ 1 file changed, 13 insertions(+), 10 deletions(-)
+
+diff --git a/drivers/net/wireless/ath/ath12k/wifi7/dp_tx.c b/drivers/net/wireless/ath/ath12k/wifi7/dp_tx.c
+index 8fd68e5b412c7..8c383a95c0af7 100644
+--- a/drivers/net/wireless/ath/ath12k/wifi7/dp_tx.c
++++ b/drivers/net/wireless/ath/ath12k/wifi7/dp_tx.c
+@@ -856,24 +856,27 @@ static void ath12k_wifi7_dp_tx_complete_msdu(struct ath12k_pdev_dp *dp_pdev,
+ 	ath12k_wifi7_dp_tx_update_txcompl(dp_pdev, ts);
+ 
+ 	peer = ath12k_dp_link_peer_find_by_peerid(dp_pdev, ts->peer_id);
+-	if (!peer || !peer->sta) {
+-		ath12k_err(ab,
++	if (!peer) {
++		ath12k_dbg(ab, ATH12K_DBG_DATA,
+ 			   "dp_tx: failed to find the peer with peer_id %d\n",
+ 			   ts->peer_id);
+ 		ieee80211_free_txskb(ath12k_pdev_dp_to_hw(dp_pdev), msdu);
+ 		goto exit;
+ 	}
+ 
+-	status.sta = peer->sta;
+-	status.info = info;
+-	status.skb = msdu;
+-	rate = peer->last_txrate;
++	if (peer->sta) {
++		status.sta = peer->sta;
++		rate = peer->last_txrate;
+ 
+-	status_rate.rate_idx = rate;
+-	status_rate.try_count = 1;
++		status_rate.rate_idx = rate;
++		status_rate.try_count = 1;
+ 
+-	status.rates = &status_rate;
+-	status.n_rates = 1;
++		status.rates = &status_rate;
++		status.n_rates = 1;
++	}
++
++	status.info = info;
++	status.skb = msdu;
+ 	ieee80211_tx_status_ext(ath12k_pdev_dp_to_hw(dp_pdev), &status);
+ 
+ exit:
+-- 
+2.43.0
+

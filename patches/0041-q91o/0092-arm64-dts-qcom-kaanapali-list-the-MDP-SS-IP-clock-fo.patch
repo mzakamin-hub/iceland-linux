@@ -1,0 +1,50 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 21:47:02 +0200
+Subject: [PATCH 092/117] arm64: dts: qcom: kaanapali: list the MDP SS IP clock
+ for the DPU
+
+The display controller is also clocked by DISP_CC_MDSS_MDP_SS_IP_CLK (the
+stock device tree passes it to the MDP as its SS IP clock), but the DPU
+node does not list it, so Linux never votes for it and the controller
+only works when the boot loader happened to leave it running. When it
+did not, boots can scan out a correct top band followed by stale data.
+
+Add the clock to the DPU clocks so the DPU enables it with the others
+(the driver takes all listed clocks as a bulk set).
+
+Found by Reixo0 on the RedMagic 11 Pro (SM8850), in github Reixo0/linux
+commit 8b4f66b1d043 ("arm64: dts: qcom: kaanapali: give the display controller its SS IP clock")
+(no Signed-off-by); this one-line change is written independently from
+the stock device tree's MDP clock list.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ arch/arm64/boot/dts/qcom/kaanapali.dtsi | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
+index 39667f09a19aa..e02d58a1bd3c6 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
++++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
+@@ -4609,12 +4609,14 @@ mdss_mdp: display-controller@9801000 {
+ 					 <&dispcc DISP_CC_MDSS_AHB_CLK>,
+ 					 <&dispcc DISP_CC_MDSS_MDP_LUT_CLK>,
+ 					 <&dispcc DISP_CC_MDSS_MDP_CLK>,
+-					 <&dispcc DISP_CC_MDSS_VSYNC_CLK>;
++					 <&dispcc DISP_CC_MDSS_VSYNC_CLK>,
++					 <&dispcc DISP_CC_MDSS_MDP_SS_IP_CLK>;
+ 				clock-names = "nrt_bus",
+ 					      "iface",
+ 					      "lut",
+ 					      "core",
+-					      "vsync";
++					      "vsync",
++					      "ssip";
+ 
+ 				assigned-clocks = <&dispcc DISP_CC_MDSS_VSYNC_CLK>;
+ 				assigned-clock-rates = <19200000>;
+-- 
+2.43.0
+

@@ -1,0 +1,113 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sreeraj S Kurup <sreekuttan2156239@gmail.com>
+Date: Fri, 13 Nov 2026 11:04:27 +0000
+Subject: [PATCH 060/117] ALSA: compress: Fix task resource leak on
+ copy_to_user() failure
+
+The task creation path allocates resources and installs file descriptors
+before copying the task information back to userspace.
+
+If copy_to_user() fails, the function returns -EFAULT without releasing
+the allocated task, DMA-BUF references, or file descriptors. This
+leaves the task registered and leaks resources.
+
+Delay fd_install() until copy_to_user() succeeds. If the copy fails,
+release the reserved file descriptors and their DMA-BUF references,
+then free the task using snd_compr_task_free_one().
+
+This ensures that task resources are properly released when copying
+task information to userspace fails.
+
+Fixes: 04177158cf98 ("ALSA: compress_offload: introduce accel operation mode")
+Signed-off-by: Sreeraj S Kurup <sreekuttan2156239@gmail.com>
+Signed-off-by: Takashi Iwai <tiwai@suse.de>
+Link: https://patch.msgid.link/20261113110427.4256-1-sreekuttan2156239@gmail.com
+
+[mzak: picked for q91o (21 Nov gains plan) from linux-next/maintainer tree commit 1afd6b7547b2; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ sound/core/compress_offload.c | 34 ++++++++++++++++++++++++++--------
+ 1 file changed, 26 insertions(+), 8 deletions(-)
+
+diff --git a/sound/core/compress_offload.c b/sound/core/compress_offload.c
+index 9b53282e01928..8b58d0bd044c8 100644
+--- a/sound/core/compress_offload.c
++++ b/sound/core/compress_offload.c
+@@ -1124,6 +1124,9 @@ static void snd_compr_task_free(struct snd_compr_task_runtime *task)
+ 	kfree(task);
+ }
+ 
++static void snd_compr_task_free_one(struct snd_compr_stream *stream,
++				    struct snd_compr_task_runtime *task);
++
+ static u64 snd_compr_seqno_next(struct snd_compr_stream *stream)
+ {
+ 	u64 seqno = ++stream->runtime->task_seqno;
+@@ -1132,7 +1135,9 @@ static u64 snd_compr_seqno_next(struct snd_compr_stream *stream)
+ 	return seqno;
+ }
+ 
+-static int snd_compr_task_new(struct snd_compr_stream *stream, struct snd_compr_task *utask)
++static int snd_compr_task_new(struct snd_compr_stream *stream,
++			      struct snd_compr_task *utask,
++			      struct snd_compr_task_runtime **runtime_task)
+ {
+ 	struct snd_compr_task_runtime *task;
+ 	int retval, fd_i, fd_o;
+@@ -1169,12 +1174,11 @@ static int snd_compr_task_new(struct snd_compr_stream *stream, struct snd_compr_
+ 	/* keep dmabuf reference until freed with task free ioctl */
+ 	get_dma_buf(task->input);
+ 	get_dma_buf(task->output);
+-	fd_install(fd_i, task->input->file);
+-	fd_install(fd_o, task->output->file);
+ 	utask->input_fd = fd_i;
+ 	utask->output_fd = fd_o;
+ 	list_add_tail(&task->list, &stream->runtime->tasks);
+ 	stream->runtime->total_tasks++;
++	*runtime_task = task;
+ 	return 0;
+ free_driver_task:
+ 	stream->ops->task_free(stream, task);
+@@ -1185,6 +1189,7 @@ static int snd_compr_task_new(struct snd_compr_stream *stream, struct snd_compr_
+ 
+ static int snd_compr_task_create(struct snd_compr_stream *stream, unsigned long arg)
+ {
++	struct snd_compr_task_runtime *runtime_task;
+ 	int retval;
+ 
+ 	if (stream->runtime->state != SNDRV_PCM_STATE_SETUP)
+@@ -1194,11 +1199,24 @@ static int snd_compr_task_create(struct snd_compr_stream *stream, unsigned long
+ 		memdup_user((void __user *)arg, sizeof(*task));
+ 	if (IS_ERR(task))
+ 		return PTR_ERR(task);
+-	retval = snd_compr_task_new(stream, task);
+-	if (retval >= 0)
+-		if (copy_to_user((void __user *)arg, task, sizeof(*task)))
+-			retval = -EFAULT;
+-	return retval;
++	retval = snd_compr_task_new(stream, task, &runtime_task);
++	if (retval < 0)
++		return retval;
++
++	if (copy_to_user((void __user *)arg, task, sizeof(*task))) {
++		put_unused_fd(task->input_fd);
++		put_unused_fd(task->output_fd);
++
++		dma_buf_put(runtime_task->input);
++		dma_buf_put(runtime_task->output);
++		snd_compr_task_free_one(stream, runtime_task);
++		return -EFAULT;
++	}
++
++	fd_install(task->input_fd, runtime_task->input->file);
++	fd_install(task->output_fd, runtime_task->output->file);
++
++	return 0;
+ }
+ 
+ static int snd_compr_task_start_prepare(struct snd_compr_task_runtime *task,
+-- 
+2.43.0
+

@@ -1,0 +1,72 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Vishnu Reddy <busanna.reddy@oss.qualcomm.com>
+Date: Tue, 17 Nov 2026 17:13:57 +0530
+Subject: [PATCH 080/117] media: iris: Fix out-of-bounds read in timestamp
+ metadata fallback
+
+inst->tss[] has VIDEO_MAX_FRAME (32) entries, so valid indexes are 0
+through 31. iris_set_ts_metadata() writes at metadata_idx and then
+increments it, wrapping only on the next call. After the 32nd input
+buffer, metadata_idx is 32 until the next input buffer is queued.
+
+If iris_get_ts_metadata() finds no matching timestamp in that window,
+its fallback reads inst->tss[32], one entry past the end of the array.
+UBSAN reports this as an array-index-out-of-bounds error.
+
+Advance metadata_idx before the write instead, starting from the last
+slot so the first write still lands in slot 0. The index then always
+refers to the last written entry and is never out of range, so the
+fallback read needs no special handling.
+
+Fixes: 17f2a485ca67 ("media: iris: implement vb2 ops for buf_queue and firmware response")
+Cc: stable@vger.kernel.org
+Tested-by: Birk Skyum <birk.skyum@pm.me> # Lenovo Yoga Slim 7x (X1E80100)
+Tested-by: Deepa Madivalara <deepa.madivalara@oss.qualcomm.com>
+Signed-off-by: Vishnu Reddy <busanna.reddy@oss.qualcomm.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1213804 (v2), replacing our v1 pick; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/media/platform/qcom/iris/iris_common.c | 4 ++--
+ drivers/media/platform/qcom/iris/iris_vidc.c   | 1 +
+ 2 files changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_common.c b/drivers/media/platform/qcom/iris/iris_common.c
+index 25836561bcf3e..2ff15edeac286 100644
+--- a/drivers/media/platform/qcom/iris/iris_common.c
++++ b/drivers/media/platform/qcom/iris/iris_common.c
+@@ -33,6 +33,8 @@ void iris_set_ts_metadata(struct iris_inst *inst, struct vb2_v4l2_buffer *vbuf)
+ 	struct vb2_buffer *vb = &vbuf->vb2_buf;
+ 	u64 ts_us = vb->timestamp;
+ 
++	inst->metadata_idx++;
++
+ 	if (inst->metadata_idx >= ARRAY_SIZE(inst->tss))
+ 		inst->metadata_idx = 0;
+ 
+@@ -42,8 +44,6 @@ void iris_set_ts_metadata(struct iris_inst *inst, struct vb2_v4l2_buffer *vbuf)
+ 	inst->tss[inst->metadata_idx].tc = vbuf->timecode;
+ 	inst->tss[inst->metadata_idx].ts_us = ts_us;
+ 	inst->tss[inst->metadata_idx].ts_ns = vb->timestamp;
+-
+-	inst->metadata_idx++;
+ }
+ 
+ int iris_process_streamon_input(struct iris_inst *inst)
+diff --git a/drivers/media/platform/qcom/iris/iris_vidc.c b/drivers/media/platform/qcom/iris/iris_vidc.c
+index 164026c20b9ad..a85dc35b76f69 100644
+--- a/drivers/media/platform/qcom/iris/iris_vidc.c
++++ b/drivers/media/platform/qcom/iris/iris_vidc.c
+@@ -184,6 +184,7 @@ int iris_open(struct file *filp)
+ 	inst->domain = session_type;
+ 	inst->session_id = hash32_ptr(inst);
+ 	inst->state = IRIS_INST_DEINIT;
++	inst->metadata_idx = ARRAY_SIZE(inst->tss) - 1;
+ 	kref_init(&inst->kref);
+ 
+ 	mutex_init(&inst->lock);
+-- 
+2.43.0
+

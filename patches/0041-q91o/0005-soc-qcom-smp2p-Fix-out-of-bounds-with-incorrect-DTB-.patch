@@ -1,0 +1,46 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>
+Date: Mon, 2 Nov 2026 14:35:33 +0100
+Subject: [PATCH 005/117] soc: qcom: smp2p: Fix out-of-bounds with incorrect
+ DTB of too many outbound entries
+
+The outbound SMEM item has a fixed array of SMP2P_MAX_ENTRY (16)
+entries, thus driver should be sure that DTB does not have more of
+these, otherwise such incorrect DTB would cause out-of-bounds writes.
+
+Reported-by: Sashiko <sashiko-bot@kernel.org>
+Closes: https://sashiko.dev/#/bug/linux-eaf9beb4-cc0d-4d8e-be28-4c12b039b3c8
+Fixes: 50e99641413e ("soc: qcom: smp2p: Qualcomm Shared Memory Point to Point")
+Cc: stable@vger.kernel.org
+Signed-off-by: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>
+Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
+Link: https://patch.msgid.link/20261102133531.173434-5-krzysztof.kozlowski@oss.qualcomm.com
+Signed-off-by: Bjorn Andersson <andersson@kernel.org>
+
+[mzak: picked for q91o (21 Nov gains plan) from linux-next/maintainer tree commit be72e07d0393; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/soc/qcom/smp2p.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/drivers/soc/qcom/smp2p.c b/drivers/soc/qcom/smp2p.c
+index 5c53110bc1e05..051ac6c7f0eaf 100644
+--- a/drivers/soc/qcom/smp2p.c
++++ b/drivers/soc/qcom/smp2p.c
+@@ -539,6 +539,11 @@ static int qcom_smp2p_outbound_entry(struct qcom_smp2p *smp2p,
+ 	struct smp2p_smem_item *out = smp2p->out;
+ 	char buf[SMP2P_MAX_ENTRY_NAME] = {};
+ 
++	if (out->valid_entries >= SMP2P_MAX_ENTRY) {
++		dev_err(smp2p->dev, "too many outbound entries\n");
++		return -EINVAL;
++	}
++
+ 	/* Allocate an entry from the smem item */
+ 	strscpy(buf, entry->name, SMP2P_MAX_ENTRY_NAME);
+ 	memcpy(out->entries[out->valid_entries].name, buf, SMP2P_MAX_ENTRY_NAME);
+-- 
+2.43.0
+

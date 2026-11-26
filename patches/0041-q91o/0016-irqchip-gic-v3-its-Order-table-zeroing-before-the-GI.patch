@@ -1,0 +1,48 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Fuad Tabba <fuad.tabba@linux.dev>
+Date: Mon, 16 Nov 2026 19:29:29 +0000
+Subject: [PATCH 016/117] irqchip/gic-v3-its: Order table zeroing before the
+ GIC can see it
+
+The ITS driver allocates the ITS tables and the vPE tables as zeroed
+pages. It exposes each table with a single store: a relaxed
+GICR_VPROPBASER write with Valid set, the relaxed GITS_CTLR write that
+enables the ITS, or a valid level-1 entry for a level-2 page.
+However, on a shareable table the zeroing isn't ordered before that
+store, so the GIC can read the page's previous contents as table
+entries, which the spec makes UNPREDICTABLE (IHI 0069H.b 5.2.1, and
+GICR_VPROPBASER.Z in 12.11.39). A level-2 page is exposed at runtime,
+when the GIC may already be walking the level-1 table for other IDs.
+
+Add a dsb(ishst) at the end of its_alloc_pages_node(), as
+its_flush_cmd() does for a command. The allocator doesn't take a
+shareability argument, so the barrier is unconditional. On a
+non-shareable table it doesn't hurt.
+
+Signed-off-by: Fuad Tabba <fuad.tabba@linux.dev>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1213108; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/irqchip/irq-gic-v3-its.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/irqchip/irq-gic-v3-its.c b/drivers/irqchip/irq-gic-v3-its.c
+index c952c069f9373..9900c6a53526e 100644
+--- a/drivers/irqchip/irq-gic-v3-its.c
++++ b/drivers/irqchip/irq-gic-v3-its.c
+@@ -233,6 +233,9 @@ static struct page *its_alloc_pages_node(int node, gfp_t gfp,
+ 	if (ret)
+ 		return NULL;
+ 
++	/* Order the zeroing before any store that exposes the page to the GIC */
++	dsb(ishst);
++
+ 	return page;
+ }
+ 
+-- 
+2.43.0
+

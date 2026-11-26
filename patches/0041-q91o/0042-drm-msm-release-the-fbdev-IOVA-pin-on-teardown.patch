@@ -1,0 +1,43 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Michael McAllister <me@michaelmcallister.org>
+Date: Fri, 13 Nov 2026 17:23:44 +0000
+Subject: [PATCH 042/117] drm/msm: release the fbdev IOVA pin on teardown
+
+The fbdev probe pins its buffer, but normal teardown never drops that
+pin. This produces a pin-count warning when the framebuffer is freed.
+
+Keep the setup pin and release it in fb_destroy. Drop the object pin
+under its reservation lock, since fbdev destruction can be delayed until
+after the KMS VM has been torn down.
+
+Fixes: 7ad0e8cf6317 ("drm/msm: Count how many times iova memory is pinned")
+Signed-off-by: Michael McAllister <me@michaelmcallister.org>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1210813; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/msm_fbdev.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/msm/msm_fbdev.c b/drivers/gpu/drm/msm/msm_fbdev.c
+index f37cc3f97a21f..83efb67ff8299 100644
+--- a/drivers/gpu/drm/msm/msm_fbdev.c
++++ b/drivers/gpu/drm/msm/msm_fbdev.c
+@@ -47,7 +47,11 @@ static void msm_fbdev_fb_destroy(struct fb_info *info)
+ 
+ 	drm_fb_helper_fini(helper);
+ 
+-	msm_gem_put_vaddr(bo);
++	/* fbdev can outlive the KMS VM; release the object pins directly. */
++	msm_gem_lock(bo);
++	msm_gem_put_vaddr_locked(bo);
++	msm_gem_unpin_locked(bo);
++	msm_gem_unlock(bo);
+ 
+ 	drm_client_buffer_delete(helper->buffer);
+ 	drm_client_release(&helper->client);
+-- 
+2.43.0
+

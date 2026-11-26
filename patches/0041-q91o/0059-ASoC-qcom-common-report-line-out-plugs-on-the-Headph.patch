@@ -1,0 +1,54 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: "Ingo A. Kubbilun" <ingo.kubbilun@gmail.com>
+Date: Fri, 13 Nov 2026 22:45:35 +0100
+Subject: [PATCH 059/117] ASoC: qcom: common: report line-out plugs on the
+ Headphone Jack pin
+
+The WCD MBHC classifies high-impedance loads (above linein_th, 5 kOhm
+on wcd938x) such as active speakers as SND_JACK_LINEOUT. The
+"Headphone Jack" pin only matched SND_JACK_HEADPHONE, so the jack
+control stayed off and userspace (UCM JackControl) never switched to
+the headphone output for those loads.
+
+Seen on ASUS Vivobook S16 S3607QA (X1P42100, WCD9385): active
+speakers measured at ~20 kOhm per channel were reported as LINEOUT only.
+
+Developed with the help of an AI coding assistant (Anthropic Claude),
+which drafted the changes from the Windows ACPI tables, existing device
+trees and test logs; reviewed, built and tested on the device by the
+submitter.
+
+Signed-off-by: Ingo A. Kubbilun <ingo.kubbilun@gmail.com>
+Fixes: 4c2c935a278e ("ASoC: qcom: common: add kcontrol to jack pins")
+Reviewed-by: Srinivas Kandagatla <srinivas.kandagatla@oss.qualcomm.com>
+Link: https://patch.msgid.link/20261113214544.232836-1-ingo.kubbilun@gmail.com
+Signed-off-by: Mark Brown <broonie@kernel.org>
+
+[mzak: picked for q91o (21 Nov gains plan) from linux-next/maintainer tree commit b610f9cd00f4; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ sound/soc/qcom/common.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/sound/soc/qcom/common.c b/sound/soc/qcom/common.c
+index 5dc954dc1cb21..af5cacddf67df 100644
+--- a/sound/soc/qcom/common.c
++++ b/sound/soc/qcom/common.c
+@@ -335,7 +335,11 @@ static struct snd_soc_jack_pin qcom_headset_jack_pins[] = {
+ 	},
+ 	{
+ 		.pin = "Headphone Jack",
+-		.mask = SND_JACK_HEADPHONE,
++		/*
++		 * WCD MBHC reports loads above linein_th (5 kOhm) as LINEOUT,
++		 * e.g. active speakers; treat them like headphones for routing.
++		 */
++		.mask = SND_JACK_HEADPHONE | SND_JACK_LINEOUT,
+ 	},
+ };
+ 
+-- 
+2.43.0
+

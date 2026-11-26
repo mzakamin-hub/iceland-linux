@@ -1,0 +1,57 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alice Ryhl <aliceryhl@google.com>
+Date: Mon, 12 Oct 2026 09:22:05 +0000
+Subject: [PATCH 038/117] drm/gpuvm: skip setting kernel_alloc_node range on
+ overflow
+
+When the reserved VA range overflows in drm_gpuvm_init(), insertion of
+kernel_alloc_node is skipped, leaving its vm pointer NULL. However,
+va.range is still set to a non-zero value, which causes drm_gpuvm_fini()
+to dereference the NULL vm pointer when removing the node. Thus, only
+initialize kernel_alloc_node's address and range when the overflow check
+succeeds.
+
+Note that this fixes unsoundness in the Rust GpuVm::new() abstraction:
+passing a backwards reserve_range (start > end) when overflow checks are
+disabled causes `end - start` to wrap around, triggering the overflow in
+drm_gpuvm_init() and dereferencing NULL when the GpuVm is dropped.
+
+Cc: stable@vger.kernel.org
+Fixes: e6303f323b1a ("drm: manager to keep track of GPUs VA mappings")
+Signed-off-by: Alice Ryhl <aliceryhl@google.com>
+Link: https://patch.msgid.link/20261012-gpuvm-reserve-overflow-v2-1-519ef15e2172@google.com
+Signed-off-by: Danilo Krummrich <dakr@kernel.org>
+
+[mzak: picked for q91o (21 Nov gains plan) from linux-next/maintainer tree commit 5780281c4588; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/drm_gpuvm.c | 9 ++++-----
+ 1 file changed, 4 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/gpu/drm/drm_gpuvm.c b/drivers/gpu/drm/drm_gpuvm.c
+index 6eaa4aef80939..027773266ed3f 100644
+--- a/drivers/gpu/drm/drm_gpuvm.c
++++ b/drivers/gpu/drm/drm_gpuvm.c
+@@ -1214,13 +1214,12 @@ drm_gpuvm_init(struct drm_gpuvm *gpuvm, const char *name,
+ 	gpuvm->mm_range = range;
+ 
+ 	memset(&gpuvm->kernel_alloc_node, 0, sizeof(struct drm_gpuva));
+-	if (reserve_range) {
++	if (reserve_range &&
++	    likely(!drm_gpuvm_warn_check_overflow(gpuvm, reserve_offset,
++						  reserve_range))) {
+ 		gpuvm->kernel_alloc_node.va.addr = reserve_offset;
+ 		gpuvm->kernel_alloc_node.va.range = reserve_range;
+-
+-		if (likely(!drm_gpuvm_warn_check_overflow(gpuvm, reserve_offset,
+-							  reserve_range)))
+-			__drm_gpuva_insert(gpuvm, &gpuvm->kernel_alloc_node);
++		__drm_gpuva_insert(gpuvm, &gpuvm->kernel_alloc_node);
+ 	}
+ }
+ EXPORT_SYMBOL_GPL(drm_gpuvm_init);
+-- 
+2.43.0
+

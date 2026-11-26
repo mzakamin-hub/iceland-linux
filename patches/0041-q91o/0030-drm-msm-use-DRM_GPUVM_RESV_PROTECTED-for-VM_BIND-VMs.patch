@@ -1,0 +1,101 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Matthew Brost <matthew.brost@intel.com>
+Date: Thu, 1 Oct 2026 15:06:29 -0700
+Subject: [PATCH 030/117] drm/msm: use DRM_GPUVM_RESV_PROTECTED for VM_BIND VMs
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+msm_gem_vm_create() creates every drm_gpuvm without
+DRM_GPUVM_RESV_PROTECTED, on the grounds that it makes
+drm_gpuvm_bo_evict() lose track of evicted external objects. It does not:
+drm_gpuvm_bo_evict() still sets drm_gpuvm_bo::evicted on an extobj, and
+drm_gpuvm_prepare_objects() moves any such extobj onto the evicted list
+before drm_gpuvm_validate() looks at it. The VM_BIND submit path always
+calls the two in that order.
+
+Userspace managed VMs already touch the extobj and evicted lists only
+with the VM's resv held: VMAs are created and linked by VM_BIND under
+the VM resv, msm_gem_vma_close() asserts it, and every drm_gpuvm_bo_put()
+which can drop the last reference of a VM_BIND vm_bo runs with it held,
+via msm_gem_lock_vm_and_obj(), with_vm_locks() or the object free path.
+The internal spinlocks buy nothing there, so set
+DRM_GPUVM_RESV_PROTECTED for those VMs.
+
+Kernel managed VMs are left alone. The legacy submit path holds a vm_bo
+reference per BO and drops it in msm_submit_retire() with only the
+object's resv held, which could be the last reference once the VMA is
+gone. VM_BIND contexts never get there, the previous patch having made
+MSM_GEM_SUBMIT reject a submit_bo table from them.
+
+This is also what two pass locking in drm_gpuvm requires, which a
+following patch makes use of.
+
+Cc: Abhinav Kumar <abhinav.kumar@linux.dev>
+Cc: Alice Ryhl <aliceryhl@google.com>
+Cc: Anna Maniscalco <anna.maniscalco2000@gmail.com>
+Cc: Antonino Maniscalco <antomani103@gmail.com>
+Cc: Boris Brezillon <boris.brezillon@collabora.com>
+Cc: Danilo Krummrich <dakr@kernel.org>
+Cc: David Airlie <airlied@gmail.com>
+Cc: Dmitry Baryshkov <lumag@kernel.org>
+Cc: Jessica Zhang <jesszhan0024@gmail.com>
+Cc: Jonathan Corbet <corbet@lwn.net>
+Cc: Liviu Dudau <liviu.dudau@arm.com>
+Cc: Lyude Paul <lyude@redhat.com>
+Cc: Maarten Lankhorst <maarten.lankhorst@linux.intel.com>
+Cc: Marijn Suijten <marijn.suijten@somainline.org>
+Cc: Maxime Ripard <mripard@kernel.org>
+Cc: Randy Dunlap <rdunlap@infradead.org>
+Cc: Rob Clark <robin.clark@oss.qualcomm.com>
+Cc: Rodrigo Vivi <rodrigo.vivi@intel.com>
+Cc: Sean Paul <sean@poorly.run>
+Cc: Shuah Khan <skhan@linuxfoundation.org>
+Cc: Simona Vetter <simona@ffwll.ch>
+Cc: Steven Price <steven.price@arm.com>
+Cc: Thomas Hellström <thomas.hellstrom@linux.intel.com>
+Cc: Thomas Zimmermann <tzimmermann@suse.de>
+Signed-off-by: Matthew Brost <matthew.brost@intel.com>
+Reviewed-by: Anna Maniscalco <anna.maniscalco2000@gmail.com>
+Link: https://patch.msgid.link/20261001220632.3190896-6-matthew.brost@intel.com
+Signed-off-by: Danilo Krummrich <dakr@kernel.org>
+
+[mzak: picked for q91o (21 Nov gains plan) from linux-next/maintainer tree commit 872403c67851; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/msm_gem_vma.c | 16 ++++++++++++----
+ 1 file changed, 12 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/msm_gem_vma.c b/drivers/gpu/drm/msm/msm_gem_vma.c
+index d12df7e42fce8..1376365e6988a 100644
+--- a/drivers/gpu/drm/msm/msm_gem_vma.c
++++ b/drivers/gpu/drm/msm/msm_gem_vma.c
+@@ -828,11 +828,19 @@ msm_gem_vm_create(struct drm_device *drm, struct msm_mmu *mmu, const char *name,
+ 		  u64 va_start, u64 va_size, bool managed)
+ {
+ 	/*
+-	 * We mostly want to use DRM_GPUVM_RESV_PROTECTED, except that
+-	 * makes drm_gpuvm_bo_evict() a no-op for extobjs (ie. we loose
+-	 * tracking that an extobj is evicted) :facepalm:
++	 * Userspace managed (VM_BIND) VMs only ever touch the gpuvm's extobj
++	 * and evicted lists with the VM's resv held, so use
++	 * DRM_GPUVM_RESV_PROTECTED for those.  drm_gpuvm_bo_evict() cannot
++	 * put an extobj on the evicted list there, but it records the
++	 * eviction and drm_gpuvm_prepare_objects() moves it onto the list
++	 * before drm_gpuvm_validate() runs, so nothing is lost.
++	 *
++	 * Kernel managed VMs keep the internal spinlocks, since the legacy
++	 * submit path can drop the last vm_bo reference with only the
++	 * object's resv held (see msm_submit_retire()).  VM_BIND contexts
++	 * cannot reach that path, as they may not pass a submit_bo table.
+ 	 */
+-	enum drm_gpuvm_flags flags = 0;
++	enum drm_gpuvm_flags flags = managed ? 0 : DRM_GPUVM_RESV_PROTECTED;
+ 	struct msm_gem_vm *vm;
+ 	struct drm_gem_object *dummy_gem;
+ 	int ret = 0;
+-- 
+2.43.0
+

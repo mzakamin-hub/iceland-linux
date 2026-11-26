@@ -1,0 +1,62 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ian Rogers <irogers@google.com>
+Date: Thu, 19 Nov 2026 09:10:46 -0800
+Subject: [PATCH 043/117] drm/msm/dp: Return MODE_BAD instead of -EINVAL from
+ mode_valid callbacks
+
+msm_dp_display_mode_valid() and msm_edp_bridge_mode_valid() have
+return type enum drm_mode_status, but return -EINVAL (-22) when dp,
+dp->connector, or mode->clock is zero/NULL. If a mode with zero pixel
+clock is validated and pruned, passing -22 to
+drm_get_mode_status_name() computes a negative array index and fires
+WARN_ON().
+
+Return MODE_BAD instead of -EINVAL in both callbacks.
+
+Found via Clang -Wassign-enum on an x86_64 allyesconfig build.
+Verified by building drivers/gpu/drm/msm/dp/dp_display.o and dp_drm.o
+with LLVM=1 W=1 (-Werror) and -Wassign-enum; not runtime-tested on
+Qualcomm Snapdragon DP/eDP hardware.
+
+Fixes: c943b4948b58 ("drm/msm/dp: add displayPort driver support")
+Fixes: 05d001352733 ("drm/msm/dp: use the eDP bridge ops to validate eDP modes")
+Signed-off-by: Ian Rogers <irogers@google.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1216430; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/dp/dp_display.c | 2 +-
+ drivers/gpu/drm/msm/dp/dp_drm.c     | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/dp/dp_display.c b/drivers/gpu/drm/msm/dp/dp_display.c
+index 9d1e1bc94914c..f5ed5dce1ca41 100644
+--- a/drivers/gpu/drm/msm/dp/dp_display.c
++++ b/drivers/gpu/drm/msm/dp/dp_display.c
+@@ -962,7 +962,7 @@ enum drm_mode_status msm_dp_display_mode_valid(struct msm_dp *dp,
+ 
+ 	if (!dp || !mode_pclk_khz || !dp->connector) {
+ 		DRM_ERROR("invalid params\n");
+-		return -EINVAL;
++		return MODE_BAD;
+ 	}
+ 
+ 	msm_dp_display = container_of(dp, struct msm_dp_display_private, msm_dp_display);
+diff --git a/drivers/gpu/drm/msm/dp/dp_drm.c b/drivers/gpu/drm/msm/dp/dp_drm.c
+index c1e4147bfef14..dd4e8426cfe09 100644
+--- a/drivers/gpu/drm/msm/dp/dp_drm.c
++++ b/drivers/gpu/drm/msm/dp/dp_drm.c
+@@ -251,7 +251,7 @@ static enum drm_mode_status msm_edp_bridge_mode_valid(struct drm_bridge *bridge,
+ 
+ 	if (!dp || !mode_pclk_khz || !dp->connector) {
+ 		DRM_ERROR("invalid params\n");
+-		return -EINVAL;
++		return MODE_BAD;
+ 	}
+ 
+ 	if (msm_dp_wide_bus_available(dp))
+-- 
+2.43.0
+

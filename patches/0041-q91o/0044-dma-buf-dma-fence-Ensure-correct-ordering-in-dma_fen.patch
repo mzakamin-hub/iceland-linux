@@ -1,0 +1,58 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Philipp Stanner <phasta@kernel.org>
+Date: Thu, 19 Nov 2026 14:18:29 +0100
+Subject: [PATCH 044/117] dma-buf/dma-fence: Ensure correct ordering in
+ dma_fence_timestamp()
+
+dma_fence_timestamp() tests two fence flags with test_bit(), not
+providing any ordering.
+
+The while loop + cpu_relax() seem to satisfy the desire to avoid
+locking, effectively rebuilding a locks spinning behavior in the rare
+case that a fence is signaling right now. Contrary to proper locking,
+however, correct memory ordering is not guaranteed.
+
+Ensure correct ordering with locking.
+
+Cc: stable@vger.kernel.org
+Fixes: b83ce9cb4a46 ("dma-buf: add dma_fence_timestamp helper")
+Signed-off-by: Philipp Stanner <phasta@kernel.org>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1216171; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ include/linux/dma-fence.h | 14 +++++++++-----
+ 1 file changed, 9 insertions(+), 5 deletions(-)
+
+diff --git a/include/linux/dma-fence.h b/include/linux/dma-fence.h
+index dd07d128adc3b..34aefb63a7fe8 100644
+--- a/include/linux/dma-fence.h
++++ b/include/linux/dma-fence.h
+@@ -708,13 +708,17 @@ static inline void dma_fence_set_error(struct dma_fence *fence,
+  */
+ static inline ktime_t dma_fence_timestamp(struct dma_fence *fence)
+ {
+-	if (WARN_ON(!test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags)))
+-		return ktime_get();
++	unsigned long flags;
++	ktime_t ret;
+ 
+-	while (!test_bit(DMA_FENCE_FLAG_TIMESTAMP_BIT, &fence->flags))
+-		cpu_relax();
++	dma_fence_lock_irqsave(fence, flags);
++	if (WARN_ON(!dma_fence_test_signaled_flag(fence)))
++		ret = ktime_get();
++	else
++		ret = fence->timestamp;
++	dma_fence_unlock_irqrestore(fence, flags);
+ 
+-	return fence->timestamp;
++	return ret;
+ }
+ 
+ signed long dma_fence_wait_timeout(struct dma_fence *,
+-- 
+2.43.0
+

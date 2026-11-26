@@ -1,0 +1,135 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 21:56:03 +0200
+Subject: [PATCH 111/117] ASoC: codecs: wcd93xx: make the MBHC result controls
+ read-only
+
+wcd937x, wcd938x and wcd939x expose the headphone type and the measured
+HPHL / HPHR impedance as SOC_SINGLE_EXT() controls with a get handler and
+no put handler. The control core then reports them as read/write, every
+write fails with -EPERM, and alsactl, which saves and restores all
+writable controls, reports at every boot that it cannot restore
+'HPH Type', 'HPHL Impedance' and 'HPHR Impedance'.
+
+These values follow what is plugged into the jack; they are results, not
+settings. Declare them read-only and volatile with a small helper macro
+in wcd-mbhc-v2.h, so user space neither saves nor writes them (alsactl
+skips controls that are not writable). While at it, give wcd939x the same
+limits as the other two (WCD_MBHC_HPH_STEREO for the type, INT_MAX for
+the impedances) instead of UINT_MAX, which the integer info callback
+reports as a maximum of -1.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ sound/soc/codecs/wcd-mbhc-v2.h | 13 +++++++++++++
+ sound/soc/codecs/wcd937x.c     | 12 ++++++------
+ sound/soc/codecs/wcd938x.c     | 12 ++++++------
+ sound/soc/codecs/wcd939x.c     | 12 ++++++------
+ 4 files changed, 31 insertions(+), 18 deletions(-)
+
+diff --git a/sound/soc/codecs/wcd-mbhc-v2.h b/sound/soc/codecs/wcd-mbhc-v2.h
+index a5d52b9643f58..682ee42e0762f 100644
+--- a/sound/soc/codecs/wcd-mbhc-v2.h
++++ b/sound/soc/codecs/wcd-mbhc-v2.h
+@@ -151,6 +151,19 @@ enum wcd_mbhc_hph_type {
+ 	WCD_MBHC_HPH_STEREO,
+ };
+ 
++/*
++ * A detection result (headphone type, impedance) as a mixer control: it
++ * follows what is plugged in, so it is read-only and volatile. Exposed as
++ * read/write without a put handler, writes fail with -EPERM and alsactl
++ * tries (and fails) to restore the saved values at every boot; it skips
++ * non-writable controls.
++ */
++#define WCD_MBHC_RESULT_CTL(xname, xshift, xmax, xhandler_get) \
++{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
++	.access = SNDRV_CTL_ELEM_ACCESS_READ | SNDRV_CTL_ELEM_ACCESS_VOLATILE, \
++	.info = snd_soc_info_volsw, .get = xhandler_get, \
++	.private_value = SOC_SINGLE_VALUE(0, xshift, 0, xmax, 0, 0) }
++
+ /*
+  * These enum definitions are directly mapped to the register
+  * definitions
+diff --git a/sound/soc/codecs/wcd937x.c b/sound/soc/codecs/wcd937x.c
+index b64fc16d50367..36664b4e833fe 100644
+--- a/sound/soc/codecs/wcd937x.c
++++ b/sound/soc/codecs/wcd937x.c
+@@ -1990,15 +1990,15 @@ static int wcd937x_hph_impedance_get(struct snd_kcontrol *kcontrol,
+ }
+ 
+ static const struct snd_kcontrol_new hph_type_detect_controls[] = {
+-	SOC_SINGLE_EXT("HPH Type", 0, 0, WCD_MBHC_HPH_STEREO, 0,
+-		       wcd937x_get_hph_type, NULL),
++	WCD_MBHC_RESULT_CTL("HPH Type", 0, WCD_MBHC_HPH_STEREO,
++			    wcd937x_get_hph_type),
+ };
+ 
+ static const struct snd_kcontrol_new impedance_detect_controls[] = {
+-	SOC_SINGLE_EXT("HPHL Impedance", 0, 0, INT_MAX, 0,
+-		       wcd937x_hph_impedance_get, NULL),
+-	SOC_SINGLE_EXT("HPHR Impedance", 0, 1, INT_MAX, 0,
+-		       wcd937x_hph_impedance_get, NULL),
++	WCD_MBHC_RESULT_CTL("HPHL Impedance", 0, INT_MAX,
++			    wcd937x_hph_impedance_get),
++	WCD_MBHC_RESULT_CTL("HPHR Impedance", 1, INT_MAX,
++			    wcd937x_hph_impedance_get),
+ };
+ 
+ static int wcd937x_mbhc_init(struct snd_soc_component *component)
+diff --git a/sound/soc/codecs/wcd938x.c b/sound/soc/codecs/wcd938x.c
+index 1c4833584b5ef..c966f262d65a2 100644
+--- a/sound/soc/codecs/wcd938x.c
++++ b/sound/soc/codecs/wcd938x.c
+@@ -2529,15 +2529,15 @@ static int wcd938x_hph_impedance_get(struct snd_kcontrol *kcontrol,
+ }
+ 
+ static const struct snd_kcontrol_new hph_type_detect_controls[] = {
+-	SOC_SINGLE_EXT("HPH Type", 0, 0, WCD_MBHC_HPH_STEREO, 0,
+-		       wcd938x_get_hph_type, NULL),
++	WCD_MBHC_RESULT_CTL("HPH Type", 0, WCD_MBHC_HPH_STEREO,
++			    wcd938x_get_hph_type),
+ };
+ 
+ static const struct snd_kcontrol_new impedance_detect_controls[] = {
+-	SOC_SINGLE_EXT("HPHL Impedance", 0, 0, INT_MAX, 0,
+-		       wcd938x_hph_impedance_get, NULL),
+-	SOC_SINGLE_EXT("HPHR Impedance", 0, 1, INT_MAX, 0,
+-		       wcd938x_hph_impedance_get, NULL),
++	WCD_MBHC_RESULT_CTL("HPHL Impedance", 0, INT_MAX,
++			    wcd938x_hph_impedance_get),
++	WCD_MBHC_RESULT_CTL("HPHR Impedance", 1, INT_MAX,
++			    wcd938x_hph_impedance_get),
+ };
+ 
+ static int wcd938x_mbhc_init(struct snd_soc_component *component)
+diff --git a/sound/soc/codecs/wcd939x.c b/sound/soc/codecs/wcd939x.c
+index 9dd4b1d8ff651..7b6c07cbe59fe 100644
+--- a/sound/soc/codecs/wcd939x.c
++++ b/sound/soc/codecs/wcd939x.c
+@@ -2532,15 +2532,15 @@ static int wcd939x_hph_impedance_get(struct snd_kcontrol *kcontrol,
+ }
+ 
+ static const struct snd_kcontrol_new hph_type_detect_controls[] = {
+-	SOC_SINGLE_EXT("HPH Type", 0, 0, UINT_MAX, 0,
+-		       wcd939x_get_hph_type, NULL),
++	WCD_MBHC_RESULT_CTL("HPH Type", 0, WCD_MBHC_HPH_STEREO,
++			    wcd939x_get_hph_type),
+ };
+ 
+ static const struct snd_kcontrol_new impedance_detect_controls[] = {
+-	SOC_SINGLE_EXT("HPHL Impedance", 0, 0, UINT_MAX, 0,
+-		       wcd939x_hph_impedance_get, NULL),
+-	SOC_SINGLE_EXT("HPHR Impedance", 0, 1, UINT_MAX, 0,
+-		       wcd939x_hph_impedance_get, NULL),
++	WCD_MBHC_RESULT_CTL("HPHL Impedance", 0, INT_MAX,
++			    wcd939x_hph_impedance_get),
++	WCD_MBHC_RESULT_CTL("HPHR Impedance", 1, INT_MAX,
++			    wcd939x_hph_impedance_get),
+ };
+ 
+ static int wcd939x_mbhc_init(struct snd_soc_component *component)
+-- 
+2.43.0
+

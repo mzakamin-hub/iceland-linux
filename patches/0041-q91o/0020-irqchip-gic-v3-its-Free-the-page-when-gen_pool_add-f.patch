@@ -1,0 +1,45 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Fuad Tabba <fuad.tabba@linux.dev>
+Date: Mon, 16 Nov 2026 19:29:33 +0000
+Subject: [PATCH 020/117] irqchip/gic-v3-its: Free the page when gen_pool_add()
+ fails
+
+When the ITT pool has no room, itt_alloc_pool() grows it by a page and
+retries. gen_pool_add() fails when it cannot allocate its chunk
+descriptor, but its return is ignored, so the page is leaked and the
+retry allocates another page to leak, until an add succeeds or a page
+allocation fails.
+
+Free the page and fail the allocation instead.
+
+Fixes: b08e2f42e86b5 ("irqchip/gic-v3-its: Share ITS tables with a non-trusted hypervisor")
+Reviewed-by: Suzuki K Poulose <suzuki.poulose@arm.com>
+Signed-off-by: Fuad Tabba <fuad.tabba@linux.dev>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1213108; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/irqchip/irq-gic-v3-its.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/irqchip/irq-gic-v3-its.c b/drivers/irqchip/irq-gic-v3-its.c
+index 33aa8a355ec65..74fda3a6efed0 100644
+--- a/drivers/irqchip/irq-gic-v3-its.c
++++ b/drivers/irqchip/irq-gic-v3-its.c
+@@ -279,7 +279,10 @@ static void *itt_alloc_pool(int node, int size)
+ 		if (!page)
+ 			break;
+ 
+-		gen_pool_add(itt_pool, (unsigned long)page_address(page), PAGE_SIZE, node);
++		if (gen_pool_add(itt_pool, (unsigned long)page_address(page), PAGE_SIZE, node)) {
++			its_free_pages(page_address(page), 0);
++			break;
++		}
+ 	} while (!addr);
+ 
+ 	return (void *)addr;
+-- 
+2.43.0
+

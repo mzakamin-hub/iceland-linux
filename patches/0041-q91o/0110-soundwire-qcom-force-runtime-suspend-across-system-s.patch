@@ -1,0 +1,51 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Gopi Chandra Sekhar Reddy Kanala <gopi.kanala@oss.qualcomm.com>
+Date: Thu, 12 Nov 2026 16:17:42 +0530
+Subject: [PATCH 110/117] soundwire: qcom: force runtime suspend across system
+ sleep
+
+The controller only implements runtime PM callbacks and relies on
+runtime suspend to stop the bus clock, gate hclk and arm the wake IRQ.
+That is not enough across system suspend: from the prepare phase until
+the complete phase the PM core holds a runtime PM usage count on every
+device, so a controller that is runtime active at that point stays
+active until the system resumes. This happens when suspend is entered
+within the 3 second autosuspend delay after bus activity, or when a
+peripheral driver resumes its device from its own system suspend
+callback, as the SDCA class function driver does to quiesce its
+interrupts.
+
+The bus clock then keeps running and hclk stays enabled for the whole
+suspend. On Qualcomm platforms the LPASS clock votes behind it are held
+as well, which keeps CX and DDR from collapsing in s2idle.
+
+Use pm_runtime_force_suspend() and pm_runtime_force_resume() as the
+system sleep callbacks, so the runtime suspend path always runs at
+system suspend and is undone on resume. Peripherals are children of the
+bus, so they are suspended before the controller and resumed after it.
+
+Signed-off-by: Gopi Chandra Sekhar Reddy Kanala <gopi.kanala@oss.qualcomm.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1209436, replacing our armada-os form; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/soundwire/qcom.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/soundwire/qcom.c b/drivers/soundwire/qcom.c
+index 74bf23cd69e63..a0189f6f3f48c 100644
+--- a/drivers/soundwire/qcom.c
++++ b/drivers/soundwire/qcom.c
+@@ -1926,6 +1926,7 @@ static int __maybe_unused swrm_runtime_suspend(struct device *dev)
+ }
+ 
+ static const struct dev_pm_ops swrm_dev_pm_ops = {
++	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend, pm_runtime_force_resume)
+ 	SET_RUNTIME_PM_OPS(swrm_runtime_suspend, swrm_runtime_resume, NULL)
+ };
+ 
+-- 
+2.43.0
+

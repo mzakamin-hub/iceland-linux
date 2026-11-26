@@ -1,0 +1,83 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Philipp Stanner <phasta@kernel.org>
+Date: Thu, 19 Nov 2026 14:18:31 +0100
+Subject: [PATCH 046/117] drm/sched: Fix memory ordering with
+ dma_fence_overwrite_timestamp()
+
+There is a memory ordering bug in drm_sched_get_finished_job(). The
+manual timestamp flag check with test_bit() is not ordered.
+
+The dma_fence framework now provides dma_fence_overwrite_timestamp(), a
+function to overwrite a timestamp in a safe manner with correct memory
+ordering.
+
+Solve the bug with dma_fence_overwrite_timestamp().
+
+Cc: stable@vger.kernel.org
+Fixes: f7fe64ad0f22 ("drm/sched: Split free_job into own work item")
+Signed-off-by: Philipp Stanner <phasta@kernel.org>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1216171; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/scheduler/sched_main.c | 28 +++++++++++++++++++++-----
+ 1 file changed, 23 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/gpu/drm/scheduler/sched_main.c b/drivers/gpu/drm/scheduler/sched_main.c
+index 99252674e2668..a065a6d2eb1c3 100644
+--- a/drivers/gpu/drm/scheduler/sched_main.c
++++ b/drivers/gpu/drm/scheduler/sched_main.c
+@@ -66,6 +66,7 @@
+  * This implies waiting for previously executed jobs.
+  */
+ 
++#include <linux/dma-fence.h>
+ #include <linux/export.h>
+ #include <linux/wait.h>
+ #include <linux/sched.h>
+@@ -898,6 +899,22 @@ drm_sched_select_entity(struct drm_gpu_scheduler *sched)
+ 	return IS_ERR(entity) ? NULL : entity;
+ }
+ 
++/**
++ * drm_sched_overwrite_scheduled_timestamp - make timestamp more accurate
++ *
++ * Overwrites the timestamp of the provided scheduled fence with the one from
++ * the finished fence, if the scheduled fence is already signaled. Does nothing
++ * otherwise.
++ */
++static void
++drm_sched_overwrite_scheduled_timestamp(struct dma_fence *finished,
++					struct dma_fence *scheduled)
++{
++	ktime_t timestamp = dma_fence_timestamp(finished);
++
++	dma_fence_overwrite_timestamp(scheduled, timestamp);
++}
++
+ /**
+  * drm_sched_get_finished_job - fetch the next finished job to be destroyed
+  *
+@@ -928,11 +945,12 @@ drm_sched_get_finished_job(struct drm_gpu_scheduler *sched)
+ 		next = list_first_entry_or_null(&sched->pending_list,
+ 						typeof(*next), list);
+ 		if (next) {
+-			/* make the scheduled timestamp more accurate */
+-			if (test_bit(DMA_FENCE_FLAG_TIMESTAMP_BIT,
+-				     &next->s_fence->scheduled.flags))
+-				next->s_fence->scheduled.timestamp =
+-					dma_fence_timestamp(&job->s_fence->finished);
++			/* Try to make the scheduled timestamp more accurate. */
++			drm_sched_overwrite_scheduled_timestamp(
++					&job->s_fence->finished,
++					&next->s_fence->scheduled
++					);
++
+ 
+ 			/* start TO timer for next job */
+ 			drm_sched_start_timeout(sched);
+-- 
+2.43.0
+

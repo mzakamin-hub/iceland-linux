@@ -1,0 +1,117 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 21:54:00 +0200
+Subject: [PATCH 104/117] serial: qcom-geni: keep the port IRQ masked across
+ system sleep
+
+Clearing pending interrupts while suspended (commit "serial: qcom-geni:
+Clear pending IRQs while suspended") handles the early IRQ_NONE race in
+the shutdown path, but the TTY wakeup path can skip shutdown() and leave
+the port IRQ enabled until pm_runtime_force_suspend() removes the
+register power. An interrupt in that window reads a powered-off serial
+engine and is reported as unhandled, and enough of them disable the
+line, which takes the Bluetooth UART down.
+
+Mask the port IRQ for the whole system sleep transition, with a disable
+depth of its own that is independent of startup() / shutdown(): taken
+before uart_suspend_port(), released after uart_resume_port(), kept if
+the force resume fails but never taken twice, and released again when
+the suspend callback itself fails (the PM core does not resume a device
+whose suspend failed). A no_console_suspend console keeps its IRQ.
+
+Analysis and approach by yzddmr6 (af2a6e2a5153 "serial: qcom-geni: mask
+the IRQ across the complete sleep transition", itself a cross-check of a
+Xiaomi Pad 6 Pro fix; no Signed-off-by); re-implemented.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/tty/serial/qcom_geni_serial.c | 46 +++++++++++++++++++++++----
+ 1 file changed, 39 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/tty/serial/qcom_geni_serial.c b/drivers/tty/serial/qcom_geni_serial.c
+index e5d1e7679c648..0f45ffd91c616 100644
+--- a/drivers/tty/serial/qcom_geni_serial.c
++++ b/drivers/tty/serial/qcom_geni_serial.c
+@@ -139,6 +139,8 @@ struct qcom_geni_serial_port {
+ 	dma_addr_t tx_dma_addr;
+ 	dma_addr_t rx_dma_addr;
+ 	bool setup;
++	/* the port IRQ is masked for a system sleep transition */
++	bool sleep_irq_masked;
+ 	unsigned long poll_timeout_us;
+ 	unsigned long clk_rate;
+ 	void *rx_buf;
+@@ -2080,6 +2082,15 @@ static int __maybe_unused qcom_geni_serial_runtime_resume(struct device *dev)
+ 	return 0;
+ }
+ 
++static void qcom_geni_serial_unmask_sleep_irq(struct qcom_geni_serial_port *port)
++{
++	if (!port->sleep_irq_masked)
++		return;
++
++	port->sleep_irq_masked = false;
++	enable_irq(port->uport.irq);
++}
++
+ static int qcom_geni_serial_suspend(struct device *dev)
+ {
+ 	struct qcom_geni_serial_port *port = dev_get_drvdata(dev);
+@@ -2096,18 +2107,38 @@ static int qcom_geni_serial_suspend(struct device *dev)
+ 		geni_icc_set_bw(&port->se);
+ 	}
+ 
+-	ret = uart_suspend_port(private_data->drv, uport);
+-	if (ret)
+-		return ret;
+-
+ 	/*
+ 	 * When no_console_suspend is set the console must remain active
+-	 * across system sleep, so skip the force suspend path.
++	 * across system sleep, its IRQ included, so skip the force suspend
++	 * path.
+ 	 */
+ 	if (!console_suspend_enabled && uart_console(uport))
+-		return 0;
++		return uart_suspend_port(private_data->drv, uport);
++
++	/*
++	 * Mask the port IRQ for the whole transition: the TTY wakeup path can
++	 * skip shutdown() and leave it enabled until the force suspend removes
++	 * the register power, and an interrupt then finds a powered-off serial
++	 * engine and is counted as unhandled. This disable depth is separate
++	 * from startup() / shutdown(); it stays if a resume fails, but is
++	 * never taken twice.
++	 */
++	if (!port->sleep_irq_masked) {
++		disable_irq(uport->irq);
++		port->sleep_irq_masked = true;
++	}
+ 
+-	return pm_runtime_force_suspend(dev);
++	ret = uart_suspend_port(private_data->drv, uport);
++	if (!ret) {
++		ret = pm_runtime_force_suspend(dev);
++		if (!ret)
++			return 0;
++		/* The PM core does not resume a device whose suspend failed. */
++		uart_resume_port(private_data->drv, uport);
++	}
++
++	qcom_geni_serial_unmask_sleep_irq(port);
++	return ret;
+ }
+ 
+ static int qcom_geni_serial_resume(struct device *dev)
+@@ -2130,6 +2161,7 @@ static int qcom_geni_serial_resume(struct device *dev)
+ 	}
+ 
+ 	ret = uart_resume_port(private_data->drv, uport);
++	qcom_geni_serial_unmask_sleep_irq(port);
+ 	if (uart_console(uport)) {
+ 		geni_icc_set_tag(&port->se, QCOM_ICC_TAG_ALWAYS);
+ 		geni_icc_set_bw(&port->se);
+-- 
+2.43.0
+

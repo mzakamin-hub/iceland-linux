@@ -1,0 +1,58 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 21:52:43 +0200
+Subject: [PATCH 101/117] media: iris: report enough capture buffers for AV1
+ and VP9
+
+After the reconfig event the driver reports the firmware's minimum
+capture buffer count, which for AV1 and VP9 can be far below the number
+of pictures the codec keeps as references (4 in split mode). Clients that
+size their pool from min_number_of_capture_buffers then recycle surfaces
+the firmware still references: frames come back late and the GStreamer
+v4l2 decoder drops them.
+
+Keep a floor that covers the reference set: 32 for AV1, the number the
+VA-API frontend already requests, and 12 for VP9.
+
+Found and measured by TheMojoMan (erhai iris tree faa3a3353a82, "keep at
+least 32 capture buffers for AV1/VP9", no Signed-off-by); re-implemented
+for our output_min_count(), which has no split-mode branch.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ .../media/platform/qcom/iris/iris_vpu_buffer.c  | 17 +++++++++++++++--
+ 1 file changed, 15 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
+index 7b78e461cb868..2f8ddd6bec38b 100644
+--- a/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
++++ b/drivers/media/platform/qcom/iris/iris_vpu_buffer.c
+@@ -2456,9 +2456,22 @@ static int output_min_count(struct iris_inst *inst)
+ {
+ 	int output_min_count = 4;
+ 
+-	/* fw_min_count > 0 indicates reconfig event has already arrived */
+-	if (inst->fw_min_count)
++	/*
++	 * fw_min_count > 0 indicates reconfig event has already arrived.
++	 * For AV1 and VP9 the firmware can report far fewer buffers than the
++	 * codec keeps as references (4 in split mode); a client that sizes
++	 * its pool from that recycles surfaces the firmware still uses, and
++	 * frames come back late (GStreamer then drops them). Keep a floor
++	 * that covers the reference set: 32 for AV1, as the VA-API frontend
++	 * already requests, and 12 for VP9.
++	 */
++	if (inst->fw_min_count) {
++		if (inst->codec == V4L2_PIX_FMT_AV1)
++			return max_t(u32, inst->fw_min_count, 32);
++		if (inst->codec == V4L2_PIX_FMT_VP9)
++			return max_t(u32, inst->fw_min_count, 12);
+ 		return inst->fw_min_count;
++	}
+ 
+ 	if (inst->codec == V4L2_PIX_FMT_VP9)
+ 		output_min_count = 9;
+-- 
+2.43.0
+

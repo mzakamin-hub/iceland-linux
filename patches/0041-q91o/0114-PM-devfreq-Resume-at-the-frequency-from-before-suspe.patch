@@ -1,0 +1,53 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Arun Iyengar <aiyengar1990@gmail.com>
+Date: Thu, 19 Nov 2026 21:16:22 +0000
+Subject: [PATCH 114/117] PM / devfreq: Resume at the frequency from before
+ suspend
+
+Since commit 62453f1ba5d5 ("PM / devfreq: Use more accurate returned
+new_freq as resume_freq"), devfreq_set_target() records the frequency it
+sets as resume_freq, so the suspend transition in
+devfreq_suspend_device() overwrites it with the suspend frequency. The
+device then resumes at its suspend frequency and stays there until the
+governor's next update; with runtime PM (e.g. lima on RK3528) that is
+after every idle period.
+
+Keep the frequency from before the suspend transition as resume_freq.
+
+Fixes: 62453f1ba5d5 ("PM / devfreq: Use more accurate returned new_freq as resume_freq")
+Signed-off-by: Arun Iyengar <aiyengar1990@gmail.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1216673; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/devfreq/devfreq.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/devfreq/devfreq.c b/drivers/devfreq/devfreq.c
+index c915edd7b757a..31bca0419cefa 100644
+--- a/drivers/devfreq/devfreq.c
++++ b/drivers/devfreq/devfreq.c
+@@ -1165,6 +1165,7 @@ EXPORT_SYMBOL(devm_devfreq_remove_device);
+  */
+ int devfreq_suspend_device(struct devfreq *devfreq)
+ {
++	unsigned long resume_freq;
+ 	int ret;
+ 
+ 	if (!devfreq)
+@@ -1182,7 +1183,10 @@ int devfreq_suspend_device(struct devfreq *devfreq)
+ 
+ 	if (devfreq->suspend_freq) {
+ 		mutex_lock(&devfreq->lock);
++		/* devfreq_set_target() overwrites resume_freq; keep the pre-suspend one */
++		resume_freq = devfreq->previous_freq;
+ 		ret = devfreq_set_target(devfreq, devfreq->suspend_freq, 0);
++		devfreq->resume_freq = resume_freq;
+ 		mutex_unlock(&devfreq->lock);
+ 		if (ret)
+ 			return ret;
+-- 
+2.43.0
+

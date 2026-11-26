@@ -1,0 +1,105 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: "Rafael J. Wysocki" <rafael.j.wysocki@intel.com>
+Date: Fri, 13 Nov 2026 14:27:23 +0100
+Subject: [PATCH 015/117] PM: runtime: Update last_busy before calling
+ rpm_suspend() in rpm_idle()
+
+When rpm_idle() is about to call rpm_suspend(), there are no reasons
+preventing the device from being suspended, but if the device uses an
+autosuspend delay, it needs to be taken into account.
+
+For this purpose, rpm_idle() adds RPM_AUTO to the flags passed to
+rpm_suspend(), but doing that alone is insufficient because the point
+in time from which the autosuspend delay is counted may be too early.
+
+For example, if the device has children (or consumers) and the last
+of them goes into runtime suspend, the parent may now become eligible
+for suspending, but it may not be worthwhile for it to suspend until
+a certain time later.
+
+Quoting Alan Stern [1]:
+
+ Let's say the last remaining active child goes into runtime suspend at
+ time T.  Let's also say that the parent expects none of the children
+ will need to resume until time T + D.  Is D sufficiently large to make
+ it worthwhile for the parent to suspend and then resume?  If not, the
+ parent should remain active.  If yes, the parent should autosuspend --
+ and the length of time the parent should wait before autosuspending is
+ on the order of the value of D (let's call it D*) that corresponds to
+ this crossover point.  Thus the parent's autosuspend delay should be
+ set to D*, or something close to it, in order to achieve both
+ objectives.
+
+Moreover, if the parent's autosuspend delay is set to D*, it should be
+counted from time T at which the last child has suspended, but that does
+not happen because the parent's last_busy timestamp is not updated at
+time T.  That leads to undesirable parent suspends occurring between
+child suspend and resume [2].
+
+To address this issue, make rpm_idle() update the last_busy timestamp
+of the device when it is about to call rpm_suspend() which most often
+is right after the device's last child (or consumer) has gone into
+runtime suspend.
+
+Updating the last_busy timestamp when rpm_idle() returns an error
+without calling rpm_suspend() is not useful because the device is then
+going to remain active for an unknown amount of time and its autosuspend
+delay needs to take effect later.
+
+This potentially changes observable behavior in all situations in
+which pm_runtime_put(), pm_runtime_put_sync(), pm_runtime_idle(), or
+pm_request_idle() is used on a device with an autosuspend delay.  That
+includes changing a device's "power/control" sysfs attribute value from
+"on" to "auto" (if there are no other active runtime PM references to
+the given device), accessing PCI configuration space from user space etc.
+Namely, in all of those cases, the runtime suspend of the device
+following the runtime PM helper call (if it causes a runtime suspend to
+occur) will be deferred by the full autosuspend delay, which arguably is
+more consistent and predictable than deferring the runtime suspend in
+question by a more-or-less unknown (and basically random) time depending
+on when the most recent direct update of the device's last_busy
+timestamp has occurred.
+
+It will also cause at least some of the direct pm_runtime_mark_last_busy()
+calls to become redundant, and they will be taken care of later.
+
+Link: https://lore.kernel.org/linux-pm/fc43eb13-816b-4cd0-9711-848fdab605ef@rowland.harvard.edu/ [1]
+Link: https://lore.kernel.org/linux-pm/CAJZ5v0hKpjMsGQm8Cpa89x5wkNxqkggDNbp+eQ0S-E52DETWjQ@mail.gmail.com/ [2]
+Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+Reviewed-by: Brian Norris <briannorris@chromium.org>
+Acked-by: Alan Stern <stern@rowland.harvard.edu>
+Reviewed-by: Ulf Hansson <ulfh@kernel.org>
+Tested-by: Brian Norris <briannorris@chromium.org>
+Reviewed-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+[ rjw: Expanded the changelog ]
+Link: https://patch.msgid.link/4789427.LvFx2qVVIh@rafael.j.wysocki
+Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from linux-next/maintainer tree commit 26236a3e8803; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/base/power/runtime.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/base/power/runtime.c b/drivers/base/power/runtime.c
+index 4e9c23059a401..0b15c718c1bbe 100644
+--- a/drivers/base/power/runtime.c
++++ b/drivers/base/power/runtime.c
+@@ -560,7 +560,11 @@ static int rpm_idle(struct device *dev, int rpmflags)
+ 
+  out:
+ 	trace_rpm_return_int(dev, _THIS_IP_, retval);
+-	return retval ? retval : rpm_suspend(dev, rpmflags | RPM_AUTO);
++	if (retval)
++		return retval;
++
++	pm_runtime_mark_last_busy(dev);
++	return rpm_suspend(dev, rpmflags | RPM_AUTO);
+ }
+ 
+ /**
+-- 
+2.43.0
+

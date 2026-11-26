@@ -1,0 +1,53 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Philip Radford <philip.radford@arm.com>
+Date: Mon, 16 Nov 2026 12:31:53 +0000
+Subject: [PATCH 022/117] firmware: arm_scmi: null pointer dereference in
+ scmi_protocol_table_register()
+
+Add checks to avoid dereferencing a null pointer in
+scmi_protocol_table_register() and scmi_protocol_table_unregister()
+
+Reported-by: Sashiko <sashiko-bot@kernel.org>
+Closes: https://sashiko.dev/#/bug/linux-7330d90b-8d81-478a-a227-4aa6f19393ba
+Fixes: 2858f6e5f064 ("firmware: arm_scmi: Add multiple protocols registration support")
+Signed-off-by: Philip Radford <philip.radford@arm.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1212731; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/firmware/arm_scmi/bus.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/firmware/arm_scmi/bus.c b/drivers/firmware/arm_scmi/bus.c
+index 25197197db8e1..337aa445e42dc 100644
+--- a/drivers/firmware/arm_scmi/bus.c
++++ b/drivers/firmware/arm_scmi/bus.c
+@@ -186,6 +186,9 @@ static int scmi_protocol_table_register(const struct scmi_device_id *id_table)
+ 	const struct scmi_device_id *entry;
+ 	int ret;
+ 
++	if (!id_table)
++		return -ENOENT;
++
+ 	for (entry = id_table; entry->name[0]; entry++) {
+ 		ret = scmi_protocol_device_request(entry);
+ 		if (ret)
+@@ -206,8 +209,11 @@ scmi_protocol_table_unregister(const struct scmi_device_id *id_table)
+ {
+ 	const struct scmi_device_id *entry;
+ 
+-	for (entry = id_table; entry->name[0]; entry++)
+-		scmi_protocol_device_unrequest(entry);
++	if (id_table) {
++		for (entry = id_table; entry->name[0]; entry++)
++			scmi_protocol_device_unrequest(entry);
++	}
++
+ }
+ 
+ static bool scmi_device_is_transport(const struct scmi_device *scmi_dev)
+-- 
+2.43.0
+

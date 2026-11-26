@@ -1,0 +1,52 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 21:53:16 +0200
+Subject: [PATCH 103/117] drm/msm/dp: exit the PHY when the DP controller
+ runtime suspends
+
+The DP controller loses its state while the display subsystem is powered
+off. Runtime suspend deinitializes the controller but exits the PHY only
+for eDP, so for DP the PHY stays marked initialized, the next plug does
+not set it up again and every AUX transfer times out: a monitor plugged
+in while the screen is off hangs its detection.
+
+A DP controller only runtime suspends with no sink attached, so exit the
+PHY for DP as well; detection and the plug path initialize it again.
+
+Found by Reixo0, commit fcd65ba21d8c ("drm/msm/dp: let the PHY go when the
+DP controller suspends") in github Reixo0/linux (no Signed-off-by);
+re-implemented.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/dp/dp_display.c | 12 +++++++++---
+ 1 file changed, 9 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/dp/dp_display.c b/drivers/gpu/drm/msm/dp/dp_display.c
+index 0449571cbd639..8b85476d31b71 100644
+--- a/drivers/gpu/drm/msm/dp/dp_display.c
++++ b/drivers/gpu/drm/msm/dp/dp_display.c
+@@ -1592,10 +1592,16 @@ static int msm_dp_pm_runtime_suspend(struct device *dev)
+ 
+ 	disable_irq(dp->irq);
+ 
+-	if (dp->msm_dp_display.is_edp) {
+-		msm_dp_display_host_phy_exit(dp);
++	/*
++	 * The controller loses its state while the display subsystem is
++	 * powered off (screen off). Exit the PHY for DP as for eDP: left
++	 * marked initialized, it would not be set up again on the next plug
++	 * and every AUX transfer would time out. DP only runtime suspends
++	 * with no sink attached; detection and the plug path init it again.
++	 */
++	msm_dp_display_host_phy_exit(dp);
++	if (dp->msm_dp_display.is_edp)
+ 		msm_dp_aux_hpd_disable(dp->aux);
+-	}
+ 	msm_dp_display_host_deinit(dp);
+ 
+ 	return 0;
+-- 
+2.43.0
+

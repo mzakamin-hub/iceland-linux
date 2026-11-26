@@ -1,0 +1,46 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Fuad Tabba <fuad.tabba@linux.dev>
+Date: Mon, 16 Nov 2026 19:29:32 +0000
+Subject: [PATCH 019/117] irqchip/gic-v3-its: Zero ITTs reused from the ITT
+ pool
+
+Commit b08e2f42e86b5 ("irqchip/gic-v3-its: Share ITS tables with a
+non-trusted hypervisor") moved sub-page ITTs from kzalloc_node() to a
+genpool. The pages added to the pool are zeroed, but an ITT freed back
+to it goes to the next device as the previous one left it. MAPD is then
+UNPREDICTABLE: "When V == 1, the specified ITT does not contain all
+zeros" (IHI 0069H.b, 5.3.10).
+
+Zero every ITT that comes from the pool.
+
+Fixes: b08e2f42e86b5 ("irqchip/gic-v3-its: Share ITS tables with a non-trusted hypervisor")
+Reviewed-by: Suzuki K Poulose <suzuki.poulose@arm.com>
+Signed-off-by: Fuad Tabba <fuad.tabba@linux.dev>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1213108; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/irqchip/irq-gic-v3-its.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/irqchip/irq-gic-v3-its.c b/drivers/irqchip/irq-gic-v3-its.c
+index 5756ffe4ec13e..33aa8a355ec65 100644
+--- a/drivers/irqchip/irq-gic-v3-its.c
++++ b/drivers/irqchip/irq-gic-v3-its.c
+@@ -270,8 +270,10 @@ static void *itt_alloc_pool(int node, int size)
+ 
+ 	do {
+ 		addr = gen_pool_alloc(itt_pool, size);
+-		if (addr)
++		if (addr) {
++			memset((void *)addr, 0, size);
+ 			break;
++		}
+ 
+ 		page = its_alloc_pages_node(node, GFP_KERNEL | __GFP_ZERO, 0);
+ 		if (!page)
+-- 
+2.43.0
+

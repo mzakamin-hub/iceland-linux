@@ -1,0 +1,89 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jiwoo Kim <arpe1618@gmail.com>
+Date: Wed, 18 Nov 2026 11:07:12 +0900
+Subject: [PATCH 032/117] drm/msm: Wait for VM_BIND jobs in msm_gem_vm_close()
+
+msm_gem_vm_close() waits for vm->last_fence before it tears down the
+VM's scheduler and its remaining mappings, but only submits add their
+fences to it. msm_submitqueue_close() flushes the VM_BIND entities
+first, but drm_sched_entity_flush() gives up after
+MAX_WAIT_SCHED_ENTITY_Q_EMPTY when the process is exiting, or on a
+fatal signal, and a queue that was closed earlier with
+DRM_IOCTL_MSM_SUBMITQUEUE_CLOSE is not flushed at all. A VM_BIND job
+that is then still waiting for its dependencies is not waited for, so
+its pgtable updates can still be pending, and the job still queued on
+its entity, when the scheduler is torn down.
+
+Add the fences of VM_BIND jobs to vm->last_fence as well, as
+submit_attach_object_fences() does for submits, but keep the previous
+fence if dma_fence_unwrap_merge() fails. As for submits,
+msm_gem_vm_close() waits for these fences without a timeout and
+uninterruptibly, so closing the file now also waits for the
+dependencies of the queued VM_BIND jobs.
+
+This does not cover a job that is killed, e.g. on SIGKILL while the
+process exits: the scheduler signals the fence of such a job before it
+frees the job, and the free can drop the last reference to the queue.
+That is fixed by "drm/msm: Destroy the VM_BIND entity when its queue is
+closed".
+
+This was found with an AI coding assistant, which also drafted this
+patch and its changelog. It has not been reproduced, and the change
+has only been compile-tested.
+
+Fixes: 2e6a8a1fe2b2 ("drm/msm: Add VM_BIND ioctl")
+Cc: stable@vger.kernel.org
+Suggested-by: Rob Clark <robin.clark@oss.qualcomm.com>
+Link: https://lore.kernel.org/r/CACSVV00ZppfBKwsHJ+NBYBB7a2f3g1O=6J4Gt1m_A74fudZQoQ@mail.gmail.com
+Signed-off-by: Jiwoo Kim <arpe1618@gmail.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1214467; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/msm_gem_vma.c | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/msm/msm_gem_vma.c b/drivers/gpu/drm/msm/msm_gem_vma.c
+index 1376365e6988a..1ec5cc32ebb64 100644
+--- a/drivers/gpu/drm/msm/msm_gem_vma.c
++++ b/drivers/gpu/drm/msm/msm_gem_vma.c
+@@ -6,6 +6,7 @@
+ 
+ #include "drm/drm_file.h"
+ #include "drm/msm_drm.h"
++#include "linux/dma-fence-unwrap.h"
+ #include "linux/file.h"
+ #include "linux/sync_file.h"
+ 
+@@ -1474,7 +1475,7 @@ msm_ioctl_vm_bind(struct drm_device *dev, void *data, struct drm_file *file)
+ 	struct msm_syncobj_post_dep *post_deps = NULL;
+ 	struct drm_syncobj **syncobjs_to_reset = NULL;
+ 	struct sync_file *sync_file = NULL;
+-	struct dma_fence *fence;
++	struct dma_fence *fence, *last_fence;
+ 	int out_fence_fd = -1;
+ 	int ret, nr_bos = 0;
+ 	unsigned i;
+@@ -1617,6 +1618,17 @@ msm_ioctl_vm_bind(struct drm_device *dev, void *data, struct drm_file *file)
+ 	msm_syncobj_reset(syncobjs_to_reset, args->nr_in_syncobjs);
+ 	msm_syncobj_process_post_deps(post_deps, args->nr_out_syncobjs, fence);
+ 
++	/*
++	 * Let msm_gem_vm_close() wait for the job, as it does for submits.
++	 * The VM's resv, which protects last_fence, is still locked here.
++	 * If the merge fails, keep waiting for the previous fence at least.
++	 */
++	last_fence = dma_fence_unwrap_merge(fence, to_msm_vm(vm)->last_fence);
++	if (last_fence) {
++		dma_fence_put(to_msm_vm(vm)->last_fence);
++		to_msm_vm(vm)->last_fence = last_fence;
++	}
++
+ 	dma_fence_put(fence);
+ 
+ out:
+-- 
+2.43.0
+

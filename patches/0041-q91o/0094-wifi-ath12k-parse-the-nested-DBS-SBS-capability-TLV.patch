@@ -1,0 +1,101 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jonathan Wolf <wolf@pi0.com>
+Date: Thu, 19 Nov 2026 10:17:16 -0900
+Subject: [PATCH 094/117] wifi: ath12k: parse the nested DBS/SBS capability TLV
+
+The DBS/SBS capability in WMI_SERVICE_READY_EXT2_EVENTID is inside a
+WMI_TAG_ARRAY_STRUCT. The array payload starts with the inner TLV
+header. Casting that pointer to struct ath12k_wmi_dbs_or_sbs_cap_params
+makes ath12k read hw_mode_id as sbs_lower_band_end_freq.
+
+On WCN7850 with hardware mode 5 and a 5900 MHz cutoff, this gives an
+SBS frequency range of 4900-5 MHz. The driver can then map the 5 GHz
+and 6 GHz links to the same MAC and request deactivation of one link.
+
+Use ath12k_wmi_tlv_iter() to reach the capability payload. Check the
+tag and minimum payload length before converting the cutoff to CPU byte
+order. Clear the cached cutoff before parsing so an empty array leaves
+it at zero.
+
+Fixes: 241d130f1419 ("wifi: ath12k: parse and save sbs_lower_band_end_freq from WMI_SERVICE_READY_EXT2_EVENTID event")
+Signed-off-by: Jonathan Wolf <wolf@pi0.com>
+Reviewed-by: Baochen Qiang <baochen.qiang@oss.qualcomm.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1216565; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/net/wireless/ath/ath12k/wmi.c | 32 +++++++++++++++++++++------
+ drivers/net/wireless/ath/ath12k/wmi.h |  1 +
+ 2 files changed, 26 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/net/wireless/ath/ath12k/wmi.c b/drivers/net/wireless/ath/ath12k/wmi.c
+index 8135776e90e62..d7954ad0f510a 100644
+--- a/drivers/net/wireless/ath/ath12k/wmi.c
++++ b/drivers/net/wireless/ath/ath12k/wmi.c
+@@ -5881,11 +5881,27 @@ static int ath12k_wmi_update_hw_mode_list(struct ath12k_base *ab)
+ 	return 0;
+ }
+ 
++static int ath12k_wmi_tlv_dbs_sbs_caps(struct ath12k_base *ab, u16 tag,
++				       u16 len, const void *ptr, void *data)
++{
++	const struct ath12k_wmi_dbs_or_sbs_cap_params *caps = ptr;
++
++	if (tag != WMI_TAG_DBS_OR_SBS_CAP_EXT || len < sizeof(*caps))
++		return -EPROTO;
++
++	ab->wmi_ab.sbs_lower_band_end_freq =
++		le32_to_cpu(caps->sbs_lower_band_end_freq);
++
++	ath12k_dbg(ab, ATH12K_DBG_WMI, "sbs_lower_band_end_freq %u\n",
++		   ab->wmi_ab.sbs_lower_band_end_freq);
++
++	return 0;
++}
++
+ static int ath12k_wmi_svc_rdy_ext2_parse(struct ath12k_base *ab,
+ 					 u16 tag, u16 len,
+ 					 const void *ptr, void *data)
+ {
+-	const struct ath12k_wmi_dbs_or_sbs_cap_params *dbs_or_sbs_caps;
+ 	struct ath12k_wmi_pdev *wmi_handle = &ab->wmi_ab.wmi[0];
+ 	struct ath12k_wmi_svc_rdy_ext2_parse *parse = data;
+ 	int ret;
+@@ -5940,12 +5956,14 @@ static int ath12k_wmi_svc_rdy_ext2_parse(struct ath12k_base *ab,
+ 		} else if (!parse->htt_msdu_idx_to_qtype_map_done) {
+ 			parse->htt_msdu_idx_to_qtype_map_done = true;
+ 		} else if (!parse->dbs_or_sbs_cap_ext_done) {
+-			dbs_or_sbs_caps = ptr;
+-			ab->wmi_ab.sbs_lower_band_end_freq =
+-				__le32_to_cpu(dbs_or_sbs_caps->sbs_lower_band_end_freq);
+-
+-			ath12k_dbg(ab, ATH12K_DBG_WMI, "sbs_lower_band_end_freq %u\n",
+-				   ab->wmi_ab.sbs_lower_band_end_freq);
++			ab->wmi_ab.sbs_lower_band_end_freq = 0;
++			ret = ath12k_wmi_tlv_iter(ab, ptr, len,
++						  ath12k_wmi_tlv_dbs_sbs_caps, NULL);
++			if (ret) {
++				ath12k_warn(ab, "failed to parse DBS/SBS capabilities WMI TLV: %d\n",
++					    ret);
++				return ret;
++			}
+ 
+ 			ret = ath12k_wmi_update_hw_mode_list(ab);
+ 			if (ret) {
+diff --git a/drivers/net/wireless/ath/ath12k/wmi.h b/drivers/net/wireless/ath/ath12k/wmi.h
+index 7757dad972e58..06c79da45f07e 100644
+--- a/drivers/net/wireless/ath/ath12k/wmi.h
++++ b/drivers/net/wireless/ath/ath12k/wmi.h
+@@ -2032,6 +2032,7 @@ enum wmi_tlv_tag {
+ 	WMI_TAG_PDEV_SET_BIOS_SAR_TABLE_CMD = 0x3D8,
+ 	WMI_TAG_PDEV_SET_BIOS_GEO_TABLE_CMD = 0x3D9,
+ 	WMI_TAG_PDEV_SET_BIOS_INTERFACE_CMD = 0x3FB,
++	WMI_TAG_DBS_OR_SBS_CAP_EXT = 0x400,
+ 	WMI_TAG_RSSI_DBM_CONVERSION_PARAMS_INFO_FIXED_PARAM = 0x427,
+ 	WMI_TAG_RSSI_DBM_CONVERSION_PARAMS_INFO,
+ 	WMI_TAG_RSSI_DBM_CONVERSION_TEMP_OFFSET_INFO,
+-- 
+2.43.0
+

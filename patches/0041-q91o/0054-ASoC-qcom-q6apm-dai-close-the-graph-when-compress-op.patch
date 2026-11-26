@@ -1,0 +1,69 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Wentao Liang <vulab@iscas.ac.cn>
+Date: Wed, 4 Nov 2026 02:40:47 +0000
+Subject: [PATCH 054/117] ASoC: qcom: q6apm-dai: close the graph when compress
+ open fails
+
+q6apm_dai_compr_open() opens the AudioReach graph before allocating the
+DMA buffer and handing it to the DSP. If the allocation or the SCM
+assignment fails, the function returns without closing the graph. The
+compress core does not call the free callback for a stream that failed
+to open, so the graph, its AudioReach reference and the private data are
+all leaked.
+
+Unwind the graph and the private data on both failure paths.
+
+Fixes: 88b60bf047fd ("ASoC: q6dsp: q6apm-dai: Add open/free compress DAI callbacks")
+Cc: stable@vger.kernel.org
+Assisted-by: DeepSeek-V4.1-Flash and OpenAI Codex
+Signed-off-by: Wentao Liang <vulab@iscas.ac.cn>
+Link: https://patch.msgid.link/20261104024047.1508584-1-vulab@iscas.ac.cn
+Signed-off-by: Mark Brown <broonie@kernel.org>
+
+[mzak: picked for q91o (21 Nov gains plan) from linux-next/maintainer tree commit 63364dc9f101; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ sound/soc/qcom/qdsp6/q6apm-dai.c | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/sound/soc/qcom/qdsp6/q6apm-dai.c b/sound/soc/qcom/qdsp6/q6apm-dai.c
+index 153189cc27cda..a6cc64b78ef79 100644
+--- a/sound/soc/qcom/qdsp6/q6apm-dai.c
++++ b/sound/soc/qcom/qdsp6/q6apm-dai.c
+@@ -976,7 +976,7 @@ static int q6apm_dai_compr_open(struct snd_soc_component *component,
+ 	size = COMPR_PLAYBACK_MAX_FRAGMENT_SIZE * COMPR_PLAYBACK_MAX_NUM_FRAGMENTS;
+ 	ret = snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV, dev, size, &prtd->dma_buffer);
+ 	if (ret)
+-		return ret;
++		goto err_close_graph;
+ 
+ 	if (pdata->use_scm_assign && !pdata->has_reserved_mem) {
+ 		ret = q6apm_dai_scm_assign(pdata, prtd->dma_buffer.addr,
+@@ -985,7 +985,7 @@ static int q6apm_dai_compr_open(struct snd_soc_component *component,
+ 			dev_err(dev, "SCM assign compr buffer failed: %d\n",
+ 				ret);
+ 			snd_dma_free_pages(&prtd->dma_buffer);
+-			return ret;
++			goto err_close_graph;
+ 		}
+ 	}
+ 
+@@ -999,6 +999,13 @@ static int q6apm_dai_compr_open(struct snd_soc_component *component,
+ 
+ 	q6apm_enable_compress_module(dev, prtd->graph, true);
+ 	return 0;
++
++err_close_graph:
++	runtime->private_data = NULL;
++	q6apm_graph_close(prtd->graph);
++	kfree(prtd);
++
++	return ret;
+ }
+ 
+ static int q6apm_dai_compr_free(struct snd_soc_component *component,
+-- 
+2.43.0
+

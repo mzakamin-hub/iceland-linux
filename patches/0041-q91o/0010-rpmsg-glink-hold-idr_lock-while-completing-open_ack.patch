@@ -1,0 +1,57 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Changyul Lee <lcy8047@gmail.com>
+Date: Mon, 16 Nov 2026 22:05:09 -0500
+Subject: [PATCH 010/117] rpmsg: glink: hold idr_lock while completing open_ack
+
+qcom_glink_rx_open_ack() looks up the channel in lcids under idr_lock,
+drops the lock and then completes channel->open_ack.
+qcom_glink_create_local() waits for that completion for five seconds.
+If the wait times out at the same moment, it removes the lcid under
+idr_lock and drops the last two references, which frees the channel.
+The OPEN_ACK handler then reads channel->name for the trace event and
+calls complete_all() on freed memory.
+
+Keep idr_lock held until complete_all() returns. The timeout path
+removes the lcid under the same lock before dropping its references,
+so the channel cannot be freed while the lock is held. Taking a
+channel reference instead would not work here, because the handler
+runs in interrupt context and the final put may call
+cancel_work_sync() from qcom_glink_channel_release().
+
+Fixes: b4f8e52b89f6 ("rpmsg: Introduce Qualcomm RPM glink driver")
+Signed-off-by: Changyul Lee <lcy8047@gmail.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1213362; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/rpmsg/qcom_glink_native.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/rpmsg/qcom_glink_native.c b/drivers/rpmsg/qcom_glink_native.c
+index f848ab46161d1..862565bf965d0 100644
+--- a/drivers/rpmsg/qcom_glink_native.c
++++ b/drivers/rpmsg/qcom_glink_native.c
+@@ -1101,16 +1101,17 @@ static int qcom_glink_rx_open_ack(struct qcom_glink *glink, unsigned int lcid)
+ 
+ 	spin_lock(&glink->idr_lock);
+ 	channel = idr_find(&glink->lcids, lcid);
+-	spin_unlock(&glink->idr_lock);
+ 
+ 	trace_qcom_glink_cmd_open_ack_rx(glink->label, channel ? channel->name : NULL,
+ 					 lcid, channel ? channel->rcid : 0);
+ 	if (!channel) {
++		spin_unlock(&glink->idr_lock);
+ 		dev_err(glink->dev, "Invalid open ack packet\n");
+ 		return -EINVAL;
+ 	}
+ 
+ 	complete_all(&channel->open_ack);
++	spin_unlock(&glink->idr_lock);
+ 
+ 	return 0;
+ }
+-- 
+2.43.0
+

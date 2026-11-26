@@ -1,0 +1,57 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 21:52:42 +0200
+Subject: [PATCH 100/117] media: iris: give picture-less capture buffers back
+ to the firmware
+
+The decoder firmware also returns capture buffers it consumed without
+producing a picture (reference-only use, data_size 0, no timestamp),
+about 1.5 returns per decoded frame on AV1. The driver hands each of them
+to the client as a V4L2_BUF_FLAG_ERROR frame, so every client pays a
+dequeue / queue round trip per return: GStreamer drops and requeues them
+with its "Decoder is producing too many buffers" warning, and ffmpeg's
+v4l2m2m wrapper counts them as decoded frames.
+
+While streaming, queue such a buffer to the firmware again with the
+helper already used for hidden reference pictures, so clients only see
+real pictures. At drain (the last buffer, or the session no longer
+streaming) and for buffers the firmware flagged as errors, they are
+still returned to the client.
+
+Found and measured by TheMojoMan (erhai iris tree 63e86475627f, "keep
+picture-less capture buffers in the firmware", no Signed-off-by);
+re-implemented on our requeue helper.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ .../media/platform/qcom/iris/iris_hfi_gen2_response.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c b/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
+index daaff08334b2f..704fb7db3ef1f 100644
+--- a/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
++++ b/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
+@@ -455,8 +455,19 @@ static int iris_hfi_gen2_handle_output_buffer(struct iris_inst *inst,
+ 			return iris_hfi_gen2_requeue_output_buffer(inst, buf);
+ 	}
+ 
++	/*
++	 * The decoder also returns capture buffers it used without producing
++	 * a picture (about 1.5 per decoded frame on AV1). Returning them as
++	 * error frames costs every client a dequeue / queue round trip and
++	 * shows up as dropped or bogus frames (GStreamer "too many buffers",
++	 * ffmpeg counting them as frames). Give them back to the firmware, as
++	 * for hidden reference pictures above. At drain (the last buffer, or
++	 * not streaming any more) they are still returned to the client.
++	 */
+ 	if (!buf->data_size && inst->state == IRIS_INST_STREAMING &&
+ 	    !(buf->flags & V4L2_BUF_FLAG_LAST)) {
++		if (inst->domain == DECODER && !(buf->flags & V4L2_BUF_FLAG_ERROR))
++			return iris_hfi_gen2_requeue_output_buffer(inst, buf);
+ 		buf->flags |= V4L2_BUF_FLAG_ERROR;
+ 	}
+ 
+-- 
+2.43.0
+

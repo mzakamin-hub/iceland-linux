@@ -1,0 +1,101 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mukesh Kumar Savaliya <mukesh.savaliya@oss.qualcomm.com>
+Date: Mon, 29 Jun 2026 19:11:40 +0530
+Subject: [PATCH 116/117] FROMLIST: i2c: i2c-qcom-geni: serve transfers during
+ early resume
+
+I2C transfers issued during the resume_noirq phase can fail on GENI I2C
+controllers.
+
+Some devices require I2C communication before their resume sequence can
+complete. One example is a USB Ethernet device attached through PCIe,
+where device configuration must be restored over I2C before PCIe link
+initialization can proceed. Since such accesses occur during
+resume_noirq(), the underlying I2C controller must be able to service
+transfers at that stage.
+
+However, GENI I2C transfers rely on interrupts for command completion,
+while IRQ handling is still suspended during early resume. Additionally,
+runtime PM may remain disabled until later in the resume sequence, causing
+pm_runtime_get_sync() to return -EACCES and preventing controller
+resources from being enabled.
+
+Allow the controller to operate during early resume by requesting the IRQ
+with IRQF_NO_SUSPEND and IRQF_EARLY_RESUME so completion interrupts can be
+delivered during the noirq phase. Also restore runtime PM from
+resume_noirq() when it is disabled and tolerate transient -EACCES failures
+from pm_runtime_get_sync() during the PM state transition.
+
+This enables GENI I2C transfers to complete successfully during the
+resume_noirq phase and allows dependent devices to finish their resume
+sequence.
+
+Link: https://lore.kernel.org/all/20260629134140.755193-1-mukesh.savaliya@oss.qualcomm.com/
+Co-developed-by: Viken Dadhaniya <viken.dadhaniya@oss.qualcomm.com>
+Signed-off-by: Mukesh Kumar Savaliya <mukesh.savaliya@oss.qualcomm.com>
+Signed-off-by: Viken Dadhaniya <viken.dadhaniya@oss.qualcomm.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from 73d4ea5777de (soc/kpatch/73d4ea5777de.patch); mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/dma/qcom/gpi.c             |  3 ++-
+ drivers/i2c/busses/i2c-qcom-geni.c | 12 +++++++++++-
+ 2 files changed, 13 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/dma/qcom/gpi.c b/drivers/dma/qcom/gpi.c
+index 5e64ee2b1207a..6402ac8379998 100644
+--- a/drivers/dma/qcom/gpi.c
++++ b/drivers/dma/qcom/gpi.c
+@@ -626,7 +626,8 @@ static int gpi_config_interrupts(struct gpii *gpii, enum gpii_irq_settings setti
+ 
+ 	if (!gpii->configured_irq) {
+ 		ret = devm_request_irq(gpii->gpi_dev->dev, gpii->irq,
+-				       gpi_handle_irq, IRQF_TRIGGER_HIGH,
++				       gpi_handle_irq,
++				       IRQF_TRIGGER_HIGH | IRQF_NO_SUSPEND | IRQF_EARLY_RESUME,
+ 				       "gpi-dma", gpii);
+ 		if (ret < 0) {
+ 			dev_err(gpii->gpi_dev->dev, "error request irq:%d ret:%d\n",
+diff --git a/drivers/i2c/busses/i2c-qcom-geni.c b/drivers/i2c/busses/i2c-qcom-geni.c
+index 98ae4c5d17155..d4aa57a38cf92 100644
+--- a/drivers/i2c/busses/i2c-qcom-geni.c
++++ b/drivers/i2c/busses/i2c-qcom-geni.c
+@@ -1036,6 +1036,10 @@ static int geni_i2c_xfer(struct i2c_adapter *adap,
+ 	int ret;
+ 
+ 	ret = pm_runtime_resume_and_get(gi2c->se.dev);
++	if (ret == -EACCES) {
++		dev_warn(gi2c->se.dev, "Runtime PM is disabled:%d\n", ret);
++		ret = 0;
++	}
+ 	if (ret < 0) {
+ 		dev_err(gi2c->se.dev, "error turning SE resources:%d\n", ret);
+ 		/* Set device in suspended since resume failed */
+@@ -1250,7 +1254,8 @@ static int geni_i2c_probe(struct platform_device *pdev)
+ 		return ret;
+ 
+ 	/* Keep interrupts disabled initially to allow for low-power modes */
+-	ret = devm_request_irq(dev, gi2c->irq, geni_i2c_irq, IRQF_NO_AUTOEN,
++	ret = devm_request_irq(dev, gi2c->irq, geni_i2c_irq,
++			       IRQF_NO_AUTOEN | IRQF_NO_SUSPEND | IRQF_EARLY_RESUME,
+ 			       dev_name(dev), gi2c);
+ 	if (ret)
+ 		return ret;
+@@ -1356,7 +1361,12 @@ static int geni_i2c_resume_noirq(struct device *dev)
+ 	if (ret)
+ 		return ret;
+ 
++	/* Enforced disable_depth = 0 to actually enable runtime PM during noirq phase */
++	if (!pm_runtime_enabled(dev))
++		pm_runtime_enable(dev);
++
+ 	i2c_mark_adapter_resumed(&gi2c->adap);
++
+ 	return 0;
+ }
+ 
+-- 
+2.43.0
+

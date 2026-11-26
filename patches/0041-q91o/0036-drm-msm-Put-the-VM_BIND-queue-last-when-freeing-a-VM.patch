@@ -1,0 +1,66 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jiwoo Kim <arpe1618@gmail.com>
+Date: Wed, 18 Nov 2026 11:07:16 +0900
+Subject: [PATCH 036/117] drm/msm: Put the VM_BIND queue last when freeing a
+ VM_BIND job
+
+vm_bind_job_free() puts the job's submitqueue and then wakes up
+vm->prealloc_throttle.wait. The job does not hold a reference to the
+VM of its own: the VM is kept alive by the context, which the queue
+holds a reference to. When the job holds the last reference to the
+queue, as it can once the file has been closed, for example when a
+killed job is freed, the put can drop the last reference to the VM,
+and the wakeup then uses a VM that msm_gem_vm_free() has released.
+
+Since commit 01c8d1f385f7 ("drm/msm: RCU-free the scheduler-containing
+ring and VM objects"), msm_gem_vm_free() frees the VM with kfree_rcu(),
+but vm_bind_job_free() is not in an RCU read-side critical section, so
+a grace period can still end before the wakeup, e.g. if the task is
+preempted in between. Before that commit, the VM was freed right away.
+
+Put the queue only after the last use of the VM.
+
+This was found with an AI coding assistant, which also drafted this
+patch and its changelog. It has not been reproduced, and the change
+has only been compile-tested.
+
+Fixes: b74fae5492d1 ("drm/msm: Add VM_BIND throttling")
+Cc: stable@vger.kernel.org
+Signed-off-by: Jiwoo Kim <arpe1618@gmail.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1214467; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/msm_gem_vma.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/msm/msm_gem_vma.c b/drivers/gpu/drm/msm/msm_gem_vma.c
+index 4975b89e2900c..a32364d027f97 100644
+--- a/drivers/gpu/drm/msm/msm_gem_vma.c
++++ b/drivers/gpu/drm/msm/msm_gem_vma.c
+@@ -914,7 +914,6 @@ vm_bind_job_free(struct msm_vm_bind_job *job)
+ 	job_foreach_bo (obj, job)
+ 		drm_gem_object_put(obj);
+ 
+-	msm_submitqueue_put(job->queue);
+ 	dma_fence_put(job->fence);
+ 
+ 	/* In error paths, we could have unexecuted ops: */
+@@ -931,6 +930,12 @@ vm_bind_job_free(struct msm_vm_bind_job *job)
+ 
+ 	wake_up(&vm->prealloc_throttle.wait);
+ 
++	/*
++	 * The queue may hold the last reference to the context, and so to the
++	 * VM, so put it only once we are done with the VM.
++	 */
++	msm_submitqueue_put(job->queue);
++
+ 	kfree(job);
+ }
+ 
+-- 
+2.43.0
+

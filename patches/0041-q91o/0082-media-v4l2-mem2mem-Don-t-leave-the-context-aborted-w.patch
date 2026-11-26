@@ -1,0 +1,60 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Arun Iyengar <aiyengar1990@gmail.com>
+Date: Sun, 15 Nov 2026 08:50:48 +0000
+Subject: [PATCH 082/117] media: v4l2-mem2mem: Don't leave the context aborted
+ when STREAMOFF fails
+
+v4l2_m2m_streamoff() sets TRANS_ABORT before vb2_streamoff(). If that
+fails, e.g. for a single-planar type on a multi-planar device, the flag
+stays and no job of the context runs until a successful STREAMOFF.
+
+Reject a type the queue doesn't have before cancelling, and if vb2 still
+fails, clear TRANS_ABORT and reschedule the context.
+
+Fixes: 2ad5389b3412 ("[media] v4l2-mem2mem: Don't schedule the context if abort job is called")
+Cc: stable@vger.kernel.org
+Signed-off-by: Arun Iyengar <aiyengar1990@gmail.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1211734; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/media/v4l2-core/v4l2-mem2mem.c | 15 ++++++++++++---
+ 1 file changed, 12 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/media/v4l2-core/v4l2-mem2mem.c b/drivers/media/v4l2-core/v4l2-mem2mem.c
+index 62c4ab542b58a..bcc49e5df9231 100644
+--- a/drivers/media/v4l2-core/v4l2-mem2mem.c
++++ b/drivers/media/v4l2-core/v4l2-mem2mem.c
+@@ -914,15 +914,24 @@ int v4l2_m2m_streamoff(struct file *file, struct v4l2_m2m_ctx *m2m_ctx,
+ 	unsigned long flags_job, flags;
+ 	int ret;
+ 
++	q_ctx = get_queue_ctx(m2m_ctx, type);
++	m2m_dev = m2m_ctx->m2m_dev;
++
++	if (type != q_ctx->q.type)
++		return -EINVAL;
++
+ 	/* wait until the current context is dequeued from job_queue */
+ 	v4l2_m2m_cancel_job(m2m_ctx);
+ 
+-	q_ctx = get_queue_ctx(m2m_ctx, type);
+ 	ret = vb2_streamoff(&q_ctx->q, type);
+-	if (ret)
++	if (ret) {
++		spin_lock_irqsave(&m2m_dev->job_spinlock, flags_job);
++		m2m_ctx->job_flags &= ~TRANS_ABORT;
++		spin_unlock_irqrestore(&m2m_dev->job_spinlock, flags_job);
++		v4l2_m2m_try_schedule(m2m_ctx);
+ 		return ret;
++	}
+ 
+-	m2m_dev = m2m_ctx->m2m_dev;
+ 	spin_lock_irqsave(&m2m_dev->job_spinlock, flags_job);
+ 	/* We should not be scheduled anymore, since we're dropping a queue. */
+ 	if (m2m_ctx->job_flags & TRANS_QUEUED)
+-- 
+2.43.0
+

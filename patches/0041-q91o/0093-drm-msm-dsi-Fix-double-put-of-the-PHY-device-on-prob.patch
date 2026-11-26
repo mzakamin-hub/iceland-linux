@@ -1,0 +1,67 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: yzddMr6 <yzddmr6@gmail.com>
+Date: Fri, 20 Nov 2026 21:12:58 +0800
+Subject: [PATCH 093/117] drm/msm/dsi: Fix double put of the PHY device on
+ probe deferral
+
+Since commit 6977cc89c875 ("drm/msm/dsi: Fix some reference counted
+resource leaks"), dsi_get_phy() stores the PHY device it looked up in
+msm_dsi->phy_dev before it checks whether the PHY driver has bound, and
+dsi_destroy() drops that reference. dsi_init() calls dsi_destroy() when
+dsi_get_phy() fails.
+
+Commit c04c3148ca12 ("drm/msm/dsi: Fix missing put_device() call in
+dsi_get_phy") then added a put_device() for the case where the PHY
+device exists but has no driver data yet. In that case the reference is
+now dropped twice, once in dsi_get_phy() and again in dsi_destroy(), so
+each probe deferral for this reason takes one reference too many from
+the PHY platform device. Enough deferrals underflow its refcount and
+free it while it is still registered.
+
+fw_devlink normally keeps the DSI host from probing before its PHY has
+bound. The path is reached with fw_devlink=permissive or off, and after
+the deferred probe timeout when no driver matches the PHY device, as
+the device link is relaxed then and every probe retry of the DSI host
+drops another reference.
+
+Drop the put_device() and leave the reference to dsi_destroy(). This
+effectively reverts that commit and brings back the single check that
+it split in two.
+
+The double put was found with the help of an AI coding assistant during
+a review of the driver.
+
+Fixes: c04c3148ca12 ("drm/msm/dsi: Fix missing put_device() call in dsi_get_phy")
+Signed-off-by: yzddMr6 <yzddmr6@gmail.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1217363; mark C; hand port: our deferral message uses dev_err_probe() (queue commit cb0203a1b3cb); same change: one check, no put_device() (dsi_destroy() drops the reference)]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/dsi/dsi.c | 7 +------
+ 1 file changed, 1 insertion(+), 6 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/dsi/dsi.c b/drivers/gpu/drm/msm/dsi/dsi.c
+index 8720eb1ba956f..6172f3925e4c6 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi.c
++++ b/drivers/gpu/drm/msm/dsi/dsi.c
+@@ -67,14 +67,9 @@ static int dsi_get_phy(struct msm_dsi *msm_dsi)
+ 
+ 	of_node_put(phy_node);
+ 
+-	if (!phy_pdev)
++	if (!phy_pdev || !msm_dsi->phy)
+ 		return dev_err_probe(&pdev->dev, -EPROBE_DEFER,
+ 				     "%s: phy driver is not ready\n", __func__);
+-	if (!msm_dsi->phy) {
+-		put_device(&phy_pdev->dev);
+-		return dev_err_probe(&pdev->dev, -EPROBE_DEFER,
+-				     "%s: phy driver is not ready\n", __func__);
+-	}
+ 
+ 	return 0;
+ }
+-- 
+2.43.0
+

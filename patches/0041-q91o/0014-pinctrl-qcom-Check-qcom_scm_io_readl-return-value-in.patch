@@ -1,0 +1,55 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Lee Jones <lee@kernel.org>
+Date: Tue, 3 Nov 2026 21:29:15 +0000
+Subject: [PATCH 014/117] pinctrl: qcom: Check qcom_scm_io_readl() return value
+ in msm_gpio_irq_set_type()
+
+In msm_gpio_irq_set_type(), when pctrl->intr_target_use_scm is set, the
+return value of qcom_scm_io_readl(addr, &val) is ignored.  If the SCM read
+fails, val remains uninitialised and its stack contents are modified and
+written back to the hardware register via qcom_scm_io_writel().
+
+Check the return value of qcom_scm_io_readl() before modifying and writing
+back val.
+
+Fixes: 13bec8d49bdf ("pinctrl: qcom: use scm_call to route GPIO irq to Apps")
+Closes: https://sashiko.dev/#/bug/linux-a5545ffd-48cc-4856-94cc-4b2dd7968f50
+Cc: stable@vger.kernel.org
+Signed-off-by: Lee Jones <lee@kernel.org>
+Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
+Acked-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
+Signed-off-by: Linus Walleij <linusw@kernel.org>
+
+[mzak: picked for q91o (21 Nov gains plan) from linux-next/maintainer tree commit 61d9fb8d4168; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/pinctrl/qcom/pinctrl-msm.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/pinctrl/qcom/pinctrl-msm.c b/drivers/pinctrl/qcom/pinctrl-msm.c
+index e1d23e0aeddb4..04c53aeda088a 100644
+--- a/drivers/pinctrl/qcom/pinctrl-msm.c
++++ b/drivers/pinctrl/qcom/pinctrl-msm.c
+@@ -1105,11 +1105,13 @@ static int msm_gpio_irq_set_type(struct irq_data *d, unsigned int type)
+ 		u32 addr = pctrl->phys_base[0] + reg;
+ 		int ret;
+ 
+-		qcom_scm_io_readl(addr, &val);
+-		val &= ~(intr_target_mask << g->intr_target_bit);
+-		val |= g->intr_target_kpss_val << g->intr_target_bit;
++		ret = qcom_scm_io_readl(addr, &val);
++		if (!ret) {
++			val &= ~(intr_target_mask << g->intr_target_bit);
++			val |= g->intr_target_kpss_val << g->intr_target_bit;
+ 
+-		ret = qcom_scm_io_writel(addr, val);
++			ret = qcom_scm_io_writel(addr, val);
++		}
+ 		if (ret)
+ 			dev_err(pctrl->dev,
+ 				"Failed routing %lu interrupt to Apps proc",
+-- 
+2.43.0
+

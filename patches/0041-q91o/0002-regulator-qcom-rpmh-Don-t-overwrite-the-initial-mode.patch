@@ -1,0 +1,50 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jesse Casco <jesse.casco@gmail.com>
+Date: Thu, 12 Nov 2026 11:09:42 -0500
+Subject: [PATCH 002/117] regulator: qcom-rpmh: Don't overwrite the initial
+ mode with the boot readback
+
+rpmh_regulator_init_vreg() registers the regulator, and
+set_machine_constraints() applies regulator-initial-mode (or the mode
+derived from regulator-system-load) through ->set_mode(), caching it in
+vreg->mode. Probe then calls rpmh_regulator_determine_initial_mode()
+unconditionally, which for an enabled regulator overwrites vreg->mode
+with the RPMh boot readback (mapping a raw mode of 0 to the lowest
+supported mode).
+
+Skip rpmh_regulator_determine_initial_mode() when registration has
+already set vreg->mode. Leaving vreg->bypassed clear also matches the
+non-bypass mode request that ->set_mode() just sent.
+
+Fixes: 09d99ff7fc3c ("regulator: qcom-rpmh: readback voltage/bypass/mode set during bootup")
+Cc: stable@vger.kernel.org
+Signed-off-by: Jesse Casco <jesse.casco@gmail.com>
+Link: https://patch.msgid.link/20261112160942.27909-1-jesse.casco@gmail.com
+Signed-off-by: Mark Brown <broonie@kernel.org>
+
+[mzak: picked for q91o (21 Nov gains plan) from linux-next/maintainer tree commit d979b7807189; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/regulator/qcom-rpmh-regulator.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/regulator/qcom-rpmh-regulator.c b/drivers/regulator/qcom-rpmh-regulator.c
+index 8b0c0664ca94d..256933c0c796b 100644
+--- a/drivers/regulator/qcom-rpmh-regulator.c
++++ b/drivers/regulator/qcom-rpmh-regulator.c
+@@ -1975,6 +1975,10 @@ static int rpmh_regulator_probe(struct platform_device *pdev)
+ 		if (ret < 0)
+ 			return ret;
+ 
++		/* Keep a mode already applied by set_machine_constraints() */
++		if (vreg->mode != REGULATOR_MODE_INVALID)
++			continue;
++
+ 		ret = rpmh_regulator_determine_initial_mode(vreg);
+ 		if (ret < 0)
+ 			dev_err(dev, "failed to read initial mode for %s\n",
+-- 
+2.43.0
+

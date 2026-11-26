@@ -1,0 +1,45 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Michael McAllister <me@michaelmcallister.org>
+Date: Fri, 13 Nov 2026 15:08:02 +0000
+Subject: [PATCH 041/117] drm/msm/dsi: clear the DMA buffer pointer after
+ freeing it
+
+The DSI host survives component unbind. On DSI v2, freeing the command
+buffer leaves tx_buf pointing at freed memory. If a later bind fails
+before allocating a new buffer, another unbind can free it again.
+
+Clear tx_buf after freeing it, as we already do for tx_gem_obj.
+
+Fixes: 5e05be782645 ("drm/msm/dsi: free TX buffer in unbind")
+Cc: stable@vger.kernel.org
+Link: https://sashiko.dev/#/bug/linux-6f5085d3-ef49-482c-86e4-a2438bc1b91f
+Signed-off-by: Michael McAllister <me@michaelmcallister.org>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1210661; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/dsi/dsi_host.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
+index 27cc9afe00067..95dd0943fd334 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_host.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
+@@ -1309,9 +1309,11 @@ void msm_dsi_tx_buf_free(struct mipi_dsi_host *host)
+ 		msm_host->vm = NULL;
+ 	}
+ 
+-	if (msm_host->tx_buf)
++	if (msm_host->tx_buf) {
+ 		dma_free_coherent(dev->dev, msm_host->tx_size, msm_host->tx_buf,
+ 			msm_host->tx_buf_paddr);
++		msm_host->tx_buf = NULL;
++	}
+ }
+ 
+ void *dsi_tx_buf_get_6g(struct msm_dsi_host *msm_host)
+-- 
+2.43.0
+

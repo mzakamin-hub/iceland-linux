@@ -1,0 +1,141 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: millia ampora <198710911+dappermint@users.noreply.github.com>
+Date: Thu, 12 Nov 2026 12:00:00 +0400
+Subject: [PATCH 113/117] power: supply: qcom_battmgr: OPLUS: a charger hold
+ and the battery authentication for a charge pump driver
+
+A charge pump driver for the OnePlus Pad 4 (two SC8547D behind the VOOC
+handshake) charges the battery past the charger and has to keep the
+charger's output off for that time, as the vendor's driver does.
+Writing charge_behaviour for it does not hold: user space owns that
+attribute (the battery guard writes "auto" back within one step). Give
+the driver its own hold, a third reason next to charge_behaviour and
+the charge limit, and the firmware's battery authentication (OPLUS
+property 76), which the vendor checks before any fast charge. Both are
+exported functions that take the battery supply; neither adds a
+power-supply property. While the hold is set the firmware's status
+describes its held charger ("Not charging"), not the battery the pump
+fills, so the status then follows the battery current instead.
+
+Signed-off-by: millia ampora <198710911+dappermint@users.noreply.github.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from dappermint/iceland-linux 97784b2dadcc (series 0041-supervooc, patch 2/2); mark V; inert until an out-of-tree driver calls the two exported functions; patch 1/2 (pump buses enabled) left out: it applies the pin states and sets up the serial engines of both pump buses and exposes them to user space]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/power/supply/qcom_battmgr.c | 68 ++++++++++++++++++++++++++++-
+ 1 file changed, 66 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
+index e790165741f5f..596741d26be1d 100644
+--- a/drivers/power/supply/qcom_battmgr.c
++++ b/drivers/power/supply/qcom_battmgr.c
+@@ -123,6 +123,7 @@ enum qcom_battmgr_variant {
+ #define OPLUS_USB_OTG_VBUS_ENABLE	19
+ #define OPLUS_USB_OTG_BOOST_CURRENT	59
+ #define OPLUS_CHG_EN			70
++#define OPLUS_BATTERY_AUTH		76
+ #define OPLUS_SET_PDO			71
+ 
+ /*
+@@ -470,6 +471,8 @@ struct qcom_battmgr {
+ 	unsigned long cool_state;
+ 	unsigned int cool_max_ua;	/* not OPLUS: the firmware's own maximum, 0 = not read yet */
+ 	bool chg_inhibit;
++	/* a charge pump driver charges past the charger and keeps its output off meanwhile */
++	bool chg_pump_hold;
+ 	/* the host's input suspend (input_current_limit 0), see qcom_battmgr_oplus_set_input_limit() */
+ 	bool input_suspend;
+ 	bool icl_unsuspended;		/* a suspend the firmware kept from an earlier boot was ended */
+@@ -652,10 +655,10 @@ static bool qcom_battmgr_oplus_online(struct qcom_battmgr *battmgr)
+ 	return battmgr->usb.online || battmgr->wireless.online;
+ }
+ 
+-/* The host keeps the charger off: user space (charge_behaviour) or the charge limit */
++/* The host keeps the charger off: user space (charge_behaviour), the charge limit or a charge pump driver */
+ static bool qcom_battmgr_oplus_inhibited(struct qcom_battmgr *battmgr)
+ {
+-	return battmgr->chg_inhibit || battmgr->chg_limit_hold;
++	return battmgr->chg_inhibit || battmgr->chg_limit_hold || battmgr->chg_pump_hold;
+ }
+ 
+ /* The start threshold in use: the one written, else CHARGE_CTRL_DELTA_SOC below the end */
+@@ -788,6 +791,11 @@ static int qcom_battmgr_oplus_status(struct qcom_battmgr *battmgr)
+ 		return status == POWER_SUPPLY_STATUS_CHARGING ?
+ 			POWER_SUPPLY_STATUS_DISCHARGING : status;
+ 
++	/* a charge pump charges past the held charger: the firmware's status is that charger's, the current is the battery's */
++	if (battmgr->chg_pump_hold)
++		return qcom_battmgr_oplus_current(battmgr) > 0 ?
++			POWER_SUPPLY_STATUS_CHARGING : POWER_SUPPLY_STATUS_NOT_CHARGING;
++
+ 	if (status != POWER_SUPPLY_STATUS_CHARGING &&
+ 	    status != POWER_SUPPLY_STATUS_DISCHARGING)
+ 		return status;
+@@ -2768,6 +2776,62 @@ static int qcom_battmgr_oplus_set_charge_behaviour(struct qcom_battmgr *battmgr,
+ 	return ret;
+ }
+ 
++/*
++ * For a charge pump driver (the SC8547D pair of the OnePlus Pad 4): while a pump charges the battery the
++ * charger's output is held off, as the vendor's driver does once more than 2 A flow into the battery. The
++ * hold is the driver's own and does not show in charge_behaviour, which stays user space's: a guard that
++ * writes "auto" there neither ends the hold nor is told to stop. Both take the battery supply.
++ */
++int qcom_battmgr_oplus_pump_hold(struct power_supply *psy, bool hold);
++int qcom_battmgr_oplus_battery_authentic(struct power_supply *psy);
++
++int qcom_battmgr_oplus_pump_hold(struct power_supply *psy, bool hold)
++{
++	struct qcom_battmgr *battmgr;
++	int ret;
++
++	if (psy->desc->get_property != qcom_battmgr_bat_get_property)
++		return -EINVAL;
++	battmgr = power_supply_get_drvdata(psy);
++	if (battmgr->variant != QCOM_BATTMGR_OPLUS)
++		return -EINVAL;
++
++	mutex_lock(&battmgr->lock);
++	battmgr->chg_pump_hold = hold;
++	ret = qcom_battmgr_oplus_set(battmgr, OPLUS_CHG_EN, !qcom_battmgr_oplus_inhibited(battmgr));
++	/* the attach poll sends a failed "off" again by itself, and a failed "on" through this */
++	battmgr->chg_en_retry = ret && !qcom_battmgr_oplus_inhibited(battmgr);
++	mutex_unlock(&battmgr->lock);
++	dev_info(battmgr->dev, "charger output %s by the charge pump driver%s\n", hold ? "held off" : "released",
++		 ret ? ", the request failed" : "");
++	power_supply_changed(psy);
++
++	return ret;
++}
++EXPORT_SYMBOL_GPL(qcom_battmgr_oplus_pump_hold);
++
++/* The firmware's battery authentication (the vendor's fast-charge gate): 1, 0, or the error of the request */
++int qcom_battmgr_oplus_battery_authentic(struct power_supply *psy)
++{
++	struct qcom_battmgr *battmgr;
++	int ret;
++
++	if (psy->desc->get_property != qcom_battmgr_bat_get_property)
++		return -EINVAL;
++	battmgr = power_supply_get_drvdata(psy);
++	if (battmgr->variant != QCOM_BATTMGR_OPLUS)
++		return -EINVAL;
++
++	mutex_lock(&battmgr->lock);
++	ret = qcom_battmgr_request_property(battmgr, OPLUS_PROPERTY_GET, OPLUS_BATTERY_AUTH, 0);
++	if (!ret)
++		ret = !!battmgr->oplus_value;
++	mutex_unlock(&battmgr->lock);
++
++	return ret;
++}
++EXPORT_SYMBOL_GPL(qcom_battmgr_oplus_battery_authentic);
++
+ /*
+  * input_current_limit on the USB supply: 0 suspends the charger input, any
+  * other value ends the suspend. That is stock's lever for a too hot USB-C
+-- 
+2.43.0
+

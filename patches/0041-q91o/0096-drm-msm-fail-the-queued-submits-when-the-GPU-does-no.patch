@@ -1,0 +1,93 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 21:49:46 +0200
+Subject: [PATCH 096/117] drm/msm: fail the queued submits when the GPU does
+ not recover
+
+recover_worker() replays every queued submit after ->recover(), even when
+the hardware init at the end of ->recover() failed and the GPU is still
+down (on Adreno 8xx: a GMU that no longer boots). Each replayed submit then
+hangs again and is dropped only one hangcheck period later, so the fences
+of a busy client stay pending for minutes: the compositor stalls, atomic
+commits wait on their in-fences, and system suspend and shutdown wait on
+the GPU.
+
+When ->recover() leaves the GPU needing a hardware init, complete the
+queued submits with -EIO instead of replaying them and count a fault on
+their queues, as a8xx_drop_queued_submits() already does when the CX
+collapse fails. The next submit runs the hardware init again through
+runtime resume, so a GPU that comes back later is used again.
+
+Problem and approach found by Travis Geisinger, in linux-perpetua
+commit 615157350526 ("drm/msm: Fail the pending submits when the GPU does not recover")
+(no Signed-off-by); re-implemented on our A8xx recovery code.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/msm_gpu.c | 42 +++++++++++++++++++++++++++++++++++
+ 1 file changed, 42 insertions(+)
+
+diff --git a/drivers/gpu/drm/msm/msm_gpu.c b/drivers/gpu/drm/msm/msm_gpu.c
+index 3b48b6b6e4747..54093ce9b4c97 100644
+--- a/drivers/gpu/drm/msm/msm_gpu.c
++++ b/drivers/gpu/drm/msm/msm_gpu.c
+@@ -484,6 +484,44 @@ static void get_comm_cmdline(struct msm_gem_submit *submit, char **comm, char **
+ 	put_task_struct(task);
+ }
+ 
++/*
++ * Called with gpu->lock held after ->recover() when the hardware init at its
++ * end failed: the GPU is still not running, so replaying the queued submits
++ * would only hang each of them again, a full hangcheck period apiece, while
++ * everybody waiting on their fences (compositor, atomic commits, system
++ * suspend and shutdown) waits with them. Complete them with -EIO instead and
++ * count a fault on their queues. The next submit runs the hardware init again
++ * through runtime resume, so a GPU that comes back later is used again.
++ */
++static void fail_queued_submits(struct msm_gpu *gpu)
++{
++	unsigned int i, n = 0;
++
++	for (i = 0; i < gpu->nr_rings; i++) {
++		struct msm_ringbuffer *ring = gpu->rb[i];
++		u32 fence = ring->fctx->last_fence;
++		struct msm_gem_submit *submit;
++		unsigned long flags;
++
++		spin_lock_irqsave(&ring->submit_lock, flags);
++		list_for_each_entry(submit, &ring->submits, node) {
++			if (!fence_after(submit->seqno, ring->memptrs->fence))
++				continue;
++			dma_fence_set_error(submit->hw_fence, -EIO);
++			submit->queue->faults++;
++			n++;
++		}
++		spin_unlock_irqrestore(&ring->submit_lock, flags);
++
++		ring->memptrs->fence = fence;
++		msm_update_fence(ring->fctx, fence);
++	}
++
++	DRM_DEV_ERROR(gpu->dev->dev,
++		      "%s: GPU not recovered: %u queued submit(s) failed, not replayed\n",
++		      gpu->name, n);
++}
++
+ static void recover_worker(struct kthread_work *work)
+ {
+ 	struct msm_gpu *gpu = container_of(work, struct msm_gpu, recover_work);
+@@ -584,6 +622,10 @@ static void recover_worker(struct kthread_work *work)
+ 
+ 	gpu->funcs->recover(gpu);
+ 
++	/* ->recover() ends with a hardware init: did the GPU come back? */
++	if (gpu->needs_hw_init)
++		fail_queued_submits(gpu);
++
+ 	/* retire completed submits, plus the one that hung: */
+ 	retire_submits(gpu);
+ 
+-- 
+2.43.0
+

@@ -1,0 +1,118 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Tue, 17 Nov 2026 16:21:23 +0100
+Subject: [PATCH 074/117] media: qcom: iris: gen2: subscribe to the picture
+ type on the encoder instance
+
+The GEN2 iris expects the HFI_PROP_PICTURE_TYPE for the encoded
+buffers, but HFI_PROP_PICTURE_TYPE is never subscribed for the
+ENCODER instance in iris_hfi_gen2_subscribe_property().
+
+Add the necessary tables along the vdec input and output properties
+table for the GEN2 hardware.
+
+The tables are aligned with the vdec and downstream iris driver
+implementation subscribing to HFI_PROP_NO_OUTPUT for the input
+queue and HFI_PROP_PICTURE_TYPE for the output queue.
+
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1214008; mark V + fix: the posted v1 adds the same four enc_*_prop initializers twice to iris_hfi_gen2_data (W=1 -Winitializer-overrides); the second copy is dropped]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ .../media/platform/qcom/iris/iris_hfi_gen2.c   | 18 ++++++++++++++++++
+ .../platform/qcom/iris/iris_hfi_gen2_command.c | 15 ++++++++++-----
+ .../platform/qcom/iris/iris_platform_common.h  |  5 +++++
+ 3 files changed, 33 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_hfi_gen2.c b/drivers/media/platform/qcom/iris/iris_hfi_gen2.c
+index 02bb477bd4693..a789c9896f553 100644
+--- a/drivers/media/platform/qcom/iris/iris_hfi_gen2.c
++++ b/drivers/media/platform/qcom/iris/iris_hfi_gen2.c
+@@ -2038,6 +2038,14 @@ static const u32 sm8550_vdec_subscribe_output_properties_av1[] = {
+ 	HFI_PROP_WORST_COMPLEXITY_FACTOR,
+ };
+ 
++static const u32 sm8550_venc_subscribe_input_properties[] = {
++	HFI_PROP_NO_OUTPUT,
++};
++
++static const u32 sm8550_venc_subscribe_output_properties[] = {
++	HFI_PROP_PICTURE_TYPE,
++};
++
+ static const u32 sm8550_dec_ip_int_buf_tbl[] = {
+ 	BUF_BIN,
+ 	BUF_COMV,
+@@ -2102,6 +2110,11 @@ const struct iris_firmware_data iris_hfi_gen2_data = {
+ 	.enc_output_config_params_size =
+ 		ARRAY_SIZE(sm8550_venc_output_config_params),
+ 
++	.enc_input_prop = sm8550_venc_subscribe_input_properties,
++	.enc_input_prop_size = ARRAY_SIZE(sm8550_venc_subscribe_input_properties),
++	.enc_output_prop = sm8550_venc_subscribe_output_properties,
++	.enc_output_prop_size = ARRAY_SIZE(sm8550_venc_subscribe_output_properties),
++
+ 	.dec_input_prop = sm8550_vdec_subscribe_input_properties,
+ 	.dec_input_prop_size = ARRAY_SIZE(sm8550_vdec_subscribe_input_properties),
+ 	.dec_output_prop_avc = sm8550_vdec_subscribe_output_properties_avc,
+@@ -3052,6 +3065,11 @@ const struct iris_firmware_data iris_hfi_gen2_ar50lt_data = {
+ 	.enc_output_config_params_size =
+ 		ARRAY_SIZE(sm8550_venc_output_config_params),
+ 
++	.enc_input_prop = sm8550_venc_subscribe_input_properties,
++	.enc_input_prop_size = ARRAY_SIZE(sm8550_venc_subscribe_input_properties),
++	.enc_output_prop = sm8550_venc_subscribe_output_properties,
++	.enc_output_prop_size = ARRAY_SIZE(sm8550_venc_subscribe_output_properties),
++
+ 	.dec_input_prop = sm8550_vdec_subscribe_input_properties,
+ 	.dec_input_prop_size = ARRAY_SIZE(sm8550_vdec_subscribe_input_properties),
+ 	.dec_output_prop_avc = sm8550_vdec_subscribe_output_properties_avc,
+diff --git a/drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c b/drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c
+index 1a1ca9c01ee11..b1e8228c5fb22 100644
+--- a/drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c
++++ b/drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c
+@@ -1090,12 +1090,17 @@ static int iris_hfi_gen2_subscribe_property(struct iris_inst *inst, u32 plane)
+ 
+ 	payload[0] = HFI_MODE_PROPERTY;
+ 
+-	if (inst->domain == ENCODER)
+-		return 0;
+-
+ 	if (V4L2_TYPE_IS_OUTPUT(plane)) {
+-		subscribe_prop_size = core->iris_firmware_data->dec_input_prop_size;
+-		subcribe_prop = core->iris_firmware_data->dec_input_prop;
++		if (inst->domain == ENCODER) {
++			subscribe_prop_size = core->iris_firmware_data->enc_input_prop_size;
++			subcribe_prop = core->iris_firmware_data->enc_input_prop;
++		} else {
++			subscribe_prop_size = core->iris_firmware_data->dec_input_prop_size;
++			subcribe_prop = core->iris_firmware_data->dec_input_prop;
++		}
++	} else if (inst->domain == ENCODER) {
++		subscribe_prop_size = core->iris_firmware_data->enc_output_prop_size;
++		subcribe_prop = core->iris_firmware_data->enc_output_prop;
+ 	} else {
+ 		switch (inst->codec) {
+ 		case V4L2_PIX_FMT_H264:
+diff --git a/drivers/media/platform/qcom/iris/iris_platform_common.h b/drivers/media/platform/qcom/iris/iris_platform_common.h
+index 01c8c87af7d60..85ed9283554f7 100644
+--- a/drivers/media/platform/qcom/iris/iris_platform_common.h
++++ b/drivers/media/platform/qcom/iris/iris_platform_common.h
+@@ -312,6 +312,11 @@ struct iris_firmware_data {
+ 	const u32 *dec_output_prop_av1;
+ 	unsigned int dec_output_prop_av1_size;
+ 
++	const u32 *enc_input_prop;
++	unsigned int enc_input_prop_size;
++	const u32 *enc_output_prop;
++	unsigned int enc_output_prop_size;
++
+ 	const u32 *dec_ip_int_buf_tbl;
+ 	unsigned int dec_ip_int_buf_tbl_size;
+ 	const u32 *dec_op_int_buf_tbl;
+-- 
+2.43.0
+

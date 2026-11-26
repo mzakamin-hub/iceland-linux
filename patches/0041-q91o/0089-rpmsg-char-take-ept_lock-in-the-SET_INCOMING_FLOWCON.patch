@@ -1,0 +1,69 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Yu Zhang <yuz08559@gmail.com>
+Date: Sat, 31 Oct 2026 19:06:50 +1000
+Subject: [PATCH 089/117] rpmsg: char: take ept_lock in the
+ SET_INCOMING_FLOWCONTROL ioctl
+
+rpmsg_eptdev_ioctl() handles RPMSG_SET_INCOMING_FLOWCONTROL by calling
+rpmsg_set_flow_control(eptdev->ept, ...) without holding eptdev->ept_lock
+and without checking eptdev->ept for NULL. rpmsg_set_flow_control()
+dereferences ept->ops, so this is the only eptdev->ept user that does not
+honour the ept_lock discipline.
+
+eptdev->ept is torn down under ept_lock: rpmsg_chrdev_eptdev_destroy()
+(reached via RPMSG_DESTROY_EPT_IOCTL on a second fd, or when the rpmsg
+device is removed) and rpmsg_eptdev_release() both do
+
+	mutex_lock(&eptdev->ept_lock);
+	rpmsg_destroy_ept(eptdev->ept);
+	eptdev->ept = NULL;
+	mutex_unlock(&eptdev->ept_lock);
+
+and rpmsg_destroy_ept() drops the endpoint's last reference and frees it.
+A SET_INCOMING_FLOWCONTROL ioctl running concurrently can therefore read
+eptdev->ept just as it is freed and dereference ept->ops -> use-after-free
+(or a NULL dereference once ept has been cleared).
+
+Fixes: 5550201c0fe2 ("rpmsg: char: Add RPMSG GET/SET FLOWCONTROL IOCTL support")
+Cc: stable@vger.kernel.org
+Signed-off-by: Yu Zhang <yuz08559@gmail.com>
+Link: https://lore.kernel.org/r/20261031090650.23701-1-yuz08559@gmail.com
+Signed-off-by: Mathieu Poirier <mathieu.poirier@linaro.org>
+
+[mzak: picked for q91o (21 Nov gains plan) from linux-next/maintainer tree commit 2334150bcdc6; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/rpmsg/rpmsg_char.c | 15 ++++++++++++++-
+ 1 file changed, 14 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/rpmsg/rpmsg_char.c b/drivers/rpmsg/rpmsg_char.c
+index 550fda217da45..d8868faacdc3a 100644
+--- a/drivers/rpmsg/rpmsg_char.c
++++ b/drivers/rpmsg/rpmsg_char.c
+@@ -343,7 +343,20 @@ static long rpmsg_eptdev_ioctl(struct file *fp, unsigned int cmd,
+ 			break;
+ 		}
+ 		set = !!arg;
+-		ret = rpmsg_set_flow_control(eptdev->ept, set, eptdev->chinfo.dst);
++
++		ret = mutex_lock_interruptible(&eptdev->ept_lock);
++		if (ret)
++			break;
++
++		if (!eptdev->ept) {
++			mutex_unlock(&eptdev->ept_lock);
++			ret = -EPIPE;
++			break;
++		}
++
++		ret = rpmsg_set_flow_control(eptdev->ept, set,
++					     eptdev->chinfo.dst);
++		mutex_unlock(&eptdev->ept_lock);
+ 		break;
+ 	case RPMSG_DESTROY_EPT_IOCTL:
+ 		/* Don't allow to destroy a default endpoint. */
+-- 
+2.43.0
+

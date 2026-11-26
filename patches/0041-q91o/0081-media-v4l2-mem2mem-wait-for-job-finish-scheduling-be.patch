@@ -1,0 +1,157 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Yaohan Li <shunsheng1218@gmail.com>
+Date: Fri, 13 Nov 2026 16:49:40 +0800
+Subject: [PATCH 081/117] media: v4l2-mem2mem: wait for job-finish scheduling
+ before freeing a context
+
+When vicodec finishes a job, it calls v4l2_m2m_job_finish(). This clears
+TRANS_RUNNING, but the function still uses the context afterwards to
+schedule the next job. If another thread closes the file or stops
+streaming at that point, v4l2_m2m_cancel_job() can see the job as no
+longer running and return; the context may then be freed while the
+scheduling code is still using it.
+
+I reproduced this with vicodec by delaying the scheduling path after the
+running flag was cleared. The unpatched kernel reported a KASAN
+use-after-free in the scheduling tail.
+
+Keep a count of scheduling tails that are still using each context.
+Update the count under job_spinlock and make cancellation wait until both
+the running job and all scheduling tails have finished. This keeps the
+context alive until the last user of it is done.
+
+The count also handles two jobs finishing close together: the first tail
+cannot make the context look idle to a waiter while the second tail is
+still registered. The wait condition is checked under the same lock that
+protects the count, so the last tail does not wake a waiter before it has
+finished with the context.
+
+Fixes: cbd9463da1b12 ("media: v4l2-mem2mem: Avoid calling .device_run in v4l2_m2m_job_finish")
+Cc: stable@vger.kernel.org
+Signed-off-by: Yaohan Li <shunsheng1218@gmail.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1210320; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/media/v4l2-core/v4l2-mem2mem.c | 44 ++++++++++++++++++++++++--
+ include/media/v4l2-mem2mem.h           |  5 +++
+ 2 files changed, 47 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/media/v4l2-core/v4l2-mem2mem.c b/drivers/media/v4l2-core/v4l2-mem2mem.c
+index a65cbb124cfe0..62c4ab542b58a 100644
+--- a/drivers/media/v4l2-core/v4l2-mem2mem.c
++++ b/drivers/media/v4l2-core/v4l2-mem2mem.c
+@@ -404,6 +404,21 @@ static void v4l2_m2m_device_run_work(struct work_struct *work)
+ 	v4l2_m2m_try_run(m2m_dev);
+ }
+ 
++/* A context is idle only when its job and scheduling tails are done. */
++static bool v4l2_m2m_ctx_idle(struct v4l2_m2m_ctx *m2m_ctx)
++{
++	struct v4l2_m2m_dev *m2m_dev = m2m_ctx->m2m_dev;
++	unsigned long flags;
++	bool idle;
++
++	spin_lock_irqsave(&m2m_dev->job_spinlock, flags);
++	idle = !(m2m_ctx->job_flags & TRANS_RUNNING) &&
++	       !m2m_ctx->sched_tail_active;
++	spin_unlock_irqrestore(&m2m_dev->job_spinlock, flags);
++
++	return idle;
++}
++
+ /**
+  * v4l2_m2m_cancel_job() - cancel pending jobs for the context
+  * @m2m_ctx: m2m context with jobs to be canceled
+@@ -427,8 +442,6 @@ static void v4l2_m2m_cancel_job(struct v4l2_m2m_ctx *m2m_ctx)
+ 		if (m2m_dev->m2m_ops->job_abort)
+ 			m2m_dev->m2m_ops->job_abort(m2m_ctx->priv);
+ 		dprintk("m2m_ctx %p running, will wait to complete\n", m2m_ctx);
+-		wait_event(m2m_ctx->finished,
+-				!(m2m_ctx->job_flags & TRANS_RUNNING));
+ 	} else if (m2m_ctx->job_flags & TRANS_QUEUED) {
+ 		list_del(&m2m_ctx->queue);
+ 		m2m_ctx->job_flags &= ~(TRANS_QUEUED | TRANS_RUNNING);
+@@ -439,6 +452,17 @@ static void v4l2_m2m_cancel_job(struct v4l2_m2m_ctx *m2m_ctx)
+ 		/* Do nothing, was not on queue/running */
+ 		spin_unlock_irqrestore(&m2m_dev->job_spinlock, flags);
+ 	}
++
++	/*
++	 * Wait for the running job, if any, and its scheduling tail.
++	 * TRANS_ABORT prevents new jobs from being queued.  A job that
++	 * was already running may still finish and register its tail;
++	 * the idle check covers both states.
++	 *
++	 * As with the original cancellation path, progress depends on
++	 * the active job eventually completing or being aborted.
++	 */
++	wait_event(m2m_ctx->finished, v4l2_m2m_ctx_idle(m2m_ctx));
+ }
+ 
+ /*
+@@ -453,6 +477,8 @@ static void v4l2_m2m_schedule_next_job(struct v4l2_m2m_dev *m2m_dev,
+ 	 * allow more than one job on the job_queue per instance, each has
+ 	 * to be scheduled separately after the previous one finishes.
+ 	 */
++	unsigned long flags;
++
+ 	__v4l2_m2m_try_queue(m2m_dev, m2m_ctx);
+ 
+ 	/*
+@@ -460,6 +486,15 @@ static void v4l2_m2m_schedule_next_job(struct v4l2_m2m_dev *m2m_dev,
+ 	 * but the job must be run in non-atomic context.
+ 	 */
+ 	schedule_work(&m2m_dev->job_work);
++
++	/*
++	 * The scheduling tail is done with this context.
++	 * Wake any thread waiting to close it.
++	 */
++	spin_lock_irqsave(&m2m_dev->job_spinlock, flags);
++	m2m_ctx->sched_tail_active--;
++	wake_up_all(&m2m_ctx->finished);
++	spin_unlock_irqrestore(&m2m_dev->job_spinlock, flags);
+ }
+ 
+ /*
+@@ -475,6 +510,11 @@ static bool _v4l2_m2m_job_finish(struct v4l2_m2m_dev *m2m_dev,
+ 	}
+ 
+ 	list_del(&m2m_dev->curr_ctx->queue);
++	/*
++	 * The scheduling code still uses this context after TRANS_RUNNING
++	 * is cleared. Keep it alive until that code has finished.
++	 */
++	m2m_dev->curr_ctx->sched_tail_active++;
+ 	m2m_dev->curr_ctx->job_flags &= ~(TRANS_QUEUED | TRANS_RUNNING);
+ 	wake_up(&m2m_dev->curr_ctx->finished);
+ 	m2m_dev->curr_ctx = NULL;
+diff --git a/include/media/v4l2-mem2mem.h b/include/media/v4l2-mem2mem.h
+index 31de25d792b98..e9f390aff3664 100644
+--- a/include/media/v4l2-mem2mem.h
++++ b/include/media/v4l2-mem2mem.h
+@@ -97,6 +97,10 @@ struct v4l2_m2m_queue_ctx {
+  * @job_flags: Job queue flags, used internally by v4l2-mem2mem.c:
+  *		%TRANS_QUEUED, %TRANS_RUNNING and %TRANS_ABORT.
+  * @finished: Wait queue used to signalize when a job queue finished.
++ * @sched_tail_active: Number of in-flight job-finish scheduling tails for
++ *		this context, protected by the device job spinlock.
++ *		v4l2_m2m_cancel_job() waits for it to drop to zero before the
++ *		context can be released.
+  * @priv: Instance private data
+  *
+  * The memory to memory context is specific to a file handle, NOT to e.g.
+@@ -125,6 +129,7 @@ struct v4l2_m2m_ctx {
+ 	struct list_head		queue;
+ 	unsigned long			job_flags;
+ 	wait_queue_head_t		finished;
++	unsigned int			sched_tail_active;
+ 
+ 	void				*priv;
+ };
+-- 
+2.43.0
+

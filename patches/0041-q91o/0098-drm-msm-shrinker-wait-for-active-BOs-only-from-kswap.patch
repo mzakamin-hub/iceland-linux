@@ -1,0 +1,61 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 21:50:39 +0200
+Subject: [PATCH 098/117] drm/msm/shrinker: wait for active BOs only from
+ kswapd
+
+can_block() lets any direct reclaim wait for active BOs to become idle,
+up to 10 jiffies per BO. Direct reclaim runs in the allocating task, and
+for a GPU driver that is often a task the desktop depends on: the
+compositor, or a task in the submit ioctl that holds the reservation
+locks of its BOs while it pins them or allocates its submit tables.
+Waiting there for the GPU turns memory pressure into a stall of that
+task, and of everything waiting for its locks, for the length of the
+scan; with mostly busy BOs the scan runs into the timeout BO after BO.
+
+i915 reaps active objects only from kswapd, and the TTM shrink helpers
+(ttm_bo_shrink_avoid_wait()) let only kswapd wait for the GPU. Do the
+same: run the blocking active purge / evict stages from kswapd only.
+Direct reclaim still purges and evicts idle BOs, and eviction_can_block
+still turns blocking off entirely.
+
+Problem and approach by yzddmr6 (linux-sm8750 tree da4b783e34bd,
+"drm/msm/shrinker: Only block for active BOs from kswapd", no
+Signed-off-by); re-implemented.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/msm_gem_shrinker.c | 13 ++++++++++---
+ 1 file changed, 10 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/msm_gem_shrinker.c b/drivers/gpu/drm/msm/msm_gem_shrinker.c
+index 52a8f5faeb873..de0206988d4ee 100644
+--- a/drivers/gpu/drm/msm/msm_gem_shrinker.c
++++ b/drivers/gpu/drm/msm/msm_gem_shrinker.c
+@@ -28,12 +28,19 @@ static bool can_swap(void)
+ 	return enable_eviction && get_nr_swap_pages() > 0;
+ }
+ 
++/*
++ * Wait for the GPU to idle a BO only from kswapd, as i915 and the TTM shrink
++ * helpers do. Direct reclaim runs in the allocating task, which may be the
++ * compositor or a task in the submit ioctl that holds the reservation locks of
++ * its BOs; blocking it on the GPU stalls it, and everyone waiting for those
++ * locks, for the whole scan. Direct reclaim still purges and evicts idle BOs.
++ */
+ static bool can_block(struct shrink_control *sc)
+ {
+-	if (!eviction_can_block)
++	if (!eviction_can_block || !current_is_kswapd())
+ 		return false;
+-	return (sc->gfp_mask & __GFP_DIRECT_RECLAIM) ||
+-	       (current_is_kswapd() && (sc->gfp_mask & __GFP_KSWAPD_RECLAIM));
++
++	return sc->gfp_mask & __GFP_KSWAPD_RECLAIM;
+ }
+ 
+ static unsigned long
+-- 
+2.43.0
+

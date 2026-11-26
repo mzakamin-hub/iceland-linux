@@ -1,0 +1,47 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Hungyu Lin <dennylin0707@gmail.com>
+Date: Tue, 17 Nov 2026 20:49:44 +0000
+Subject: [PATCH 072/117] media: iris: check the packet size after reading from
+ shared memory
+
+iris_hfi_queue_read() takes the size of a packet from the first word of
+the packet in the shared queue and then copies that many bytes, including
+that word, out of the queue. The firmware can change the word in between,
+so the size field of the copy can be larger than what was copied. The
+gen1 response handlers use that field as the length of the packet, for
+example to walk the buffer requirements in
+iris_hfi_gen1_session_property_info().
+
+venus got the same check in commit 49befc830daa ("media: venus: Add a
+check for packet size after reading from shared memory"). Compare the
+size field of the copy with the size that was used for the copy and fail
+the read if they differ.
+
+Fixes: fb583a214337 ("media: iris: introduce host firmware interface with necessary hooks")
+Cc: stable@vger.kernel.org
+Signed-off-by: Hungyu Lin <dennylin0707@gmail.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1214278; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/media/platform/qcom/iris/iris_hfi_queue.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_hfi_queue.c b/drivers/media/platform/qcom/iris/iris_hfi_queue.c
+index 545bbe75e1740..9de199bf5a0a0 100644
+--- a/drivers/media/platform/qcom/iris/iris_hfi_queue.c
++++ b/drivers/media/platform/qcom/iris/iris_hfi_queue.c
+@@ -95,6 +95,8 @@ static int iris_hfi_queue_read(struct iris_iface_q_info *qinfo, void *packet)
+ 			       qinfo->kernel_vaddr, residue);
+ 			new_read_idx = residue;
+ 		}
++		if (*(u32 *)packet != packet_size)
++			return -EINVAL;
+ 	} else {
+ 		new_read_idx = write_idx;
+ 		ret = -EBADMSG;
+-- 
+2.43.0
+

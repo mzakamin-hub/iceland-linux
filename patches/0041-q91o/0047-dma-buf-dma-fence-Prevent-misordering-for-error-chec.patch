@@ -1,0 +1,84 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Philipp Stanner <phasta@kernel.org>
+Date: Fri, 20 Nov 2026 12:16:16 +0100
+Subject: [PATCH 047/117] dma-buf/dma-fence: Prevent misordering for error
+ checks
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Many users of dma_fence do things like:
+
+// Thread A
+dma_fence_set_error(f, -EINVAL);
+dma_fence_signal(f); // <- test_and_set_bit() orders against the above.
+
+// Thread B
+if (dma_fence_is_signaled(f)) // <- Does test_bit(), no ordering.
+	pr_info("err: %i\n", f->error); // <- Can be loaded first.
+
+There is no memory ordering between reading of the signaled-bit and
+reading of the error code. This can result in outdated, wrong error
+codes being evaluated by the user. That's a significant bug when we
+consider that fences' purpose is to propagate the state of jobs running
+on hardware.
+
+dma_fence_get_status() does take the fence lock, presumably to ensure
+ordering, but it is broken, too, because the read misordering can simply
+happen within the critical section.
+
+It's not entirely clear since when this bug exists, but at least since
+dma_fence_get_status() was added, which is why its birth commit is
+marked as the Fixes commit here.
+
+Ensure ordering for everyone evaluating the error code centrally by
+using test_bit_acquire() in dma_fence_test_signaled_flag().
+
+Cc: stable@vger.kernel.org
+Fixes: d6c99f4bf093 ("dma-fence: Wrap querying the fence->status")
+Signed-off-by: Philipp Stanner <phasta@kernel.org>
+Reviewed-by: Christian König <christian.koenig@amd.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1217250; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ include/linux/dma-fence.h | 15 +++++++++++----
+ 1 file changed, 11 insertions(+), 4 deletions(-)
+
+diff --git a/include/linux/dma-fence.h b/include/linux/dma-fence.h
+index 815471b844f05..444ae155352d2 100644
+--- a/include/linux/dma-fence.h
++++ b/include/linux/dma-fence.h
+@@ -488,16 +488,23 @@ const char __rcu *dma_fence_timeline_name(struct dma_fence *fence);
+  * with the fence in any way. The user must, therefore, ensure through other
+  * means that fences get signaled eventually.
+  *
+- * This function uses test_bit(), which is thread-safe. Naturally, this function
+- * should be used opportunistically; a fence could get signaled at any moment
+- * after the check is done.
++ * Naturally, this function should be used opportunistically; a fence could get
++ * signaled at any moment after the check is done.
++ *
++ * This function provides acquire ordering. This means that all stores
++ * preceding the signaling of a fence are visible in correct order to users of
++ * this function.
+  *
+  * Return: true if signaled, false otherwise.
+  */
+ static inline bool
+ dma_fence_test_signaled_flag(struct dma_fence *fence)
+ {
+-	return test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags);
++	/*
++	 * The release counterpart is the test_and_set_bit() in
++	 * dma_fence_signal_timestamp_locked().
++	 */
++	return test_bit_acquire(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags);
+ }
+ 
+ /**
+-- 
+2.43.0
+

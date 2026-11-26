@@ -1,0 +1,89 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 21:50:38 +0200
+Subject: [PATCH 097/117] drm/msm: signal completed hw fences without waiting
+ for retire
+
+Since commit 3c7a52217a8c ("drm/msm: Drop update_fences()") the IRQ
+handler only advances the completed fence; the hw_fence of a submit, and
+the scheduler fence attached to its BOs, is signalled only when
+retire_submits() reaches the submit, and retire_submits() takes the
+reservation lock of each BO of the submit before it moves to the next
+one.
+
+Completing a fence must not need a dma_resv lock: dma_fence_wait() may be
+called with one held. The msm shrinker does exactly that (active_evict()
+waits for the fences of a BO it holds locked), so under memory pressure a
+reclaiming task that holds BO locks and the retire worker can end up
+waiting on each other until each wait times out, BO after BO.
+
+Signal the completed submits' fences from msm_gpu_retire() again, which
+runs from the IRQ handler, the hangcheck timer and the recover worker:
+after advancing the completed fence, walk the ring's submits under
+submit_lock and signal them in order up to the first one that is not
+done. retire_submits() still does the cleanup.
+
+Problem analysis and approach by yzddmr6 (linux-sm8750 tree e11a25e13387,
+"drm/msm: Signal completed hw fences from the irq handler", no
+Signed-off-by); re-implemented.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/msm_gpu.c | 36 ++++++++++++++++++++++++++++++++---
+ 1 file changed, 33 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/msm_gpu.c b/drivers/gpu/drm/msm/msm_gpu.c
+index 54093ce9b4c97..34ef145fb8e30 100644
+--- a/drivers/gpu/drm/msm/msm_gpu.c
++++ b/drivers/gpu/drm/msm/msm_gpu.c
+@@ -876,13 +876,43 @@ static void retire_worker(struct kthread_work *work)
+ 	retire_submits(gpu);
+ }
+ 
+-/* call from irq handler to schedule work to retire bo's */
++/*
++ * Signal the hw_fence of every submit the GPU has completed. This must not
++ * wait for retire_submits(), which takes the reservation lock of each BO of a
++ * submit: a dma_fence_wait() under such a lock (the shrinker evicting an
++ * active BO, for one) would otherwise wait for a fence that is only signalled
++ * once it lets go of the lock. Submits on a ring complete in order, so stop at
++ * the first one that is not done; dma_fence_is_signaled() signals a fence that
++ * msm_fence_signaled() reports complete. The fence lock nests in submit_lock.
++ */
++static void msm_gpu_signal_completed(struct msm_ringbuffer *ring)
++{
++	struct msm_gem_submit *submit;
++	unsigned long flags;
++
++	spin_lock_irqsave(&ring->submit_lock, flags);
++	list_for_each_entry(submit, &ring->submits, node) {
++		if (!dma_fence_is_signaled(submit->hw_fence))
++			break;
++	}
++	spin_unlock_irqrestore(&ring->submit_lock, flags);
++}
++
++/*
++ * call from irq handler to signal completed fences and schedule work to
++ * retire bo's
++ */
+ void msm_gpu_retire(struct msm_gpu *gpu)
+ {
+ 	int i;
+ 
+-	for (i = 0; i < gpu->nr_rings; i++)
+-		msm_update_fence(gpu->rb[i]->fctx, gpu->rb[i]->memptrs->fence);
++	for (i = 0; i < gpu->nr_rings; i++) {
++		struct msm_ringbuffer *ring = gpu->rb[i];
++
++		/* the completed fence first, unconditionally */
++		msm_update_fence(ring->fctx, ring->memptrs->fence);
++		msm_gpu_signal_completed(ring);
++	}
+ 
+ 	kthread_queue_work(gpu->worker, &gpu->retire_work);
+ }
+-- 
+2.43.0
+

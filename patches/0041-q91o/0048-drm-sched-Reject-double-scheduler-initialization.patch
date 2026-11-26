@@ -1,0 +1,59 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tvrtko Ursulin <tvrtko.ursulin@igalia.com>
+Date: Wed, 4 Nov 2026 12:34:39 +0000
+Subject: [PATCH 048/117] drm/sched: Reject double scheduler initialization
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+There is no point in having code and logging whose only purpose is to
+notify developers of incorrect usage of the API while bringing up a new
+driver. Lets simply return an error and let the developers figure it out.
+
+Signed-off-by: Tvrtko Ursulin <tvrtko.ursulin@igalia.com>
+Cc: Christian König <christian.koenig@amd.com>
+Cc: Danilo Krummrich <dakr@kernel.org>
+Cc: Matthew Brost <matthew.brost@intel.com>
+Cc: Philipp Stanner <phasta@kernel.org>
+Signed-off-by: Philipp Stanner <phasta@kernel.org>
+Link: https://patch.msgid.link/20261104123441.34842-2-tvrtko.ursulin@igalia.com
+
+[mzak: picked for q91o (21 Nov gains plan) from linux-next/maintainer tree commit 0ae9d1db6582; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/scheduler/sched_main.c | 10 +++-------
+ 1 file changed, 3 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/gpu/drm/scheduler/sched_main.c b/drivers/gpu/drm/scheduler/sched_main.c
+index a065a6d2eb1c3..7f2a534d08513 100644
+--- a/drivers/gpu/drm/scheduler/sched_main.c
++++ b/drivers/gpu/drm/scheduler/sched_main.c
+@@ -1119,6 +1119,9 @@ int drm_sched_init(struct drm_gpu_scheduler *sched, const struct drm_sched_init_
+ {
+ 	int i;
+ 
++	if (sched->sched_rq)
++		return -EINVAL;
++
+ 	sched->ops = args->ops;
+ 	sched->credit_limit = args->credit_limit;
+ 	sched->name = args->name;
+@@ -1134,13 +1137,6 @@ int drm_sched_init(struct drm_gpu_scheduler *sched, const struct drm_sched_init_
+ 		dev_err(sched->dev, "%s: num_rqs cannot be greater than DRM_SCHED_PRIORITY_COUNT\n",
+ 			__func__);
+ 		return -EINVAL;
+-	} else if (sched->sched_rq) {
+-		/* Not an error, but warn anyway so drivers can
+-		 * fine-tune their DRM calling order, and return all
+-		 * is good.
+-		 */
+-		dev_warn(sched->dev, "%s: scheduler already initialized!\n", __func__);
+-		return 0;
+ 	}
+ 
+ 	if (args->submit_wq) {
+-- 
+2.43.0
+

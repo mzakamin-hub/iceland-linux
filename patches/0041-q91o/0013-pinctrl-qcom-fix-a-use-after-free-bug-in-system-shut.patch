@@ -1,0 +1,72 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
+Date: Thu, 5 Nov 2026 17:09:40 +0100
+Subject: [PATCH 013/117] pinctrl: qcom: fix a use-after-free bug in system
+ shutdown path
+
+msm_pinctrl_probe() allocates the pctrl structure via devm_kzalloc() and
+unconditionally populates the global variables poweroff_pctrl and
+pm_power_off.
+
+If msm_pinctrl_probe() subsequently fails, devres resources - including
+the memory allocated for pctrl - are automatically freed. However, the
+global pointers are never cleared, resulting in a use-after-free during
+kernel_power_off().
+
+Schedule a devres action clearing the global pointers that runs before
+the pctrl memory is freed.
+
+Cc: stable@vger.kernel.org
+Closes: https://sashiko.dev/#/bug/linux-0c3a18a4-3de8-489b-abc9-e9e3a8641ed2
+Fixes: ad64498762dd ("pinctrl: qcom: Hook pm_power_down for shutdown support")
+Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
+Reviewed-by: Linus Walleij <linusw@kernel.org>
+Link: https://patch.msgid.link/20261105-pinctrl-qcom-uaf-v1-1-c9cbc0a93161@oss.qualcomm.com
+Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
+
+[mzak: picked for q91o (21 Nov gains plan) from linux-next/maintainer tree commit 6c940958950e; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/pinctrl/qcom/pinctrl-msm.c | 15 ++++++++++++++-
+ 1 file changed, 14 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/pinctrl/qcom/pinctrl-msm.c b/drivers/pinctrl/qcom/pinctrl-msm.c
+index 657ecdaec4251..e1d23e0aeddb4 100644
+--- a/drivers/pinctrl/qcom/pinctrl-msm.c
++++ b/drivers/pinctrl/qcom/pinctrl-msm.c
+@@ -1548,9 +1548,15 @@ static void msm_ps_hold_poweroff(void)
+ 	msm_ps_hold_restart(&data);
+ }
+ 
++static void msm_pinctrl_clear_poweroff(void *data)
++{
++	poweroff_pctrl = NULL;
++	pm_power_off = NULL;
++}
++
+ static void msm_pinctrl_setup_pm_reset(struct msm_pinctrl *pctrl)
+ {
+-	int i;
++	int i, ret;
+ 	const struct pinfunction *func = pctrl->soc->functions;
+ 
+ 	for (i = 0; i < pctrl->soc->nfunctions; i++)
+@@ -1564,6 +1570,13 @@ static void msm_pinctrl_setup_pm_reset(struct msm_pinctrl *pctrl)
+ 					"failed to setup restart handler.\n");
+ 			poweroff_pctrl = pctrl;
+ 			pm_power_off = msm_ps_hold_poweroff;
++
++			ret = devm_add_action_or_reset(pctrl->dev,
++					msm_pinctrl_clear_poweroff, NULL);
++			if (ret)
++				dev_err(pctrl->dev,
++					"Failed to register the poweroff cleanup action.\n");
++
+ 			break;
+ 		}
+ }
+-- 
+2.43.0
+

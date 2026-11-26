@@ -1,0 +1,34 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 21:55:09 +0200
+Subject: [PATCH 106/117] Revert "pinctrl: qcom: sm8650-lpass-lpi: force
+ runtime suspend across system sleep"
+
+Replaced by the signed version posted by Qualcomm (patchwork series 1215029
+v2 for the LPASS LPI pinctrl part, series 1209436 for SoundWire), which do
+the same thing (pm_runtime_force_suspend / _resume as system sleep ops);
+ours was the armada-os form, carried without its author's Signed-off-by.
+
+This reverts commit 0360d7220529.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/pinctrl/qcom/pinctrl-sm8650-lpass-lpi.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drivers/pinctrl/qcom/pinctrl-sm8650-lpass-lpi.c b/drivers/pinctrl/qcom/pinctrl-sm8650-lpass-lpi.c
+index e33d4360c094f..bc7889c993d05 100644
+--- a/drivers/pinctrl/qcom/pinctrl-sm8650-lpass-lpi.c
++++ b/drivers/pinctrl/qcom/pinctrl-sm8650-lpass-lpi.c
+@@ -220,7 +220,6 @@ static const struct of_device_id lpi_pinctrl_of_match[] = {
+ MODULE_DEVICE_TABLE(of, lpi_pinctrl_of_match);
+ 
+ static const struct dev_pm_ops lpi_pinctrl_pm_ops = {
+-	SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend, pm_runtime_force_resume)
+ 	RUNTIME_PM_OPS(pm_clk_suspend, pm_clk_resume, NULL)
+ };
+ 
+-- 
+2.43.0
+

@@ -1,0 +1,52 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Wang Haoran <wanghr2026@mail.zgclab.edu.cn>
+Date: Thu, 19 Nov 2026 16:14:58 +0800
+Subject: [PATCH 085/117] media: i2c: dw9719: disable vdd on detection failure
+
+dw9719_power_up() enables the vdd regulator but neither the INFO register
+read error nor the unknown device id path disables it again, and the probe
+error path does not call dw9719_power_down(). Device detection is the
+driver's normal hot-plug path, so a missing or mismatched module leaves the
+VCM rail enabled after every failed probe and _regulator_put() warns on the
+leaked enable.
+
+Disable the regulator on these detection failures.
+
+Signed-off-by: Wang Haoran <wanghr2026@mail.zgclab.edu.cn>
+Fixes: fed60fc552c8 ("media: i2c: Add driver for DW9719 VCM")
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1215861; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/media/i2c/dw9719.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/media/i2c/dw9719.c b/drivers/media/i2c/dw9719.c
+index 8b0e7ca05560d..2492d1300e701 100644
+--- a/drivers/media/i2c/dw9719.c
++++ b/drivers/media/i2c/dw9719.c
+@@ -247,8 +247,10 @@ static int dw9719_power_up(struct dw9719_device *dw9719, bool detect)
+ 		}
+ 
+ 		ret = cci_read(dw9719->regmap, DW9719_INFO, &val, NULL);
+-		if (ret < 0)
++		if (ret < 0) {
++			dw9719_power_down(dw9719);
+ 			return ret;
++		}
+ 
+ 		switch (val) {
+ 		case DW9719_ID:
+@@ -266,6 +268,7 @@ static int dw9719_power_up(struct dw9719_device *dw9719, bool detect)
+ 		default:
+ 			dev_err(dw9719->dev,
+ 				"Error unknown device id 0x%02llx\n", val);
++			dw9719_power_down(dw9719);
+ 			return -ENXIO;
+ 		}
+ 
+-- 
+2.43.0
+

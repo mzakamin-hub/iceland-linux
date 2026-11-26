@@ -1,0 +1,68 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Philipp Stanner <phasta@kernel.org>
+Date: Tue, 17 Nov 2026 10:37:09 +0100
+Subject: [PATCH 049/117] drm/sched: Extend locking in
+ drm_sched_entity_select_rq()
+
+drm_sched_entity_select_rq() evaluates entity->sched_list locklessly,
+which is elsewhere always lock-protected. Another lockless check regards
+spsc_queue_count(). spsc_queue is evaluated under lock protection at
+many places already and the plan is to replace it with fully locked
+infrastructure anyways.
+
+Move the spin_lock() in drm_sched_entity_select_rq() upwards.
+
+Signed-off-by: Philipp Stanner <phasta@kernel.org>
+
+[mzak: picked for q91o (21 Nov gains plan) from patchwork series 1213669; mark V]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/scheduler/sched_entity.c | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/gpu/drm/scheduler/sched_entity.c b/drivers/gpu/drm/scheduler/sched_entity.c
+index 03e68b4102d50..3856d5e507d7f 100644
+--- a/drivers/gpu/drm/scheduler/sched_entity.c
++++ b/drivers/gpu/drm/scheduler/sched_entity.c
+@@ -577,22 +577,21 @@ void drm_sched_entity_select_rq(struct drm_sched_entity *entity)
+ 	struct drm_gpu_scheduler *sched;
+ 	struct drm_sched_rq *rq;
+ 
++	spin_lock(&entity->lock);
++
+ 	/* single possible engine and already selected */
+ 	if (!entity->sched_list)
+-		return;
++		goto unlock;
+ 
+ 	/* queue non-empty, stay on the same engine */
+ 	if (spsc_queue_count(&entity->job_queue))
+-		return;
++		goto unlock;
+ 
+-	spin_lock(&entity->lock);
+ 	fence = entity->last_scheduled;
+ 
+ 	/* stay on the same engine if the previous job hasn't finished */
+-	if (fence && !dma_fence_is_signaled(fence)) {
+-		spin_unlock(&entity->lock);
+-		return;
+-	}
++	if (fence && !dma_fence_is_signaled(fence))
++		goto unlock;
+ 
+ 	sched = drm_sched_pick_best(entity->sched_list, entity->num_sched_list);
+ 	rq = sched ? sched->sched_rq[entity->rq_priority] : NULL;
+@@ -604,6 +603,7 @@ void drm_sched_entity_select_rq(struct drm_sched_entity *entity)
+ 	if (entity->num_sched_list == 1)
+ 		entity->sched_list = NULL;
+ 
++unlock:
+ 	spin_unlock(&entity->lock);
+ }
+ 
+-- 
+2.43.0
+
