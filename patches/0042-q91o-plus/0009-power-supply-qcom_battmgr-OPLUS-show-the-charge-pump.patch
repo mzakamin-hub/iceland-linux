@@ -1,0 +1,53 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 22:49:20 +0200
+Subject: [PATCH 09/13] power: supply: qcom_battmgr: OPLUS: show the charge
+ pump hold to user space
+
+qcom_battmgr_oplus_pump_hold() keeps the charger output off while a charge pump
+charges, and the hold is deliberately not visible in charge_behaviour. Expose
+it read-only as /sys/module/qcom_battmgr/parameters/oplus_pump_hold so
+iceland-battery-guard can see a pump session and its state; nothing reads it in
+the kernel.
+
+Based on dappermint/iceland-supervooc commit 614469fabe59 ("ci: run the host tests on every push");
+builds on DocZ13's SC8547D handover in iceland-linux issue #2 and on OnePlus's open-source oplus_chg code.
+
+Link: https://github.com/dappermint/iceland-supervooc
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/power/supply/qcom_battmgr.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
+index 596741d26be1d..115f5c211df66 100644
+--- a/drivers/power/supply/qcom_battmgr.c
++++ b/drivers/power/supply/qcom_battmgr.c
+@@ -2783,6 +2783,14 @@ static int qcom_battmgr_oplus_set_charge_behaviour(struct qcom_battmgr *battmgr,
+  * writes "auto" there neither ends the hold nor is told to stop. Both take the battery supply.
+  */
+ int qcom_battmgr_oplus_pump_hold(struct power_supply *psy, bool hold);
++
++/*
++ * The charge pump driver's hold, readable by user space (iceland-battery-guard), which cannot see it in
++ * charge_behaviour: /sys/module/qcom_battmgr/parameters/oplus_pump_hold (one OPLUS battmgr per system).
++ */
++static bool oplus_pump_hold;
++module_param(oplus_pump_hold, bool, 0444);
++MODULE_PARM_DESC(oplus_pump_hold, "OPLUS: 1 while a charge pump driver holds the charger output off (read-only)");
+ int qcom_battmgr_oplus_battery_authentic(struct power_supply *psy);
+ 
+ int qcom_battmgr_oplus_pump_hold(struct power_supply *psy, bool hold)
+@@ -2798,6 +2806,7 @@ int qcom_battmgr_oplus_pump_hold(struct power_supply *psy, bool hold)
+ 
+ 	mutex_lock(&battmgr->lock);
+ 	battmgr->chg_pump_hold = hold;
++	WRITE_ONCE(oplus_pump_hold, hold);
+ 	ret = qcom_battmgr_oplus_set(battmgr, OPLUS_CHG_EN, !qcom_battmgr_oplus_inhibited(battmgr));
+ 	/* the attach poll sends a failed "off" again by itself, and a failed "on" through this */
+ 	battmgr->chg_en_retry = ret && !qcom_battmgr_oplus_inhibited(battmgr);
+-- 
+2.43.0
+

@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 22:49:20 +0200
+Subject: [PATCH 08/13] power: supply: iceland-supervooc: assert the 7.3 A
+ ceiling at build time
+
+The parameter checks already refuse an ask above 73 (7.3 A, stock's highest).
+Add a static_assert over the tables that feed the ask (V3B_CAP_MAX,
+V3_STOCK_ASK, V4_ENV_A0), so a later edit cannot raise it unnoticed.
+
+Based on dappermint/iceland-supervooc commit 614469fabe59 ("ci: run the host tests on every push");
+builds on DocZ13's SC8547D handover in iceland-linux issue #2 and on OnePlus's open-source oplus_chg code.
+
+Link: https://github.com/dappermint/iceland-supervooc
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/power/supply/iceland-supervooc/iceland_supervooc.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/power/supply/iceland-supervooc/iceland_supervooc.c b/drivers/power/supply/iceland-supervooc/iceland_supervooc.c
+index 3cb3c01a02125..dc893b7dbea8b 100644
+--- a/drivers/power/supply/iceland-supervooc/iceland_supervooc.c
++++ b/drivers/power/supply/iceland-supervooc/iceland_supervooc.c
+@@ -1457,6 +1457,9 @@ static int pump_client(const char *parent, struct i2c_adapter **adap, struct i2c
+ 	return ret;
+ }
+ 
++/* iceland: never above stock's highest ask, 7.3 A (the parameter checks enforce it; keep the tables honest too) */
++static_assert(V3B_CAP_MAX <= 73 && V3_STOCK_ASK <= 73 && V4_ENV_A0 <= 73);
++
+ static int __init vooc_init(void)
+ {
+ 	const char *bad;
+-- 
+2.43.0
+

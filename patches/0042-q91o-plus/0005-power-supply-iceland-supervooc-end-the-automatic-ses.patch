@@ -1,0 +1,46 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 22:49:19 +0200
+Subject: [PATCH 05/13] power: supply: iceland-supervooc: end the automatic
+ session at 85 %
+
+The owner's charge rule ends charging at 85 %; the automatic stage ended at 90 %.
+Only the end of charge changes; the current ladder, the voltage ends and every
+thermal guard stay as in the driver.
+
+Based on dappermint/iceland-supervooc commit 614469fabe59 ("ci: run the host tests on every push");
+builds on DocZ13's SC8547D handover in iceland-linux issue #2 and on OnePlus's open-source oplus_chg code.
+
+Link: https://github.com/dappermint/iceland-supervooc
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/power/supply/iceland-supervooc/vooc_logic.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/power/supply/iceland-supervooc/vooc_logic.h b/drivers/power/supply/iceland-supervooc/vooc_logic.h
+index 67a50527d39b7..3926f6c08d9c9 100644
+--- a/drivers/power/supply/iceland-supervooc/vooc_logic.h
++++ b/drivers/power/supply/iceland-supervooc/vooc_logic.h
+@@ -1179,7 +1179,7 @@ static inline void vl3_ladder_pump(const struct vl3_io *io, struct vl3_lad *l, i
+ #define V4_SETTLE_READS		30		/* reads after an ask change: the adapter takes a new ask only through the change code and then ramps, so the
+ 						 * taper does not count and the total limit keeps the old ask until then */
+ #define V4_END_MV		4480		/* a single gauge read above it ends the session (stock's first step-down voltage) */
+-#define V4_END_SOC		90
++#define V4_END_SOC		85	/* iceland: the owner's 85 % end (dappermint: 90) */
+ #define V4_REARM_MS		30000		/* offline is believed this long after a session's end (the firmware's own unsuspend dips VBUS) */
+ #define V4_RECHECK_MS		60000		/* a start refused before any write: the gates are read again this long after the refusal */
+ #define V4_NO_LIMIT		0x7fffffff
+@@ -1279,7 +1279,7 @@ static inline const char *vl4_why(int c)
+ {
+ 	switch (c) {
+ 	case V4E_VOLT:	return "battery voltage above 4480 mV";
+-	case V4E_SOC:	return "complete: 90 %";
++	case V4E_SOC:	return "complete: 85 %";
+ 	case V4E_FLOOR:	return "complete: taper reached 2.0 A";
+ 	}
+ 	return "?";
+-- 
+2.43.0
+

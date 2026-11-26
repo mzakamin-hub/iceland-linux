@@ -1,0 +1,98 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 22:49:19 +0200
+Subject: [PATCH 04/13] power: supply: iceland-supervooc: build it as a module
+ that never loads by itself
+
+Wire the imported driver into Kconfig (ICELAND_SUPERVOOC, tristate, depends on
+the OPLUS battmgr) and the power-supply Makefile, and replace its out-of-tree
+Kbuild line. The driver exports no device table, so udev never loads it, and a
+new enable parameter (default 0) makes the module refuse to load: no register of
+either pump, no D+/D- switch and no battmgr call happens unless it is loaded by
+hand with enable=1. Each hardware phase needs the owner's go.
+
+Based on dappermint/iceland-supervooc commit 614469fabe59 ("ci: run the host tests on every push");
+builds on DocZ13's SC8547D handover in iceland-linux issue #2 and on OnePlus's open-source oplus_chg code.
+
+Link: https://github.com/dappermint/iceland-supervooc
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/power/supply/Kconfig                          | 11 +++++++++++
+ drivers/power/supply/Makefile                         |  1 +
+ drivers/power/supply/iceland-supervooc/Kbuild         |  2 +-
+ .../supply/iceland-supervooc/iceland_supervooc.c      |  9 +++++++++
+ 4 files changed, 22 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/power/supply/Kconfig b/drivers/power/supply/Kconfig
+index 541c55104d964..7dda0eb9620f8 100644
+--- a/drivers/power/supply/Kconfig
++++ b/drivers/power/supply/Kconfig
+@@ -218,6 +218,17 @@ config BATTERY_QCOM_BATTMGR
+ 	  which is used on modern Qualcomm platforms to provide battery and
+ 	  power supply information.
+ 
++config ICELAND_SUPERVOOC
++	tristate "SUPERVOOC charging for the OnePlus Pad 4 (out-of-tree driver, inert by default)"
++	depends on BATTERY_QCOM_BATTMGR && I2C && ARCH_QCOM
++	help
++	  dappermint's iceland-supervooc driver: the VOOC protocol and the two
++	  SC8547D charge pumps of the OnePlus Pad 4. Built only as a module. It
++	  is never loaded automatically (no device table is exported, so no
++	  modalias autoload), and loading it does nothing unless it is loaded
++	  with enable=1: the default refuses to load. Every hardware phase
++	  needs the owner's go. See CREDITS in the driver directory.
++
+ config BATTERY_OLPC
+ 	tristate "One Laptop Per Child battery"
+ 	depends on OLPC_EC
+diff --git a/drivers/power/supply/Makefile b/drivers/power/supply/Makefile
+index 694077712ec12..69f610b785a6b 100644
+--- a/drivers/power/supply/Makefile
++++ b/drivers/power/supply/Makefile
+@@ -38,6 +38,7 @@ obj-$(CONFIG_BATTERY_LEGO_EV3)	+= lego_ev3_battery.o
+ obj-$(CONFIG_BATTERY_LENOVO_YOGA_C630) += lenovo_yoga_c630_battery.o
+ obj-$(CONFIG_BATTERY_PMU)	+= pmu_battery.o
+ obj-$(CONFIG_BATTERY_QCOM_BATTMGR)	+= qcom_battmgr.o
++obj-$(CONFIG_ICELAND_SUPERVOOC)	+= iceland-supervooc/
+ obj-$(CONFIG_BATTERY_OLPC)	+= olpc_battery.o
+ obj-$(CONFIG_BATTERY_SAMSUNG_SDI)	+= samsung-sdi-battery.o
+ obj-$(CONFIG_BATTERY_S2MU005)	+= s2mu005-battery.o
+diff --git a/drivers/power/supply/iceland-supervooc/Kbuild b/drivers/power/supply/iceland-supervooc/Kbuild
+index a19e1494b8e3c..aa962f9b8ca16 100644
+--- a/drivers/power/supply/iceland-supervooc/Kbuild
++++ b/drivers/power/supply/iceland-supervooc/Kbuild
+@@ -1 +1 @@
+-obj-m := iceland_supervooc.o
++obj-$(CONFIG_ICELAND_SUPERVOOC) += iceland_supervooc.o
+diff --git a/drivers/power/supply/iceland-supervooc/iceland_supervooc.c b/drivers/power/supply/iceland-supervooc/iceland_supervooc.c
+index 218964cf5310a..b32738de6f816 100644
+--- a/drivers/power/supply/iceland-supervooc/iceland_supervooc.c
++++ b/drivers/power/supply/iceland-supervooc/iceland_supervooc.c
+@@ -87,6 +87,10 @@ static bool arm;
+ static unsigned int stage = 2, pumps = 1, cap_100ma = UNSET_U, hold_s = UNSET_U, conn_max_c = 60, soc_min = UNSET_U, soc_max = UNSET_U;
+ static int temp_min = UNSET_I, temp_max = UNSET_I;	/* 0.1 C; an unset value takes the stage's default (vl4_default) at load */
+ static bool stock_start, auth_gate, auto_start;
++/* iceland: the module refuses to load unless enable=1 is given explicitly (no hardware access before that) */
++static bool enable;
++module_param(enable, bool, 0444);
++MODULE_PARM_DESC(enable, "iceland: 0 (default) = refuse to load, nothing touched; 1 = load as the parameters say");
+ static u8 mode = VM_S2;
+ module_param(stage, uint, 0444);
+ module_param_named(autostart, auto_start, bool, 0444);	/* not "auto": the kernel defines auto as __auto_type */
+@@ -1456,6 +1460,11 @@ static int __init vooc_init(void)
+ 	const char *bad;
+ 	int ret;
+ 
++	if (!enable) {
++		pr_info("iceland_supervooc: not enabled (enable=0), nothing done\n");
++		return -ENODEV;
++	}
++
+ 	if (cap_100ma == UNSET_U)
+ 		cap_100ma = vl4_default(stage, V4D_CAP);
+ 	if (hold_s == UNSET_U)
+-- 
+2.43.0
+

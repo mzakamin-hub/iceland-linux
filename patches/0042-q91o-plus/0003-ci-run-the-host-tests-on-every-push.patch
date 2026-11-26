@@ -1,0 +1,42 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: millia ampora <198710911+dappermint@users.noreply.github.com>
+Date: Sun, 15 Nov 2026 02:40:32 +0400
+Subject: [PATCH 03/13] ci: run the host tests on every push
+
+the readme names the queues the patches were tested on (q91k) and apply to (q91n).
+---
+ .../supply/iceland-supervooc/.github/workflows/test.yml   | 8 ++++++++
+ drivers/power/supply/iceland-supervooc/README.md          | 2 +-
+ 2 files changed, 9 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/power/supply/iceland-supervooc/.github/workflows/test.yml
+
+diff --git a/drivers/power/supply/iceland-supervooc/.github/workflows/test.yml b/drivers/power/supply/iceland-supervooc/.github/workflows/test.yml
+new file mode 100644
+index 0000000000000..57116148446ee
+--- /dev/null
++++ b/drivers/power/supply/iceland-supervooc/.github/workflows/test.yml
+@@ -0,0 +1,8 @@
++name: test
++on: [push, pull_request]
++jobs:
++  test:
++    runs-on: ubuntu-latest
++    steps:
++      - uses: actions/checkout@v4
++      - run: make -C tests test
+diff --git a/drivers/power/supply/iceland-supervooc/README.md b/drivers/power/supply/iceland-supervooc/README.md
+index 538ab54d38e19..5b94e5b826935 100644
+--- a/drivers/power/supply/iceland-supervooc/README.md
++++ b/drivers/power/supply/iceland-supervooc/README.md
+@@ -22,7 +22,7 @@ An automatic session from 36 % asked for 7.3 A, then 5.0 A, then 3.8 A. It reach
+ 
+ ## Requirements
+ 
+-- A kernel built from the [iceland-linux](https://github.com/mzakamin-hub/iceland-linux) patch queue plus the two patches in `patches/`. The first enables the i2c buses of the two pumps. The second lets a driver hold the firmware's charger off through `qcom_battmgr` for the length of a session. I ran 7.4.0-rc1 with the queue at `2fa5838`.
++- A kernel built from the [iceland-linux](https://github.com/mzakamin-hub/iceland-linux) patch queue plus the two patches in `patches/`. The first enables the i2c buses of the two pumps. The second lets a driver hold the firmware's charger off through `qcom_battmgr` for the length of a session. The sessions above ran on queue `q91k` (7.4.0-rc1). Both patches also apply to `q91n`, the newest queue at this release; I have not run a session on it.
+ - The stock 80 W brick and its cable. The driver accepts adapter ids `0x4b` to `0x4e` and `0x65`; I have run `0x4b`. It leaves other chargers to the firmware.
+ - Wi-Fi power save off: `iw dev wlan0 set power_save off`. The driver ends a session after two replies slower than 1.5 ms. With ath12k's power save on, two replies in two short runs took 1.8 and 1.95 ms. With it off, the slowest reply across the sessions took 0.9 ms.
+ 
+-- 
+2.43.0
+

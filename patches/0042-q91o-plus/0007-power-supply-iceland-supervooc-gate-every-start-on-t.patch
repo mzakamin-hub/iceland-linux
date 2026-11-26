@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 22:49:20 +0200
+Subject: [PATCH 07/13] power: supply: iceland-supervooc: gate every start on
+ the battery authentication
+
+Stock checks the battery authentication before any fast charge; the driver
+reported it but started anyway by default (auth_gate=0). Make auth_gate=1 the
+default; auth_gate=0 still only reports.
+
+Based on dappermint/iceland-supervooc commit 614469fabe59 ("ci: run the host tests on every push");
+builds on DocZ13's SC8547D handover in iceland-linux issue #2 and on OnePlus's open-source oplus_chg code.
+
+Link: https://github.com/dappermint/iceland-supervooc
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/power/supply/iceland-supervooc/iceland_supervooc.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/power/supply/iceland-supervooc/iceland_supervooc.c b/drivers/power/supply/iceland-supervooc/iceland_supervooc.c
+index 2938c945c85d4..3cb3c01a02125 100644
+--- a/drivers/power/supply/iceland-supervooc/iceland_supervooc.c
++++ b/drivers/power/supply/iceland-supervooc/iceland_supervooc.c
+@@ -86,7 +86,8 @@ static bool arm;
+ /* read-only after load: a bad combination is refused at load, a runtime write could not be checked */
+ static unsigned int stage = 2, pumps = 1, cap_100ma = UNSET_U, hold_s = UNSET_U, conn_max_c = 60, soc_min = UNSET_U, soc_max = UNSET_U;
+ static int temp_min = UNSET_I, temp_max = UNSET_I;	/* 0.1 C; an unset value takes the stage's default (vl4_default) at load */
+-static bool stock_start, auth_gate, auto_start;
++/* iceland: the battery authentication gates every start by default (stock does; dappermint: report only) */
++static bool stock_start, auth_gate = true, auto_start;
+ /* iceland: the module refuses to load unless enable=1 is given explicitly (no hardware access before that) */
+ static bool enable;
+ module_param(enable, bool, 0444);
+-- 
+2.43.0
+

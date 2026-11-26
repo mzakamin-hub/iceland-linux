@@ -1,0 +1,50 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 22:49:21 +0200
+Subject: [PATCH 10/13] power: supply: iceland-supervooc: add a CREDITS file
+
+Name the primary author (dappermint), DocZ13 (SC8547D handover, issue #2) and
+OnePlus (oplus_chg), list the iceland changes on top and the licence state of
+each file (tests/ has no SPDX lines).
+
+Based on dappermint/iceland-supervooc commit 614469fabe59 ("ci: run the host tests on every push");
+builds on DocZ13's SC8547D handover in iceland-linux issue #2 and on OnePlus's open-source oplus_chg code.
+
+Link: https://github.com/dappermint/iceland-supervooc
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ .../power/supply/iceland-supervooc/CREDITS    | 20 +++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+ create mode 100644 drivers/power/supply/iceland-supervooc/CREDITS
+
+diff --git a/drivers/power/supply/iceland-supervooc/CREDITS b/drivers/power/supply/iceland-supervooc/CREDITS
+new file mode 100644
+index 0000000000000..9360dbb98b900
+--- /dev/null
++++ b/drivers/power/supply/iceland-supervooc/CREDITS
+@@ -0,0 +1,20 @@
++iceland-supervooc in the iceland kernel tree - credits
++
++Primary author: dappermint (github.com/dappermint, git identity "millia ampora"),
++  https://github.com/dappermint/iceland-supervooc - the driver, the VOOC frame engine (vooc_logic.h),
++  the host tests and the stock i2c traces. Imported here with his three commits unchanged (34234b8,
++  2daacb4, 614469f; GPL-2.0, see LICENSE). His commits carry no Signed-off-by: upstream submission
++  would need his DCO.
++DocZ13: the SC8547D PPS driver and the pump facts of iceland-linux issue #2, on which the handover builds.
++OnePlus: the open-source oplus_chg code (oplus_ap_voocphy.c) the frame engine follows; OnePlus copyright
++  lines in derived code are kept.
++
++Iceland changes on top (separate commits, by mzak): built as a module that never autoloads and refuses to
++load without enable=1; session end 85 % (dappermint: 90 %); CPU latency request 0 (dappermint: 400 us);
++auth_gate=1 by default; a build-time assert of the 7.3 A ceiling; the battmgr charge pump hold readable
++at /sys/module/qcom_battmgr/parameters/oplus_pump_hold. The thermal guards are dappermint's, unchanged
++(connector 60 C, pump step-down 66 C, pump limit 70 C, his taper / ladder). The stock connector cut and
++cool-down stay enforced by iceland-battery-guard in user space, independent of this driver.
++
++Licence: GPL-2.0 (LICENSE). iceland_supervooc.c and vooc_logic.h carry SPDX GPL-2.0 headers; the files
++under tests/ carry no SPDX line (covered only by the repository's LICENSE file).
+-- 
+2.43.0
+

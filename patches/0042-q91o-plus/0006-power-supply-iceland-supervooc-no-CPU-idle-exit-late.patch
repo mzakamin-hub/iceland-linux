@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 22:49:20 +0200
+Subject: [PATCH 06/13] power: supply: iceland-supervooc: no CPU idle exit
+ latency during a session
+
+Request a CPU latency of 0 instead of 400 us while a session runs. jstockdale saw
+two silent resets with deep idle allowed during a SuperVOOC session; the frame
+timing rules (1.5 ms per reply) also favour no idle exit latency.
+
+Based on dappermint/iceland-supervooc commit 614469fabe59 ("ci: run the host tests on every push");
+builds on DocZ13's SC8547D handover in iceland-linux issue #2 and on OnePlus's open-source oplus_chg code.
+
+Link: https://github.com/dappermint/iceland-supervooc
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/power/supply/iceland-supervooc/iceland_supervooc.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/power/supply/iceland-supervooc/iceland_supervooc.c b/drivers/power/supply/iceland-supervooc/iceland_supervooc.c
+index b32738de6f816..2938c945c85d4 100644
+--- a/drivers/power/supply/iceland-supervooc/iceland_supervooc.c
++++ b/drivers/power/supply/iceland-supervooc/iceland_supervooc.c
+@@ -1168,7 +1168,8 @@ static void session(void)
+ 	pm_runtime_get_sync(busdev);	/* the first frame comes 0.5 s after the last transfer, past geni's 250 ms autosuspend */
+ 	if (busdev2)
+ 		pm_runtime_get_sync(busdev2);
+-	cpu_latency_qos_add_request(&S.qos, 400);
++	/* iceland: no CPU idle exit latency at all during a session (dappermint: 400 us); jstockdale saw silent resets */
++	cpu_latency_qos_add_request(&S.qos, 0);
+ 	S.qos_on = true;
+ 	S.t0 = ktime_get();
+ 	S.bat_ok = S.t0;
+-- 
+2.43.0
+

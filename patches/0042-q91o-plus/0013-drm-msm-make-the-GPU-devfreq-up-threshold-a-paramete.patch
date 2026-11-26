@@ -1,0 +1,51 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 22:50:32 +0200
+Subject: [PATCH 13/13] drm/msm: make the GPU devfreq up-threshold a parameter
+
+msm.gpu_devfreq_upthreshold (percent busy, default 50 = the value so far)
+sets the simple_ondemand up-threshold of the GPU, for an A/B of frame pacing
+against power without a rebuild.
+
+Measurements behind the idea: Reixo0 on SM8850, in github Reixo0/linux
+commit 81aeecda5b6c ("drm/msm: throttle the GPU up at 20% load")
+(20 % for 144 Hz scrolling at ~0.1 W more on video, later back to 50 %;
+no Signed-off-by).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/msm_gpu_devfreq.c | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/msm/msm_gpu_devfreq.c b/drivers/gpu/drm/msm/msm_gpu_devfreq.c
+index f3c664b20a1ba..90f5a1f708ad0 100644
+--- a/drivers/gpu/drm/msm/msm_gpu_devfreq.c
++++ b/drivers/gpu/drm/msm/msm_gpu_devfreq.c
+@@ -12,6 +12,14 @@
+ #include <linux/math64.h>
+ #include <linux/units.h>
+ 
++/*
++ * iceland switch: the simple_ondemand up-threshold of the GPU, percent busy (default 50 = before). Reixo0 measured
++ * 20 for smoother 144 Hz scrolling at about 0.1 W more on video on SM8850 (81aeecda5b6c, then back to 50).
++ */
++static unsigned int gpu_devfreq_upthreshold = 50;
++module_param(gpu_devfreq_upthreshold, uint, 0444);
++MODULE_PARM_DESC(gpu_devfreq_upthreshold, "iceland: GPU devfreq up-threshold, % busy, 11..100 (default 50)");
++
+ /*
+  * Power Management:
+  */
+@@ -152,7 +160,7 @@ void msm_devfreq_init(struct msm_gpu *gpu)
+ 	 * where due to stalling waiting for vblank we could get stuck
+ 	 * at (for ex) 30fps at 50% utilization.
+ 	 */
+-	priv->gpu_devfreq_config.upthreshold = 50;
++	priv->gpu_devfreq_config.upthreshold = clamp(gpu_devfreq_upthreshold, 11U, 100U);
+ 	priv->gpu_devfreq_config.downdifferential = 10;
+ 
+ 	mutex_init(&df->lock);
+-- 
+2.43.0
+

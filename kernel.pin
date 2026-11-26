@@ -158,6 +158,7 @@ INFINITI_COMMIT=10650ae7bef447d04eb820bfc0c2d5a98d83e4e2
 # replaced by the upstream version or cancelled by their revert (docs/Q92D-QUEUE.md). The tree hashes after
 # 0001-0040 on v7.4-rc1 are in the history of this file (branch iceland-7.4-rc1).
 # q91o (21 Nov 2026) = the v7.4-rc4 queue + 0041-q91o: 117 upstream / list picks and our fixes (Qualcomm platform bounds and UAF fixes, GICv3 ITS, UFS, msm VM_BIND lifetime, drm_sched / dma-fence, q6apm / LPASS across DSP restart, Bluetooth L2CAP, ath12k, iris, v4l2, dwc3).
+# q91o-plus (21 Nov 2026) = q91o + 0042-q91o-plus: dappermint's iceland-supervooc driver (imported unchanged, never loads by itself) + our gates on top, PCI qcom halt / link-off switches (off), GPU devfreq up-threshold parameter.
 
 # Tree hash expected after each series on v7.4-rc4 (scripts/prepare.sh checks them):
 TREE_AFTER_0001_infiniti=ab755f7a527baeef80e230d9552990af430016bb
@@ -201,3 +202,4 @@ TREE_AFTER_0038_q91k=c5a8003aced6cebf7ff3127bfdbc25aedd728d03
 TREE_AFTER_0039_q91m_pd=c10e2a9b8abd89d646e4796f817c110187156ad7
 TREE_AFTER_0040_q91n=85fbe9c8e2a7453641b8de568452e6982b7e1ff8
 TREE_AFTER_0041_q91o=66973753d873d3ab92f691c6ada93ede1c0568cb
+TREE_AFTER_0042_q91o_plus=bcb3bf3c9cad846538fd316a51ae95b5976d0584

@@ -1,0 +1,35 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: millia ampora <198710911+dappermint@users.noreply.github.com>
+Date: Sat, 14 Nov 2026 18:21:58 +0400
+Subject: [PATCH 02/13] docs: the replug session ran on this revision
+
+---
+ drivers/power/supply/iceland-supervooc/README.md | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+diff --git a/drivers/power/supply/iceland-supervooc/README.md b/drivers/power/supply/iceland-supervooc/README.md
+index 19b10b9e41e70..538ab54d38e19 100644
+--- a/drivers/power/supply/iceland-supervooc/README.md
++++ b/drivers/power/supply/iceland-supervooc/README.md
+@@ -18,7 +18,7 @@ Plug the brick in and a session starts. I measured these on one Pad 4 with the s
+ | 3.8 A | 7.1 A | |
+ | 3.0 A | 5.5 A, 25 W | 36 to 38 °C |
+ 
+-An automatic session from 36 % asked for 7.3 A, then 5.0 A, then 3.8 A. It reached 75 % after 41 minutes and ended at 84 % after 58 minutes, on the last step of the taper. From there the firmware's charger finishes the charge at about 1.5 A.
++An automatic session from 36 % asked for 7.3 A, then 5.0 A, then 3.8 A. It reached 75 % after 41 minutes and ended at 84 % after 58 minutes, on the last step of the taper. A second session started half a second after a replug at 69 %, asked for 3.8 A and ended at 86 % after 26 minutes, with the pumps at 43 °C. From there the firmware's charger finishes the charge at about 1.5 A.
+ 
+ ## Requirements
+ 
+@@ -114,9 +114,7 @@ make -C tests mutations   # about 10 minutes
+ 
+ ## Not tested
+ 
+-- this revision under power: the sessions above ran the same protocol and limit code, before I renamed the module and its parameters and moved the session summary out of the kernel log. This revision passes the host tests and loads on the tablet with the start window shut.
+ - a second tablet, or a brick other than the stock 80 W one
+-- a replug: the automatic session ran from a brick that sat in the port at boot
+ - the 66 °C step: the hottest automatic session peaked at 65.0 °C
+ - a start with the battery below 3.45 V
+ - suspend during a session: the driver holds a wakeup source, and I have not put the tablet to sleep in the middle of one
+-- 
+2.43.0
+

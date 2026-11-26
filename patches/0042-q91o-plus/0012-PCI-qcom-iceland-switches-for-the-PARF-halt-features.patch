@@ -1,0 +1,74 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Sat, 21 Nov 2026 22:50:32 +0200
+Subject: [PATCH 12/13] PCI: qcom: iceland switches for the PARF halt features
+ and a suspend link-off
+
+Two opt-in behaviours, both off by default so the controller behaves as before:
+
+- pcie_qcom.parf_halt_off=1 leaves the PARF AXI halt features off on the
+  configurations whose NoC keeps the inbound ordering (the previous commit,
+  kernel-topics 8d25d828ca4a, made that unconditional); 0 keeps the halt on.
+- pcie_qcom.suspend_linkoff=1 makes the Kaanapali root port go through
+  PME_Turn_Off and L2 to power-off in system suspend and come back on resume
+  (dw_pcie's suspend_poweroff), because CX collapses in s2idle and the link is
+  found down on resume. It excludes keeping the link up for Wake-on-WLAN
+  through CESTA; only one of the two may be used.
+
+The link-off idea is Reixo0's, in github Reixo0/linux
+commit cde4109e9a4b ("PCI: qcom: power the Kaanapali link off in system suspend")
+(no Signed-off-by); re-implemented as a switch.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/pci/controller/dwc/pcie-qcom.c | 19 ++++++++++++++++++-
+ 1 file changed, 18 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/pci/controller/dwc/pcie-qcom.c b/drivers/pci/controller/dwc/pcie-qcom.c
+index df37abb5edb15..b92cf67a7d920 100644
+--- a/drivers/pci/controller/dwc/pcie-qcom.c
++++ b/drivers/pci/controller/dwc/pcie-qcom.c
+@@ -314,6 +314,20 @@ struct qcom_pcie_cfg {
+ 	bool noc_ensures_ordering;
+ };
+ 
++/*
++ * iceland switches, both off by default (behaviour as before):
++ * parf_halt_off  - leave the PARF AXI halt features off where the NoC keeps the ordering (kernel-topics
++ *                  8d25d828ca4a); off = the halt stays enabled as before.
++ * suspend_linkoff - Kaanapali: PME_Turn_Off, L2 and link power-off in system suspend, back on resume (idea of
++ *                  Reixo0 cde4109e9a4b). Excludes keeping the link up for Wake-on-WLAN through CESTA.
++ */
++static bool parf_halt_off;
++module_param(parf_halt_off, bool, 0444);
++MODULE_PARM_DESC(parf_halt_off, "iceland: 1 = PARF AXI halt features off where the NoC keeps ordering (default 0)");
++static bool suspend_linkoff;
++module_param(suspend_linkoff, bool, 0444);
++MODULE_PARM_DESC(suspend_linkoff, "iceland: 1 = Kaanapali link to L2 and off in system suspend (default 0; not with WoWLAN)");
++
+ struct qcom_pcie_perst {
+ 	struct list_head list;
+ 	struct gpio_desc *desc;
+@@ -1142,7 +1156,7 @@ static int qcom_pcie_init_2_7_0(struct qcom_pcie *pcie)
+ 
+ 	pci->l1ss_support = true;
+ 
+-	if (pcie->cfg->noc_ensures_ordering) {
++	if (pcie->cfg->noc_ensures_ordering && READ_ONCE(parf_halt_off)) {
+ 		val = readl(pcie->parf + PARF_AXI_MSTR_WR_ADDR_HALT_V2);
+ 		val &= ~EN;
+ 		writel(val, pcie->parf + PARF_AXI_MSTR_WR_ADDR_HALT_V2);
+@@ -2443,6 +2457,9 @@ static int qcom_pcie_probe(struct platform_device *pdev)
+ 		goto err_pm_runtime_put;
+ 
+ 	pp->ops = &qcom_pcie_dw_ops;
++	/* Kaanapali collapses CX in s2idle and the controller loses its state with it */
++	if (suspend_linkoff && of_device_is_compatible(dev->of_node, "qcom,kaanapali-pcie"))
++		pp->suspend_poweroff = true;
+ 
+ 	ret = qcom_pcie_parse_ports(pcie);
+ 	if (ret) {
+-- 
+2.43.0
+
