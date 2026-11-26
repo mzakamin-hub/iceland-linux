@@ -1,0 +1,185 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mzak <mzak.amin@gmail.com>
+Date: Mon, 23 Nov 2026 12:05:58 +0200
+Subject: [PATCH 5/5] drm/msm/dpu: allow for a stretched idle frame in the
+ commit and frame done timeouts
+
+The idle refresh rate (msm.dpu_idle_refresh_ms, on by default on the
+OnePlus Pad 4 with dpu_idle_refresh_hz=30) stretches the vertical front
+porch of the running mode: a 120 Hz frame of 8.3 ms becomes a 30 Hz frame
+of 33.3 ms. Two timeouts still assume the mode's own frame:
+
+- dpu_encoder_phys_vid_wait_for_commit_done() waits a fixed 50 ms for the
+  CTL flush to clear;
+- dpu_encoder_start_frame_done_timer() allows five frames at the rate of
+  the adjusted mode, 41 ms at 120 Hz, barely more than one stretched
+  frame.
+
+The commit that brings the mode rate back writes the mode's vertical
+total and its flush in the front porch window of the stretched frame
+that is running. Its flush and its frame done are paced by that frame,
+and when the write window is missed the commit can need a second one,
+about 67 ms in all. The flush then completes later anyway, but the
+commit has already logged "vblank timeout" and returned -ETIMEDOUT, or
+the frame done timer has reported a frame error and taken a display
+snapshot.
+
+Count the frames of the longest frame the encoder may be scanning out:
+the stretched one while the idle refresh rate is in use or still
+programmed, or the last frame before an in-place front porch change that
+made the frame shorter. The commit wait is three such frames with the
+50 ms floor kept, the frame done timer five. At 30 Hz this gives 99 ms
+and 166 ms. The adjusted mode alone is not enough: the commit that
+returns to the mode rate already carries the short mode while its flush
+still waits for the stretched frame.
+
+Encoders without the idle refresh rate, and DSI encoders with it off,
+keep the old timeouts: three 120 Hz frames stay below the 50 ms floor,
+and five frames at the mode rate are computed as before. Only how long
+an error takes to be reported changes; the idle refresh rate itself, the
+stretch limits and the DPU clock and bandwidth votes do not.
+
+The idea and the numbers follow the Lenovo Y700 Gen 5 (TB323FU) port's
+fix for its own idle refresh implementation (li-yiyang, Joonhoe Kim:
+"drm/msm/dpu: baldur: bound the timeouts by the slowest idle rate"),
+rewritten for this one.
+
+Link: https://github.com/joonhoekim/tb323fu-linux/blob/main/kernel/patches/0216-drm-msm-dpu-baldur-bound-the-timeouts-by-the-slowest.patch
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c   | 43 ++++++++++++++++++-
+ drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h   |  3 ++
+ .../drm/msm/disp/dpu1/dpu_encoder_phys_vid.c  | 12 ++++--
+ 3 files changed, 53 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+index 0caf6ed31fe6a..f13a7057c9334 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+@@ -320,7 +320,10 @@ static u32 dither_matrix[DITHER_MATRIX_SZ] = {
+  * running frame (dpu_vfp_window), and the change shows up after that frame.
+  */
+ 
+-/* the frame done timer allows 5 frames, the commit wait 50 ms: stay below */
++/*
++ * The longest idle frame. The frame done timer and the commit wait allow for
++ * it, see dpu_encoder_slowest_frame_us().
++ */
+ #define DPU_IDLE_RR_MAX_STRETCH		4
+ #define DPU_IDLE_RR_MAX_FRAME_US	40000
+ /* window 0: don't write the new total within this many lines of a frame start */
+@@ -1409,6 +1412,36 @@ int dpu_encoder_frame_vtotal(struct drm_encoder *drm_enc, int line,
+ 	return mode_vtotal;
+ }
+ 
++/**
++ * dpu_encoder_slowest_frame_us - the longest frame the encoder may scan out
++ * @drm_enc: encoder pointer
++ * @mode: the mode the encoder runs with
++ *
++ * The frame of @mode, or a longer one: while the idle refresh rate is in use
++ * (or still programmed after it was turned off), the commit that returns to
++ * the mode rate is paced by the stretched frame that is running when it is
++ * flushed, and after an in-place front porch change that made the frame
++ * shorter the last long frame may still run. Lock free, like
++ * dpu_encoder_frame_vtotal().
++ *
++ * Return: the frame time in microseconds, 0 if @mode has no timing
++ */
++unsigned int dpu_encoder_slowest_frame_us(struct drm_encoder *drm_enc,
++					  const struct drm_display_mode *mode)
++{
++	struct dpu_enc_idle_rr *idle = &to_dpu_encoder_virt(drm_enc)->idle_rr;
++	u32 vtotal = mode->vtotal;
++
++	if (!mode->clock || !mode->htotal || !vtotal)
++		return 0;
++
++	if (READ_ONCE(idle->low) || READ_ONCE(dpu_idle_refresh_ms))
++		vtotal = max(vtotal, READ_ONCE(idle->idle_vtotal));
++	vtotal = max(vtotal, READ_ONCE(idle->prev_vtotal));
++
++	return div_u64((u64)vtotal * mode->htotal * 1000, mode->clock);
++}
++
+ /**
+  * dpu_encoder_get_drm_fmt - return DRM fourcc format
+  * @phys_enc: Pointer to physical encoder structure
+@@ -3389,12 +3422,18 @@ bool dpu_encoder_is_valid_for_commit(struct drm_encoder *drm_enc)
+  */
+ void dpu_encoder_start_frame_done_timer(struct drm_encoder *drm_enc)
+ {
++	const struct drm_display_mode *mode = &drm_enc->crtc->state->adjusted_mode;
+ 	struct dpu_encoder_virt *dpu_enc;
+ 	unsigned long timeout_ms;
++	unsigned int frame_us;
+ 
+ 	dpu_enc = to_dpu_encoder_virt(drm_enc);
+ 	timeout_ms = DPU_ENCODER_FRAME_DONE_TIMEOUT_FRAMES * 1000 /
+-			drm_mode_vrefresh(&drm_enc->crtc->state->adjusted_mode);
++			drm_mode_vrefresh(mode);
++	/* the same number of frames when one may be a stretched idle frame */
++	frame_us = dpu_encoder_slowest_frame_us(drm_enc, mode);
++	timeout_ms = max_t(unsigned long, timeout_ms,
++			   DPU_ENCODER_FRAME_DONE_TIMEOUT_FRAMES * frame_us / 1000);
+ 
+ 	atomic_set(&dpu_enc->frame_done_timeout_ms, timeout_ms);
+ 	mod_timer(&dpu_enc->frame_done_timer,
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h
+index 97c2dd0c2f3f8..a8ff2769a47b7 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.h
+@@ -77,6 +77,9 @@ bool dpu_encoder_can_change_vfp(struct drm_encoder *drm_enc,
+ int dpu_encoder_frame_vtotal(struct drm_encoder *drm_enc, int line,
+ 			     int mode_vtotal);
+ 
++unsigned int dpu_encoder_slowest_frame_us(struct drm_encoder *drm_enc,
++					  const struct drm_display_mode *mode);
++
+ void dpu_encoder_idle_rr_fini(struct drm_encoder *drm_enc);
+ 
+ int dpu_encoder_get_vsync_count(struct drm_encoder *drm_enc);
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
+index 4255b8addd604..bc14dec8a038c 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
+@@ -579,14 +579,20 @@ static int dpu_encoder_phys_vid_wait_for_commit_done(
+ 		struct dpu_encoder_phys *phys_enc)
+ {
+ 	struct dpu_hw_ctl *hw_ctl = phys_enc->hw_ctl;
++	unsigned int frame_us, timeout_ms = 50;
+ 	int ret;
+ 
+ 	if (!hw_ctl)
+ 		return 0;
+ 
++	/* three frames, at least 50 ms: one may be a stretched idle frame */
++	frame_us = dpu_encoder_slowest_frame_us(phys_enc->parent,
++						&phys_enc->cached_mode);
++	timeout_ms = max(timeout_ms, 3 * frame_us / 1000);
++
+ 	ret = wait_event_timeout(phys_enc->pending_kickoff_wq,
+ 		(hw_ctl->ops.get_flush_register(hw_ctl) == 0),
+-		msecs_to_jiffies(50));
++		msecs_to_jiffies(timeout_ms));
+ 	if (ret <= 0) {
+ 		struct dpu_hw_intf_status s = {0};
+ 
+@@ -594,11 +600,11 @@ static int dpu_encoder_phys_vid_wait_for_commit_done(
+ 			phys_enc->hw_intf->ops.get_status(phys_enc->hw_intf, &s);
+ 
+ 		/* the timing engine state tells a stuck flush from a stopped INTF */
+-		DPU_ERROR("vblank timeout: %x, intf %d en %u frame %u line %u, vblank refs %d\n",
++		DPU_ERROR("vblank timeout: %x, intf %d en %u frame %u line %u, vblank refs %d, after %u ms\n",
+ 			  hw_ctl->ops.get_flush_register(hw_ctl),
+ 			  phys_enc->hw_intf ? phys_enc->hw_intf->idx - INTF_0 : -1,
+ 			  s.is_en, s.frame_count, s.line_count,
+-			  READ_ONCE(phys_enc->vblank_refcount));
++			  READ_ONCE(phys_enc->vblank_refcount), timeout_ms);
+ 		return -ETIMEDOUT;
+ 	}
+ 
+-- 
+2.43.0
+

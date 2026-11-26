@@ -1,0 +1,82 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Baochen Qiang <baochen.qiang@oss.qualcomm.com>
+Date: Tue, 10 Nov 2026 14:40:22 +0800
+Subject: [PATCH 2/5] wifi: ath12k: fix potential OOB access due to unverified
+ hardware link id
+
+In ath12k_wifi7_dp_rx_process(), hw_link_id is extracted from
+hardware/firmware descriptor and directly used here (and also stored in
+rxcb->hw_link_id which is used later in other functions) to index
+ag->hw_links. ag->hw_links is an array with size ATH12K_GROUP_MAX_RADIO,
+unverified hw_link_id could lead to out-of-bounds access.
+
+Add the boundary check before using it. If the check fails, continue to
+process next descriptor.
+
+The same applies to ath12k_wifi7_dp_rx_process_err(), fix it as well.
+
+This is found during code review.
+
+Tested-on: WCN7850 hw2.0 PCI WLAN.HMT.1.1.c7-00108-QCAHMTSWPL_V1.0_V2.0_SILICONZ_UPSTREAM-3
+Tested-on: QCC2072 hw1.0 PCI WLAN.COL.1.0.c2-00068-QCACOLSWPL_V1_TO_SILICONZ-1
+
+Tested-by: Burke Cates <burke.cates@gmail.com> # ASUS Zenbook A16 (UX3607OA)
+Signed-off-by: Baochen Qiang <baochen.qiang@oss.qualcomm.com>
+Reviewed-by: Rameshkumar Sundaram <rameshkumar.sundaram@oss.qualcomm.com>
+Link: https://patch.msgid.link/20261110-ath12k-logical-link-id-v5-1-26a3ed38db09@oss.qualcomm.com
+Signed-off-by: Jeff Johnson <jeff.johnson@oss.qualcomm.com>
+(cherry picked from commit d709315edda1fe0742e1178a6085e1db69416af3)
+
+[mzak: picked for q92a (23 Nov updates scan, docs/UPDATES-2026-11-23.md) from ath-next (in next-20261120)]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c | 20 ++++++++++++++++---
+ 1 file changed, 17 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c b/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
+index e46c914f039b0..33d894c6686d8 100644
+--- a/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
++++ b/drivers/net/wireless/ath/ath12k/wifi7/dp_rx.c
+@@ -708,13 +708,22 @@ int ath12k_wifi7_dp_rx_process(struct ath12k_dp *dp, int ring_id,
+ 		cookie = le32_get_bits(desc->buf_addr_info.info1,
+ 				       BUFFER_ADDR_INFO1_SW_COOKIE);
+ 
+-		hw_link_id = le32_get_bits(desc->info0,
+-					   HAL_REO_DEST_RING_INFO0_SRC_LINK_ID);
+-
+ 		desc_va = ((u64)le32_to_cpu(desc->buf_va_hi) << 32 |
+ 			   le32_to_cpu(desc->buf_va_lo));
+ 		desc_info = (struct ath12k_rx_desc_info *)((unsigned long)desc_va);
+ 
++		hw_link_id = le32_get_bits(desc->info0,
++					   HAL_REO_DEST_RING_INFO0_SRC_LINK_ID);
++		if (unlikely(hw_link_id >= ATH12K_GROUP_MAX_RADIO)) {
++			if (desc_info && desc_info->skb) {
++				dev_kfree_skb_any(desc_info->skb);
++				desc_info->skb = NULL;
++			}
++
++			ath12k_warn(ab, "invalid HW link id %u\n", hw_link_id);
++			continue;
++		}
++
+ 		device_id = hw_links[hw_link_id].device_id;
+ 		partner_dp = ath12k_dp_hw_grp_to_dp(dp_hw_grp, device_id);
+ 		if (unlikely(!partner_dp)) {
+@@ -1474,6 +1483,11 @@ int ath12k_wifi7_dp_rx_process_err(struct ath12k_dp *dp, struct napi_struct *nap
+ 
+ 		hw_link_id = le32_get_bits(reo_desc->info0,
+ 					   HAL_REO_DEST_RING_INFO0_SRC_LINK_ID);
++		if (unlikely(hw_link_id >= ATH12K_GROUP_MAX_RADIO)) {
++			ath12k_warn(ab, "invalid HW link id %u\n", hw_link_id);
++			continue;
++		}
++
+ 		device_id = hw_links[hw_link_id].device_id;
+ 		partner_dp = ath12k_dp_hw_grp_to_dp(dp_hw_grp, device_id);
+ 
+-- 
+2.43.0
+

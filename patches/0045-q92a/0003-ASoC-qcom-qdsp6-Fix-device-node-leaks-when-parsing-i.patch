@@ -1,0 +1,89 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Zhao Feng <zhaofeng2@cmss.chinamobile.com>
+Date: Tue, 10 Nov 2026 18:10:26 +0800
+Subject: [PATCH 3/5] ASoC: qcom: qdsp6: Fix device node leaks when parsing
+ "iommus" phandle
+
+q6asm_dai_probe(), q6apm_dai_probe() and q6usb_dai_dev_probe() parse
+the "iommus" phandle with of_parse_phandle_with_fixed_args(), which
+takes a reference on the iommu device node, but none of them drops
+the reference after the stream ID has been read from args.args[0],
+so the iommu node is leaked on every probe.
+
+Drop the reference with of_node_put() after reading args.args[0].
+
+This is a refreshed version of the fix posted by Selby Mashiki [1],
+which no longer applies because the context in q6apm_dai_probe() has
+changed since; the leaks are still present in all three functions.
+
+Originally-by: Selby Mashiki <mashikiselby@gmail.com>
+Link: https://lore.kernel.org/linux-sound/20261025190340.449613-1-mashikiselby@gmail.com/ [1]
+Fixes: 2a9e92d371db ("ASoC: qdsp6: q6asm: Add q6asm dai driver")
+Fixes: 9b4fe0f1cd79 ("ASoC: qdsp6: audioreach: add q6apm-dai support")
+Fixes: 72b0b8b29980 ("ASoC: qcom: qdsp6: Add USB backend ASoC driver for Q6")
+Signed-off-by: Zhao Feng <zhaofeng2@cmss.chinamobile.com>
+Link: https://patch.msgid.link/20261110101026.1154-1-zhaofeng2@cmss.chinamobile.com
+Signed-off-by: Mark Brown <broonie@kernel.org>
+(cherry picked from commit 2b6e81a4d50a4cf236c69f4ed56ef6a42ac17d87)
+
+[mzak: picked for q92a (23 Nov updates scan, docs/UPDATES-2026-11-23.md) from broonie sound (in next-20261120)]
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: mzak <mzak.amin@gmail.com>
+---
+ sound/soc/qcom/qdsp6/q6apm-dai.c | 4 +++-
+ sound/soc/qcom/qdsp6/q6asm-dai.c | 4 +++-
+ sound/soc/qcom/qdsp6/q6usb.c     | 4 +++-
+ 3 files changed, 9 insertions(+), 3 deletions(-)
+
+diff --git a/sound/soc/qcom/qdsp6/q6apm-dai.c b/sound/soc/qcom/qdsp6/q6apm-dai.c
+index a6cc64b78ef79..09d10b005e64b 100644
+--- a/sound/soc/qcom/qdsp6/q6apm-dai.c
++++ b/sound/soc/qcom/qdsp6/q6apm-dai.c
+@@ -1358,8 +1358,10 @@ static int q6apm_dai_probe(struct platform_device *pdev)
+ 	rc = of_parse_phandle_with_fixed_args(node, "iommus", 1, 0, &args);
+ 	if (rc < 0)
+ 		pdata->sid = -1;
+-	else
++	else {
+ 		pdata->sid = args.args[0] & SID_MASK_DEFAULT;
++		of_node_put(args.np);
++	}
+ 
+ 	if (apm && apm->gdev &&
+ 	    apm->gdev->domain_id == GPR_DOMAIN_ID_MODEM) {
+diff --git a/sound/soc/qcom/qdsp6/q6asm-dai.c b/sound/soc/qcom/qdsp6/q6asm-dai.c
+index 173d947cc9ffd..3840669867351 100644
+--- a/sound/soc/qcom/qdsp6/q6asm-dai.c
++++ b/sound/soc/qcom/qdsp6/q6asm-dai.c
+@@ -1315,8 +1315,10 @@ static int q6asm_dai_probe(struct platform_device *pdev)
+ 	rc = of_parse_phandle_with_fixed_args(node, "iommus", 1, 0, &args);
+ 	if (rc < 0)
+ 		pdata->sid = -1;
+-	else
++	else {
+ 		pdata->sid = args.args[0] & SID_MASK_DEFAULT;
++		of_node_put(args.np);
++	}
+ 
+ 	dev_set_drvdata(dev, pdata);
+ 
+diff --git a/sound/soc/qcom/qdsp6/q6usb.c b/sound/soc/qcom/qdsp6/q6usb.c
+index c777c57b06a59..8a748a9a598c9 100644
+--- a/sound/soc/qcom/qdsp6/q6usb.c
++++ b/sound/soc/qcom/qdsp6/q6usb.c
+@@ -382,8 +382,10 @@ static int q6usb_dai_dev_probe(struct platform_device *pdev)
+ 	}
+ 
+ 	ret = of_parse_phandle_with_fixed_args(node, "iommus", 1, 0, &args);
+-	if (!ret)
++	if (!ret) {
+ 		data->priv.sid = args.args[0] & Q6_USB_SID_MASK;
++		of_node_put(args.np);
++	}
+ 
+ 	ret = devm_mutex_init(dev, &data->mutex);
+ 	if (ret < 0)
+-- 
+2.43.0
+
