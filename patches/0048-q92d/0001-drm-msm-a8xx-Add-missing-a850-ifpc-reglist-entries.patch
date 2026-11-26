@@ -1,0 +1,41 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Rob Clark <robin.clark@oss.qualcomm.com>
+Date: Mon, 9 Nov 2026 06:19:51 -0800
+Subject: [PATCH 1/4] drm/msm/a8xx: Add missing a850 ifpc reglist entries
+
+We want to save/restore all of the CP_PROTECT regs across IFPC.
+
+Tested-by: Alexander Koskovich <akoskovich@pm.me> # Milos (Nothing Phone 3a)
+Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
+Reviewed-by: Akhil P Oommen <akhilpo@oss.qualcomm.com>
+Signed-off-by: Rob Clark <robin.clark@oss.qualcomm.com>
+Link: https://lore.kernel.org/r/20261109142111.256630-6-robin.clark@oss.qualcomm.com
+[ from the linux-arm-msm archive: v8 05/15 of "drm/msm/a8xx: GPU state capture support" (9 Nov 2026); not applied upstream yet ]
+[ upstream author: Rob Clark <robin.clark@oss.qualcomm.com>; picked for the iceland kernel q92d (applies unchanged) ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/adreno/a8xx_catalog.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/drivers/gpu/drm/msm/adreno/a8xx_catalog.c b/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
+index 7540e3aede08c..6e169f1f900ad 100644
+--- a/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
++++ b/drivers/gpu/drm/msm/adreno/a8xx_catalog.c
+@@ -914,6 +914,13 @@ static const u32 a850_ifpc_reglist_regs[] = {
+ 	REG_A8XX_CP_PROTECT_GLOBAL(53),
+ 	REG_A8XX_CP_PROTECT_GLOBAL(54),
+ 	REG_A8XX_CP_PROTECT_GLOBAL(55),
++	REG_A8XX_CP_PROTECT_GLOBAL(56),
++	REG_A8XX_CP_PROTECT_GLOBAL(57),
++	REG_A8XX_CP_PROTECT_GLOBAL(58),
++	REG_A8XX_CP_PROTECT_GLOBAL(59),
++	REG_A8XX_CP_PROTECT_GLOBAL(60),
++	REG_A8XX_CP_PROTECT_GLOBAL(61),
++	REG_A8XX_CP_PROTECT_GLOBAL(62),
+ 	REG_A8XX_CP_PROTECT_GLOBAL(63),
+ };
+ DECLARE_ADRENO_REGLIST_LIST(a850_ifpc_reglist);
+-- 
+2.43.0
+

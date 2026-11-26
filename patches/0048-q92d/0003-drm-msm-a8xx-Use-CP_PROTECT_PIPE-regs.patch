@@ -1,0 +1,55 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Rob Clark <robin.clark@oss.qualcomm.com>
+Date: Mon, 9 Nov 2026 06:19:59 -0800
+Subject: [PATCH 3/4] drm/msm/a8xx: Use CP_PROTECT_PIPE regs
+
+If there are not enough global CP_PROTECT_GLOBAL regs, we can use
+CP_PROTECT_PIPE regs for the extra spans.  We just need to configure
+them the same on all pipes.
+
+Tested-by: Alexander Koskovich <akoskovich@pm.me> # Milos (Nothing Phone 3a)
+Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
+Signed-off-by: Rob Clark <robin.clark@oss.qualcomm.com>
+Link: https://lore.kernel.org/r/20261109142111.256630-14-robin.clark@oss.qualcomm.com
+[ from the linux-arm-msm archive: v8 13/15 of "drm/msm/a8xx: GPU state capture support" (9 Nov 2026); not applied upstream yet ]
+[ upstream author: Rob Clark <robin.clark@oss.qualcomm.com>; picked for the iceland kernel q92d (applies unchanged) ]
+Signed-off-by: mzak <mzak.amin@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/msm/adreno/a8xx_gpu.c | 19 ++++++++++++++-----
+ 1 file changed, 14 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
+index c0afd0be8e298..52b580ae2707b 100644
+--- a/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
++++ b/drivers/gpu/drm/msm/adreno/a8xx_gpu.c
+@@ -276,12 +276,21 @@ static void a8xx_set_cp_protect(struct msm_gpu *gpu)
+ 
+ 	a8xx_aperture_clear(gpu);
+ 
+-	for (i = 0; i < protect->count; i++) {
++	for (i = 0; i < min(64, protect->count); i++) {
+ 		/* Intentionally skip writing to some registers */
+-		if (protect->regs[i]) {
+-			gpu_write(gpu, REG_A8XX_CP_PROTECT_GLOBAL(i), protect->regs[i]);
+-			final_cfg = protect->regs[i];
+-		}
++		if (!protect->regs[i])
++			continue;
++		gpu_write(gpu, REG_A8XX_CP_PROTECT_GLOBAL(i), protect->regs[i]);
++		final_cfg = protect->regs[i];
++	}
++
++	for (; i < protect->count; i++) {
++		/* Intentionally skip writing to some registers */
++		if (!protect->regs[i])
++			continue;
++		a8xx_write_pipe(gpu, PIPE_BR, REG_A8XX_CP_PROTECT_PIPE(i - 64), protect->regs[i]);
++		a8xx_write_pipe(gpu, PIPE_BV, REG_A8XX_CP_PROTECT_PIPE(i - 64), protect->regs[i]);
++		final_cfg = protect->regs[i];
+ 	}
+ 
+ 	/*
+-- 
+2.43.0
+

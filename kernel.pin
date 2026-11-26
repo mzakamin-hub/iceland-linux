@@ -167,6 +167,8 @@ INFINITI_COMMIT=10650ae7bef447d04eb820bfc0c2d5a98d83e4e2
 # Kernel 7.4.0-rc4-iceland-00822-g58b8c04517b0.
 # q92c (23 Nov 2026) = q92b + 0047-q92c: smp2p_sleepstate ignores sensor stream edges during suspend.
 # Kernel 7.4.0-rc4-iceland-00823-g7b6ed5d9705d.
+# q92d (25 Nov 2026) = q92c + 0048-q92d: a8xx A850 IFPC / CP_PROTECT_PIPE reglist (Rob Clark), the DSI1 nodes after the DSI0 PHY.
+# Kernel 7.4.0-rc4-iceland-00827-g08a7adc3c104.
 
 # Tree hash expected after each series on v7.4-rc4 (scripts/prepare.sh checks them):
 TREE_AFTER_0001_infiniti=ab755f7a527baeef80e230d9552990af430016bb
@@ -216,3 +218,4 @@ TREE_AFTER_0044_q91o_plus3=575b0b135568532e2edcf533e30ad6c7b78d363e
 TREE_AFTER_0045_q92a=927a61247a14191a9144876315aea7d3bc0a67f7
 TREE_AFTER_0046_q92b=d9fc049dcb8714bd3d189e05d3b95549960698b4
 TREE_AFTER_0047_q92c=10b60b7ad6bf8eaaf46cce306c2831de336f98ea
+TREE_AFTER_0048_q92d=1e82048fe14f2e0fca075ab5af852d63eefab558
