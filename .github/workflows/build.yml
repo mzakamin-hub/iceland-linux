@@ -17,7 +17,7 @@ on:
     - cron: '23 3 * * 1'
 
 env:
-  CURRENT_BRANCH: iceland-7.3-rc7-next
+  CURRENT_BRANCH: iceland-7.4-rc4
 
 permissions:
   contents: read

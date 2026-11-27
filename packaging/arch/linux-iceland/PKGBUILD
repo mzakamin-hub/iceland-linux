@@ -1,0 +1,81 @@
+# SPDX-License-Identifier: GPL-2.0-only
+# Maintainer: iceland project <noreply@iceland.invalid>
+#
+# linux-iceland-q92d: the OnePlus Pad 4 kernel q92d (7.4.0-rc4-iceland-00827-g08a7adc3c104 in the released package),
+# built from tag q92d of github.com/mzakamin-hub/iceland-linux. Each queue gets its own package name, so kernels
+# install side by side: every file is below /usr/lib/modules/<release>/. The boot entry and the initramfs come from
+# iceland-coexist's pacman hook (iceland-mainline, packaging/arch/iceland-coexist), which never changes the default.
+#
+# Package layout: /usr/lib/modules/<release>/{vmlinuz, System.map, config, BUILD_INFO, pkgbase,
+# dtb/qcom/kaanapali-oneplus-iceland.dtb, dtb/qcom/variants/kaanapali-oneplus-iceland-{headset,pumpbus}.dtb,
+# kernel/**.ko (debug info stripped, uncompressed), modules.*}.
+#
+# Two ways to build, one layout:
+#  (a) ICELAND_KERNEL_MODE=cross (default; how the released package was made): on a PC,
+#        scripts/prepare.sh ./src
+#        packaging/arch/linux-iceland/kbuild.sh ./src ./out packaging/arch/linux-iceland/kbuild-q92d.tar.zst
+#      then makepkg in an Arch Linux ARM aarch64 environment (a container works) only packages that tree.
+#      The released package was cross-built with Android clang r596125 (LLVM=1).
+#  (b) ICELAND_KERNEL_MODE=native: makepkg on an aarch64 Arch system fetches the tag, runs scripts/prepare.sh
+#      (clones v7.4-rc4 from kernel.org) and kbuild.sh with Arch's clang / lld. Same config and layout; a different
+#      compiler, so Image and modules are not byte-comparable with (a).
+pkgname=linux-iceland-q92d
+_tag=q92d
+pkgver=7.4.0rc4.00827.g08a7adc3c104
+pkgrel=1
+pkgdesc='Linux for the OnePlus Pad 4 (iceland, SM8850): kernel q92d, installs next to other linux-iceland kernels'
+arch=(aarch64)
+url='https://github.com/mzakamin-hub/iceland-linux'
+license=('GPL-2.0-only')
+depends=(coreutils kmod)
+optdepends=('iceland-coexist: kernel-install plugin + boot entry on the shared boot file system'
+            'iceland-firmware: the Pad 4 firmware')
+options=(!strip !debug)
+install=linux-iceland.install
+# the default device tree of q92d (the released package's)
+_dtb_sha256=a71d1bd9a7056e79cdf186c4865ff73422d26757f5d40ff84f6c4c1aedb7ed73
+_mode=${ICELAND_KERNEL_MODE:-cross}
+if [ "$_mode" = native ]; then
+  makedepends=(git clang lld llvm bc bison flex perl python pahole cpio xz zstd)
+  source=("iceland-linux::git+https://github.com/mzakamin-hub/iceland-linux.git#tag=${_tag}" config-q92d)
+  sha256sums=('SKIP' '6e4743bc7bedba5ea82e12c2f22d7e09e51ace5318850fca1166f0c9b540f34b')
+else
+  # the tarball from kbuild.sh; its sha256 depends on the build (the released package's was
+  # 71b5421293107992ea75dcf9e0caf67a7452fa40dcc6946a95f401c4dbb6f8e6)
+  noextract=(kbuild-q92d.tar.zst)
+  source=(kbuild-q92d.tar.zst config-q92d)
+  sha256sums=('SKIP' '6e4743bc7bedba5ea82e12c2f22d7e09e51ace5318850fca1166f0c9b540f34b')
+fi
+
+prepare() {
+  [ "$_mode" = native ] || return 0
+  "$srcdir/iceland-linux/scripts/prepare.sh" "$srcdir/src"
+}
+
+build() {
+  [ "$_mode" = native ] || return 0
+  "$srcdir/iceland-linux/packaging/arch/linux-iceland/kbuild.sh" "$srcdir/src" "$srcdir/out" "$srcdir/kbuild-q92d.tar.zst"
+}
+
+package() {
+  bsdtar -xpf "$srcdir/kbuild-q92d.tar.zst" -C "$pkgdir"
+  local kver
+  kver=$(ls "$pkgdir/usr/lib/modules")
+  [ "$(echo "$kver" | wc -l)" = 1 ] || { echo "expected one module directory, got: $kver"; return 1; }
+  local m=$pkgdir/usr/lib/modules/$kver
+  test -f "$m/vmlinuz"
+  test -f "$m/dtb/qcom/kaanapali-oneplus-iceland.dtb"
+  # the package config (toolchain version lines aside)
+  local re='^(# )?CONFIG_(CC_VERSION_TEXT|CLANG_VERSION|LLD_VERSION|AS_VERSION|LD_VERSION|RUSTC|BINDGEN|PAHOLE|GCC_VERSION|CC_IS|LD_IS|AS_IS|CC_HAS|TOOLS_SUPPORT)'
+  diff <(grep -E '^CONFIG_|^# CONFIG_.* is not set' "$srcdir/config-q92d" | grep -vE "$re" | sort) \
+       <(grep -E '^CONFIG_|^# CONFIG_.* is not set' "$m/config" | grep -vE "$re" | sort) > /dev/null ||
+    { echo "the kernel config differs from config-q92d"; return 1; }
+  if echo "$_dtb_sha256  $m/dtb/qcom/kaanapali-oneplus-iceland.dtb" | sha256sum -c --quiet 2>/dev/null; then
+    echo "default DTB = the released q92d DTB"
+  else
+    echo "note: the default DTB differs from the released q92d DTB (another dtc / preprocessor?)"
+  fi
+  # Arch convention: the package base in the module dir (iceland-coexist's pacman hook keys on it)
+  echo "$pkgname" > "$m/pkgbase"
+  depmod -b "$pkgdir/usr" "$kver"
+}

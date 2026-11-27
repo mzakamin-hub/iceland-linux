@@ -1,0 +1,8 @@
+post_install() {
+	local d
+	for d in /usr/lib/modules/*/; do
+		[ "$(cat "${d}pkgbase" 2>/dev/null)" = linux-iceland-q92d ] && depmod "$(basename "$d")" 2>/dev/null
+	done
+	:
+}
+post_upgrade() { post_install; }
