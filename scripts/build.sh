@@ -17,11 +17,13 @@ mk defconfig
 # config pass; q90i: the config round; q90i-shipped: the rest of the shipped q90i config; q90m: the in-tree Gunyah
 # VM stack as modules and the C binder driver; q90n-q90s: the options of each later queue; q90p: the board's command
 # line as built-in defaults; q90s: vhost-net; q90t: writeback throttling (off by default) and the LZ4 zram backend).
-# q90y: the weighted thermal sensor module. q90z: SWIOTLB 2 MB dynamic, CMA 128 MB. The result is the q90z config.
+# q90y: the weighted thermal sensor module. q90z: SWIOTLB 2 MB dynamic, CMA 128 MB. q91c-q91e: the v7.4-rc1 queues'
+# options. q92d: the iceland-supervooc module. On v7.4-rc4 the result is the q92d package config.
 frags=("$top/configs/distro-neutral.config" "$top/configs/q90b.config" "$top/configs/q90i.config"
 	"$top/configs/q90i-shipped.config" "$top/configs/q90m.config" "$top/configs/q90n.config"
 	"$top/configs/q90o.config" "$top/configs/q90p.config" "$top/configs/q90q.config" "$top/configs/q90r.config"
-	"$top/configs/q90s.config" "$top/configs/q90t.config" "$top/configs/q90y.config" "$top/configs/q90z.config" "$top/configs/q91c.config" "$top/configs/q91d.config" "$top/configs/q91e.config")
+	"$top/configs/q90s.config" "$top/configs/q90t.config" "$top/configs/q90y.config" "$top/configs/q90z.config" "$top/configs/q91c.config" "$top/configs/q91d.config" "$top/configs/q91e.config"
+	"$top/configs/q92d.config")
 "$src/scripts/kconfig/merge_config.sh" -m -O "$out" "$out/.config" 	"$src/arch/arm64/configs/sm8850.config" "${frags[@]}" >/dev/null
 mk olddefconfig
 
@@ -51,6 +53,7 @@ check "$top/configs/q90i.config" 1 && check "$top/configs/q90i-shipped.config" 1
 	check "$top/configs/q91c.config" 1 &&
 	check "$top/configs/q91d.config" 1 &&
 	check "$top/configs/q91e.config" 1 &&
+	check "$top/configs/q92d.config" 1 &&
 	check "$top/configs/required.config" 1 || {
 	echo "config check failed (fix fragment dependencies)"; [ "${ALLOW_CONFIG_DRIFT:-0}" = 1 ] || exit 1; }
 
