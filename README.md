@@ -1,8 +1,7 @@
 # iceland-linux
 
 The Linux kernel for the OnePlus Pad 4 (`iceland`, Qualcomm SM8850P "kaanapali"). The kernel is kept as a patch queue
-on an upstream tag, linux-next `next-20261020` (Linux 7.3 plus the trees queued for 7.4) on the current branch, so
-every commit keeps its original author. This is the same approach as the
+on an upstream tag, Linux `v7.4-rc4` on the current branch, so every commit keeps its original author. This is the same approach as the
 postmarketOS kernel packages and other tablet ports.
 
 This repository is one part of the project. The boot chain and the install are described in the hub,
@@ -11,40 +10,32 @@ This repository is one part of the project. The boot chain and the install are d
 
 ## Current kernel
 
-- **Branch:** [`iceland-7.3-rc7-next`](https://github.com/mzakamin-hub/iceland-linux/tree/iceland-7.3-rc7-next). Build from this branch.
-- **Queue:** q90x (tag `q90x`), kernel release `7.3.0-next-20261020-iceland-00555-gbc55efdfac46`, packaged as
-  `kernel-iceland`. What each queue adds is in that branch's README.
-- **`main`** holds the older queue q89g, the kernel of the first install image. Later queues are only on
-  `iceland-7.3-rc7-next`.
+- **Branch:** [`iceland-7.4-rc4`](https://github.com/mzakamin-hub/iceland-linux/tree/iceland-7.4-rc4) (tag `q92d`).
+  Build from that branch; its README describes the queue, the build and the Arch Linux ARM package.
+- **Queue:** q92d, kernel release `7.4.0-rc4-iceland-00827-g08a7adc3c104`, on Linux `v7.4-rc4`, packaged for Arch
+  Linux ARM as `linux-iceland-q92d`.
+- **`main`** holds the older queue q89g, the kernel of the first install image. Later queues are on the
+  `iceland-*` branches: `iceland-7.4-rc4` (q92d), `iceland-7.4-rc1` (q91c to q91n), `iceland-7.3-rc7-next` (q89h to
+  q90z).
 
 ## Download
 
-The newest release download is q90x: the [`q90x` release](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90x)
-has:
+The newest release is q92d: the [`q92d` release](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q92d) has
+the Arch Linux ARM package `linux-iceland-q92d-7.4.0rc4.00827.g08a7adc3c104-1-aarch64.pkg.tar.zst`, its signature,
+the optional device trees, the repository at tag `q92d` and `SHA256SUMS`. Install it with
+`sudo pacman -U linux-iceland-q92d-7.4.0rc4.00827.g08a7adc3c104-1-aarch64.pkg.tar.zst` (see the
+[branch README](https://github.com/mzakamin-hub/iceland-linux/tree/iceland-7.4-rc4#download)).
 
-- `kernel-iceland-7.3.0.next.20261020.iceland.00555.gbc55efdfac46-1.fc44.aarch64.rpm`, the Fedora 44 package for the
-  tablet;
-- the source RPM, which carries this repository's queue, and `SHA256SUMS`.
+Earlier releases (Fedora RPMs): [q91n](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q91n),
+[q91k](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q91k),
+[q90z](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90z),
+[q90x](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90x) and older.
 
-Check the files with `sha256sum -c SHA256SUMS`. On the tablet's Fedora 44 system, install the package with dnf:
-
-```bash
-sudo dnf install ./kernel-iceland-7.3.0.next.20261020.iceland.00555.gbc55efdfac46-1.fc44.aarch64.rpm
-```
-
-Earlier releases: [q90w2](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90w2),
-[q90v](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90v),
-[q90u](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90u),
-[q90r](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90r),
-[q90i](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q90i),
-[q89w](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89w),
-[q89m](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89m),
-[q89l](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89l) and
-[q89k](https://github.com/mzakamin-hub/iceland-linux/releases/tag/q89k).
+The sections below describe the files on `main` (the q89g queue).
 
 ## What is in the repository
 
-The counts below are for `iceland-7.3-rc7-next`.
+The counts below are for the q89g queue on `main`.
 
 | Path | Content |
 |---|---|
