@@ -1,0 +1,75 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: millia ampora <198710911+dappermint@users.noreply.github.com>
+Date: Thu, 12 Nov 2026 02:10:00 +0400
+Subject: [PATCH] arm64: dts: qcom: kaanapali-oneplus-iceland: enable the
+ charge pump buses
+
+The two SC8547D charge pumps sit at 0x6a on i2c12 (i2c@890000, the
+secondary pump) and on i2c_hub_0 (i2c@980000, the primary pump). The
+queue describes both chips but leaves both buses disabled. Enable the
+two buses so that /dev/i2c-N exists for each of them, for a read-only
+identification of the chips from user space before any driver exists.
+Both charger@6a nodes stay disabled, so no driver binds to address 0x6a
+and the kernel itself sends nothing on either bus. What changes at run
+time is that each bus's default pin state is applied (gpio66 / gpio67
+for i2c_hub_0 and gpio208 / gpio209 for i2c12: i2c function, 2 mA,
+pull-up, the settings of stock's active state) and the serial engines
+are set up at 400 kHz. The hub wrapper (i2c_master_hub) is already
+enabled for i2c_hub_1. The interrupt pins gpio0 and gpio3 are not
+touched.
+Link: https://github.com/mzakamin-hub/iceland-linux/issues/2
+Based-on: DocZ13's identification test, which enables the same two buses
+ in a test DTB (iceland-pps-handover, GPL-2.0)
+
+Signed-off-by: millia ampora <198710911+dappermint@users.noreply.github.com>
+(cherry picked from commit 0aba0b9ca5662d839cdf350ea72d0e06f4b13bae)
+(cherry picked from commit dca7303883357c6769106cdaf6435364714cfa04)
+(cherry picked from commit 47647aa20fc7f5fde6967de18828fd9f453a0f12)
+(cherry picked from commit 9533be286aab5ec42fd173a0020c0d922da246cc)
+---
+ .../boot/dts/qcom/kaanapali-oneplus-iceland.dts    | 14 ++++++++++----
+ 1 file changed, 10 insertions(+), 4 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+index d115515739de3..64cbed74b440f 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
++++ b/arch/arm64/boot/dts/qcom/kaanapali-oneplus-iceland.dts
+@@ -1437,12 +1437,15 @@ &qup_i2c9_data_clk {
+ 
+ /*
+  * The secondary SC8547D 2:1 charge pump of the VOOC / SuperVOOC path (stock:
+- * sc8547-charger-slave@6A on qupv3_se12_i2c, 400 kHz, IRQ on gpio3). Only
+- * described: the bus stays disabled and no driver binds to the chip.
++ * sc8547-charger-slave@6A on qupv3_se12_i2c, 400 kHz, IRQ on gpio3). The
++ * bus is enabled so that /dev/i2c-N exists for read-only tests; the chip
++ * node stays disabled, so no driver binds to it.
+  */
+ &i2c12 {
+ 	clock-frequency = <400000>;
+ 
++	status = "okay";
++
+ 	sc8547d_secondary: charger@6a {
+ 		compatible = "southchip,sc8547d";
+ 		reg = <0x6a>;
+@@ -1481,12 +1484,15 @@ backlight@11 {
+ 
+ /*
+  * The primary SC8547D 2:1 charge pump, also the VOOC / UFCS PHY (stock:
+- * oplus,sc8547d@6A on qupv3_hub_i2c0, 400 kHz, IRQ on gpio0). Only
+- * described: the bus stays disabled and no driver binds to the chip.
++ * oplus,sc8547d@6A on qupv3_hub_i2c0, 400 kHz, IRQ on gpio0). The bus is
++ * enabled so that /dev/i2c-N exists for read-only tests; the chip node
++ * stays disabled, so no driver binds to it.
+  */
+ &i2c_hub_0 {
+ 	clock-frequency = <400000>;
+ 
++	status = "okay";
++
+ 	sc8547d_primary: charger@6a {
+ 		compatible = "southchip,sc8547d";
+ 		reg = <0x6a>;
+-- 
+2.43.0
+
